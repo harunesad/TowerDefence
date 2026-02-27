@@ -22,6 +22,9 @@ namespace TowerDefence.Data
         [Range(1, 3)] public int difficulty = 1;
         public string levelID; // Kilit takibi için benzersiz ID
 
+        [Header("Map Settings")]
+        public GameObject mapPrefab;
+
         [Header("Waves")]
         public List<WaveData> waves;
 

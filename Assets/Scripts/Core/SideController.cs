@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 namespace TowerDefence.Core
 {
@@ -13,20 +14,28 @@ namespace TowerDefence.Core
     {
         public static SideController Instance { get; private set; }
 
+        public event Action<Side> OnSideChanged;
+
         [SerializeField] private Side playerSide;
 
         private void Awake()
         {
-            if (Instance == null) Instance = this;
-            else Destroy(gameObject);
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
 
         public void SetPlayerSide(Side side)
         {
             playerSide = side;
             Debug.Log($"Player chose: {side} side");
-            
-            // Tarafa özgü HUD ve kaynak ayarları burada yapılabilir
+            OnSideChanged?.Invoke(side);
         }
 
         public Side GetPlayerSide() => playerSide;

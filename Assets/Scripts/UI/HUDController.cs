@@ -11,13 +11,17 @@ namespace TowerDefence.UI
     {
         [Header("Text Elements")]
         [SerializeField] private TextMeshProUGUI currencyText;
+        [SerializeField] private TextMeshProUGUI livesText;
         [SerializeField] private TextMeshProUGUI timerText;
         [SerializeField] private TextMeshProUGUI phaseText;
 
         [Header("Buttons")]
         [SerializeField] private Button skipPrepButton;
         [SerializeField] private Button abilityButton;
-        [SerializeField] private Image abilityOverlay; // Cooldown görseli için
+        [SerializeField] private Image abilityOverlay;
+        
+        [Header("Selection UIs")]
+        [SerializeField] private UnitSelectionUI unitSelectionUI;
 
         [Header("Game Over Panels")]
         [SerializeField] private GameObject victoryPanel;
@@ -31,6 +35,7 @@ namespace TowerDefence.UI
             PhaseManager.Instance.OnPhaseChanged += UpdatePhaseUI;
             AbilityManager.Instance.OnAbilityCooldownChanged += UpdateAbilityUI;
             GameManager.Instance.OnGameStateChanged += UpdateGameStateUI;
+            LivesManager.OnLivesChanged += UpdateLivesUI;
 
             skipPrepButton.onClick.AddListener(OnSkipPrepClicked);
             abilityButton.onClick.AddListener(OnAbilityClicked);
@@ -39,6 +44,9 @@ namespace TowerDefence.UI
             Side playerSide = SideController.Instance.GetPlayerSide();
             UpdateCurrencyUI(playerSide, CurrencyManager.Instance.GetCurrency(playerSide));
             UpdatePhaseUI(PhaseManager.Instance.GetCurrentPhase());
+            
+            if (LivesManager.Instance != null)
+                UpdateLivesUI(LivesManager.Instance.GetCurrentLives(), LivesManager.Instance.GetMaxLives());
         }
 
         private void OnDestroy()
@@ -57,6 +65,16 @@ namespace TowerDefence.UI
 
             if (GameManager.Instance != null)
                 GameManager.Instance.OnGameStateChanged -= UpdateGameStateUI;
+
+            LivesManager.OnLivesChanged -= UpdateLivesUI;
+        }
+
+        private void UpdateLivesUI(int current, int max)
+        {
+            if (livesText != null)
+            {
+                livesText.text = $"Can: {current}/{max}";
+            }
         }
 
         private void UpdateCurrencyUI(Side side, int amount)

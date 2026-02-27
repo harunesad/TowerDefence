@@ -50,7 +50,10 @@ namespace TowerDefence.Combat
             projectilePrefab = data.prefab;
             
             if (firePoint == null) firePoint = transform.Find("FirePoint");
-            if (firePoint == null) firePoint = transform; 
+            if (firePoint == null) firePoint = transform;
+
+            // Dinamik Hedefleme (Light kuleler Dark layer'ı (7), Dark kuleler Light layer'ı (6) hedefler)
+            targetLayer = (towerSide == Side.Light) ? (1 << 7) : (1 << 6);
         }
 
         private void Update()

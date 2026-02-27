@@ -24,6 +24,8 @@ namespace TowerDefence.Combat
         private NavMeshAgent agent;
         private float nextAttackTime;
         private bool isDead;
+        private LayerMask targetLayer;
+        private IDamageable targetCombatant;
 
         // Status effects
         private List<StatusEffect> activeEffects = new List<StatusEffect>();
@@ -42,21 +44,19 @@ namespace TowerDefence.Combat
             unitData = data;
             unitSide = data.side;
 
-            // Meta-Gelişim Çarpanlarını Uygula
-            float healthMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.HealthBonus, unitSide);
-            float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.SpeedBonus, unitSide);
-            float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.DamageBonus, unitSide);
-
-            maxHealth = data.maxHealth * healthMult;
-            moveSpeed = data.moveSpeed * speedMult;
-            attackDamage = data.attackDamage * damageMult;
-            
+            maxHealth = data.maxHealth;
+            moveSpeed = data.moveSpeed;
+            attackDamage = data.attackDamage;
             attackRange = data.attackRange;
             attackRate = data.attackRate;
 
             currentHealth = maxHealth;
             if (agent == null) agent = GetComponent<NavMeshAgent>();
             agent.speed = moveSpeed;
+
+            // Dinamik Katman ve Hedef Katmanı Atama (LightUnit: 6 (Hedef 7), DarkUnit: 7 (Hedef 6))
+            gameObject.layer = (unitSide == Side.Light) ? 6 : 7;
+            targetLayer = (unitSide == Side.Light) ? (1 << 7) : (1 << 6);
         }
 
         private Base targetBase;
@@ -69,70 +69,91 @@ namespace TowerDefence.Combat
         private void Update()
         {
             if (isDead) return;
-
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
-            if (targetBase == null)
+            HandleStatusEffects();
+            UpdateTargetConflict();
+
+            // Savaş Durumu
+            if (targetCombatant != null && !targetCombatant.IsDead)
             {
-                FindTargetBase();
-                return;
+                float distance = Vector3.Distance(transform.position, ((MonoBehaviour)targetCombatant).transform.position);
+                
+                if (distance <= attackRange)
+                {
+                    agent.isStopped = true;
+                    if (Time.time >= nextAttackTime)
+                    {
+                        Attack();
+                        nextAttackTime = Time.time + 1f / attackRate;
+                    }
+                    return; // Savaşırken hareket etme
+                }
             }
 
-            // Status Effect Update
-            HandleStatusEffects();
+            // Hareket Durumu
+            bool isStunned = activeEffects.Exists(e => e.type == StatusEffectType.Stun);
+            agent.isStopped = isStunned;
 
-            float distanceToBase = Vector3.Distance(transform.position, targetBase.transform.position);
-
-            if (distanceToBase <= attackRange)
+            if (!isStunned)
             {
-                agent.isStopped = true;
-                if (Time.time >= nextAttackTime)
+                // Hız Ayarı
+                agent.speed = moveSpeed;
+
+                // 1. Birim hedefine doğru git
+                if (targetCombatant != null && !targetCombatant.IsDead)
                 {
-                    Attack();
-                    nextAttackTime = Time.time + 1f / attackRate;
+                    agent.SetDestination(((MonoBehaviour)targetCombatant).transform.position);
                 }
+                // 2. Üsse (Exit Point) doğru git
+                else if (targetBase != null)
+                {
+                    agent.SetDestination(targetBase.transform.position);
+                }
+                // 3. Waypoint takibi yap
+                else if (currentPath != null && currentWaypointIndex < currentPath.GetWaypoints().Count)
+                {
+                    Transform wp = currentPath.GetWaypoints()[currentWaypointIndex];
+                    agent.SetDestination(wp.position);
+                    if (Vector3.Distance(transform.position, wp.position) < 1.0f) currentWaypointIndex++;
+                }
+                else
+                {
+                    agent.isStopped = true;
+                }
+            }
+        }
+
+        private void UpdateTargetConflict()
+        {
+            // Önce yakındaki birimleri tara
+            Collider[] colliders = Physics.OverlapSphere(transform.position, attackRange * 2f, targetLayer);
+            float shortestDist = Mathf.Infinity;
+            IDamageable nearestUnit = null;
+
+            foreach (var col in colliders)
+            {
+                Unit u = col.GetComponent<Unit>();
+                if (u != null && !u.IsDead)
+                {
+                    float dist = Vector3.Distance(transform.position, col.transform.position);
+                    if (dist < shortestDist)
+                    {
+                        shortestDist = dist;
+                        nearestUnit = u;
+                    }
+                }
+            }
+
+            if (nearestUnit != null)
+            {
+                targetCombatant = nearestUnit;
             }
             else
             {
-                // Eğer Stun etkisindeyse hareket etme
-                bool isStunned = activeEffects.Exists(e => e.type == StatusEffectType.Stun);
-                agent.isStopped = isStunned;
-
-                if (!isStunned)
-                {
-                    // Hız Hesaplama
-                    float currentSpeedModifier = 1f;
-                    if (unitSide == Side.Dark && CorruptionManager.Instance != null)
-                    {
-                        currentSpeedModifier = CorruptionManager.Instance.GetSpeedModifier(transform.position);
-                    }
-
-                    // Yavaşlatma etkilerini topla
-                    float slowFactor = 1f;
-                    foreach (var effect in activeEffects)
-                    {
-                        if (effect.type == StatusEffectType.Slow) 
-                            slowFactor = Mathf.Min(slowFactor, effect.power);
-                    }
-
-                    agent.speed = moveSpeed * currentSpeedModifier * slowFactor;
-
-                    // Waypoint Takibi veya Direk Üsse İlerleme
-                    if (currentPath != null && currentWaypointIndex < currentPath.GetWaypoints().Count)
-                    {
-                        Transform wp = currentPath.GetWaypoints()[currentWaypointIndex];
-                        agent.SetDestination(wp.position);
-
-                        if (Vector3.Distance(transform.position, wp.position) < 1.0f)
-                        {
-                            currentWaypointIndex++;
-                        }
-                    }
-                    else
-                    {
-                        agent.SetDestination(targetBase.transform.position);
-                    }
-                }
+                // Yakında birim yoksa üssü (Exit Point) hedef al
+                if (targetBase == null) FindTargetBase();
+                targetCombatant = targetBase;
             }
         }
 
@@ -143,6 +164,29 @@ namespace TowerDefence.Combat
         {
             currentPath = path;
             currentWaypointIndex = 0;
+        }
+
+        public void SetPathAtNearestWaypoint(PathWaypoints path, Vector3 currentPos)
+        {
+            currentPath = path;
+            if (path == null) return;
+
+            var wps = path.GetWaypoints();
+            float minDistance = float.PositiveInfinity;
+            int nearestIdx = 0;
+
+            for (int i = 0; i < wps.Count; i++)
+            {
+                float dist = Vector3.Distance(currentPos, wps[i].position);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    nearestIdx = i;
+                }
+            }
+
+            // En yakın noktaya ulaştı sayıp bir sonrakine yönlendiriyoruz
+            currentWaypointIndex = Mathf.Min(nearestIdx + 1, wps.Count - 1);
         }
 
         private void HandleStatusEffects()
@@ -195,17 +239,17 @@ namespace TowerDefence.Combat
                 if (b.GetSide() != unitSide)
                 {
                     targetBase = b;
-                    break;
+                    return;
                 }
             }
         }
 
         private void Attack()
         {
-            if (targetBase != null)
+            if (targetCombatant != null && !targetCombatant.IsDead)
             {
-                targetBase.TakeDamage(attackDamage);
-                Debug.Log($"{gameObject.name} attacked the base!");
+                targetCombatant.TakeDamage(attackDamage);
+                Debug.Log($"{gameObject.name} attacked {((MonoBehaviour)targetCombatant).name}!");
             }
         }
 

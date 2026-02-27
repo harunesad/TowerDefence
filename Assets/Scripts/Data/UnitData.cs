@@ -11,6 +11,7 @@ namespace TowerDefence.Data
         public Side side;
         public GameObject prefab;
         public Sprite icon;
+        public UnitData enemyCounterpart; // Karşı taraftaki karşılığı (Aydınlık <-> Karanlık)
 
         [Header("Economics")]
         public int spawnCost;

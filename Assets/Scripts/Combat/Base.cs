@@ -7,59 +7,29 @@ namespace TowerDefence.Combat
 {
     public class Base : MonoBehaviour, IDamageable
     {
-        [Header("Stats")]
-        [SerializeField] private float maxHealth = 1000f;
+        [Header("Settings")]
         [SerializeField] private Side baseSide;
         [SerializeField] private AudioClip damageSFX;
         
-        private float currentHealth;
-        private bool isGameOver = false;
-
-        public bool IsDead => isGameOver;
+        public bool IsDead => LivesManager.Instance != null && LivesManager.Instance.GetCurrentLives() <= 0;
         public Side GetSide() => baseSide;
-
-        private void Awake()
-        {
-            currentHealth = maxHealth;
-        }
 
         public void TakeDamage(float amount)
         {
-            if (isGameOver) return;
+            if (LivesManager.Instance == null) return;
 
-            currentHealth -= amount;
-            Debug.Log($"{gameObject.name} (Base) took {amount} damage. Current health: {currentHealth}");
+            // Merkezi can sistemine bildir
+            LivesManager.Instance.ReduceLives(baseSide);
 
             // Görsel ve İşitsel Geri Bildirim
             if (ScreenShake.Instance != null)
             {
-                ScreenShake.Instance.Shake(0.2f, 0.4f);
+                ScreenShake.Instance.Shake(0.3f, 0.5f);
             }
 
             if (AudioManager.Instance != null && damageSFX != null)
             {
                 AudioManager.Instance.PlaySFX(damageSFX);
-            }
-
-            if (currentHealth <= 0)
-            {
-                currentHealth = 0;
-                Die();
-            }
-        }
-
-        private void Die()
-        {
-            isGameOver = true;
-            Debug.Log($"{baseSide} Base Destroyed!");
-            
-            if (baseSide == SideController.Instance.GetPlayerSide())
-            {
-                GameManager.Instance.ChangeState(GameState.Defeat);
-            }
-            else
-            {
-                GameManager.Instance.ChangeState(GameState.Victory);
             }
         }
     }

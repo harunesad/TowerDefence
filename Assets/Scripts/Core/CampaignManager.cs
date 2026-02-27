@@ -35,8 +35,14 @@ namespace TowerDefence.Core
         {
             if (currentSelectedLevel != null)
             {
+                // Mevcut wave indexini de sıfırlayalım
+                PhaseManager.Instance.ResetWaveIndex();
+                
                 SceneManager.LoadScene(currentSelectedLevel.sceneIndex);
                 GameManager.Instance.ChangeState(GameState.Playing);
+                
+                // Sahne yüklendiğinde ilk hazırlığı başlat
+                PhaseManager.Instance.StartPreparationPhase();
             }
         }
 

@@ -36,7 +36,7 @@ namespace TowerDefence.Core
 
         private void Start()
         {
-            StartPreparationPhase();
+            // StartPreparationPhase(); // Artık otomatik başlamayacak
         }
 
         private void Update()
@@ -90,6 +90,7 @@ namespace TowerDefence.Core
         private void CheckWaveCompletion()
         {
             if (currentPhase != GamePhase.Combat) return;
+            if (GameManager.Instance.GetCurrentState() != GameState.Playing) return;
 
             // Sahnedeki düşman birimlerini kontrol et 
             Unit[] units = FindObjectsByType<Unit>(FindObjectsSortMode.None);
@@ -101,6 +102,12 @@ namespace TowerDefence.Core
             {
                 WaveCompleted();
             }
+        }
+
+        public void ResetWaveIndex()
+        {
+            currentWaveIndex = 0;
+            Debug.Log("Core: Wave Index Reset.");
         }
 
         private void WaveCompleted()
