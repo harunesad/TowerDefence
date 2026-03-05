@@ -11,6 +11,7 @@ namespace TowerDefence.Data
         public string towerName;
         public Side side;
         public GameObject prefab;
+        public GameObject projectilePrefab;
         public Sprite icon;
 
         [Header("Economics")]

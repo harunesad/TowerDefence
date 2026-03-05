@@ -5,6 +5,7 @@ using TMPro;
 using TowerDefence.UI;
 using TowerDefence.Combat;
 using TowerDefence.Grid;
+using TowerDefence.Data;
 using UnityEngine.AI;
 
 public class EditorPrefabBuilder : Editor
@@ -13,9 +14,12 @@ public class EditorPrefabBuilder : Editor
     public static void GeneratePrefabs()
     {
         string uiFolder = "Assets/Prefabs/UI";
-        string gameplayFolder = "Assets/Prefabs/Gameplay";
+        string gameplayBase = "Assets/Prefabs/Gameplay";
+        string unitsFolder = gameplayBase + "/Units";
+        string towersFolder = gameplayBase + "/Towers";
+        string projectilesFolder = gameplayBase + "/Projectiles";
 
-        EnsureFolders(uiFolder, gameplayFolder);
+        EnsureFolders(uiFolder, unitsFolder, towersFolder, projectilesFolder);
 
         // UI Prefabs
         CreateLevelButtonPrefab(uiFolder);
@@ -25,17 +29,50 @@ public class EditorPrefabBuilder : Editor
         CreateTowerSelectionPrefab(uiFolder);
         CreateUnitSelectionPrefab(uiFolder);
 
-        // Gameplay Prefabs
-        CreateUnitPrefab(gameplayFolder);
-        CreateTowerPrefab(gameplayFolder);
-        CreateProjectilePrefab(gameplayFolder);
-        CreateWaypointsPrefab(gameplayFolder);
-        CreateVFXPrefab(gameplayFolder);
-        CreateTowerSlotPrefab(gameplayFolder);
+        // Mermi Varyasyonları (10 Adet)
+        CreateProjectileTemplate(projectilesFolder, "Archer_Arrow", Color.white);
+        CreateProjectileTemplate(projectilesFolder, "Ballista_Bolt", Color.gray);
+        CreateProjectileTemplate(projectilesFolder, "Bone_Projectyle", Color.white);
+        CreateProjectileTemplate(projectilesFolder, "Cannon_Ball", Color.black);
+        CreateProjectileTemplate(projectilesFolder, "Dark_Pulse", Color.magenta);
+        CreateProjectileTemplate(projectilesFolder, "Mage_Bolt", Color.blue);
+        CreateProjectileTemplate(projectilesFolder, "Poison_Drip", new Color(0.1f, 0.5f, 0.1f));
+        CreateProjectileTemplate(projectilesFolder, "Solar_Beam", Color.yellow);
+        CreateProjectileTemplate(projectilesFolder, "Soul_Orb", new Color(0.5f, 0, 0));
+        CreateProjectileTemplate(projectilesFolder, "Void_Missile", new Color(0.2f, 0, 0.2f));
+
+        // Kule Varyasyonları (10 Adet)
+        CreateTowerTemplate(towersFolder, projectilesFolder, "Archer_Tower", Color.green);
+        CreateTowerTemplate(towersFolder, projectilesFolder, "Ballista_Tower", Color.gray);
+        CreateTowerTemplate(towersFolder, projectilesFolder, "Bone_Catapult", Color.white);
+        CreateTowerTemplate(towersFolder, projectilesFolder, "Cannon_Tower", Color.black);
+        CreateTowerTemplate(towersFolder, projectilesFolder, "Dark_Sentry", Color.magenta);
+        CreateTowerTemplate(towersFolder, projectilesFolder, "Mage_Tower", Color.blue);
+        CreateTowerTemplate(towersFolder, projectilesFolder, "Poison_Spitter", new Color(0.1f, 0.5f, 0.1f));
+        CreateTowerTemplate(towersFolder, projectilesFolder, "Solar_Prism", Color.yellow);
+        CreateTowerTemplate(towersFolder, projectilesFolder, "Soul_Harvester", new Color(0.5f, 0, 0));
+        CreateTowerTemplate(towersFolder, projectilesFolder, "Void_Obelisk", new Color(0.2f, 0, 0.2f));
+
+        // Ünite Varyasyonları (10 Adet)
+        CreateUnitTemplate(unitsFolder, "Celestial_Archer", Color.cyan);
+        CreateUnitTemplate(unitsFolder, "Holy_Scout", Color.yellow);
+        CreateUnitTemplate(unitsFolder, "Iron_Knight", Color.white);
+        CreateUnitTemplate(unitsFolder, "Light_Swordsman", Color.white);
+        CreateUnitTemplate(unitsFolder, "Shield_Bearer", Color.blue);
+
+        CreateUnitTemplate(unitsFolder, "Abyssal_Behemoth", Color.red);
+        CreateUnitTemplate(unitsFolder, "Plague_Runner", new Color(0.3f, 0.4f, 0));
+        CreateUnitTemplate(unitsFolder, "Shadow_Stalker", Color.black);
+        CreateUnitTemplate(unitsFolder, "Skeleton_Warrior", Color.gray);
+        CreateUnitTemplate(unitsFolder, "Wraith", Color.magenta);
+
+        CreateWaypointsPrefab(gameplayBase);
+        CreateVFXPrefab(gameplayBase);
+        CreateTowerSlotPrefab(gameplayBase, uiFolder);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("All Prefabs generated successfully!");
+        Debug.Log("All Prefabs generated successfully and organized into subfolders!");
     }
 
     private static void CreateWaypointsPrefab(string folder)
@@ -65,57 +102,181 @@ public class EditorPrefabBuilder : Editor
 
     private static void EnsureFolders(params string[] paths)
     {
-        if (!AssetDatabase.IsValidFolder("Assets/Prefabs"))
-            AssetDatabase.CreateFolder("Assets", "Prefabs");
-
         foreach (var path in paths)
         {
-            string folderName = System.IO.Path.GetFileName(path);
-            if (!AssetDatabase.IsValidFolder(path))
-                AssetDatabase.CreateFolder("Assets/Prefabs", folderName);
+            string[] folders = path.Split('/');
+            string currentPath = "";
+            foreach (var folder in folders)
+            {
+                if (string.IsNullOrEmpty(currentPath))
+                {
+                    currentPath = folder;
+                }
+                else
+                {
+                    string parent = currentPath;
+                    currentPath += "/" + folder;
+                    if (!AssetDatabase.IsValidFolder(currentPath))
+                    {
+                        AssetDatabase.CreateFolder(parent, folder);
+                    }
+                }
+            }
         }
     }
 
-    private static void CreateUnitPrefab(string folder)
+    private static void CreateUnitTemplate(string folder, string name, Color color)
     {
-        GameObject root = new GameObject("BaseUnitPrefab", typeof(NavMeshAgent), typeof(Unit), typeof(CapsuleCollider));
+        GameObject root = new GameObject(name, typeof(NavMeshAgent), typeof(Unit), typeof(CapsuleCollider));
         root.GetComponent<CapsuleCollider>().center = new Vector3(0, 1, 0);
         root.GetComponent<CapsuleCollider>().radius = 0.5f;
         root.GetComponent<CapsuleCollider>().height = 2f;
+        
+        Unit unitScript = root.GetComponent<Unit>();
 
-        GameObject visuals = new GameObject("Visuals", typeof(SpriteRenderer));
+        // Karşılık gelen UnitData'yı bul
+        UnitData data = null;
+        string[] guids = AssetDatabase.FindAssets(name + " t:UnitData");
+        if (guids.Length > 0)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            data = AssetDatabase.LoadAssetAtPath<UnitData>(path);
+            Debug.Log($"Found UnitData for {name} at: {path}");
+        }
+
+        if (data != null)
+        {
+            var serializedUnit = new SerializedObject(unitScript);
+            // Unit.cs içinde [SerializeField] private UnitData unitData; olduğunu varsayıyoruz
+            var dataProp = serializedUnit.FindProperty("unitData");
+            if (dataProp != null)
+            {
+                dataProp.objectReferenceValue = data;
+                serializedUnit.ApplyModifiedProperties();
+            }
+        }
+
+        GameObject visuals = new GameObject("Visuals", typeof(SpriteRenderer), typeof(Animator));
         visuals.transform.SetParent(root.transform);
+        visuals.GetComponent<SpriteRenderer>().color = color;
 
-        PrefabUtility.SaveAsPrefabAsset(root, folder + "/BaseUnitPrefab.prefab");
+        string prefabPath = folder + "/" + name + ".prefab";
+        GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+
+        // UnitData'yı güncelle
+        if (data != null)
+        {
+            var serializedData = new SerializedObject(data);
+            serializedData.FindProperty("prefab").objectReferenceValue = prefab;
+            serializedData.FindProperty("unitName").stringValue = name.Replace("_", " ");
+            serializedData.ApplyModifiedProperties();
+            EditorUtility.SetDirty(data);
+            Debug.Log($"Successfully updated UnitData for {name} with Prefab.");
+        }
+
         GameObject.DestroyImmediate(root);
     }
 
-    private static void CreateTowerPrefab(string folder)
+    private static void CreateTowerTemplate(string folder, string projectileFolder, string name, Color color)
     {
-        GameObject root = new GameObject("BaseTowerPrefab", typeof(Tower));
+        GameObject root = new GameObject(name, typeof(Tower));
+        Tower towerScript = root.GetComponent<Tower>();
         
+        // Karşılık gelen TowerData'yı bul (Daha esnek arama)
+        TowerData data = null;
+        string[] guids = AssetDatabase.FindAssets(name + " t:TowerData");
+        if (guids.Length > 0)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            data = AssetDatabase.LoadAssetAtPath<TowerData>(path);
+            Debug.Log($"Found TowerData for {name} at: {path}");
+        }
+        else
+        {
+            // Fallback: Eski usul klasik yol
+            string dataPath = "Assets/Resources/Data/Towers/" + name + ".asset";
+            data = AssetDatabase.LoadAssetAtPath<TowerData>(dataPath);
+            if (data != null) Debug.Log($"Found TowerData for {name} at fallback path: {dataPath}");
+            else Debug.LogWarning($"Could not find TowerData for {name}! Tried searching by name and at {dataPath}");
+        }
+        
+        if (data != null)
+        {
+            var serializedTower = new SerializedObject(towerScript);
+            serializedTower.FindProperty("towerData").objectReferenceValue = data;
+            serializedTower.ApplyModifiedProperties();
+        }
+
         GameObject visuals = new GameObject("Visuals", typeof(SpriteRenderer));
         visuals.transform.SetParent(root.transform);
+        visuals.GetComponent<SpriteRenderer>().color = color;
 
         GameObject firePoint = new GameObject("FirePoint");
         firePoint.transform.SetParent(root.transform);
         firePoint.transform.localPosition = new Vector3(0, 1, 0);
 
-        PrefabUtility.SaveAsPrefabAsset(root, folder + "/BaseTowerPrefab.prefab");
+        string prefabPath = folder + "/" + name + ".prefab";
+        GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+        
+        // TowerData'yı güncelle
+        if (data != null)
+        {
+            var serializedData = new SerializedObject(data);
+            serializedData.FindProperty("prefab").objectReferenceValue = prefab;
+            serializedData.FindProperty("towerName").stringValue = name.Replace("_", " ");
+            
+            // İlgili mermi prefabını bul ve bağla
+            string projName = GetProjectileNameForTower(name);
+            if (!string.IsNullOrEmpty(projName))
+            {
+                GameObject projPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(projectileFolder + "/" + projName + ".prefab");
+                if (projPrefab != null)
+                {
+                    serializedData.FindProperty("projectilePrefab").objectReferenceValue = projPrefab;
+                    Debug.Log($"Linked Projectile {projName} to TowerData {name}");
+                }
+                else Debug.LogWarning($"Could not find Projectile prefab {projName} at {projectileFolder}");
+            }
+
+            serializedData.ApplyModifiedProperties();
+            EditorUtility.SetDirty(data);
+            Debug.Log($"Successfully updated TowerData for {name} with Prefab and Projectile.");
+        }
+
         GameObject.DestroyImmediate(root);
     }
 
-    private static void CreateProjectilePrefab(string folder)
+    private static string GetProjectileNameForTower(string towerName)
     {
-        GameObject root = new GameObject("BaseProjectilePrefab", typeof(Projectile), typeof(SphereCollider), typeof(Rigidbody));
+        switch (towerName)
+        {
+            case "Archer_Tower": return "Archer_Arrow";
+            case "Ballista_Tower": return "Ballista_Bolt";
+            case "Bone_Catapult": return "Bone_Projectyle";
+            case "Cannon_Tower": return "Cannon_Ball";
+            case "Dark_Sentry": return "Dark_Pulse";
+            case "Mage_Tower": return "Mage_Bolt";
+            case "Poison_Spitter": return "Poison_Drip";
+            case "Solar_Prism": return "Solar_Beam";
+            case "Soul_Harvester": return "Soul_Orb";
+            case "Void_Obelisk": return "Void_Missile";
+            default: return "";
+        }
+    }
+
+    private static void CreateProjectileTemplate(string folder, string name, Color color)
+    {
+        GameObject root = new GameObject(name, typeof(Projectile), typeof(SphereCollider), typeof(Rigidbody));
         root.GetComponent<SphereCollider>().isTrigger = true;
         root.GetComponent<Rigidbody>().useGravity = false;
         root.GetComponent<Rigidbody>().isKinematic = true;
 
         GameObject visuals = new GameObject("Visuals", typeof(SpriteRenderer));
         visuals.transform.SetParent(root.transform);
+        visuals.GetComponent<SpriteRenderer>().color = color;
+        visuals.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
 
-        PrefabUtility.SaveAsPrefabAsset(root, folder + "/BaseProjectilePrefab.prefab");
+        PrefabUtility.SaveAsPrefabAsset(root, folder + "/" + name + ".prefab");
         GameObject.DestroyImmediate(root);
     }
 
@@ -230,10 +391,10 @@ public class EditorPrefabBuilder : Editor
         GameObject.DestroyImmediate(root);
     }
 
-    private static void CreateTowerSlotPrefab(string folder)
+    private static void CreateTowerSlotPrefab(string folder, string uiFolder)
     {
         // Önce UI prefabının güncel olduğundan emin olalım
-        CreateTowerSelectionPrefab(folder);
+        CreateTowerSelectionPrefab(uiFolder);
 
         GameObject root = new GameObject("BaseTowerSlotPrefab", typeof(TowerSlot), typeof(BoxCollider));
         root.GetComponent<BoxCollider>().size = new Vector3(2, 0.2f, 2);
@@ -247,8 +408,8 @@ public class EditorPrefabBuilder : Editor
         
         if (visuals.GetComponent<Collider>()) GameObject.DestroyImmediate(visuals.GetComponent<Collider>());
 
-        // UI Prefabını child olarak ekle
-        string uiPath = folder + "/BaseTowerSelectionPrefab.prefab";
+        // UI Prefabını child olarak ekle (Doğru klasörden)
+        string uiPath = uiFolder + "/BaseTowerSelectionPrefab.prefab";
         GameObject uiPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(uiPath);
         if (uiPrefab != null)
         {

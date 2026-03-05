@@ -18,8 +18,16 @@ namespace TowerDefence.Combat
 
         private void Awake()
         {
-            if (Instance == null) Instance = this;
-            else Destroy(gameObject);
+            if (Instance == null)
+            {
+                Instance = this;
+                transform.SetParent(null);
+                DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
 
         private void Update()

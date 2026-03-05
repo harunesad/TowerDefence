@@ -26,6 +26,7 @@ namespace TowerDefence.Core
             if (Instance == null)
             {
                 Instance = this;
+                transform.SetParent(null);
                 DontDestroyOnLoad(gameObject);
                 savePath = Path.Combine(Application.persistentDataPath, "meta_progression.json");
                 LoadGame();

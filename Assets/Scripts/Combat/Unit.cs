@@ -22,6 +22,7 @@ namespace TowerDefence.Combat
         
         private float currentHealth;
         private NavMeshAgent agent;
+        private Animator animator;
         private float nextAttackTime;
         private bool isDead;
         private LayerMask targetLayer;
@@ -36,6 +37,7 @@ namespace TowerDefence.Combat
         private void Awake()
         {
             agent = GetComponent<NavMeshAgent>();
+            animator = GetComponentInChildren<Animator>();
             if (unitData != null) Initialize(unitData);
         }
 
@@ -99,6 +101,12 @@ namespace TowerDefence.Combat
             {
                 // Hız Ayarı
                 agent.speed = moveSpeed;
+                
+                // Animasyon Ayarı
+                if (animator != null)
+                {
+                    animator.SetBool("IsMoving", agent.velocity.magnitude > 0.1f);
+                }
 
                 // 1. Birim hedefine doğru git
                 if (targetCombatant != null && !targetCombatant.IsDead)
@@ -248,6 +256,7 @@ namespace TowerDefence.Combat
         {
             if (targetCombatant != null && !targetCombatant.IsDead)
             {
+                if (animator != null) animator.SetTrigger("Attack");
                 targetCombatant.TakeDamage(attackDamage);
                 Debug.Log($"{gameObject.name} attacked {((MonoBehaviour)targetCombatant).name}!");
             }
@@ -284,6 +293,7 @@ namespace TowerDefence.Combat
         {
             isDead = true;
             agent.enabled = false;
+            if (animator != null) animator.SetTrigger("Die");
             Debug.Log($"{gameObject.name} died!");
 
             // Ölüm efekti

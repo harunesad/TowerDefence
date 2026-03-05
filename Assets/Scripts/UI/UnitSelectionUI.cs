@@ -68,11 +68,9 @@ namespace TowerDefence.UI
 
         private void OnUnitButtonClicked(UnitData unit)
         {
-            if (UnitPlacementManager.Instance != null && CurrencyManager.Instance.CanAfford(unit.side, unit.spawnCost))
+            if (UnitPlacementManager.Instance != null && CurrencyManager.Instance != null && CurrencyManager.Instance.CanAfford(unit.side, unit.spawnCost))
             {
                 UnitPlacementManager.Instance.StartDragging(unit);
-                // Not: Bırakma işlemi UnitPlacementManager içindeki Update'te 
-                // Input.GetMouseButtonUp(0) ile algılanacak.
             }
             else
             {

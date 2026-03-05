@@ -47,7 +47,7 @@ namespace TowerDefence.Combat
             fireRate = data.fireRate * speedMult;
             damage = data.damage * damageMult;
             targetLayer = data.targetLayer;
-            projectilePrefab = data.prefab;
+            projectilePrefab = data.projectilePrefab;
             
             if (firePoint == null) firePoint = transform.Find("FirePoint");
             if (firePoint == null) firePoint = transform;

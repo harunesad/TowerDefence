@@ -92,7 +92,12 @@ namespace TowerDefence.UI
             CampaignManager.Instance.SelectLevel(level);
             Debug.Log($"LevelSelectionUI: {level.levelName} selected.");
             
-            if (sideSelectionPanel != null)
+            MainMenuController mc = GetComponentInParent<MainMenuController>();
+            if (mc != null)
+            {
+                mc.ShowSideSelection();
+            }
+            else if (sideSelectionPanel != null)
             {
                 sideSelectionPanel.SetActive(true);
                 gameObject.SetActive(false);

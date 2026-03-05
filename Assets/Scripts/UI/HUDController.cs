@@ -30,20 +30,36 @@ namespace TowerDefence.UI
         private void Start()
         {
             // Event abonelikleri
-            CurrencyManager.Instance.OnCurrencyChanged += UpdateCurrencyUI;
-            PhaseManager.Instance.OnTimerUpdated += UpdateTimerUI;
-            PhaseManager.Instance.OnPhaseChanged += UpdatePhaseUI;
-            AbilityManager.Instance.OnAbilityCooldownChanged += UpdateAbilityUI;
-            GameManager.Instance.OnGameStateChanged += UpdateGameStateUI;
+            if (CurrencyManager.Instance != null)
+                CurrencyManager.Instance.OnCurrencyChanged += UpdateCurrencyUI;
+            
+            if (PhaseManager.Instance != null)
+            {
+                PhaseManager.Instance.OnTimerUpdated += UpdateTimerUI;
+                PhaseManager.Instance.OnPhaseChanged += UpdatePhaseUI;
+            }
+
+            if (AbilityManager.Instance != null)
+                AbilityManager.Instance.OnAbilityCooldownChanged += UpdateAbilityUI;
+
+            if (GameManager.Instance != null)
+                GameManager.Instance.OnGameStateChanged += UpdateGameStateUI;
+
             LivesManager.OnLivesChanged += UpdateLivesUI;
 
-            skipPrepButton.onClick.AddListener(OnSkipPrepClicked);
-            abilityButton.onClick.AddListener(OnAbilityClicked);
+            if (skipPrepButton != null) skipPrepButton.onClick.AddListener(OnSkipPrepClicked);
+            if (abilityButton != null) abilityButton.onClick.AddListener(OnAbilityClicked);
             
             // Başlangıç değerleri
-            Side playerSide = SideController.Instance.GetPlayerSide();
-            UpdateCurrencyUI(playerSide, CurrencyManager.Instance.GetCurrency(playerSide));
-            UpdatePhaseUI(PhaseManager.Instance.GetCurrentPhase());
+            if (SideController.Instance != null)
+            {
+                Side playerSide = SideController.Instance.GetPlayerSide();
+                if (CurrencyManager.Instance != null)
+                    UpdateCurrencyUI(playerSide, CurrencyManager.Instance.GetCurrency(playerSide));
+            }
+
+            if (PhaseManager.Instance != null)
+                UpdatePhaseUI(PhaseManager.Instance.GetCurrentPhase());
             
             if (LivesManager.Instance != null)
                 UpdateLivesUI(LivesManager.Instance.GetCurrentLives(), LivesManager.Instance.GetMaxLives());
