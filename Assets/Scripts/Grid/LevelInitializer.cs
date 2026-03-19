@@ -1,7 +1,9 @@
 using UnityEngine;
 using TowerDefence.Core;
 using TowerDefence.Data;
+using TowerDefence.Combat;
 using Unity.AI.Navigation;
+using UnityEngine.AI;
 
 namespace TowerDefence.Grid
 {
@@ -28,18 +30,24 @@ namespace TowerDefence.Grid
                 GameObject mapInstance = Instantiate(currentLevel.mapPrefab, Vector3.zero, Quaternion.identity);
                 Debug.Log($"LevelInitializer: Map '{currentLevel.levelName}' spawned.");
 
-                // Dinamik NavMesh Fırınlama (Bake)
-                // Unity.AI.Navigation paketi yüklü ise NavMeshSurface kullanılır
-                var navSurface = mapInstance.GetComponentInChildren<NavMeshSurface>();
-                if (navSurface != null)
+                // Haritadaki kuleleri tara ve oyuncunun seçtiği tarafa göre rakip karşılıklarına dönüştür
+                Side playerSide = SideController.Instance.GetPlayerSide();
+                Tower[] mapTowers = mapInstance.GetComponentsInChildren<Tower>();
+                
+                foreach (var tower in mapTowers)
                 {
-                    navSurface.BuildNavMesh();
-                    Debug.Log("LevelInitializer: NavMesh Baked successfully.");
+                    TowerData currentData = tower.GetTowerData();
+                    if (currentData != null && currentData.side == playerSide)
+                    {
+                        if (currentData.enemyCounterpart != null)
+                        {
+                            tower.Initialize(currentData.enemyCounterpart);
+                            Debug.Log($"LevelInitializer: Map tower '{currentData.towerName}' swapped to opponent counterpart '{currentData.enemyCounterpart.towerName}'.");
+                        }
+                    }
                 }
-                else
-                {
-                    Debug.LogWarning("LevelInitializer: NavMeshSurface not found on map prefab! Soldiers might not move.");
-                }
+
+                // NavMesh sistemi kaldırıldı, waypoint bazlı hareket sistemine geçildi.
             }
             else
             {

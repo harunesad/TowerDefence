@@ -19,14 +19,15 @@ namespace TowerDefence.Grid
         private void Start()
         {
             localUI = GetComponentInChildren<TowerSelectionUI>(true);
-            if (localUI != null) localUI.Hide();
+            if (localUI == null) Debug.LogWarning($"TowerSlot {gameObject.name}: localUI (TowerSelectionUI) not found in children!");
+            else localUI.Hide();
         }
 
-        private void OnMouseDown()
+        public void HandleClick()
         {
             if (isOccupied || localUI == null) return;
-
-            // Manager'a hangi slotun aktif olduğunu bildir
+            
+            // Başka bir slot menüsü açıksa onu kapat (opsiyonel ama iyi bir pratik)
             if (TowerPlacementManager.Instance != null)
                 TowerPlacementManager.Instance.StartPlacementAtSlot(this);
 

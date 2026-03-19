@@ -67,13 +67,16 @@ namespace TowerDefence.Core
         private void UnlockNextLevel()
         {
             int currentIndex = allLevels.IndexOf(currentSelectedLevel);
-            if (currentIndex >= 0 && currentIndex < allLevels.Count - 1)
+            int nextIndex = currentIndex + 1;
+            
+            if (nextIndex < allLevels.Count)
             {
-                LevelData nextLevel = allLevels[currentIndex + 1];
-                // LevelData'da bir 'isUnlocked' bool'u olduğunu varsayıyoruz veya 
-                // SaveManager üzerinden bir index tutabiliriz. 
-                // Şimdilik debug mesajı:
-                Debug.Log($"Next Level Unlocked: {nextLevel.levelName}");
+                // Eğer açılan yeni bölüm, kayıttaki en yüksek bölümden büyükse kaydı güncelle
+                if (nextIndex > MetaProgressionManager.Instance.GetHighestUnlockedLevel())
+                {
+                    MetaProgressionManager.Instance.UpdateHighestLevel(nextIndex);
+                    Debug.Log($"Next Level Unlocked and Saved: {allLevels[nextIndex].levelName}");
+                }
             }
         }
 
@@ -82,12 +85,10 @@ namespace TowerDefence.Core
             if (allLevels == null || allLevels.Count == 0) return true;
             
             int index = allLevels.IndexOf(level);
-            if (index == 0) return true; // İlk bölüm her zaman açık
+            if (index <= 0) return true; // İlk bölüm veya liste dışı (hata koruması) her zaman açık
             
-            // Gerçek projede SaveData'dan kontrol edilir. 
-            // Şimdilik basitlik için SaveManager'daki bir 'highestLevel' değerine bakabiliriz.
-            // Ama şimdilik sadece yazılım iskeletini kuruyoruz:
-            return true; // Şimdilik testi kolaylaştırmak için true dönüyoruz
+            // Kayıtlı en yüksek bölüm indeksinden küçük veya eşitse açıktır
+            return index <= MetaProgressionManager.Instance.GetHighestUnlockedLevel();
         }
 
         public LevelData GetCurrentLevel() => currentSelectedLevel;

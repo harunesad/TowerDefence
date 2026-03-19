@@ -10,6 +10,7 @@ namespace TowerDefence.Core
     {
         public int totalKarma;
         public List<string> unlockedSkillIDs = new List<string>();
+        public int highestUnlockedLevelIndex = 0;
     }
 
     public class MetaProgressionManager : MonoBehaviour
@@ -67,6 +68,17 @@ namespace TowerDefence.Core
         public bool IsSkillUnlocked(string skillID)
         {
             return saveData.unlockedSkillIDs.Contains(skillID);
+        }
+
+        public int GetHighestUnlockedLevel() => saveData.highestUnlockedLevelIndex;
+
+        public void UpdateHighestLevel(int index)
+        {
+            if (index > saveData.highestUnlockedLevelIndex)
+            {
+                saveData.highestUnlockedLevelIndex = index;
+                SaveGame();
+            }
         }
 
         public int GetTotalKarma() => saveData.totalKarma;

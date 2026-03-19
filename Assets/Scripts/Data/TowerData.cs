@@ -13,6 +13,8 @@ namespace TowerDefence.Data
         public GameObject prefab;
         public GameObject projectilePrefab;
         public Sprite icon;
+        public TowerData enemyCounterpart; // Karşı taraftaki karşılığı (Aydınlık <-> Karanlık)
+        public Color towerColor = Color.white;
 
         [Header("Economics")]
         public int cost;

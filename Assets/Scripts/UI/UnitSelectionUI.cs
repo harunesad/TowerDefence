@@ -43,8 +43,11 @@ namespace TowerDefence.UI
                 if (child != null) Destroy(child.gameObject);
             }
 
-            // Tüm birim verilerini Resources'tan otomatik yükle
-            allUnits = Resources.LoadAll<UnitData>("Data/Units");
+            // Birim verilerini UnitPlacementManager listesinden al (Resources.LoadAll yerine)
+            if (UnitPlacementManager.Instance != null && UnitPlacementManager.Instance.AllUnits != null)
+                allUnits = UnitPlacementManager.Instance.AllUnits.ToArray();
+            else
+                allUnits = new UnitData[0];
 
             Side playerSide = SideController.Instance.GetPlayerSide();
 
@@ -53,16 +56,9 @@ namespace TowerDefence.UI
                 if (unit.side != playerSide) continue;
 
                 GameObject buttonGO = Instantiate(unitButtonPrefab, container);
-                Button button = buttonGO.GetComponent<Button>();
-                
-                Image icon = buttonGO.transform.Find("Icon")?.GetComponent<Image>();
-                if (icon != null) icon.sprite = unit.icon;
-
-                // Maliyet metni varsa güncelle (Opsiyonel: prefabda Text eklenirse aktif olur)
-                TMPro.TextMeshProUGUI costText = buttonGO.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-                if (costText != null) costText.text = unit.spawnCost.ToString();
-
-                button.onClick.AddListener(() => OnUnitButtonClicked(unit));
+                UnitButton unitBtn = buttonGO.GetComponent<UnitButton>();
+                if (unitBtn == null) unitBtn = buttonGO.AddComponent<UnitButton>();
+                unitBtn.Setup(unit);
             }
         }
 

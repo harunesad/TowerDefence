@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.AI;
+using System.Collections;
 using System.Collections.Generic;
 using TowerDefence.Interfaces;
 using TowerDefence.Core;
@@ -7,21 +7,22 @@ using TowerDefence.Data;
 
 namespace TowerDefence.Combat
 {
-    [RequireComponent(typeof(NavMeshAgent))]
     public class Unit : MonoBehaviour, IDamageable
     {
         [Header("Data")]
         [SerializeField] private UnitData unitData;
 
+        [Header("Movement")]
+        [SerializeField] private float moveSpeed = 3f;
+        [SerializeField] private float rotationSpeed = 10f;
+
         private float maxHealth;
-        private float moveSpeed;
         private float attackDamage;
         private float attackRange;
         private float attackRate;
         private Side unitSide;
         
         private float currentHealth;
-        private NavMeshAgent agent;
         private Animator animator;
         private float nextAttackTime;
         private bool isDead;
@@ -36,14 +37,13 @@ namespace TowerDefence.Combat
 
         private void Awake()
         {
-            agent = GetComponent<NavMeshAgent>();
             animator = GetComponentInChildren<Animator>();
             if (unitData != null) Initialize(unitData);
         }
 
         public void Initialize(UnitData data)
         {
-            unitData = data;
+            this.unitData = data;
             unitSide = data.side;
 
             maxHealth = data.maxHealth;
@@ -53,12 +53,32 @@ namespace TowerDefence.Combat
             attackRate = data.attackRate;
 
             currentHealth = maxHealth;
-            if (agent == null) agent = GetComponent<NavMeshAgent>();
-            agent.speed = moveSpeed;
-
+            
             // Dinamik Katman ve Hedef Katmanı Atama (LightUnit: 6 (Hedef 7), DarkUnit: 7 (Hedef 6))
             gameObject.layer = (unitSide == Side.Light) ? 6 : 7;
             targetLayer = (unitSide == Side.Light) ? (1 << 7) : (1 << 6);
+
+            SetVisuals();
+        }
+
+        private void SetVisuals()
+        {
+            Color teamColor = (unitSide == Side.Light) ? Color.cyan : Color.red;
+            Renderer[] renderers = GetComponentsInChildren<Renderer>();
+            
+            // MaterialPropertyBlock kullanarak daha performanslı ve shader uyumlu renklendirme
+            MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
+            
+            foreach (var r in renderers)
+            {
+                r.GetPropertyBlock(propBlock);
+                // URP, Toon ve Standart shader özellikleri
+                propBlock.SetColor("_Color", teamColor);
+                propBlock.SetColor("_BaseColor", teamColor);
+                propBlock.SetColor("_MainColor", teamColor);
+                propBlock.SetColor("_TintColor", teamColor);
+                r.SetPropertyBlock(propBlock);
+            }
         }
 
         private Base targetBase;
@@ -71,64 +91,110 @@ namespace TowerDefence.Combat
         private void Update()
         {
             if (isDead) return;
+
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
             HandleStatusEffects();
             UpdateTargetConflict();
 
-            // Savaş Durumu
+            // Savaş Durumu Check
+            bool isFighting = false;
             if (targetCombatant != null && !targetCombatant.IsDead)
             {
                 float distance = Vector3.Distance(transform.position, ((MonoBehaviour)targetCombatant).transform.position);
-                
                 if (distance <= attackRange)
                 {
-                    agent.isStopped = true;
+                    isFighting = true;
+                    HandleRotation(((MonoBehaviour)targetCombatant).transform.position);
+                    
                     if (Time.time >= nextAttackTime)
                     {
                         Attack();
                         nextAttackTime = Time.time + 1f / attackRate;
                     }
-                    return; // Savaşırken hareket etme
                 }
             }
 
-            // Hareket Durumu
+            // Hareket Mantığı
             bool isStunned = activeEffects.Exists(e => e.type == StatusEffectType.Stun);
-            agent.isStopped = isStunned;
-
-            if (!isStunned)
+            
+            if (!isFighting && !isStunned)
             {
-                // Hız Ayarı
-                agent.speed = moveSpeed;
-                
-                // Animasyon Ayarı
-                if (animator != null)
-                {
-                    animator.SetBool("IsMoving", agent.velocity.magnitude > 0.1f);
-                }
+                Vector3 targetPos = Vector3.zero;
 
-                // 1. Birim hedefine doğru git
-                if (targetCombatant != null && !targetCombatant.IsDead)
+                // 1. Düşman Takibi (Eğer menzil dışındaysa ama hedefi varsa)
+                if (targetCombatant != null && !targetCombatant.IsDead && !(targetCombatant is Base))
                 {
-                    agent.SetDestination(((MonoBehaviour)targetCombatant).transform.position);
+                    targetPos = ((MonoBehaviour)targetCombatant).transform.position;
                 }
-                // 2. Üsse (Exit Point) doğru git
-                else if (targetBase != null)
-                {
-                    agent.SetDestination(targetBase.transform.position);
-                }
-                // 3. Waypoint takibi yap
+                // 2. Waypoint Takibi
                 else if (currentPath != null && currentWaypointIndex < currentPath.GetWaypoints().Count)
                 {
-                    Transform wp = currentPath.GetWaypoints()[currentWaypointIndex];
-                    agent.SetDestination(wp.position);
-                    if (Vector3.Distance(transform.position, wp.position) < 1.0f) currentWaypointIndex++;
+                    targetPos = currentPath.GetWaypoints()[currentWaypointIndex].position;
+                    // Y Eksenini yoksayarak mesafe ölçümü yap (Overshoot ve geri gitmeyi engeller)
+                    Vector3 flatPos = new Vector3(transform.position.x, 0, transform.position.z);
+                    Vector3 flatTarget = new Vector3(targetPos.x, 0, targetPos.z);
+                    
+                    if (Vector3.Distance(flatPos, flatTarget) < 0.1f)
+                    {
+                        currentWaypointIndex++;
+                        if (currentWaypointIndex >= currentPath.GetWaypoints().Count)
+                        {
+                            OnReachPathEnd();
+                            return;
+                        }
+                    }
+                }
+                // 3. Üs Hedefi
+                else if (targetBase != null)
+                {
+                    targetPos = targetBase.transform.position;
+                }
+
+                if (targetPos != Vector3.zero)
+                {
+                    MoveTowardsTarget(targetPos);
+                    HandleRotation(targetPos);
+                    if (animator != null) animator.SetBool("IsMoving", true);
                 }
                 else
                 {
-                    agent.isStopped = true;
+                    if (animator != null) animator.SetBool("IsMoving", false);
                 }
+            }
+            else
+            {
+                if (animator != null) animator.SetBool("IsMoving", false);
+            }
+        }
+
+        private void MoveTowardsTarget(Vector3 targetPos)
+        {
+            Vector3 targetWithMyY = new Vector3(targetPos.x, transform.position.y, targetPos.z);
+            // MoveTowards kullanımı, hedefi geçip geri dönme (titreme) sorununu tamamen engeller
+            transform.position = Vector3.MoveTowards(transform.position, targetWithMyY, moveSpeed * Time.deltaTime);
+        }
+
+        private void HandleRotation(Vector3 targetPos)
+        {
+            Vector3 direction = (targetPos - transform.position);
+            direction.y = 0; // Yerden yükselmeyi veya aşağı bakmayı engelle
+            
+            // Eğer sıfıra çok yakınsa dönmeye çalışma (LookRotation hatasını engeller)
+            if (direction.sqrMagnitude > 0.001f)
+            {
+                Quaternion lookRotation = Quaternion.LookRotation(direction.normalized);
+                transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, rotationSpeed * Time.deltaTime);
+            }
+        }
+
+        private void SnapRotationToTarget(Vector3 targetPos)
+        {
+            Vector3 direction = (targetPos - transform.position);
+            direction.y = 0;
+            if (direction.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(direction.normalized);
             }
         }
 
@@ -159,9 +225,8 @@ namespace TowerDefence.Combat
             }
             else
             {
-                // Yakında birim yoksa üssü (Exit Point) hedef al
-                if (targetBase == null) FindTargetBase();
-                targetCombatant = targetBase;
+                // Sadece üniteleri hedef al ki Waypointler çalışabilsin
+                targetCombatant = null;
             }
         }
 
@@ -172,6 +237,11 @@ namespace TowerDefence.Combat
         {
             currentPath = path;
             currentWaypointIndex = 0;
+            
+            if (currentPath != null && currentPath.GetWaypoints().Count > 0)
+            {
+                SnapRotationToTarget(currentPath.GetWaypoints()[0].position);
+            }
         }
 
         public void SetPathAtNearestWaypoint(PathWaypoints path, Vector3 currentPos)
@@ -195,6 +265,11 @@ namespace TowerDefence.Combat
 
             // En yakın noktaya ulaştı sayıp bir sonrakine yönlendiriyoruz
             currentWaypointIndex = Mathf.Min(nearestIdx + 1, wps.Count - 1);
+            
+            if (currentWaypointIndex < wps.Count)
+            {
+                SnapRotationToTarget(wps[currentWaypointIndex].position);
+            }
         }
 
         private void HandleStatusEffects()
@@ -242,14 +317,50 @@ namespace TowerDefence.Combat
         private void FindTargetBase()
         {
             Base[] bases = FindObjectsByType<Base>(FindObjectsSortMode.None);
+            
+            // Eğer yol atanmışsa, hedef olarak yolun son noktasını (Base kapısını) referans al
+            Vector3 referencePos = transform.position;
+            if (currentPath != null && currentPath.GetWaypoints().Count > 0)
+            {
+                var wps = currentPath.GetWaypoints();
+                referencePos = wps[wps.Count - 1].position;
+            }
+
+            float minDistance = float.MaxValue;
             foreach (Base b in bases)
             {
                 if (b.GetSide() != unitSide)
                 {
-                    targetBase = b;
-                    return;
+                    // Artık doğduğu yere göre değil, gideceği yolun sonuna en yakın Base'i seçecek
+                    float dist = Vector3.Distance(referencePos, b.transform.position);
+                    if (dist < minDistance)
+                    {
+                        minDistance = dist;
+                        targetBase = b;
+                    }
                 }
             }
+        }
+
+        private void OnReachPathEnd()
+        {
+            if (targetBase != null && !targetBase.IsDead)
+            {
+                // Üsse ulaştığında çarpma hasarı ver ve kendini yok et (Kamikaze)
+                targetBase.TakeDamage(attackDamage * 5f);
+                Debug.Log($"{gameObject.name} reached base and exploded!");
+                
+                // Kamikaze efekti
+                if (VFXManager.Instance != null)
+                {
+                    // Özel ölüm veya standart ölüm efekti
+                    VFXManager.Instance.SpawnVFX(VFXType.UnitDeath, transform.position, Quaternion.identity);
+                }
+            }
+            
+            isDead = true;
+            if (animator != null) animator.SetTrigger("Die");
+            Destroy(gameObject, 0.5f);
         }
 
         private void Attack()
@@ -283,6 +394,7 @@ namespace TowerDefence.Combat
             if (isDead) return;
 
             currentHealth -= amount;
+
             if (currentHealth <= 0)
             {
                 Die();
@@ -292,7 +404,6 @@ namespace TowerDefence.Combat
         private void Die()
         {
             isDead = true;
-            agent.enabled = false;
             if (animator != null) animator.SetTrigger("Die");
             Debug.Log($"{gameObject.name} died!");
 

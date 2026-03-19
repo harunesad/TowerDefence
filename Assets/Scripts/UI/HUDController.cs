@@ -110,6 +110,7 @@ namespace TowerDefence.UI
         {
             phaseText.text = phase == GamePhase.Preparation ? "HAZIRLIK" : "ÇATIŞMA";
             skipPrepButton.gameObject.SetActive(phase == GamePhase.Preparation);
+            skipPrepButton.interactable = (phase == GamePhase.Preparation);
         }
 
         private void UpdateGameStateUI(GameState state)

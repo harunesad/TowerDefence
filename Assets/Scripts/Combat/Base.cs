@@ -14,6 +14,16 @@ namespace TowerDefence.Combat
         public bool IsDead => LivesManager.Instance != null && LivesManager.Instance.GetCurrentLives() <= 0;
         public Side GetSide() => baseSide;
 
+        private void Start()
+        {
+            // Seviye başladığında sahnede bulunan üs oyuncunun tarafına geçer
+            if (SideController.Instance != null)
+            {
+                baseSide = SideController.Instance.GetPlayerSide();
+                Debug.Log($"Base initialized for side: {baseSide}");
+            }
+        }
+
         public void TakeDamage(float amount)
         {
             if (LivesManager.Instance == null) return;

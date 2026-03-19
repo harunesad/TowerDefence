@@ -16,11 +16,13 @@ namespace TowerDefence.Combat
         public static System.Collections.Generic.List<Spawner> AllSpawners { get; private set; } = new System.Collections.Generic.List<Spawner>();
 
         private int currentWaveIndex = -1;
+        public int CurrentWaveIndex => currentWaveIndex;
         private System.Collections.Generic.List<WaveUnitGroup> activeWaveGroups = new System.Collections.Generic.List<WaveUnitGroup>();
         private int currentGroupIndex = 0;
         private int unitsSpawnedInGroup = 0;
         private float nextSpawnTime;
         private bool isSpawning = false;
+        public bool IsSpawning => isSpawning;
 
         private void Awake()
         {
@@ -138,7 +140,10 @@ namespace TowerDefence.Combat
         {
             if (unitData == null || unitData.prefab == null) return;
 
-            GameObject unitGO = Instantiate(unitData.prefab, position, Quaternion.identity);
+            Vector3 spawnPos = position;
+            // NavMesh.SamplePosition blokları kaldırıldı.
+
+            GameObject unitGO = Instantiate(unitData.prefab, spawnPos, Quaternion.identity);
             Unit unit = unitGO.GetComponent<Unit>();
             if (unit != null)
             {
@@ -183,7 +188,10 @@ namespace TowerDefence.Combat
 
             if (finalUnitData.prefab == null) return;
 
-            GameObject unitGO = Instantiate(finalUnitData.prefab, spawnPoint.position, spawnPoint.rotation);
+            Vector3 spawnPos = spawnPoint.position;
+            // NavMesh.SamplePosition blokları kaldırıldı.
+
+            GameObject unitGO = Instantiate(finalUnitData.prefab, spawnPos, spawnPoint.rotation);
             Unit unit = unitGO.GetComponent<Unit>();
             if (unit != null)
             {

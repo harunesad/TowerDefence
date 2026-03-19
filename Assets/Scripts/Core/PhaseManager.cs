@@ -25,6 +25,7 @@ namespace TowerDefence.Core
         private float timer;
         private bool isTimerActive;
         private int currentWaveIndex = 0;
+        private float combatStartTime;
 
         public int GetCurrentWaveIndex() => currentWaveIndex;
 
@@ -80,6 +81,7 @@ namespace TowerDefence.Core
         {
             currentPhase = GamePhase.Combat;
             isTimerActive = false;
+            combatStartTime = Time.time;
             OnPhaseChanged?.Invoke(currentPhase);
             Debug.Log("Combat Phase Started!");
         }
@@ -88,6 +90,8 @@ namespace TowerDefence.Core
         {
             if (currentPhase == GamePhase.Preparation)
             {
+                timer = 0;
+                OnTimerUpdated?.Invoke(timer);
                 StartCombatPhase();
             }
         }
@@ -100,12 +104,30 @@ namespace TowerDefence.Core
             if (currentPhase != GamePhase.Combat) return;
             if (GameManager.Instance.GetCurrentState() != GameState.Playing) return;
 
+            // Senkronizasyon için çok kısa bir süre bekle (En az 1 saniye)
+            if (Time.time < combatStartTime + 1.0f) return;
+
+            // Spawner'lar hala üretim yapıyor mu VEYA henüz dalgaya başladılar mı kontrol et
+            bool anySpawnerBusy = false;
+            foreach (var spawner in Spawner.AllSpawners)
+            {
+                if (spawner == null) continue;
+
+                // Spawner henüz PhaseManager'ın dalga index'ine ulaşmamışsa (Henüz başlamamış demektir)
+                // VEYA şu an aktif olarak doğuruyorsa
+                if (spawner.CurrentWaveIndex < currentWaveIndex || spawner.IsSpawning)
+                {
+                    anySpawnerBusy = true;
+                    break;
+                }
+            }
+
+            if (anySpawnerBusy) return;
+
             // Sahnedeki düşman birimlerini kontrol et 
             Unit[] units = FindObjectsByType<Unit>(FindObjectsSortMode.None);
             
-            // Eğer sahada birim kalmadıysa dalga bitmiştir
-            // Not: Burada Spawner'ın o dalga için üretimini bitirdiğinden emin olunmalı.
-            // Spawner.IsSpawning kontrolü eklenebilir. Şimdilik basitçe birim yoksa biter.
+            // Eğer sahada birim kalmadıysa ve spawner'lar bittiyse dalga bitmiştir
             if (units.Length == 0)
             {
                 WaveCompleted();

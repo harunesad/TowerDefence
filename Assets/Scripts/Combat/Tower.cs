@@ -11,12 +11,18 @@ namespace TowerDefence.Combat
         [Header("Data")]
         [SerializeField] private TowerData towerData;
 
+        public TowerData GetTowerData() => towerData;
+
         private float range;
         private float fireRate;
         private GameObject projectilePrefab;
         private Transform firePoint;
         private Side towerSide;
         private LayerMask targetLayer;
+
+        [Header("Rotation")]
+        [SerializeField] private Transform partToRotate;
+        [SerializeField] private float rotationSpeed = 10f;
 
         private float fireCountdown = 0f;
         private Transform target;
@@ -50,7 +56,26 @@ namespace TowerDefence.Combat
             projectilePrefab = data.projectilePrefab;
             
             if (firePoint == null) firePoint = transform.Find("FirePoint");
+            
+            // 3D Kuleler için Weapon nesnesini bul ve ona kilitlen
+            if (partToRotate == null)
+            {
+                Transform visuals = transform.Find("Visuals");
+                if (visuals != null)
+                {
+                    partToRotate = visuals.Find("Weapon");
+                    // Eğer dursa firePoint'i de bunun altında ara
+                    if (partToRotate != null)
+                    {
+                        firePoint = partToRotate.Find("FirePoint");
+                    }
+                }
+            }
+
             if (firePoint == null) firePoint = transform;
+
+            // Dinamik Hedefleme (Light kuleler Dark layer'ı (7), Dark kuleler Light layer'ı (6) hedefler)
+            targetLayer = (towerSide == Side.Light) ? (1 << 7) : (1 << 6);
 
             // Dinamik Hedefleme (Light kuleler Dark layer'ı (7), Dark kuleler Light layer'ı (6) hedefler)
             targetLayer = (towerSide == Side.Light) ? (1 << 7) : (1 << 6);
@@ -69,15 +94,27 @@ namespace TowerDefence.Combat
 
             UpdateTarget();
 
-            if (target == null) return;
-
-            if (fireCountdown <= 0f)
+            if (target != null)
             {
-                Shoot();
-                fireCountdown = 1f / fireRate;
+                LockOnTarget();
+                if (fireCountdown <= 0f)
+                {
+                    Shoot();
+                    fireCountdown = 1f / fireRate;
+                }
             }
 
             fireCountdown -= Time.deltaTime;
+        }
+
+        private void LockOnTarget()
+        {
+            if (partToRotate == null) return;
+
+            Vector3 dir = target.position - transform.position;
+            Quaternion lookRotation = Quaternion.LookRotation(dir);
+            Vector3 rotation = Quaternion.Lerp(partToRotate.rotation, lookRotation, Time.deltaTime * rotationSpeed).eulerAngles;
+            partToRotate.rotation = Quaternion.Euler(0f, rotation.y, 0f); // Sadece Y ekseninde döner
         }
 
         private void UpdateTarget()
