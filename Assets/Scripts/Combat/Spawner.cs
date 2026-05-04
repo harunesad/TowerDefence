@@ -9,9 +9,9 @@ namespace TowerDefence.Combat
         [Header("References")]
         [SerializeField] private Transform spawnPoint;
         [Header("Settings")]
-        [SerializeField] private int spawnerIndex = 0;
-        [SerializeField] private PathWaypoints assignedPath;
-        [SerializeField] private bool isPlayerSpawner = false;
+        public int spawnerIndex = 0;
+        public System.Collections.Generic.List<PathWaypoints> assignedPaths = new System.Collections.Generic.List<PathWaypoints>();
+        public bool isPlayerSpawner = false;
 
         public static System.Collections.Generic.List<Spawner> AllSpawners { get; private set; } = new System.Collections.Generic.List<Spawner>();
 
@@ -136,19 +136,25 @@ namespace TowerDefence.Combat
             }
         }
 
-        public void ManualSpawnAtPosition(UnitData unitData, Vector3 position, PathWaypoints path)
+        public void ManualSpawnAtPosition(UnitData unitData, Vector3 position, PathWaypoints path, int targetWpIdx = -1)
         {
             if (unitData == null || unitData.prefab == null) return;
 
             Vector3 spawnPos = position;
-            // NavMesh.SamplePosition blokları kaldırıldı.
 
             GameObject unitGO = Instantiate(unitData.prefab, spawnPos, Quaternion.identity);
             Unit unit = unitGO.GetComponent<Unit>();
             if (unit != null)
             {
                 unit.Initialize(unitData);
-                unit.SetPathAtNearestWaypoint(path, position);
+                if (targetWpIdx >= 0)
+                {
+                    unit.SetPathWithExactTarget(path, targetWpIdx);
+                }
+                else
+                {
+                    unit.SetPathAtNearestWaypoint(path, position);
+                }
             }
 
             if (VFXManager.Instance != null)
@@ -196,7 +202,13 @@ namespace TowerDefence.Combat
             if (unit != null)
             {
                 unit.Initialize(finalUnitData);
-                unit.SetPath(assignedPath);
+                
+                // Atanan yollardan rastgele birini seç
+                if (assignedPaths != null && assignedPaths.Count > 0)
+                {
+                    int randomIndex = Random.Range(0, assignedPaths.Count);
+                    unit.SetPath(assignedPaths[randomIndex]);
+                }
             }
 
             if (VFXManager.Instance != null)

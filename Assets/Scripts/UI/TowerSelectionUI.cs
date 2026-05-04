@@ -12,10 +12,9 @@ namespace TowerDefence.UI
     public class TowerSelectionUI : MonoBehaviour
     {
         [SerializeField] private GameObject towerButtonPrefab;
-        [SerializeField] private Transform rowUpper; // Üst satır (3 kule için)
-        [SerializeField] private Transform rowLower; // Alt satır (2 kule için)
+        [SerializeField] private Transform rowUpper; // Üst satır (3 buton için)
+        [SerializeField] private Transform rowLower; // Alt satır (2 buton için)
 
-        private TowerData[] allTowers;
         private TowerSlot currentActiveSlot;
 
         private void Awake()
@@ -23,9 +22,33 @@ namespace TowerDefence.UI
             gameObject.SetActive(false); // Başlangıçta gizle
         }
 
-        private void Start()
+        private void OnEnable()
         {
-            InitializeUI();
+            // Taraf veya altın değiştiğinde menüyü güncelle
+            if (SideController.Instance != null)
+                SideController.Instance.OnSideChanged += HandleSideChanged;
+            
+            if (CurrencyManager.Instance != null)
+                CurrencyManager.Instance.OnCurrencyChanged += HandleCurrencyChanged;
+        }
+
+        private void OnDisable()
+        {
+            if (SideController.Instance != null)
+                SideController.Instance.OnSideChanged -= HandleSideChanged;
+
+            if (CurrencyManager.Instance != null)
+                CurrencyManager.Instance.OnCurrencyChanged -= HandleCurrencyChanged;
+        }
+
+        private void HandleCurrencyChanged(Side side, int amount)
+        {
+            if (gameObject.activeSelf) InitializeUI();
+        }
+
+        private void HandleSideChanged(Side side)
+        {
+            if (gameObject.activeSelf) InitializeUI();
         }
 
         private void InitializeUI()
@@ -34,42 +57,78 @@ namespace TowerDefence.UI
             if (rowUpper != null) foreach (Transform child in rowUpper) Destroy(child.gameObject);
             if (rowLower != null) foreach (Transform child in rowLower) Destroy(child.gameObject);
 
-            // Kule verilerini al
-            if (TowerPlacementManager.Instance != null && TowerPlacementManager.Instance.AllTowers != null)
-                allTowers = TowerPlacementManager.Instance.AllTowers.ToArray();
-            else
-                allTowers = new TowerData[0];
-
             Side playerSide = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
-            Debug.Log($"TowerSelectionUI: Found {allTowers.Length} total towers. PlayerSide: {playerSide}");
+            
+            // Managers check
+            List<TowerData> allTowers = TowerPlacementManager.Instance != null ? TowerPlacementManager.Instance.AllTowers : new List<TowerData>();
+
+            // FALLBACK: Eğer manager boşsa her şeyi bul
+            if (allTowers == null || allTowers.Count == 0)
+            {
+                allTowers = new List<TowerData>(Resources.FindObjectsOfTypeAll<TowerData>());
+                Debug.LogWarning($"[CORE-UI] Manager empty. Local search found {allTowers.Count} towers.");
+            }
+
+            Debug.Log($"[CORE-UI] Populating TOWERS ONLY for side: {playerSide}. Pool size: {allTowers.Count}");
 
             int buttonsCreated = 0;
+            HashSet<string> addedNames = new HashSet<string>();
+
+            // SADECE KULELERİ GÖSTER
             foreach (TowerData tower in allTowers)
             {
-                if (tower.side != playerSide) continue;
+                if (tower == null) continue;
+                TowerData chosen = null;
 
-                // Hedef satırı belirle (İlk 3 kule üstte, sonrakiler altta)
-                Transform targetRow = (buttonsCreated < 3) ? rowUpper : rowLower;
-                if (targetRow == null) continue;
+                if (tower.side == playerSide) chosen = tower;
+                else if (tower.enemyCounterpart != null && tower.enemyCounterpart.side == playerSide) chosen = tower.enemyCounterpart;
 
-                GameObject buttonGO = Instantiate(towerButtonPrefab, targetRow);
-                Button button = buttonGO.GetComponent<Button>();
-                
-                Image icon = buttonGO.transform.Find("Icon")?.GetComponent<Image>();
-                if (icon != null) icon.sprite = tower.icon;
+                if (chosen != null && chosen.isBaseTower && !addedNames.Contains(chosen.towerName))
+                {
+                    Transform targetRow = (buttonsCreated < 3) ? rowUpper : rowLower;
+                    CreateSelectionButton(chosen.icon, chosen.cost, () => OnTowerButtonClicked(chosen), targetRow);
+                    
+                    addedNames.Add(chosen.towerName);
+                    buttonsCreated++;
+                    if (buttonsCreated >= 5) break; 
+                }
+            }
 
-                // Maliyet yazısını güncelle
-                TextMeshProUGUI costText = buttonGO.transform.Find("Cost")?.GetComponent<TextMeshProUGUI>();
-                if (costText != null) costText.text = tower.cost.ToString();
-
-                button.onClick.AddListener(() => OnTowerButtonClicked(tower));
-                buttonsCreated++;
+            if (buttonsCreated == 0)
+            {
+                Debug.LogWarning($"[CORE-UI] No TOWERS found for side {playerSide}.");
             }
         }
 
+        private void CreateSelectionButton(Sprite icon, int cost, UnityEngine.Events.UnityAction onClick, Transform parent)
+        {
+            if (parent == null || towerButtonPrefab == null) return;
+
+            GameObject buttonGO = Instantiate(towerButtonPrefab, parent);
+            Button button = buttonGO.GetComponent<Button>();
+            
+            Image iconImg = buttonGO.transform.Find("Icon")?.GetComponent<Image>();
+            if (iconImg != null) iconImg.sprite = icon;
+
+            TextMeshProUGUI costText = buttonGO.transform.Find("Cost")?.GetComponent<TextMeshProUGUI>();
+            if (costText != null) costText.text = cost.ToString();
+
+            button.onClick.AddListener(onClick);
+
+            // Dinamik altın kontrolü
+            Side side = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
+            button.interactable = CurrencyManager.Instance.CanAfford(side, cost);
+        }
+
+        private static float lastShowTime = -1f;
+
         public void ShowForSlot(TowerSlot slot)
         {
-            // TOGGLE Mantığı: Eğer zaten bu slot için açıksa, Kapat.
+            if (Time.time - lastShowTime < 0.2f) return;
+            lastShowTime = Time.time;
+
+            InitializeUI();
+
             if (gameObject.activeSelf && currentActiveSlot == slot)
             {
                 Hide();
@@ -79,16 +138,15 @@ namespace TowerDefence.UI
             currentActiveSlot = slot;
             gameObject.SetActive(true);
 
-            // Direkt dünya konumuna taşı (Yuvanın biraz üzerine)
-            transform.position = slot.transform.position + new Vector3(0, 2.5f, 0);
+            // Standart Ölçek
+            transform.localScale = new Vector3(0.045f, 0.045f, 0.045f);
+            transform.position = slot.transform.position + new Vector3(0, 3.5f, 0);
         }
 
         private void Update()
         {
-            // Menü açıksa her zaman kameraya bakmalı (Billboarding)
             if (gameObject.activeSelf && Camera.main != null)
             {
-                // Tüm panellerin kameraya tam paralel ve aynı açıda durması için (Daha temiz görünüm)
                 transform.rotation = Camera.main.transform.rotation;
             }
         }
@@ -96,11 +154,27 @@ namespace TowerDefence.UI
         public void Hide()
         {
             gameObject.SetActive(false);
+            currentActiveSlot = null;
         }
 
         private void OnTowerButtonClicked(TowerData tower)
         {
-            TowerPlacementManager.Instance.SelectTower(tower);
+            if (TowerPlacementManager.Instance != null && currentActiveSlot != null)
+            {
+                TowerPlacementManager.Instance.StartPlacementAtSlot(currentActiveSlot);
+                TowerPlacementManager.Instance.SelectTower(tower);
+                Hide();
+            }
+        }
+
+        private void OnUnitButtonClicked(UnitData unit)
+        {
+            // Bu metod artık seçim panelinde (popup) kullanılmıyor, üniteler alt barda.
+            if (CurrencyManager.Instance != null && CurrencyManager.Instance.TrySpendCurrency(unit.side, unit.spawnCost))
+            {
+                Spawner.SpawnPlayerUnits(unit);
+                Hide();
+            }
         }
     }
 }

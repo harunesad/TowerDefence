@@ -19,13 +19,20 @@ namespace TowerDefence.UI
         [SerializeField] private Button skipPrepButton;
         [SerializeField] private Button abilityButton;
         [SerializeField] private Image abilityOverlay;
+
+        [Header("Speed Control")]
+        [SerializeField] private Button speedX1Button;
+        [SerializeField] private Button speedX2Button;
+        [SerializeField] private Button speedX3Button;
+
+        private readonly Color speedActiveColor   = new Color(1f,   0.75f, 0.1f); // Sarı - aktif
+        private readonly Color speedInactiveColor = new Color(0.2f, 0.2f,  0.2f); // Koyu - pasif
         
         [Header("Selection UIs")]
         [SerializeField] private UnitSelectionUI unitSelectionUI;
 
         [Header("Game Over Panels")]
-        [SerializeField] private GameObject victoryPanel;
-        [SerializeField] private GameObject defeatPanel;
+        [SerializeField] private LevelResultUI levelResultUI;
 
         private void Start()
         {
@@ -48,7 +55,19 @@ namespace TowerDefence.UI
             LivesManager.OnLivesChanged += UpdateLivesUI;
 
             if (skipPrepButton != null) skipPrepButton.onClick.AddListener(OnSkipPrepClicked);
-            if (abilityButton != null) abilityButton.onClick.AddListener(OnAbilityClicked);
+            if (abilityButton  != null) abilityButton.onClick.AddListener(OnAbilityClicked);
+
+            // Hız butonlarını bağla
+            if (speedX1Button != null) speedX1Button.onClick.AddListener(() => OnSpeedButtonClicked(0));
+            if (speedX2Button != null) speedX2Button.onClick.AddListener(() => OnSpeedButtonClicked(1));
+            if (speedX3Button != null) speedX3Button.onClick.AddListener(() => OnSpeedButtonClicked(2));
+
+            // Hız değişikliği eventine abone ol
+            if (GameSpeedManager.Instance != null)
+            {
+                GameSpeedManager.Instance.OnSpeedChanged += UpdateSpeedButtonHighlights;
+                UpdateSpeedButtonHighlights(GameSpeedManager.Instance.GetCurrentSpeedIndex());
+            }
             
             // Başlangıç değerleri
             if (SideController.Instance != null)
@@ -83,13 +102,16 @@ namespace TowerDefence.UI
                 GameManager.Instance.OnGameStateChanged -= UpdateGameStateUI;
 
             LivesManager.OnLivesChanged -= UpdateLivesUI;
+
+            if (GameSpeedManager.Instance != null)
+                GameSpeedManager.Instance.OnSpeedChanged -= UpdateSpeedButtonHighlights;
         }
 
         private void UpdateLivesUI(int current, int max)
         {
             if (livesText != null)
             {
-                livesText.text = $"Can: {current}/{max}";
+                livesText.text = $"Lives: {current}/{max}";
             }
         }
 
@@ -97,26 +119,39 @@ namespace TowerDefence.UI
         {
             if (side != SideController.Instance.GetPlayerSide()) return;
 
-            string label = side == Side.Light ? "Altın" : "Ruh";
+            string label = side == Side.Light ? "Gold" : "Soul";
             currencyText.text = $"{label}: {amount}";
         }
 
         private void UpdateTimerUI(float time)
         {
-            timerText.text = $"Süre: {Mathf.CeilToInt(time)}s";
+            timerText.text = $"Time: {Mathf.CeilToInt(time)}s";
         }
 
         private void UpdatePhaseUI(GamePhase phase)
         {
-            phaseText.text = phase == GamePhase.Preparation ? "HAZIRLIK" : "ÇATIŞMA";
-            skipPrepButton.gameObject.SetActive(phase == GamePhase.Preparation);
-            skipPrepButton.interactable = (phase == GamePhase.Preparation);
+            if (phaseText != null)
+                phaseText.text = phase == GamePhase.Preparation ? "PREPARATION" : "COMBAT";
+            
+            if (skipPrepButton != null)
+            {
+                skipPrepButton.gameObject.SetActive(phase == GamePhase.Preparation);
+                skipPrepButton.interactable = (phase == GamePhase.Preparation);
+            }
         }
 
         private void UpdateGameStateUI(GameState state)
         {
-            if (state == GameState.Victory) victoryPanel.SetActive(true);
-            if (state == GameState.Defeat) defeatPanel.SetActive(true);
+            if (levelResultUI == null) return;
+
+            if (state == GameState.Victory)
+            {
+                levelResultUI.Show(true, LivesManager.Instance.GetCurrentLives(), LivesManager.Instance.GetMaxLives());
+            }
+            else if (state == GameState.Defeat)
+            {
+                levelResultUI.Show(false, 0, LivesManager.Instance.GetMaxLives());
+            }
         }
 
         private void UpdateAbilityUI(float current, float max)
@@ -136,6 +171,25 @@ namespace TowerDefence.UI
         private void OnAbilityClicked()
         {
             AbilityManager.Instance.UseAbility();
+        }
+
+        private void OnSpeedButtonClicked(int speedIndex)
+        {
+            if (GameSpeedManager.Instance != null)
+                GameSpeedManager.Instance.SetSpeed(speedIndex);
+        }
+
+        private void UpdateSpeedButtonHighlights(int activeIndex)
+        {
+            SetButtonHighlight(speedX1Button, activeIndex == 0);
+            SetButtonHighlight(speedX2Button, activeIndex == 1);
+            SetButtonHighlight(speedX3Button, activeIndex == 2);
+        }
+
+        private void SetButtonHighlight(Button btn, bool active)
+        {
+            if (btn == null) return;
+            btn.GetComponent<Image>().color = active ? speedActiveColor : speedInactiveColor;
         }
 
         public void RestartLevel()

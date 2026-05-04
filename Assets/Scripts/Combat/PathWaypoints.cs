@@ -13,16 +13,22 @@ namespace TowerDefence.Combat
         {
             if (waypoints == null || waypoints.Count < 2) return;
 
-            Gizmos.color = Color.cyan;
+            Gizmos.color = Color.yellow;
             for (int i = 0; i < waypoints.Count - 1; i++)
             {
                 if (waypoints[i] != null && waypoints[i+1] != null)
                 {
                     Gizmos.DrawLine(waypoints[i].position, waypoints[i+1].position);
-                    Gizmos.DrawSphere(waypoints[i].position, 0.3f);
+                    Gizmos.color = Color.cyan;
+                    Gizmos.DrawSphere(waypoints[i].position, 0.4f);
+                    Gizmos.color = Color.yellow;
                 }
             }
-            Gizmos.DrawSphere(waypoints[waypoints.Count - 1].position, 0.3f);
+            if (waypoints.Count > 0 && waypoints[waypoints.Count - 1] != null)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawSphere(waypoints[waypoints.Count - 1].position, 0.5f);
+            }
         }
     }
 }

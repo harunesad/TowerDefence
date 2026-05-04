@@ -14,6 +14,11 @@ namespace TowerDefence.UI
         
         private UnitData unitData;
 
+        private void OnEnable()
+        {
+            // Filtreleme artık UnitSelectionUI tarafından yapıldığı için burası serbest bırakıldı.
+        }
+
         public void Setup(UnitData data)
         {
             unitData = data;
@@ -28,15 +33,8 @@ namespace TowerDefence.UI
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            // Eğer sürükleme yapılmadıysa ve sadece tıklandıysa, varsayılan spawner noktasında doğur
-            if (!eventData.dragging)
-            {
-                if (CurrencyManager.Instance != null && CurrencyManager.Instance.TrySpendCurrency(unitData.side, unitData.spawnCost))
-                {
-                    Spawner.SpawnPlayerUnits(unitData);
-                    Debug.Log($"Click spawn: {unitData.unitName} at default spawner.");
-                }
-            }
+            // Tıklayarak (Base noktasında) spawn olmayı kullanıcının isteği üzerine iptal ettik.
+            // Sadece sürükle-bırak (Drag & Drop) ile spawn edilecek.
         }
 
         public void OnBeginDrag(PointerEventData eventData)

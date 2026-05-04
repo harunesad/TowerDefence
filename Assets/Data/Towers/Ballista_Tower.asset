@@ -15,15 +15,16 @@ MonoBehaviour:
   towerName: Ballista Tower
   side: 0
   prefab: {fileID: 6058965456197533061, guid: f3480dd927d22404185363e00d846a4a, type: 3}
-  projectilePrefab: {fileID: 2136969303207047483, guid: 491bc4bfc3b21614bbe203c20840f773, type: 3}
+  projectilePrefab: {fileID: 7988017465963706159, guid: 4656ebb881d84934d93d4ed181a063aa, type: 3}
   icon: {fileID: 1445732715, guid: a8e05066b0c34834a82e6644118dd841, type: 3}
-  enemyCounterpart: {fileID: 11400000, guid: e98a13074653dc54386bfede1cdb9005, type: 2}
+  enemyCounterpart: {fileID: 11400000, guid: d0ffe695e12660648ac59150d9f01ddd, type: 2}
   towerColor: {r: 1, g: 1, b: 1, a: 1}
-  cost: 450
-  upgradeCost: 450
-  range: 12
+  cost: 350
+  upgradeCost: 350
+  range: 17
   fireRate: 0.3
   damage: 150
+  health: 900
   explosionRadius: 0
   targetLayer:
     serializedVersion: 2
@@ -31,4 +32,12 @@ MonoBehaviour:
   effectType: 0
   effectDuration: 0
   effectPower: 0
+  specializations:
+  - {fileID: 11400000, guid: b5d0bc18b16ecc44e9622ab6b4b98973, type: 2}
+  - {fileID: 11400000, guid: 71221f5f7b39c604794bfb7dd886f35a, type: 2}
   shootSFX: {fileID: 0}
+  isBaseTower: 1
+  isAuraTower: 0
+  auraRadius: 5
+  auraDamageBonus: 0.25
+  auraFireRateBonus: 0.15

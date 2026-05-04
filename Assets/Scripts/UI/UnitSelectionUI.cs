@@ -12,18 +12,47 @@ namespace TowerDefence.UI
         [SerializeField] private GameObject unitButtonPrefab;
         [SerializeField] private Transform container;
 
-        private UnitData[] allUnits;
+        [SerializeField] private UnitData[] allUnits;
+        private Side lastSide;
+
+        private void Update()
+        {
+            if (SideController.Instance != null && SideController.Instance.GetPlayerSide() != lastSide)
+            {
+                Debug.Log("[UNIT-FORCE-REFRESH] Side change detected in Update! " + lastSide + " -> " + SideController.Instance.GetPlayerSide());
+                InitializeUI();
+            }
+        }
 
         private void OnEnable()
         {
             if (SideController.Instance != null)
                 SideController.Instance.OnSideChanged += HandleSideChanged;
             
+            StopAllCoroutines();
+            StartCoroutine(DeferredInit());
+        }
+
+        private System.Collections.IEnumerator DeferredInit()
+        {
+            // Bekle ki SideController vs iyice yerleşsin
+            yield return new WaitForSeconds(0.1f);
             InitializeUI();
+            
+            // Eğer hala (yanlışlıkla) aydınlık gelmişse veya boşsa birkaç kez daha dene
+            for (int i = 0; i < 3; i++)
+            {
+                if (lastSide == Side.Light && SideController.Instance != null && SideController.Instance.GetPlayerSide() != Side.Light)
+                {
+                    InitializeUI();
+                }
+                yield return new WaitForSeconds(0.5f);
+            }
         }
 
         private void OnDisable()
         {
+            StopAllCoroutines();
             if (SideController.Instance != null)
                 SideController.Instance.OnSideChanged -= HandleSideChanged;
         }
@@ -37,28 +66,56 @@ namespace TowerDefence.UI
         {
             if (SideController.Instance == null) return;
             
+            lastSide = SideController.Instance.GetPlayerSide();
+
             // Konteynerdaki eski butonları temizle
-            foreach (Transform child in container)
+            if (container != null)
             {
-                if (child != null) Destroy(child.gameObject);
+                foreach (Transform child in container)
+                {
+                    if (child != null) Object.Destroy(child.gameObject);
+                }
             }
 
-            // Birim verilerini UnitPlacementManager listesinden al (Resources.LoadAll yerine)
-            if (UnitPlacementManager.Instance != null && UnitPlacementManager.Instance.AllUnits != null)
-                allUnits = UnitPlacementManager.Instance.AllUnits.ToArray();
-            else
-                allUnits = new UnitData[0];
-
-            Side playerSide = SideController.Instance.GetPlayerSide();
-
-            foreach (UnitData unit in allUnits)
+            // Birim verilerini al (Agresif bulma fallback ile)
+            List<UnitData> unitsPool = new List<UnitData>();
+            if (UnitPlacementManager.Instance != null && UnitPlacementManager.Instance.AllUnits != null && UnitPlacementManager.Instance.AllUnits.Count > 0)
             {
-                if (unit.side != playerSide) continue;
+                unitsPool = UnitPlacementManager.Instance.AllUnits;
+            }
+            else
+            {
+                unitsPool = new List<UnitData>(Resources.FindObjectsOfTypeAll<UnitData>());
+            }
 
-                GameObject buttonGO = Instantiate(unitButtonPrefab, container);
-                UnitButton unitBtn = buttonGO.GetComponent<UnitButton>();
-                if (unitBtn == null) unitBtn = buttonGO.AddComponent<UnitButton>();
-                unitBtn.Setup(unit);
+            Side playerSide = lastSide;
+            Debug.Log($"[CORE-UNIT] Refreshing bottom bar. Side: {playerSide}. Units: {unitsPool.Count}");
+
+            HashSet<string> addedNames = new HashSet<string>();
+            foreach (UnitData unit in unitsPool)
+            {
+                if (unit == null) continue;
+                UnitData finalUnit = null;
+
+                if (unit.side == playerSide) finalUnit = unit;
+                else if (unit.enemyCounterpart != null && unit.enemyCounterpart.side == playerSide) finalUnit = unit.enemyCounterpart;
+
+                if (finalUnit != null && !addedNames.Contains(finalUnit.unitName))
+                {
+                    if (unitButtonPrefab != null && container != null)
+                    {
+                        GameObject buttonGO = Instantiate(unitButtonPrefab, container);
+                        UnitButton unitBtn = buttonGO.GetComponent<UnitButton>();
+                        if (unitBtn == null) unitBtn = buttonGO.AddComponent<UnitButton>();
+                        unitBtn.Setup(finalUnit);
+                        addedNames.Add(finalUnit.unitName);
+                    }
+                }
+            }
+
+            if (addedNames.Count == 0)
+            {
+                Debug.LogWarning("[CORE-UNIT] No units found for side: " + playerSide);
             }
         }
 

@@ -90,6 +90,25 @@ namespace TowerDefence.Core
         {
             if (currentPhase == GamePhase.Preparation)
             {
+                // Erken Çağırma Bonusu (Early Call Bonus)
+                if (timer > 0)
+                {
+                    int bonusGold = Mathf.CeilToInt(timer * 2f); // Saniye başına 2 Altın
+                    int bonusKarma = Mathf.CeilToInt(timer * 0.5f); // 2 Saniyede 1 Karma
+
+                    if (CurrencyManager.Instance != null && SideController.Instance != null)
+                    {
+                        CurrencyManager.Instance.AddCurrency(SideController.Instance.GetPlayerSide(), bonusGold);
+                        Debug.Log($"<color=yellow>[Early Call Bonus]</color> +{bonusGold} Gold awarded for calling wave {timer:F1}s early!");
+                    }
+                    
+                    if (MetaProgressionManager.Instance != null && bonusKarma > 0)
+                    {
+                        MetaProgressionManager.Instance.AddKarma(bonusKarma);
+                        Debug.Log($"<color=magenta>[Early Call Bonus]</color> +{bonusKarma} Karma awarded!");
+                    }
+                }
+
                 timer = 0;
                 OnTimerUpdated?.Invoke(timer);
                 StartCombatPhase();
@@ -104,17 +123,16 @@ namespace TowerDefence.Core
             if (currentPhase != GamePhase.Combat) return;
             if (GameManager.Instance.GetCurrentState() != GameState.Playing) return;
 
-            // Senkronizasyon için çok kısa bir süre bekle (En az 1 saniye)
-            if (Time.time < combatStartTime + 1.0f) return;
+            // Senkronizasyon için çok kısa bir süre bekle (En az 1.5 saniye)
+            if (Time.time < combatStartTime + 1.5f) return;
 
             // Spawner'lar hala üretim yapıyor mu VEYA henüz dalgaya başladılar mı kontrol et
             bool anySpawnerBusy = false;
             foreach (var spawner in Spawner.AllSpawners)
             {
-                if (spawner == null) continue;
+                if (spawner == null || spawner.isPlayerSpawner) continue;
 
-                // Spawner henüz PhaseManager'ın dalga index'ine ulaşmamışsa (Henüz başlamamış demektir)
-                // VEYA şu an aktif olarak doğuruyorsa
+                // Spawner henüz PhaseManager'ın dalga index'ine ulaşmamışsa VEYA şu an aktif olarak doğuruyorsa
                 if (spawner.CurrentWaveIndex < currentWaveIndex || spawner.IsSpawning)
                 {
                     anySpawnerBusy = true;
@@ -124,11 +142,21 @@ namespace TowerDefence.Core
 
             if (anySpawnerBusy) return;
 
-            // Sahnedeki düşman birimlerini kontrol et 
-            Unit[] units = FindObjectsByType<Unit>(FindObjectsSortMode.None);
+            // Sadece DÜŞMAN birimlerini kontrol et (Oyuncunun kendi askerleri dalgayı bloklamasın)
+            Unit[] allUnits = FindObjectsByType<Unit>(FindObjectsSortMode.None);
+            Side playerSide = SideController.Instance.GetPlayerSide();
+            int enemyCount = 0;
+
+            foreach (var unit in allUnits)
+            {
+                if (unit != null && !unit.IsDead && unit.GetSide() != playerSide)
+                {
+                    enemyCount++;
+                }
+            }
             
-            // Eğer sahada birim kalmadıysa ve spawner'lar bittiyse dalga bitmiştir
-            if (units.Length == 0)
+            // Eğer sahada düşman kalmadıysa ve spawner'lar bittiyse dalga bitmiştir
+            if (enemyCount == 0)
             {
                 WaveCompleted();
             }

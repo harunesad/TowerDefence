@@ -12,6 +12,21 @@ namespace TowerDefence.Data
         Bottleneck
     }
 
+    public enum LevelTheme
+    {
+        Forest,
+        Desert,
+        Snow,
+        Underworld
+    }
+
+    [System.Serializable]
+    public class LevelPath
+    {
+        public List<Vector3> points = new List<Vector3>();
+        public int spawnerIndex = 0;
+    }
+
     [CreateAssetMenu(fileName = "New Level Data", menuName = "Tower Defence/Level/Level Data")]
     public class LevelData : ScriptableObject
     {
@@ -22,7 +37,11 @@ namespace TowerDefence.Data
         [Range(1, 3)] public int difficulty = 1;
         public string levelID; // Kilit takibi için benzersiz ID
 
-        [Header("Map Settings")]
+        [Header("Map Generation Settings")]
+        public LevelTheme theme;
+        public List<LevelPath> paths = new List<LevelPath>();
+        public List<Vector3> basePoints = new List<Vector3>();
+        public int towerSlotCount = 5;
         public GameObject mapPrefab;
 
         [Header("Waves")]

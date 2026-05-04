@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TowerDefence.Data;
-
+using TowerDefence.Combat;
 namespace TowerDefence.Core
 {
     public class CampaignManager : MonoBehaviour
@@ -32,18 +32,68 @@ namespace TowerDefence.Core
             Debug.Log($"Level Selected: {level.levelName}");
         }
 
+        private GameObject currentMapInstance;
+
         public void LoadSelectedLevel()
         {
             if (currentSelectedLevel != null)
             {
-                // Mevcut wave indexini de sıfırlayalım
-                PhaseManager.Instance.ResetWaveIndex();
-                
-                SceneManager.LoadScene(currentSelectedLevel.sceneIndex);
-                GameManager.Instance.ChangeState(GameState.Playing);
-                
-                // Sahne yüklendiğinde ilk hazırlığı başlat
-                PhaseManager.Instance.StartPreparationPhase();
+                // 1. Temizlik: Eski harita varsa yok et
+                if (currentMapInstance != null)
+                {
+                    Destroy(currentMapInstance);
+                }
+
+                // 2. Sahne Yükleme Kontrolü
+                if (SceneManager.GetActiveScene().buildIndex != currentSelectedLevel.sceneIndex)
+                {
+                    // Sahne yüklendiğinde spawn yapmak için event'e abone ol
+                    SceneManager.sceneLoaded += OnLevelSceneLoaded;
+                    SceneManager.LoadScene(currentSelectedLevel.sceneIndex);
+                }
+                else
+                {
+                    // Zaten sahnedeyiz, direkt spawn et
+                    SpawnMap();
+                }
+            }
+        }
+
+        private void OnLevelSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            // Sadece bir kez çalışması için çıkar
+            SceneManager.sceneLoaded -= OnLevelSceneLoaded;
+            
+            // Sahne yükleme bitince spawn et
+            SpawnMap();
+        }
+
+        private void SpawnMap()
+        {
+            if (currentSelectedLevel == null) return;
+
+            // 3. Spawning: Haritayı oluştur
+            if (currentSelectedLevel.mapPrefab != null)
+            {
+                currentMapInstance = Instantiate(currentSelectedLevel.mapPrefab, Vector3.zero, Quaternion.identity);
+                currentMapInstance.name = "[MAP] " + currentSelectedLevel.levelName;
+                Debug.Log($"CampaignManager: Map spawned: {currentMapInstance.name}");
+            }
+            else
+            {
+                Debug.LogError($"CampaignManager: Map Prefab missing on {currentSelectedLevel.levelName}!");
+            }
+
+            // 4. Sistem Resetleri
+            CurrencyManager.Instance.InitializeFromLevel(currentSelectedLevel);
+            PhaseManager.Instance.ResetWaveIndex();
+            GameManager.Instance.ChangeState(GameState.Playing);
+            PhaseManager.Instance.StartPreparationPhase();
+
+            // Yeni: Haritayı ekrana tam ortala (HUD payı dahil)
+            if (currentMapInstance != null)
+            {
+                CenterCameraAtRuntime(currentMapInstance);
             }
         }
 
@@ -89,6 +139,50 @@ namespace TowerDefence.Core
             
             // Kayıtlı en yüksek bölüm indeksinden küçük veya eşitse açıktır
             return index <= MetaProgressionManager.Instance.GetHighestUnlockedLevel();
+        }
+
+        private void CenterCameraAtRuntime(GameObject mapInstance)
+        {
+            Camera cam = Camera.main;
+            if (cam == null) return;
+
+            // Harita sınırlarını tam oynanabilir alana göre hesapla (Waypointler üzerinden)
+            Bounds bounds = new Bounds();
+            bool first = true;
+            PathWaypoints[] allPaths = mapInstance.GetComponentsInChildren<PathWaypoints>();
+
+            foreach (var path in allPaths)
+            {
+                if (path.GetWaypoints() == null) continue;
+                foreach (var wp in path.GetWaypoints())
+                {
+                    if (wp == null) continue;
+                    if (first) { bounds = new Bounds(wp.position, Vector3.zero); first = false; }
+                    else bounds.Encapsulate(wp.position);
+                }
+            }
+
+            if (first) return; 
+
+            Vector3 center = bounds.center;
+            float maxDim = Mathf.Max(bounds.size.x, bounds.size.z);
+            
+            float camAngle = 65f;
+            // Dinamik yükseklik: Harita boyutuna göre mesafeyi ayarla
+            float height = Mathf.Max(30, maxDim * 0.7f); 
+            
+            // HUD Panelini (Alt Kısım) telafi etmek için fokus noktasını biraz yukarı kaydır
+            // Trigonometrik ofset + Sabit birim ofset
+            float uiOffsetZ = -height / Mathf.Tan(camAngle * Mathf.Deg2Rad); 
+            float hudCompensation = 10f; // Haritayı dikeyde tam merkeze (HUD üstüne) taşır
+
+            cam.transform.position = new Vector3(center.x, height, center.z + uiOffsetZ + hudCompensation);
+            cam.transform.rotation = Quaternion.Euler(camAngle, 0, 0);
+            
+            if (cam.orthographic) cam.orthographicSize = maxDim * 0.45f;
+            else cam.fieldOfView = 40;
+
+            Debug.Log($"[CampaignManager] Camera centered on {mapInstance.name}. Center: {center}, Height: {height}");
         }
 
         public LevelData GetCurrentLevel() => currentSelectedLevel;

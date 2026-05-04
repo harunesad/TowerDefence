@@ -15,15 +15,16 @@ MonoBehaviour:
   towerName: Bone Catapult
   side: 1
   prefab: {fileID: 4161322656533578192, guid: 35ac3a412e127e34d9880897395e7e5f, type: 3}
-  projectilePrefab: {fileID: 8240709389501978420, guid: d47a035642be67b4f851d97af106f432, type: 3}
+  projectilePrefab: {fileID: 5653947181672841779, guid: 40c414778e8c5a14fb653fe02850e1c1, type: 3}
   icon: {fileID: 1822043533, guid: dc8272b9c0bcada4d9686003e6900d49, type: 3}
-  enemyCounterpart: {fileID: 11400000, guid: 26fce7a169a74d349884d53d8b58d31c, type: 2}
+  enemyCounterpart: {fileID: 11400000, guid: e98a13074653dc54386bfede1cdb9005, type: 2}
   towerColor: {r: 1, g: 1, b: 1, a: 1}
-  cost: 350
-  upgradeCost: 350
-  range: 15
-  fireRate: 0.4
+  cost: 320
+  upgradeCost: 320
+  range: 18
+  fireRate: 0.5
   damage: 60
+  health: 840
   explosionRadius: 4
   targetLayer:
     serializedVersion: 2
@@ -31,4 +32,12 @@ MonoBehaviour:
   effectType: 0
   effectDuration: 0
   effectPower: 0
+  specializations:
+  - {fileID: 11400000, guid: fee12e25338a9d047b849ca995a19a62, type: 2}
+  - {fileID: 11400000, guid: f821ad713319f1841881112a98ffb5cd, type: 2}
   shootSFX: {fileID: 0}
+  isBaseTower: 1
+  isAuraTower: 0
+  auraRadius: 5
+  auraDamageBonus: 0.25
+  auraFireRateBonus: 0.15

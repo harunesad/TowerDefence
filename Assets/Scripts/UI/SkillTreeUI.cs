@@ -10,8 +10,11 @@ namespace TowerDefence.UI
     {
         [Header("UI Elements")]
         [SerializeField] private TextMeshProUGUI totalKarmaText;
+        [SerializeField] private TextMeshProUGUI feedbackText; // Yeni: Hata/Bilgi mesajı alanı
         [SerializeField] private List<SkillNodeUI> allNodes;
         [SerializeField] private Button backButton;
+
+        private float feedbackTimer;
 
         private void Start()
         {
@@ -27,6 +30,28 @@ namespace TowerDefence.UI
         private void OnEnable()
         {
             UpdateAllNodes();
+        }
+
+        private void Update()
+        {
+            if (feedbackTimer > 0)
+            {
+                feedbackTimer -= Time.deltaTime;
+                if (feedbackTimer <= 0 && feedbackText != null)
+                {
+                    feedbackText.text = "";
+                }
+            }
+        }
+
+        public void ShowFeedback(string message, Color color)
+        {
+            if (feedbackText != null)
+            {
+                feedbackText.text = message;
+                feedbackText.color = color;
+                feedbackTimer = 3f; // 3 saniye sonra silinir
+            }
         }
 
         public void UpdateAllNodes()

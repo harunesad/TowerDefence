@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using TowerDefence.Interfaces;
 using TowerDefence.Core;
 using TowerDefence.Data;
+using TowerDefence.UI;
 
 namespace TowerDefence.Combat
 {
@@ -15,12 +16,15 @@ namespace TowerDefence.Combat
         [Header("Movement")]
         [SerializeField] private float moveSpeed = 3f;
         [SerializeField] private float rotationSpeed = 10f;
+        [SerializeField] private HealthBarUI healthBar;
 
         private float maxHealth;
         private float attackDamage;
         private float attackRange;
         private float attackRate;
         private Side unitSide;
+        private float pathOffset; // Yol üzerindeki yanal sapma (Sabitlendi)
+        private Vector3 currentMoveTarget; // Bir sonraki waypoint hedefi (Ofset dahil)
         
         private float currentHealth;
         private Animator animator;
@@ -34,6 +38,9 @@ namespace TowerDefence.Combat
 
         public bool IsDead => isDead;
         public Side GetSide() => unitSide;
+        public float GetHealth() => currentHealth;
+        public int GetCurrentWaypointIndex() => currentWaypointIndex;
+        public Vector3 GetCurrentMoveTarget() => currentMoveTarget;
 
         private void Awake()
         {
@@ -46,38 +53,56 @@ namespace TowerDefence.Combat
             this.unitData = data;
             unitSide = data.side;
 
-            maxHealth = data.maxHealth;
-            moveSpeed = data.moveSpeed;
-            attackDamage = data.attackDamage;
+            // Meta-Gelişim Çarpanlarını Uygula
+            float healthMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.HealthBonus, unitSide);
+            float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.SpeedBonus, unitSide);
+            float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.DamageBonus, unitSide);
+
+            maxHealth = data.maxHealth * healthMult;
+            moveSpeed = data.moveSpeed * speedMult;
+            attackDamage = data.attackDamage * damageMult;
             attackRange = data.attackRange;
             attackRate = data.attackRate;
 
             currentHealth = maxHealth;
             
-            // Dinamik Katman ve Hedef Katmanı Atama (LightUnit: 6 (Hedef 7), DarkUnit: 7 (Hedef 6))
-            gameObject.layer = (unitSide == Side.Light) ? 6 : 7;
-            targetLayer = (unitSide == Side.Light) ? (1 << 7) : (1 << 6);
+            // Rastgele yanal sapma ata
+            pathOffset = Random.Range(-0.8f, 0.8f);
 
-            SetVisuals();
+            // Animasyon hızını hareket hızıyla senkronize et
+            // 1.0f = referans hız, animasyon bu hıza göre kalibre edilmiş sayılır
+            SyncAnimatorSpeed(moveSpeed);
+
+            if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
+
+            InitializeStatusEffects();
+            SetLayerRecursive(gameObject, (unitSide == Side.Light) ? 6 : 7);
+            targetLayer = (unitSide == Side.Light) ? (1 << 7) : (1 << 6);
         }
 
-        private void SetVisuals()
+        /// <summary>Animator hızını verilen hareket hızına göre ayarlar.</summary>
+        private void SyncAnimatorSpeed(float speed)
         {
-            Color teamColor = (unitSide == Side.Light) ? Color.cyan : Color.red;
-            Renderer[] renderers = GetComponentsInChildren<Renderer>();
-            
-            // MaterialPropertyBlock kullanarak daha performanslı ve shader uyumlu renklendirme
-            MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
-            
-            foreach (var r in renderers)
+            if (animator == null) return;
+            // Referans hızı: 1.0f. Animasyonlar bu hıza göre çekilmiş sayılır.
+            // Kısmi çarpım (0.85f) aşırı hızlı görünmeyi engeller.
+            const float baseSpeed = 1.0f;
+            animator.speed = Mathf.Clamp((speed / baseSpeed) * 0.85f, 0.3f, 2.5f);
+        }
+
+        private void InitializeStatusEffects()
+        {
+            activeEffects = new List<StatusEffect>();
+        }
+
+        private void SetLayerRecursive(GameObject obj, int newLayer)
+        {
+            if (null == obj) return;
+            obj.layer = newLayer;
+            foreach (Transform child in obj.transform)
             {
-                r.GetPropertyBlock(propBlock);
-                // URP, Toon ve Standart shader özellikleri
-                propBlock.SetColor("_Color", teamColor);
-                propBlock.SetColor("_BaseColor", teamColor);
-                propBlock.SetColor("_MainColor", teamColor);
-                propBlock.SetColor("_TintColor", teamColor);
-                r.SetPropertyBlock(propBlock);
+                if (null == child) continue;
+                SetLayerRecursive(child.gameObject, newLayer);
             }
         }
 
@@ -107,9 +132,9 @@ namespace TowerDefence.Combat
                     isFighting = true;
                     HandleRotation(((MonoBehaviour)targetCombatant).transform.position);
                     
-                    if (Time.time >= nextAttackTime)
+                    if (Time.time >= nextAttackTime && !isAttacking)
                     {
-                        Attack();
+                        StartCoroutine(PerformAttack((MonoBehaviour)targetCombatant));
                         nextAttackTime = Time.time + 1f / attackRate;
                     }
                 }
@@ -118,48 +143,56 @@ namespace TowerDefence.Combat
             // Hareket Mantığı
             bool isStunned = activeEffects.Exists(e => e.type == StatusEffectType.Stun);
             
-            if (!isFighting && !isStunned)
+            if (!isFighting && !isStunned && !isAttacking)
             {
-                Vector3 targetPos = Vector3.zero;
-
-                // 1. Düşman Takibi (Eğer menzil dışındaysa ama hedefi varsa)
-                if (targetCombatant != null && !targetCombatant.IsDead && !(targetCombatant is Base))
+                if (targetCombatant != null && !targetCombatant.IsDead)
                 {
-                    targetPos = ((MonoBehaviour)targetCombatant).transform.position;
-                }
-                // 2. Waypoint Takibi
-                else if (currentPath != null && currentWaypointIndex < currentPath.GetWaypoints().Count)
-                {
-                    targetPos = currentPath.GetWaypoints()[currentWaypointIndex].position;
-                    // Y Eksenini yoksayarak mesafe ölçümü yap (Overshoot ve geri gitmeyi engeller)
-                    Vector3 flatPos = new Vector3(transform.position.x, 0, transform.position.z);
-                    Vector3 flatTarget = new Vector3(targetPos.x, 0, targetPos.z);
-                    
-                    if (Vector3.Distance(flatPos, flatTarget) < 0.1f)
-                    {
-                        currentWaypointIndex++;
-                        if (currentWaypointIndex >= currentPath.GetWaypoints().Count)
-                        {
-                            OnReachPathEnd();
-                            return;
-                        }
-                    }
-                }
-                // 3. Üs Hedefi
-                else if (targetBase != null)
-                {
-                    targetPos = targetBase.transform.position;
-                }
-
-                if (targetPos != Vector3.zero)
-                {
-                    MoveTowardsTarget(targetPos);
-                    HandleRotation(targetPos);
+                    // 1. Hedefi Kovala (Chase Logic - aggro radius içindelerse)
+                    Vector3 chaseTarget = ((MonoBehaviour)targetCombatant).transform.position;
+                    MoveTowardsTarget(chaseTarget);
+                    HandleRotation(chaseTarget);
                     if (animator != null) animator.SetBool("IsMoving", true);
                 }
                 else
                 {
-                    if (animator != null) animator.SetBool("IsMoving", false);
+                    // 2. Düşman yoksa Waypoint Takibi yap
+                    Vector3 targetPos = Vector3.zero;
+
+                    // 1. Waypoint Takibi
+                    if (currentPath != null && currentWaypointIndex < currentPath.GetWaypoints().Count)
+                    {
+                        targetPos = currentPath.GetWaypoints()[currentWaypointIndex].position;
+                        // Y Eksenini yoksayarak mesafe ölçümü yap (Overshoot ve geri gitmeyi engeller)
+                        Vector3 flatPos = new Vector3(transform.position.x, 0, transform.position.z);
+                        Vector3 flatTarget = new Vector3(currentMoveTarget.x, 0, currentMoveTarget.z);
+                        
+                        if (Vector3.Distance(flatPos, flatTarget) < 0.2f)
+                        {
+                            currentWaypointIndex++;
+                            if (currentWaypointIndex >= currentPath.GetWaypoints().Count)
+                            {
+                                OnReachPathEnd();
+                                return;
+                            }
+                            UpdateMoveTarget(); // Yeni waypoint için hedefi güncelle
+                        }
+                    }
+                    // 3. Üs Hedefi
+                    else if (targetBase != null)
+                    {
+                        targetPos = targetBase.transform.position;
+                    }
+
+                    if (targetPos != Vector3.zero)
+                    {
+                        MoveTowardsTarget(currentMoveTarget);
+                        HandleRotation(currentMoveTarget);
+                        if (animator != null) animator.SetBool("IsMoving", true);
+                    }
+                    else
+                    {
+                        if (animator != null) animator.SetBool("IsMoving", false);
+                    }
                 }
             }
             else
@@ -173,6 +206,26 @@ namespace TowerDefence.Combat
             Vector3 targetWithMyY = new Vector3(targetPos.x, transform.position.y, targetPos.z);
             // MoveTowards kullanımı, hedefi geçip geri dönme (titreme) sorununu tamamen engeller
             transform.position = Vector3.MoveTowards(transform.position, targetWithMyY, moveSpeed * Time.deltaTime);
+        }
+
+        private void UpdateMoveTarget()
+        {
+            if (currentPath == null || currentWaypointIndex >= currentPath.GetWaypoints().Count) return;
+
+            Vector3 baseTarget = currentPath.GetWaypoints()[currentWaypointIndex].position;
+            Vector3 targetWithMyY = new Vector3(baseTarget.x, transform.position.y, baseTarget.z);
+            
+            // Yanal sapmayı (lane içinde mikro-varyans) waypoint bazlı hesapla ve sabitle
+            Vector3 direction = (targetWithMyY - transform.position).normalized;
+            if (direction.sqrMagnitude > 0.01f)
+            {
+                Vector3 right = Vector3.Cross(Vector3.up, direction);
+                currentMoveTarget = baseTarget + right * pathOffset;
+            }
+            else
+            {
+                currentMoveTarget = baseTarget;
+            }
         }
 
         private void HandleRotation(Vector3 targetPos)
@@ -200,21 +253,28 @@ namespace TowerDefence.Combat
 
         private void UpdateTargetConflict()
         {
+            // Aggro Range: Menzilli ise menzili kadar, yakın dövüş ise en az 8 birimlik geniş aggro yelpazesi
+            float aggroRange = Mathf.Max(attackRange, 8f);
+            
             // Önce yakındaki birimleri tara
-            Collider[] colliders = Physics.OverlapSphere(transform.position, attackRange * 2f, targetLayer);
-            float shortestDist = Mathf.Infinity;
+            Collider[] colliders = Physics.OverlapSphere(transform.position, aggroRange, targetLayer);
+            float shortestDist = aggroRange;
             IDamageable nearestUnit = null;
 
             foreach (var col in colliders)
             {
-                Unit u = col.GetComponent<Unit>();
-                if (u != null && !u.IsDead)
+                IDamageable damageable = col.GetComponent<IDamageable>();
+                if (damageable != null && !damageable.IsDead && damageable.GetSide() != unitSide)
                 {
+                    // FİLTRE: Yakın dövüş birimleri kuleleri hedef alamaz
+                    if (unitData.projectilePrefab == null && damageable is Tower)
+                        continue;
+
                     float dist = Vector3.Distance(transform.position, col.transform.position);
                     if (dist < shortestDist)
                     {
                         shortestDist = dist;
-                        nearestUnit = u;
+                        nearestUnit = damageable;
                     }
                 }
             }
@@ -225,13 +285,13 @@ namespace TowerDefence.Combat
             }
             else
             {
-                // Sadece üniteleri hedef al ki Waypointler çalışabilsin
                 targetCombatant = null;
             }
         }
 
         private PathWaypoints currentPath;
         private int currentWaypointIndex = 0;
+        private bool isAttacking = false;
 
         public void SetPath(PathWaypoints path)
         {
@@ -240,7 +300,8 @@ namespace TowerDefence.Combat
             
             if (currentPath != null && currentPath.GetWaypoints().Count > 0)
             {
-                SnapRotationToTarget(currentPath.GetWaypoints()[0].position);
+                UpdateMoveTarget();
+                SnapRotationToTarget(currentMoveTarget);
             }
         }
 
@@ -268,8 +329,23 @@ namespace TowerDefence.Combat
             
             if (currentWaypointIndex < wps.Count)
             {
+                UpdateMoveTarget();
                 SnapRotationToTarget(wps[currentWaypointIndex].position);
             }
+        }
+
+        public void SetPathWithExactTarget(PathWaypoints path, int targetIdx)
+        {
+            currentPath = path;
+            if (path == null) return;
+
+            var wps = path.GetWaypoints();
+            if (wps.Count == 0) return;
+
+            currentWaypointIndex = Mathf.Clamp(targetIdx, 0, wps.Count - 1);
+            
+            UpdateMoveTarget();
+            SnapRotationToTarget(currentMoveTarget);
         }
 
         private void HandleStatusEffects()
@@ -306,12 +382,17 @@ namespace TowerDefence.Combat
             if (isDead) return;
             currentHealth += amount;
             currentHealth = Mathf.Min(currentHealth, maxHealth);
+            
+            if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
+
             Debug.Log($"{gameObject.name} healed by {amount}. Current Health: {currentHealth}");
         }
 
         public void ApplySlow(float multiplier, float duration)
         {
             AddStatusEffect(StatusEffectType.Slow, duration, multiplier);
+            // Slow uygulandığında animasyonu da yavaşlat
+            SyncAnimatorSpeed(moveSpeed * multiplier);
         }
 
         private void FindTargetBase()
@@ -363,14 +444,62 @@ namespace TowerDefence.Combat
             Destroy(gameObject, 0.5f);
         }
 
-        private void Attack()
+        private System.Collections.IEnumerator PerformAttack(MonoBehaviour targetMB)
         {
-            if (targetCombatant != null && !targetCombatant.IsDead)
+            isAttacking = true;
+            IDamageable targetC = targetMB as IDamageable;
+
+            if (targetC != null && !targetC.IsDead)
             {
-                if (animator != null) animator.SetTrigger("Attack");
-                targetCombatant.TakeDamage(attackDamage);
-                Debug.Log($"{gameObject.name} attacked {((MonoBehaviour)targetCombatant).name}!");
+                if (animator != null) 
+                {
+                    // Animator hızını attackRate ile orantılı artırarak yavaş/hızlı birimlerin animasyonlarını senkronize et
+                    // (Orijinal animasyon çok yavaşsa kılıç inmeden süre bitebileceği için min. oran korunur)
+                    animator.speed = Mathf.Max(1f, attackRate / 1.5f);
+                    animator.SetTrigger("Attack");
+                }
+
+                // Animasyonun "vurma anı" için bekleme (Saldırı döngüsünün %50'si)
+                float attackDuration = 1f / attackRate;
+                float hitTime = attackDuration * 0.5f;
+
+                yield return new WaitForSeconds(hitTime);
+
+                // Phantom Hit Fix (Ölüye vurmayı engelle)
+                if (targetMB != null && targetC != null && !targetC.IsDead)
+                {
+                    if (unitData.projectilePrefab != null)
+                    {
+                        // Menzilli saldırı: Mermi oluştur ve hedefe yönlendir
+                        Vector3 spawnPos = transform.position + Vector3.up * 1.2f;
+                        GameObject projGO = Instantiate(unitData.projectilePrefab, spawnPos, transform.rotation);
+                        Projectile proj = projGO.GetComponent<Projectile>();
+                        if (proj != null)
+                        {
+                            proj.Initialize(attackDamage, 0f, (unitSide == Side.Light) ? VFXType.LightImpact : VFXType.DarkImpact);
+                            proj.Seek(targetMB.transform);
+                        }
+                    }
+                    else
+                    {
+                        // Yakın dövüş: Sadece başka ÜNİTELERE hasar verebilir, KULELERE vuramaz
+                        if (!(targetC is Tower))
+                        {
+                            targetC.TakeDamage(attackDamage);
+                        }
+                        else
+                        {
+                            Debug.Log($"[UNIT] {gameObject.name} is Melee and cannot reach tower {targetMB.name}");
+                        }
+                    }
+                }
+
+                // Geri kalan attack animasyon süresini (Recoil) bitirmesini bekle ki hemen kaymaya başlamasın
+                yield return new WaitForSeconds(attackDuration - hitTime);
             }
+            
+            if (animator != null) animator.speed = 1f; // Animator hızını normale çek
+            isAttacking = false;
         }
 
         public void TakeDamage(float amount)
@@ -394,6 +523,7 @@ namespace TowerDefence.Combat
             if (isDead) return;
 
             currentHealth -= amount;
+            if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
 
             if (currentHealth <= 0)
             {
@@ -405,6 +535,8 @@ namespace TowerDefence.Combat
         {
             isDead = true;
             if (animator != null) animator.SetTrigger("Die");
+            if (healthBar != null) healthBar.SetVisible(false);
+
             Debug.Log($"{gameObject.name} died!");
 
             // Ölüm efekti
@@ -420,7 +552,7 @@ namespace TowerDefence.Combat
 
             // Ekonomi ödülü: Ölen birimin karşı tarafına kaynak ver
             Side opponentSide = unitSide == Side.Light ? Side.Dark : Side.Light;
-            int rewardAmount = unitData.spawnCost / 2; // Örn: Maliyetin yarısı geri döner
+            int rewardAmount = unitData.killReward;
             CurrencyManager.Instance.AddCurrency(opponentSide, rewardAmount);
 
             // Rakip birim öldüğünde Karma ödülü ver (Örn: 1 Karma)

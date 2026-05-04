@@ -6,11 +6,20 @@ using TowerDefence.Data;
 namespace TowerDefence.Core
 {
     [System.Serializable]
+    public class LevelProgress
+    {
+        public string levelID;
+        public int stars;
+        public bool isCompleted;
+    }
+
+    [System.Serializable]
     public class SaveData
     {
         public int totalKarma;
         public List<string> unlockedSkillIDs = new List<string>();
         public int highestUnlockedLevelIndex = 0;
+        public List<LevelProgress> levelProgressList = new List<LevelProgress>();
     }
 
     public class MetaProgressionManager : MonoBehaviour
@@ -79,6 +88,30 @@ namespace TowerDefence.Core
                 saveData.highestUnlockedLevelIndex = index;
                 SaveGame();
             }
+        }
+
+        public void SaveLevelProgress(string levelID, int stars)
+        {
+            LevelProgress progress = saveData.levelProgressList.Find(p => p.levelID == levelID);
+            if (progress == null)
+            {
+                progress = new LevelProgress { levelID = levelID };
+                saveData.levelProgressList.Add(progress);
+            }
+
+            // Sadece daha yüksek bir yıldız almışsak güncelle
+            if (stars > progress.stars)
+            {
+                progress.stars = stars;
+            }
+            progress.isCompleted = true;
+            SaveGame();
+        }
+
+        public int GetLevelStars(string levelID)
+        {
+            LevelProgress progress = saveData.levelProgressList.Find(p => p.levelID == levelID);
+            return progress != null ? progress.stars : 0;
         }
 
         public int GetTotalKarma() => saveData.totalKarma;

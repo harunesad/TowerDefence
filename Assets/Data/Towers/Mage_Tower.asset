@@ -17,13 +17,14 @@ MonoBehaviour:
   prefab: {fileID: 6769114973756798602, guid: 16984e7ce6823e644a8acadafa6b6807, type: 3}
   projectilePrefab: {fileID: 5093358924016176882, guid: 9e59726f3a63e8d4a8a6e704aae73675, type: 3}
   icon: {fileID: 543121309, guid: 3da9829daff4adf42be651066b333493, type: 3}
-  enemyCounterpart: {fileID: 11400000, guid: 7f564f05c4124bf4b8cd35739aa0deb1, type: 2}
+  enemyCounterpart: {fileID: 11400000, guid: 1a53c3e247dd4b346b306cefff8b9519, type: 2}
   towerColor: {r: 1, g: 1, b: 1, a: 1}
   cost: 200
   upgradeCost: 200
-  range: 6
+  range: 11
   fireRate: 0.8
   damage: 20
+  health: 600
   explosionRadius: 0
   targetLayer:
     serializedVersion: 2
@@ -31,4 +32,12 @@ MonoBehaviour:
   effectType: 4
   effectDuration: 2
   effectPower: 0.5
+  specializations:
+  - {fileID: 11400000, guid: 8decfe2dccb74c34fa4cce69130dda2b, type: 2}
+  - {fileID: 11400000, guid: 0ed79b52fdbd018478bde3a9dbfe94a6, type: 2}
   shootSFX: {fileID: 0}
+  isBaseTower: 1
+  isAuraTower: 0
+  auraRadius: 5
+  auraDamageBonus: 0.25
+  auraFireRateBonus: 0.15

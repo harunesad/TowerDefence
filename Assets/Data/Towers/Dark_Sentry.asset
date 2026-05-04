@@ -15,15 +15,16 @@ MonoBehaviour:
   towerName: Dark Sentry
   side: 1
   prefab: {fileID: 1516686006911113495, guid: b267e2073042ca743841f69df07fa22e, type: 3}
-  projectilePrefab: {fileID: 8720798297102482130, guid: 0db1d88dc5b23824bbee4f35a21d30e0, type: 3}
+  projectilePrefab: {fileID: 7988017465963706159, guid: 4656ebb881d84934d93d4ed181a063aa, type: 3}
   icon: {fileID: -840653803, guid: a28489b1d1dcad64399feb4a032d0772, type: 3}
-  enemyCounterpart: {fileID: 11400000, guid: fc5cb04b16ddf6044ae159cbc6d59ca2, type: 2}
+  enemyCounterpart: {fileID: 11400000, guid: 26fce7a169a74d349884d53d8b58d31c, type: 2}
   towerColor: {r: 1, g: 1, b: 1, a: 1}
   cost: 80
   upgradeCost: 80
-  range: 4
+  range: 11
   fireRate: 2
   damage: 8
+  health: 360
   explosionRadius: 0
   targetLayer:
     serializedVersion: 2
@@ -31,4 +32,12 @@ MonoBehaviour:
   effectType: 0
   effectDuration: 0
   effectPower: 0
+  specializations:
+  - {fileID: 11400000, guid: 96489b1e38073314da96a8c3256a189e, type: 2}
+  - {fileID: 11400000, guid: 3bc60b33833badf4bad45560ede7420b, type: 2}
   shootSFX: {fileID: 0}
+  isBaseTower: 1
+  isAuraTower: 0
+  auraRadius: 5
+  auraDamageBonus: 0.25
+  auraFireRateBonus: 0.15

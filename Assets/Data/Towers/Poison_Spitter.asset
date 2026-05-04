@@ -15,15 +15,16 @@ MonoBehaviour:
   towerName: Poison Spitter
   side: 1
   prefab: {fileID: 5044711114701979116, guid: e15e58ffb18bd2649b4499d92e7034af, type: 3}
-  projectilePrefab: {fileID: 1105585530097908392, guid: 9fb021f93ff74a845a3287e22e3825df, type: 3}
+  projectilePrefab: {fileID: 7988017465963706159, guid: 4656ebb881d84934d93d4ed181a063aa, type: 3}
   icon: {fileID: 641948625, guid: cb3c097fc7660c64f889424cccc240eb, type: 3}
-  enemyCounterpart: {fileID: 11400000, guid: d0ffe695e12660648ac59150d9f01ddd, type: 2}
+  enemyCounterpart: {fileID: 11400000, guid: fc5cb04b16ddf6044ae159cbc6d59ca2, type: 2}
   towerColor: {r: 1, g: 1, b: 1, a: 1}
   cost: 220
   upgradeCost: 220
-  range: 6
+  range: 11
   fireRate: 1
   damage: 15
+  health: 640
   explosionRadius: 0
   targetLayer:
     serializedVersion: 2
@@ -31,4 +32,12 @@ MonoBehaviour:
   effectType: 2
   effectDuration: 5
   effectPower: 2
+  specializations:
+  - {fileID: 11400000, guid: 402a1e62166000e4da4436cb820fad66, type: 2}
+  - {fileID: 11400000, guid: cf08b12001ce58641afd87d109c561b1, type: 2}
   shootSFX: {fileID: 0}
+  isBaseTower: 1
+  isAuraTower: 0
+  auraRadius: 5
+  auraDamageBonus: 0.25
+  auraFireRateBonus: 0.15

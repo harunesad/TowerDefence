@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using TowerDefence.Data;
 
 namespace TowerDefence.Core
 {
@@ -35,8 +36,44 @@ namespace TowerDefence.Core
 
         private void Start()
         {
+            // İlk başlatma (Varsayılan)
+            ResetToDefaults();
+        }
+
+        public void ResetToDefaults()
+        {
+            gold = startingGold;
+            soul = startingSoul;
+            ApplyMetaBonuses();
             OnCurrencyChanged?.Invoke(Side.Light, gold);
             OnCurrencyChanged?.Invoke(Side.Dark, soul);
+        }
+
+        public void InitializeFromLevel(LevelData level)
+        {
+            if (level == null) return;
+
+            gold = level.startingCurrencyLight;
+            soul = level.startingCurrencyDark;
+
+            ApplyMetaBonuses();
+
+            OnCurrencyChanged?.Invoke(Side.Light, gold);
+            OnCurrencyChanged?.Invoke(Side.Dark, soul);
+            
+            Debug.Log($"CurrencyManager: Initialized from level {level.levelName}. Gold: {gold}, Soul: {soul}");
+        }
+
+        private void ApplyMetaBonuses()
+        {
+            if (MetaProgressionManager.Instance != null)
+            {
+                float lightMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.CurrencyStartBonus, Side.Light);
+                float darkMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.CurrencyStartBonus, Side.Dark);
+
+                gold = Mathf.RoundToInt(gold * lightMult);
+                soul = Mathf.RoundToInt(soul * darkMult);
+            }
         }
 
         public bool CanAfford(Side side, int amount)

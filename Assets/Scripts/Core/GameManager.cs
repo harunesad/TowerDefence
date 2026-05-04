@@ -1,5 +1,7 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System;
+using TowerDefence.Combat;
 
 namespace TowerDefence.Core
 {
@@ -36,6 +38,16 @@ namespace TowerDefence.Core
             }
         }
 
+        private void Start()
+        {
+            // Eğer oyun Bootstrap sahnesinden başlıyorsa otomatik Menüye git
+            if (SceneManager.GetActiveScene().buildIndex == 0)
+            {
+                ChangeState(GameState.MainMenu);
+                SceneManager.LoadScene(1); // 1 genelde MainMenu sahnesidir
+            }
+        }
+
         public void ChangeState(GameState newState)
         {
             currentState = newState;
@@ -51,11 +63,24 @@ namespace TowerDefence.Core
                 case GameState.Victory:
                     Debug.Log("Victory!");
                     CampaignManager.Instance.CompleteCurrentLevel();
+                    TriggerResultUI(true);
                     break;
                 case GameState.Defeat:
                     Debug.Log("Defeat.");
                     MetaProgressionManager.Instance.AddKarma(20); // Teselli ödülü
+                    TriggerResultUI(false);
                     break;
+            }
+        }
+
+        private void TriggerResultUI(bool isVictory)
+        {
+            var resultUI = FindFirstObjectByType<TowerDefence.UI.LevelResultUI>(FindObjectsInactive.Include);
+            if (resultUI != null)
+            {
+                int remainingLives = LivesManager.Instance.GetCurrentLives();
+                int totalLives = LivesManager.Instance.GetMaxLives();
+                resultUI.Show(isVictory, remainingLives, totalLives);
             }
         }
 

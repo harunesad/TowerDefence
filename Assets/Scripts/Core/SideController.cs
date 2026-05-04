@@ -39,7 +39,11 @@ namespace TowerDefence.Core
             OnSideChanged?.Invoke(side);
         }
 
-        public Side GetPlayerSide() => playerSide;
+        public Side GetPlayerSide() 
+        {
+            // Debug.Log($"[CORE-SIDE] GetPlayerSide called. Value: {playerSide}");
+            return playerSide;
+        }
         
         public Side GetOpponentSide() 
         {

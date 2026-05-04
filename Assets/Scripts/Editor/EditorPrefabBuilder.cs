@@ -549,7 +549,7 @@ public class EditorPrefabBuilder : Editor
         RectTransform rt = root.GetComponent<RectTransform>();
         rt.sizeDelta = new Vector2(400, 250);
         // World Space'de ideal boyutta görünmesi için ölçeklendiriyoruz (Kullanıcı Talebi: Daha Büyük)
-        rt.localScale = new Vector3(0.006f, 0.006f, 0.006f);
+        rt.localScale = new Vector3(0.04f, 0.04f, 0.04f);
         
         // Arka Plan Image
         GameObject bg = new GameObject("Background", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));

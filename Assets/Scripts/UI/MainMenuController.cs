@@ -25,21 +25,45 @@ namespace TowerDefence.UI
 
         private void Start()
         {
-            // İlk açılışta tüm panelleri hazırla (CanvasGroup alpha = 0 yapabiliriz)
+            // Referans yoksa isimle bul (prefab bağlantısı kopsa bile çalışır)
+            if (mainMenuPanel   == null) mainMenuPanel   = FindChild("MainMenuPanel");
+            if (levelSelectPanel == null) levelSelectPanel = FindChild("LevelSelectionPanel");
+            if (skillTreePanel   == null) skillTreePanel   = FindChild("SkillTreePanel");
+
+            if (playButton      == null) playButton      = FindChildButton("PlayButton");
+            if (skillTreeButton == null) skillTreeButton = FindChildButton("SkillTreeButton");
+            if (quitButton      == null) quitButton      = FindChildButton("QuitButton");
+
+            // Tüm panelleri kapat
             InitPanel(mainMenuPanel);
             InitPanel(levelSelectPanel);
             InitPanel(skillTreePanel);
             InitPanel(sideSelectionPanel);
 
-            // Buton olaylarını otomatik bağla
-            if (playButton != null) playButton.onClick.AddListener(ShowLevelSelect);
+            // Buton olaylarını bağla
+            if (playButton      != null) playButton.onClick.AddListener(ShowLevelSelect);
             if (skillTreeButton != null) skillTreeButton.onClick.AddListener(ShowSkillTree);
-            if (quitButton != null) quitButton.onClick.AddListener(QuitGame);
+            if (quitButton      != null) quitButton.onClick.AddListener(QuitGame);
 
-            // İlk paneli aç
-            currentActivePanel = mainMenuPanel;
-            mainMenuPanel.SetActive(true);
-            AnimatePanelIn(mainMenuPanel);
+            // Ana menüyü hemen görünür olarak aç (fade yok, anında)
+            if (mainMenuPanel != null)
+            {
+                currentActivePanel = mainMenuPanel;
+                mainMenuPanel.SetActive(true);
+                AnimatePanelIn(mainMenuPanel, instant: true);
+            }
+        }
+
+        private GameObject FindChild(string childName)
+        {
+            Transform t = transform.Find(childName);
+            return t != null ? t.gameObject : null;
+        }
+
+        private Button FindChildButton(string path)
+        {
+            Transform t = transform.Find("MainMenuPanel/ButtonContainer/" + path);
+            return t != null ? t.GetComponent<Button>() : null;
         }
 
         private void InitPanel(GameObject panel)
@@ -81,12 +105,20 @@ namespace TowerDefence.UI
             AnimatePanelIn(targetPanel);
         }
 
-        private void AnimatePanelIn(GameObject panel)
+        private void AnimatePanelIn(GameObject panel, bool instant = false)
         {
             CanvasGroup group = panel.GetComponent<CanvasGroup>();
+            if (group == null) group = panel.AddComponent<CanvasGroup>();
+
+            if (instant)
+            {
+                group.alpha = 1f;
+                panel.transform.localScale = Vector3.one;
+                return;
+            }
+
             group.alpha = 0;
             panel.transform.localScale = startScale;
-
             group.DOFade(1, fadeDuration).SetUpdate(true);
             panel.transform.DOScale(Vector3.one, fadeDuration).SetEase(Ease.OutBack).SetUpdate(true);
         }

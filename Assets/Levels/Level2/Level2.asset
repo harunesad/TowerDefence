@@ -12,16 +12,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa17066cf895d7046b530b990028bf3d, type: 3}
   m_Name: Level2
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Data.LevelData
-  levelName: 
-  sceneIndex: 1
-  levelPreview: {fileID: 0}
+  levelName: 'Level 2: Dusty Pass'
+  sceneIndex: 2
+  levelPreview: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
   levelType: 0
   difficulty: 1
-  levelID: level_2
-  mapPrefab: {fileID: 0}
+  levelID: Level2
+  theme: 1
+  paths:
+  - points:
+    - {x: -20, y: 0, z: 20}
+    - {x: 5, y: 0, z: 25}
+    - {x: 20, y: 0, z: 25}
+    spawnerIndex: 0
+  - points:
+    - {x: -20, y: 0, z: -20}
+    - {x: 5, y: 0, z: -25}
+    - {x: 20, y: 0, z: -25}
+    spawnerIndex: 1
+  basePoints:
+  - {x: 20, y: 0, z: 25}
+  - {x: 20, y: 0, z: -25}
+  towerSlotCount: 23
+  mapPrefab: {fileID: 2155874858372208084, guid: 101a128b37d88e74e8cef15f385ad86b, type: 3}
   waves:
-  - {fileID: 11400000, guid: e140b5d24f388934fadf094b212367fb, type: 2}
-  - {fileID: 11400000, guid: a588de15da1b80243ae8a4e76250eac6, type: 2}
-  - {fileID: 11400000, guid: 061d2114bf6e77e4f8810fd1fc6dabf7, type: 2}
-  startingCurrencyLight: 200
-  startingCurrencyDark: 300
+  - {fileID: 11400000, guid: 83a1211d812734b4cb2c0e439679389c, type: 2}
+  - {fileID: 11400000, guid: b9a3a2b3d7c66f34ca7821caebbf30d6, type: 2}
+  - {fileID: 11400000, guid: 5d59cd6080df93349ac0e4487dd151c5, type: 2}
+  - {fileID: 11400000, guid: 94555486d540d7a4dbfc5dbbad233df7, type: 2}
+  startingCurrencyLight: 400
+  startingCurrencyDark: 500

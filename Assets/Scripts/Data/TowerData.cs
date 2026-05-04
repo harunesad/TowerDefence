@@ -24,6 +24,7 @@ namespace TowerDefence.Data
         public float range;
         public float fireRate;
         public float damage;
+        public float health; // Kule dayanıklılığı
         public float explosionRadius;
         public LayerMask targetLayer;
 
@@ -32,7 +33,20 @@ namespace TowerDefence.Data
         public float effectDuration;
         public float effectPower;
 
+        [Header("Specialization")]
+        public System.Collections.Generic.List<TowerData> specializations;
+
         [Header("Audio")]
         public AudioClip shootSFX;
+
+        [Header("Meta")]
+        public bool isBaseTower = false; // Sadece ana kuleler (Archer, Mage vb.) true olur
+
+        [Header("Aura Tower")]
+        public bool isAuraTower = false;
+        [Range(1f, 15f)] public float auraRadius = 5f;
+        [Range(0f, 1f)] public float auraDamageBonus = 0.25f;   // %25 hasar artışı
+        [Range(0f, 1f)] public float auraFireRateBonus = 0.15f; // %15 ateş hızı artışı
+
     }
 }

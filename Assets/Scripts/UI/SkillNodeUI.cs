@@ -56,20 +56,28 @@ namespace TowerDefence.UI
 
             lockedOverlay.gameObject.SetActive(!requirementsMet && !isUnlocked);
             
-            // Eğer puanı yetmiyorsa veya önkoşul sağlanmamışsa buton pasif olabilir
+            // Eğer önkoşul sağlanmamışsa veya zaten alınmışsa buton pasif olur.
+            // Puan yetmiyorsa bile buton aktif kalsın ki kullanıcı tıklayıp hata sesini duyabilsin/uyarı görebilsin.
             if (!isUnlocked)
             {
+                buyButton.interactable = requirementsMet;
+                
+                // Puan yetmiyorsa maliyet metnini kırmızı yap, yetiyorsa yeşil
                 bool canAfford = MetaProgressionManager.Instance.GetTotalKarma() >= skillData.karmaCost;
-                buyButton.interactable = requirementsMet && canAfford;
+                costText.color = canAfford ? new Color(0.6f, 1f, 0.6f) : Color.red;
             }
         }
 
         private void OnBuyClicked()
         {
+            SkillTreeUI treeUI = GetComponentInParent<SkillTreeUI>();
+
             if (MetaProgressionManager.Instance.TryUnlockSkill(skillData))
             {
                 if (AudioManager.Instance != null && unlockSFX != null)
                     AudioManager.Instance.PlaySFX(unlockSFX);
+
+                if (treeUI != null) treeUI.ShowFeedback($"{skillData.skillName} Açıldı!", Color.green);
 
                 // UI'ı bir üst seviyede yenilemek daha iyi olabilir
                 SendMessageUpwards("UpdateAllNodes", SendMessageOptions.DontRequireReceiver);
@@ -78,6 +86,14 @@ namespace TowerDefence.UI
             {
                 if (AudioManager.Instance != null && errorSFX != null)
                     AudioManager.Instance.PlaySFX(errorSFX);
+
+                if (treeUI != null)
+                {
+                    // Hata tipini belirle
+                    bool canAfford = MetaProgressionManager.Instance.GetTotalKarma() >= skillData.karmaCost;
+                    string msg = canAfford ? "Önkoşul Sağlanmadı!" : "Yetersiz Karma!";
+                    treeUI.ShowFeedback(msg, Color.red);
+                }
             }
         }
 

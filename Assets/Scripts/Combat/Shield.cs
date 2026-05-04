@@ -1,5 +1,6 @@
 using UnityEngine;
 using TowerDefence.Interfaces;
+using TowerDefence.Core;
 
 namespace TowerDefence.Combat
 {
@@ -15,6 +16,7 @@ namespace TowerDefence.Combat
         private bool isBroken;
 
         public bool IsDead => false; // Kalkan ölmez, sadece kırılır
+        public Side GetSide() => GetComponent<Unit>()?.GetSide() ?? GetComponent<Base>()?.GetSide() ?? Side.Neutral;
 
         private void Start()
         {

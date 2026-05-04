@@ -15,6 +15,7 @@ namespace TowerDefence.Data
 
         [Header("Economics")]
         public int spawnCost;
+        public int killReward;
 
         [Header("Stats")]
         public float maxHealth;
@@ -22,6 +23,7 @@ namespace TowerDefence.Data
         public float attackDamage;
         public float attackRange;
         public float attackRate;
+        public GameObject projectilePrefab;
 
         [Header("Audio")]
         public AudioClip spawnSFX;
