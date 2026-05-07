@@ -547,7 +547,7 @@ public class EditorPrefabBuilder : Editor
         canvas.renderMode = RenderMode.WorldSpace;
         
         RectTransform rt = root.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(400, 250);
+        rt.sizeDelta = new Vector2(450, 320); // 6 buton için genişletildi
         // World Space'de ideal boyutta görünmesi için ölçeklendiriyoruz (Kullanıcı Talebi: Daha Büyük)
         rt.localScale = new Vector3(0.04f, 0.04f, 0.04f);
         
@@ -761,6 +761,8 @@ public class EditorPrefabBuilder : Editor
             case "Soul_Harvester": return "Solar_Prism";
             case "Poison_Spitter": return "Void_Obelisk";
             case "Void_Obelisk": return "Poison_Spitter";
+            case "Barracks": return "Graveyard";
+            case "Graveyard": return "Barracks";
 
             // Units
             case "Celestial_Archer": return "Shadow_Stalker";
@@ -769,7 +771,8 @@ public class EditorPrefabBuilder : Editor
             case "Plague_Runner": return "Holy_Scout";
             case "Iron_Knight": return "Skeleton_Warrior";
             case "Skeleton_Warrior": return "Iron_Knight";
-            case "Light_Swordsman": return "Wraith";
+            case "Light_Swordsman": return "Skeleton_Warrior";
+            case "Skeleton_Warrior_Ally": return "Light_Swordsman";
             case "Wraith": return "Light_Swordsman";
             case "Shield_Bearer": return "Abyssal_Behemoth";
             case "Abyssal_Behemoth": return "Shield_Bearer";

@@ -85,12 +85,13 @@ namespace TowerDefence.UI
 
                 if (chosen != null && chosen.isBaseTower && !addedNames.Contains(chosen.towerName))
                 {
+                    // Her satırda 3 buton olacak şekilde dağıt (Toplam 6 buton desteği)
                     Transform targetRow = (buttonsCreated < 3) ? rowUpper : rowLower;
                     CreateSelectionButton(chosen.icon, chosen.cost, () => OnTowerButtonClicked(chosen), targetRow);
                     
                     addedNames.Add(chosen.towerName);
                     buttonsCreated++;
-                    if (buttonsCreated >= 5) break; 
+                    if (buttonsCreated >= 6) break; 
                 }
             }
 

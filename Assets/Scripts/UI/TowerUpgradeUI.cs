@@ -102,6 +102,9 @@ namespace TowerDefence.UI
             currentTower = tower;
             mainPanel.SetActive(true);
 
+            // Eğer kışla ise menzil halkasını göster
+            if (currentTower is BarracksTower bt) bt.SetRangeVisible(true);
+
             // World Space modunda olduğumuz için billboarding yapıyoruz
             transform.rotation = Camera.main.transform.rotation;
 
@@ -119,9 +122,9 @@ namespace TowerDefence.UI
             int level = currentTower.CurrentLevel;
             var specs = currentTower.GetSpecializations();
 
-            if (specs != null && specs.Count >= 2)
+            if (level >= 3 && specs != null && specs.Count >= 2)
             {
-                // Elite Branching veya Seviye 1'deki Branşlaşma
+                // Elite Branching (Sadece Seviye 3'te görünür)
                 normalUpgradeGroup.SetActive(false);
                 specializationGroup.SetActive(true);
 
@@ -135,7 +138,7 @@ namespace TowerDefence.UI
             }
             else if (level < 3)
             {
-                // Normal Upgrade
+                // Normal Upgrade (Seviye 1 ve 2 için)
                 normalUpgradeGroup.SetActive(true);
                 specializationGroup.SetActive(false);
                 upgradeCostText.text = data.upgradeCost.ToString();
@@ -143,7 +146,7 @@ namespace TowerDefence.UI
             }
             else
             {
-                // Max Level
+                // Branşlaşma tanımlanmamış Max Level kuleler
                 normalUpgradeGroup.SetActive(false);
                 specializationGroup.SetActive(false);
             }
@@ -152,7 +155,14 @@ namespace TowerDefence.UI
 
             if (priorityText != null)
             {
-                priorityText.text = $"Target: {currentTower.GetTargetingPriority()}";
+                if (currentTower is BarracksTower)
+                {
+                    priorityText.text = "Rally Point";
+                }
+                else
+                {
+                    priorityText.text = $"Target: {currentTower.GetTargetingPriority()}";
+                }
             }
         }
 
@@ -200,12 +210,28 @@ namespace TowerDefence.UI
         public void OnPriorityClicked()
         {
             if (currentTower == null) return;
-            currentTower.CycleTargetingPriority();
-            RefreshUI();
+
+            if (currentTower is BarracksTower bt)
+            {
+                if (TowerPlacementManager.Instance != null)
+                {
+                    // Önce bir referans al, çünkü Hide() metodunda currentTower null yapılıyor
+                    BarracksTower tempBarracks = bt;
+                    Hide(); 
+                    TowerPlacementManager.Instance.EnterRallyPlacementMode(tempBarracks);
+                }
+            }
+            else
+            {
+                currentTower.CycleTargetingPriority();
+                RefreshUI();
+            }
         }
 
         public void Hide()
         {
+            if (currentTower is BarracksTower bt) bt.SetRangeVisible(false);
+            
             mainPanel.SetActive(false);
             currentSlot = null;
             currentTower = null;

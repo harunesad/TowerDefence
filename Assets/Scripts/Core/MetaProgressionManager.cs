@@ -18,6 +18,8 @@ namespace TowerDefence.Core
     {
         public int totalKarma;
         public List<string> unlockedSkillIDs = new List<string>();
+        public List<string> unlockedSpellIDs = new List<string>(); // Açılan aktif büyüler
+        public List<string> equippedSpellIDs = new List<string>(); // Kuşatılan büyüler
         public int highestUnlockedLevelIndex = 0;
         public List<LevelProgress> levelProgressList = new List<LevelProgress>();
     }
@@ -68,11 +70,46 @@ namespace TowerDefence.Core
 
                 saveData.totalKarma -= skill.karmaCost;
                 saveData.unlockedSkillIDs.Add(skill.skillID);
+
+                // Eğer bu yetenek bir büyü açıyorsa, büyüyü de ekle
+                if (skill.upgradeType == UpgradeType.UnlockSpell && skill.grantedSpell != null)
+                {
+                    if (!saveData.unlockedSpellIDs.Contains(skill.grantedSpell.spellID))
+                    {
+                        saveData.unlockedSpellIDs.Add(skill.grantedSpell.spellID);
+                    }
+                }
+
                 SaveGame();
                 return true;
             }
             return false;
         }
+
+        public bool IsSpellUnlocked(string spellID) => saveData.unlockedSpellIDs.Contains(spellID);
+
+        public void EquipSpell(string spellID)
+        {
+            if (IsSpellUnlocked(spellID) && !saveData.equippedSpellIDs.Contains(spellID))
+            {
+                if (saveData.equippedSpellIDs.Count < 3) // Maksimum 3 büyü sınırı
+                {
+                    saveData.equippedSpellIDs.Add(spellID);
+                    SaveGame();
+                }
+            }
+        }
+
+        public void UnequipSpell(string spellID)
+        {
+            if (saveData.equippedSpellIDs.Contains(spellID))
+            {
+                saveData.equippedSpellIDs.Remove(spellID);
+                SaveGame();
+            }
+        }
+
+        public List<string> GetEquippedSpellIDs() => saveData.equippedSpellIDs;
 
         public bool IsSkillUnlocked(string skillID)
         {
@@ -151,6 +188,41 @@ namespace TowerDefence.Core
                 saveData = JsonUtility.FromJson<SaveData>(json);
                 Debug.Log("Game Loaded");
             }
+            else
+            {
+                saveData = new SaveData();
+                saveData.totalKarma = 200; // Başlangıç Karma puanı
+            }
+
+            // Başlangıç büyülerini ve yeteneklerini otomatik aç (Eğer hiç büyü yoksa)
+            if (saveData.unlockedSpellIDs.Count == 0)
+            {
+                // 1 Light, 1 Dark Başlangıç Büyüsü
+                saveData.unlockedSpellIDs.Add("Spell_Light_Meteor_1");
+                saveData.unlockedSpellIDs.Add("Spell_Dark_Bloodlust");
+
+                // İlgili yetenekleri de satın alınmış işaretle
+                if (!saveData.unlockedSkillIDs.Contains("Skill_Unlock_Light_Meteor_1"))
+                    saveData.unlockedSkillIDs.Add("Skill_Unlock_Light_Meteor_1");
+                if (!saveData.unlockedSkillIDs.Contains("Skill_Unlock_Dark_Bloodlust"))
+                    saveData.unlockedSkillIDs.Add("Skill_Unlock_Dark_Bloodlust");
+
+                SaveGame();
+            }
+        }
+
+        public void ResetSave()
+        {
+            if (File.Exists(savePath))
+            {
+                File.Delete(savePath);
+            }
+            saveData = new SaveData();
+            saveData.totalKarma = 200;
+            Debug.Log("Game Progress Reset Successfully!");
+            
+            // Başlangıç ayarlarını tekrar yükle
+            LoadGame();
         }
     }
 }

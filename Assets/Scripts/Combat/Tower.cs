@@ -18,7 +18,7 @@ namespace TowerDefence.Combat
     public class Tower : MonoBehaviour, IDamageable
     {
         [Header("Data")]
-        [SerializeField] private TowerData towerData;
+        [SerializeField] protected TowerData towerData;
 
         public TowerData GetTowerData() => towerData;
         public int CurrentLevel => currentLevel;
@@ -63,11 +63,16 @@ namespace TowerDefence.Combat
         private bool isDead;
         private TowerDefence.UI.HealthBarUI healthBar;
 
+        private bool isInvulnerable = false;
+        private float invulnerableTimer = 0f;
+        private float tempFireRateMultiplier = 1f;
+        private float tempBuffTimer = 0f;
+
         public bool IsDead => isDead;
 
         public void TakeDamage(float amount)
         {
-            if (isDead) return;
+            if (isDead || isInvulnerable) return;
 
             currentHealth -= amount;
             if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
@@ -210,6 +215,19 @@ namespace TowerDefence.Combat
 
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
+            // --- SPELL TIMERS ---
+            if (invulnerableTimer > 0)
+            {
+                invulnerableTimer -= Time.deltaTime;
+                if (invulnerableTimer <= 0) isInvulnerable = false;
+            }
+
+            if (tempBuffTimer > 0)
+            {
+                tempBuffTimer -= Time.deltaTime;
+                if (tempBuffTimer <= 0) tempFireRateMultiplier = 1f;
+            }
+
             // Aura kuleleri ateş etmez, sadece buff verir
             if (fireRate <= 0f) return;
 
@@ -221,11 +239,25 @@ namespace TowerDefence.Combat
                 if (fireCountdown <= 0f)
                 {
                     Shoot();
-                    fireCountdown = 1f / fireRate;
+                    fireCountdown = 1f / (fireRate * tempFireRateMultiplier);
                 }
             }
 
             fireCountdown -= Time.deltaTime;
+        }
+
+        public void SetInvulnerable(float duration)
+        {
+            isInvulnerable = true;
+            invulnerableTimer = duration;
+            // Visual feedback: Kalkan efekti (varsa)
+        }
+
+        public void ApplyTempBuff(float speedMult, float duration)
+        {
+            tempFireRateMultiplier = speedMult;
+            tempBuffTimer = duration;
+            // Visual feedback: Hızlanma efekti
         }
 
         private void LockOnTarget()
@@ -362,7 +394,7 @@ namespace TowerDefence.Combat
             }
         }
 
-        private int currentLevel = 1;
+        protected int currentLevel = 1;
 
         public void Disable(float duration)
         {
@@ -371,7 +403,7 @@ namespace TowerDefence.Combat
             Debug.Log($"{gameObject.name} disabled for {duration} seconds.");
         }
 
-        public void Upgrade()
+        public virtual void Upgrade()
         {
             if (currentLevel >= 3 && GetSpecializations() != null && GetSpecializations().Count > 0)
             {

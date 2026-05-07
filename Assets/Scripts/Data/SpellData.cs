@@ -1,4 +1,5 @@
 using UnityEngine;
+using TowerDefence.Core;
 
 namespace TowerDefence.Data
 {
@@ -7,7 +8,9 @@ namespace TowerDefence.Data
         Meteor,        // Alan hasarı + Stun
         Reinforcement, // Yol üzerine geçici asker çağırma
         Freeze,        // Tüm düşmanları dondurma
-        GoldBoost      // Anlık altın kazanımı
+        GoldBoost,     // Anlık altın kazanımı
+        Shield,        // Kulelere geçici dokunulmazlık
+        Buff           // Kulelere geçici saldırı hızı artışı
     }
 
     [CreateAssetMenu(fileName = "New Spell Data", menuName = "Tower Defence/Spells/Spell Data")]
@@ -16,6 +19,7 @@ namespace TowerDefence.Data
         [Header("Basic Info")]
         public string spellID;
         public string spellName;
+        public Side side;
         [TextArea] public string description;
         public Sprite icon;
 

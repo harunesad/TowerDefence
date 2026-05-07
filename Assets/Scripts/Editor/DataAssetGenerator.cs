@@ -18,13 +18,20 @@ public class DataAssetGenerator : Editor
         EnsureDirectory(towerPath);
         EnsureDirectory(unitPath);
 
+        // --- PREFAB ENSURE ---
+        if (!System.IO.File.Exists($"{towerPath.Replace("Data", "Prefabs/Gameplay")}/Barracks.prefab"))
+            AssetDatabase.CopyAsset($"{towerPath.Replace("Data", "Prefabs/Gameplay")}/Archer_Tower.prefab", $"{towerPath.Replace("Data", "Prefabs/Gameplay")}/Barracks.prefab");
+        if (!System.IO.File.Exists($"{towerPath.Replace("Data", "Prefabs/Gameplay")}/Graveyard.prefab"))
+            AssetDatabase.CopyAsset($"{towerPath.Replace("Data", "Prefabs/Gameplay")}/Dark_Sentry.prefab", $"{towerPath.Replace("Data", "Prefabs/Gameplay")}/Graveyard.prefab");
+
         // --- TOWERS (5 Light, 5 Dark) ---
         // Light Towers
         CreateTower(towerPath, "Archer Tower", Side.Light, 100, 10, 1.5f, 12, 0, true);
         CreateTower(towerPath, "Cannon Tower", Side.Light, 250, 40, 0.5f, 12, 3, true);
         CreateTower(towerPath, "Mage Tower", Side.Light, 200, 20, 0.8f, 11, 0, true, StatusEffectType.Slow, 2f, 0.5f);
         CreateTower(towerPath, "Ballista Tower", Side.Light, 350, 150, 0.3f, 17, 0, true); 
-        CreateTower(towerPath, "Solar Prism", Side.Light, 280, 0, 0f, 13, 0, true); 
+        CreateTower(towerPath, "Barracks", Side.Light, 300, 0, 0f, 40f, 0, true); 
+        CreateTower(towerPath, "Graveyard", Side.Dark, 300, 0, 0f, 40f, 0, true); 
 
         // Dark Towers
         CreateTower(towerPath, "Dark Sentry", Side.Dark, 80, 8, 2.0f, 11, 0, true);
@@ -32,6 +39,7 @@ public class DataAssetGenerator : Editor
         CreateTower(towerPath, "Poison Spitter", Side.Dark, 220, 15, 1.0f, 11, 0, true, StatusEffectType.Poison, 5f, 2f);
         CreateTower(towerPath, "Bone Catapult", Side.Dark, 320, 60, 0.5f, 18, 4, true); 
         CreateTower(towerPath, "Soul Harvester", Side.Dark, 150, 12, 3.0f, 11, 0, true);
+        CreateTower(towerPath, "Graveyard", Side.Dark, 300, 0, 0f, 28f, 0, true); 
 
         // --- UNITS (5 Light, 5 Dark) ---
         // --- UNITS (5 Light, 5 Dark) ---
@@ -78,22 +86,34 @@ public class DataAssetGenerator : Editor
         EditorUtility.SetDirty(wraith);
 
         // --- TAMİR VE YAPILANDIRMA ZİNCİRİ (Chain Repair) ---
-        // Bu bölüm, oluşturulan tüm verilerin birbirine ve prefablara kusursuz bağlanmasını sağlar
         LinkEliteTowerSpecializations(towerPath);
         LinkTowerCounterparts(towerPath);
         FixMissingTowerReferences();
         FixMissingUnitReferences();
         ConfigureAuraTowers(towerPath);
+        
         ConfigureTowerPrefabs(towerPath);
         ConfigureUnitPrefabs(unitPath);
+        
+        GenerateDefaultSpells(); // Büyüleri önce üret (Yetenekler bunlara bağlı)
+        LinkMetaSkills("Assets/Data/Skills");
         PopulateManagerSkills("Assets/Data/Skills");
+        
+        // --- ELITE TOWER GENERATION ---
+        GenerateEliteTowerPrefabs(towerPath);
+
+        // --- UI REGENERATION (Kritik: Yeni yetenekleri UI'ya ekler) ---
+        TowerDefence.Editor.UIMasterPrefabCreator.CreateSkillTreeUIPrefab();
+        TowerDefence.Editor.UIMasterPrefabCreator.CreateSideSelectionPanelPrefab();
+        TowerDefence.Editor.UIMasterPrefabCreator.CreateGameplayHUDMaster();
+
         LinkUnitProjectiles();
-        GenerateLevels(); // [NEW] Generate Level and Wave data
+        GenerateLevels(); 
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
-        Debug.Log("✔ ALL DATA AND PREFABS GENERATED, LINKED, AND REPAIRED SUCCESSFULLY!");
+        Debug.Log("✔ ALL DATA, PREFABS AND UI GENERATED, LINKED, AND REPAIRED SUCCESSFULLY!");
     }
 
     /// <summary>
@@ -184,22 +204,51 @@ public class DataAssetGenerator : Editor
 
     private static void LinkMetaSkills(string path)
     {
-        if (!AssetDatabase.IsValidFolder(path))
-        {
-            System.IO.Directory.CreateDirectory(path);
-            AssetDatabase.Refresh();
-        }
+        EnsureDirectory(path, true); // TAM TEMİZLİK
 
-        // Archer Damage I -> II
-        SkillNodeData archerDmg1 = CreateSkill(path, "Archer_Potency_1", "Archer Potency I", "Increases Light Archer damage by 10%", 100, UpgradeType.DamageBonus, 1.1f, Side.Light);
-        SkillNodeData archerDmg2 = CreateSkill(path, "Archer_Potency_2", "Archer Potency II", "Further increases Light Archer damage by 15%", 250, UpgradeType.DamageBonus, 1.15f, Side.Light, archerDmg1);
 
-        // Dark Speed I -> II
-        SkillNodeData darkSpd1 = CreateSkill(path, "Dark_Haste_1", "Dark Haste I", "Increases Dark unit move speed by 10%", 150, UpgradeType.SpeedBonus, 1.1f, Side.Dark);
-        SkillNodeData darkSpd2 = CreateSkill(path, "Dark_Haste_2", "Dark Haste II", "Further increases Dark unit move speed by 15%", 300, UpgradeType.SpeedBonus, 1.15f, Side.Dark, darkSpd1);
+        // --- PASSIVE SKILLS (5 Total) ---
+        CreateSkill(path, "Skill_Passive_Neutral_Bountiful", "Bountiful Start", "Start every level with +50 Gold", 200, UpgradeType.CurrencyStartBonus, 1.5f, Side.Neutral);
+        
+        SkillNodeData archer1 = CreateSkill(path, "Skill_Passive_Light_Archer_1", "Archer Potency I", "Light Archer damage +10%", 150, UpgradeType.TowerDamageBonus, 1.1f, Side.Light);
+        CreateSkill(path, "Skill_Passive_Light_Archer_2", "Archer Potency II", "Light Archer damage +20%", 300, UpgradeType.TowerDamageBonus, 1.2f, Side.Light, archer1);
+        
+        SkillNodeData haste1 = CreateSkill(path, "Skill_Passive_Dark_Haste_1", "Dark Haste I", "Dark unit speed +10%", 150, UpgradeType.UnitSpeedBonus, 1.1f, Side.Dark);
+        CreateSkill(path, "Skill_Passive_Dark_Haste_2", "Dark Haste II", "Dark unit speed +20%", 300, UpgradeType.UnitSpeedBonus, 1.2f, Side.Dark, haste1);
 
-        // General Economy
-        CreateSkill(path, "Bountiful_Start", "Bountiful Start", "Start every level with +50 Gold", 200, UpgradeType.CurrencyStartBonus, 1.5f, Side.Neutral);
+        // --- ACTIVE SPELLS UNLOCKS (9 Total) ---
+        string spellPath = "Assets/Data/Spells";
+        
+        // Light Spells (3)
+        var m1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Meteor_1.asset");
+        if (m1 != null) CreateSkill(path, "Skill_Unlock_Light_Meteor_1", "Meteor Strike", m1.description, 100, UpgradeType.UnlockSpell, 1, Side.Light, null, m1);
+
+        var m2 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Meteor_2.asset");
+        if (m2 != null) CreateSkill(path, "Skill_Unlock_Light_Meteor_2", "Elite Meteor", m2.description, 400, UpgradeType.UnlockSpell, 1, Side.Light, null, m2);
+
+        var s1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Shield.asset");
+        if (s1 != null) CreateSkill(path, "Skill_Unlock_Light_Shield", "Divine Shield", s1.description, 350, UpgradeType.UnlockSpell, 1, Side.Light, null, s1);
+
+        // Dark Spells (3)
+        var r1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Rift.asset");
+        if (r1 != null) CreateSkill(path, "Skill_Unlock_Dark_Rift", "Abyssal Rift", r1.description, 400, UpgradeType.UnlockSpell, 1, Side.Dark, null, r1);
+
+        var b1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Bloodlust.asset");
+        if (b1 != null) CreateSkill(path, "Skill_Unlock_Dark_Bloodlust", "Bloodlust", b1.description, 350, UpgradeType.UnlockSpell, 1, Side.Dark, null, b1);
+
+        var f1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Freeze.asset");
+        if (f1 != null) CreateSkill(path, "Skill_Unlock_Dark_Freeze", "Shadow Freeze", f1.description, 450, UpgradeType.UnlockSpell, 1, Side.Dark, null, f1);
+
+        // Reinforcements (2)
+        var re1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Reinforce_1.asset");
+        if (re1 != null) CreateSkill(path, "Skill_Unlock_Light_Reinforce_1", "Reinforcements", re1.description, 100, UpgradeType.UnlockSpell, 1, Side.Light, null, re1);
+
+        var re2 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Reinforce_2.asset");
+        if (re2 != null) CreateSkill(path, "Skill_Unlock_Light_Reinforce_2", "Royal Guards", re2.description, 450, UpgradeType.UnlockSpell, 1, Side.Light, null, re2);
+
+        // Neutral Spells (1)
+        var g1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Neutral_Gold.asset");
+        if (g1 != null) CreateSkill(path, "Skill_Unlock_Neutral_Gold", "Gold Rush", g1.description, 500, UpgradeType.UnlockSpell, 1, Side.Neutral, null, g1);
 
         AssetDatabase.SaveAssets();
 
@@ -248,7 +297,7 @@ public class DataAssetGenerator : Editor
         }
     }
 
-    private static SkillNodeData CreateSkill(string path, string id, string name, string desc, int cost, UpgradeType type, float mult, Side side, SkillNodeData req = null)
+    private static SkillNodeData CreateSkill(string path, string id, string name, string desc, int cost, UpgradeType type, float mult, Side side, SkillNodeData req = null, SpellData grant = null)
     {
         string fullPath = $"{path}/{id}.asset";
         SkillNodeData skill = AssetDatabase.LoadAssetAtPath<SkillNodeData>(fullPath);
@@ -265,10 +314,15 @@ public class DataAssetGenerator : Editor
         skill.upgradeType = type;
         skill.multiplier = mult;
         skill.side = side;
+        skill.grantedSpell = grant;
         skill.requiredSkills = new System.Collections.Generic.List<SkillNodeData>();
         if (req != null) skill.requiredSkills.Add(req);
+        
+        // Icon bulmaya çalış
+        skill.icon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{id}_Icon.png");
 
         EditorUtility.SetDirty(skill);
+        AssetDatabase.SaveAssetIfDirty(skill);
         return skill;
     }
 
@@ -398,7 +452,97 @@ public class DataAssetGenerator : Editor
             EditorUtility.SetDirty(harvester);
         }
 
+        // --- BARRACKS & GRAVEYARD SPECIALIZATIONS ---
+
+        // 11. Barracks -> Paladin Barracks / Knight's Guild
+        TowerData barracks = AssetDatabase.LoadAssetAtPath<TowerData>($"{towerPath}/Barracks.asset");
+        if (barracks != null)
+        {
+            barracks.specializations = new System.Collections.Generic.List<TowerData>
+            {
+                CreateTower(towerPath, "Paladin Barracks", side: Side.Light, cost: 500, damage: 0, fireRate: 0f, range: 60f, explosion: 0f),
+                CreateTower(towerPath, "Knights Guild", side: Side.Light, cost: 550, damage: 0, fireRate: 0f, range: 50f, explosion: 0f)
+            };
+            EditorUtility.SetDirty(barracks);
+        }
+
+        // 12. Graveyard -> Lich Crypt / Zombie Nest
+        TowerData graveyard = AssetDatabase.LoadAssetAtPath<TowerData>($"{towerPath}/Graveyard.asset");
+        if (graveyard != null)
+        {
+            graveyard.specializations = new System.Collections.Generic.List<TowerData>
+            {
+                CreateTower(towerPath, "Lich Crypt", side: Side.Dark, cost: 500, damage: 0, fireRate: 0f, range: 55f, explosion: 0f),
+                CreateTower(towerPath, "Zombie Nest", side: Side.Dark, cost: 480, damage: 0, fireRate: 0f, range: 45f, explosion: 0f)
+            };
+            EditorUtility.SetDirty(graveyard);
+        }
+
         AssetDatabase.SaveAssets();
+    }
+
+    public static void GenerateEliteTowerPrefabs(string towerPath)
+    {
+        string prefabPath = "Assets/Prefabs/Gameplay/Towers";
+        string[] towerGuids = AssetDatabase.FindAssets("t:TowerData", new[] { towerPath });
+        
+        int count = 0;
+        foreach (string guid in towerGuids)
+        {
+            TowerData eliteData = AssetDatabase.LoadAssetAtPath<TowerData>(AssetDatabase.GUIDToAssetPath(guid));
+            if (eliteData == null || eliteData.isBaseTower) continue;
+
+            // Eğer zaten prefabı varsa geç
+            if (eliteData.prefab != null) continue;
+
+            // Bu elit kulenin ana (base) kulesini bul
+            TowerData baseData = FindBaseTowerOfSpecialization(eliteData);
+            if (baseData == null || baseData.prefab == null) continue;
+
+            // Prefab oluştur (Base prefab'ı kopyala)
+            string newPfbPath = $"{prefabPath}/{eliteData.towerName.Replace(" ", "_")}.prefab";
+            if (!System.IO.File.Exists(newPfbPath))
+            {
+                if (AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(baseData.prefab), newPfbPath))
+                {
+                    GameObject root = PrefabUtility.LoadPrefabContents(newPfbPath);
+                    
+                    // Görsel Fark: Renderer'lara renk ver
+                    Color tint = (eliteData.side == Side.Light) ? new Color(1f, 0.9f, 0.5f) : new Color(0.6f, 0.4f, 1f);
+                    foreach (var rend in root.GetComponentsInChildren<Renderer>())
+                    {
+                        foreach (var mat in rend.materials)
+                        {
+                            if (mat.HasProperty("_Color")) mat.color *= tint;
+                            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", mat.GetColor("_BaseColor") * tint);
+                        }
+                    }
+
+                    // Tower bileşenini güncelle
+                    Tower tower = root.GetComponent<Tower>();
+                    if (tower != null)
+                    {
+                        var so = new SerializedObject(tower);
+                        so.FindProperty("towerData").objectReferenceValue = eliteData;
+                        so.ApplyModifiedProperties();
+                    }
+
+                    PrefabUtility.SaveAsPrefabAsset(root, newPfbPath);
+                    PrefabUtility.UnloadPrefabContents(root);
+                    
+                    eliteData.prefab = AssetDatabase.LoadAssetAtPath<GameObject>(newPfbPath);
+                    EditorUtility.SetDirty(eliteData);
+                    count++;
+                }
+            }
+        }
+
+        if (count > 0)
+        {
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"✔ Generated {count} Elite Tower Prefabs automatically!");
+        }
     }
 
     private static void LinkUnitProjectiles()
@@ -548,13 +692,84 @@ public class DataAssetGenerator : Editor
 
         GameObject root = PrefabUtility.LoadPrefabContents(path);
 
-        // 1. Tower Script
+        // 1. Tower Script (Barracks check - Uzmanlaşmış kışlaları da kapsar)
+        bool isBarracks = data.towerName.Contains("Barracks") || data.towerName.Contains("Graveyard") || 
+                         data.towerName.Contains("Crypt") || data.towerName.Contains("Nest") || 
+                         data.towerName.Contains("Guild") || data.towerName.Contains("Paladin");
+        
         Tower tower = root.GetComponent<Tower>();
-        if (tower == null) tower = root.AddComponent<Tower>();
+        if (isBarracks)
+        {
+            if (tower != null && !(tower is BarracksTower)) { DestroyImmediate(tower, true); tower = null; }
+            if (tower == null) tower = root.AddComponent<BarracksTower>();
+            
+            // Asker Verisi Ataması
+            BarracksTower bt = (BarracksTower)tower;
+            string soldierName = (data.side == Side.Light) ? "Light_Swordsman" : "Skeleton_Warrior";
+            bt.soldierData = AssetDatabase.LoadAssetAtPath<UnitData>($"Assets/Data/Units/{soldierName}.asset");
+            bt.soldierCount = 3;
+            bt.respawnDelay = 12f;
+
+            // Rally Indicator Ataması (Yeni oluşturduğun prefab)
+            bt.rallyIndicatorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/RallyIndicator.prefab");
+        }
+        else
+        {
+            if (tower == null) tower = root.AddComponent<Tower>();
+        }
         
         var so = new SerializedObject(tower);
         so.FindProperty("towerData").objectReferenceValue = data;
         so.ApplyModifiedProperties();
+
+        // Kışla kuleleri mermi atmaz: Weapon görselini kaldır
+        if (isBarracks)
+        {
+            Transform visuals = root.transform.Find("Visuals");
+            if (visuals != null)
+            {
+                Transform weapon = visuals.Find("Weapon");
+                if (weapon != null)
+                {
+                    Object.DestroyImmediate(weapon.gameObject);
+                    Debug.Log($"✔ Removed Weapon visual from barracks tower: {prefab.name}");
+                }
+
+                // Icon ataması: Visuals altındaki ilk nesnenin adıyla ara
+                // (Kullanıcı icon dosyasını bu isimle oluşturdu)
+                if (data.icon == null && visuals.childCount > 0)
+                {
+                    string visualChildName = visuals.GetChild(0).name;
+                    
+                    // Önce "{visualChildName}_Icon.png" dene
+                    Sprite foundIcon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{visualChildName}_Icon.png");
+                    // Sonra "{visualChildName}.png" dene
+                    if (foundIcon == null)
+                        foundIcon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{visualChildName}.png");
+                    // Son çare: "{towerName}_Icon.png" (standart format)
+                    if (foundIcon == null)
+                    {
+                        string safeName = data.towerName.Replace(" ", "_");
+                        foundIcon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{safeName}_Icon.png");
+                    }
+
+                    if (foundIcon != null)
+                    {
+                        data.icon = foundIcon;
+                        EditorUtility.SetDirty(data);
+                        Debug.Log($"✔ Icon linked for barracks tower '{prefab.name}': {foundIcon.name}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Barracks] Icon not found for '{prefab.name}'. Looked for '{visualChildName}_Icon.png' in Assets/Data/Icons/");
+                    }
+                }
+            }
+            // Kışla kuleleri mermi atmaz ve menzili 0'dır
+            data.projectilePrefab = null;
+            data.range = 0;
+            EditorUtility.SetDirty(data);
+        }
 
         // 2. Collider & Layer Setup
         int towerLayer = (data.side == Side.Light) ? 6 : 7;
@@ -641,6 +856,7 @@ public class DataAssetGenerator : Editor
         LinkPair(towerPath, "Mage_Tower", "Poison_Spitter");
         LinkPair(towerPath, "Ballista_Tower", "Void_Obelisk");
         LinkPair(towerPath, "Solar_Prism", "Soul_Harvester");
+        LinkPair(towerPath, "Barracks", "Graveyard"); // Kışla <-> Mezarlık
 
         // Uzmanlaşmış Kule Eşleştirmeleri (Elite) - İsimler Senkronize Edildi
         LinkPair(towerPath, "Sniper_Tower", "Void_Guard");
@@ -714,11 +930,20 @@ public class DataAssetGenerator : Editor
                 }
             }
 
-            // 3. Projectile Ataması (Güçlendirildi: Miras desteği)
-            if (data.projectilePrefab == null)
+            // 3. Projectile & Range Ataması (Kışla kontrolü eklendi)
+            string n = data.towerName.ToLower();
+            bool isSpawner = n.Contains("barracks") || n.Contains("graveyard") || n.Contains("crypt") || 
+                            n.Contains("nest") || n.Contains("guild") || n.Contains("paladin");
+
+            if (isSpawner)
+            {
+                data.projectilePrefab = null;
+                // data.range = 0; // BU SATIRI KALDIRDIK - Artık menzil veriden geliyor
+                changed = true;
+            }
+            else if (data.projectilePrefab == null)
             {
                 string projName = "Archer_Arrow";
-                string n = data.towerName.ToLower();
                 if (n.Contains("mage") || n.Contains("soul") || n.Contains("void") || n.Contains("prism")) projName = "Mage_Bolt";
                 else if (n.Contains("cannon") || n.Contains("catapult") || n.Contains("bone")) projName = "Cannon_Ball";
                 
@@ -729,7 +954,6 @@ public class DataAssetGenerator : Editor
                     if (baseTower != null && baseTower.projectilePrefab != null)
                     {
                         foundProj = baseTower.projectilePrefab;
-                        Debug.Log($"[REPAIR] {data.towerName} used base projectile from {baseTower.towerName}");
                     }
                 }
 
@@ -870,9 +1094,19 @@ public class DataAssetGenerator : Editor
         int targetLayer = (data.side == Side.Light) ? 6 : 7;
         SetLayerRecursive(root, targetLayer);
 
-        // 1. Unit Script (Zaten vardır ama garantiye alalım)
+        // 1. Unit Script (Soldier check)
+        bool isSoldier = data.unitName.Contains("Swordsman") || data.unitName.Contains("Skeleton") || data.unitName.Contains("Knight");
         Unit unit = root.GetComponent<Unit>();
-        if (unit == null) unit = root.AddComponent<Unit>();
+        
+        if (isSoldier)
+        {
+            if (unit != null && !(unit is Soldier)) { DestroyImmediate(unit, true); unit = null; }
+            if (unit == null) unit = root.AddComponent<Soldier>();
+        }
+        else
+        {
+            if (unit == null) unit = root.AddComponent<Unit>();
+        }
 
         // 2. Health Bar UI Setup
         Transform hbTransform = root.transform.Find("HealthBarCanvas");
@@ -1098,5 +1332,77 @@ public class DataAssetGenerator : Editor
         else Debug.LogWarning($"⚠ [LevelGen] DİKKAT: {id} ({name}) için harita bulunamadı! Lütfen Assets/Maps/ altını kontrol edin.");
 
         EditorUtility.SetDirty(level);
+    }
+
+    [MenuItem("Tools/TD Setup/Generate Spells")]
+    public static void GenerateDefaultSpells()
+    {
+        string path = "Assets/Data/Spells";
+        EnsureDirectory(path, true); // TAM TEMİZLİK
+
+        // LIGHT SPELLS (3)
+        CreateSpell(path, "Spell_Light_Meteor_1", "Meteor Strike", Side.Light, 50, SpellType.Meteor, 100f, 4f, 15f);
+        CreateSpell(path, "Spell_Light_Meteor_2", "Elite Meteor", Side.Light, 150, SpellType.Meteor, 200f, 6f, 15f);
+        CreateSpell(path, "Spell_Light_Shield", "Divine Shield", Side.Light, 100, SpellType.Shield, 8f, 5f, 20f);
+        
+        // REINFORCEMENTS (2)
+        CreateSpell(path, "Spell_Light_Reinforce_1", "Reinforcements", Side.Light, 30, SpellType.Reinforcement, 2f, 0f, 25f);
+        CreateSpell(path, "Spell_Light_Reinforce_2", "Royal Guards", Side.Light, 120, SpellType.Reinforcement, 3f, 0f, 25f);
+
+        // DARK SPELLS (3)
+        CreateSpell(path, "Spell_Dark_Rift", "Abyssal Rift", Side.Dark, 120, SpellType.Meteor, 100f, 8f, 12f);
+        CreateSpell(path, "Spell_Dark_Bloodlust", "Bloodlust", Side.Dark, 80, SpellType.Buff, 1.5f, 4f, 10f);
+        CreateSpell(path, "Spell_Dark_Freeze", "Shadow Freeze", Side.Dark, 110, SpellType.Freeze, 4f, 6f, 18f);
+
+        // NEUTRAL SPELLS (1)
+        CreateSpell(path, "Spell_Neutral_Gold", "Gold Rush", Side.Neutral, 0, SpellType.GoldBoost, 100f, 0f, 60f);
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log("✔ 9 Unique Spells Generated Successfully with New Naming!");
+    }
+
+    private static void CreateSpell(string path, string id, string name, Side side, int cost, SpellType type, float power, float radius, float cooldown)
+    {
+        string assetPath = $"{path}/{id}.asset";
+        SpellData data = AssetDatabase.LoadAssetAtPath<SpellData>(assetPath);
+        if (data == null)
+        {
+            data = ScriptableObject.CreateInstance<SpellData>();
+            AssetDatabase.CreateAsset(data, assetPath);
+        }
+
+        data.spellID = id;
+        data.spellName = name;
+        data.side = side;
+        data.manaCost = cost;
+        data.spellType = type;
+        data.power = power;
+        data.radius = radius;
+        data.cooldown = cooldown;
+        
+        // Icon bulmaya çalış
+        data.icon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/Spells/{id}_Icon.png");
+
+        EditorUtility.SetDirty(data);
+        AssetDatabase.SaveAssetIfDirty(data);
+    }
+
+    private static void EnsureDirectory(string path, bool clear = false)
+    {
+        if (System.IO.Directory.Exists(path))
+        {
+            if (clear)
+            {
+                string[] files = System.IO.Directory.GetFiles(path);
+                foreach (string f in files) System.IO.File.Delete(f);
+                AssetDatabase.Refresh();
+            }
+        }
+        else
+        {
+            System.IO.Directory.CreateDirectory(path);
+            AssetDatabase.Refresh();
+        }
     }
 }

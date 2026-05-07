@@ -25,10 +25,26 @@ namespace TowerDefence.Editor
                 GUI.backgroundColor = new Color(0.7f, 1f, 0.7f); // Yeşil tonlu (Başarılı/Güvenli)
                 if (GUILayout.Button("COMPLETE SYSTEM REPAIR (Data, UI, Prefabs)", GUILayout.Height(40)))
                 {
-                    DataAssetGenerator.GenerateAllData(); // Veri Assetları ve Branşlar
-                    UIMasterPrefabCreator.CreateTowerUpgradeUIPrefab(); // UI Ölçek ve Canvas
-                    DataAssetGenerator.ConfigureTowerPrefabs(); // Prefab Entegrasyonu
-                    UIMasterPrefabCreator.CreateCoreEnginePrefab(); // Engine Güncelleme
+                    // 1. Data & Logic
+                    DataAssetGenerator.GenerateAllData(); 
+                    
+                    // 2. UI Panels (Atomic)
+                    UIMasterPrefabCreator.CreateTowerUpgradeUIPrefab();
+                    UIMasterPrefabCreator.CreateSkillTreeUIPrefab();
+                    UIMasterPrefabCreator.CreateLevelSelectionPanelPrefab();
+                    UIMasterPrefabCreator.CreateSideSelectionPanelPrefab();
+                    UIMasterPrefabCreator.CreateLevelResultUIPrefab();
+                    UIMasterPrefabCreator.CreateSpellSlotPrefabs();
+                    UIMasterPrefabCreator.CreateUnitButtonPrefab();
+
+                    // 3. Configurations
+                    DataAssetGenerator.ConfigureTowerPrefabs();
+                    DataAssetGenerator.ConfigureUnitPrefabs();
+                    
+                    // 4. Master Prefabs (Composite)
+                    UIMasterPrefabCreator.CreateCoreEnginePrefab();
+                    UIMasterPrefabCreator.CreateMainMenuMaster();
+                    UIMasterPrefabCreator.CreateGameplayHUDMaster();
                     
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();

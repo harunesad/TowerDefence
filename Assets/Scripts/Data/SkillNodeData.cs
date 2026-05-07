@@ -11,7 +11,10 @@ namespace TowerDefence.Data
         RangeBonus,
         SpeedBonus,
         CostReduction,
-        CurrencyStartBonus
+        CurrencyStartBonus,
+        TowerDamageBonus,
+        UnitSpeedBonus,
+        UnlockSpell
     }
 
     [CreateAssetMenu(fileName = "New Skill Node", menuName = "Tower Defence/Meta/Skill Node")]
@@ -29,6 +32,7 @@ namespace TowerDefence.Data
         [Header("Effect Settings")]
         public UpgradeType upgradeType;
         public float multiplier = 1.1f; // %10 artış için 1.1
+        public SpellData grantedSpell; // Eğer upgradeType == UnlockSpell ise bu büyü açılır
         public Side side; // Hangi tarafa ait olduğunu belirtir (Aydınlık/Karanlık/Genel)
 
         public bool IsUnlocked()

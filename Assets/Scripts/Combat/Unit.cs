@@ -11,7 +11,7 @@ namespace TowerDefence.Combat
     public class Unit : MonoBehaviour, IDamageable
     {
         [Header("Data")]
-        [SerializeField] private UnitData unitData;
+        [SerializeField] protected UnitData unitData;
 
         [Header("Movement")]
         [SerializeField] private float moveSpeed = 3f;
@@ -26,8 +26,8 @@ namespace TowerDefence.Combat
         private float pathOffset; // Yol üzerindeki yanal sapma (Sabitlendi)
         private Vector3 currentMoveTarget; // Bir sonraki waypoint hedefi (Ofset dahil)
         
-        private float currentHealth;
-        private Animator animator;
+        protected float currentHealth;
+        protected Animator animator;
         private float nextAttackTime;
         private bool isDead;
         private LayerMask targetLayer;
@@ -41,6 +41,16 @@ namespace TowerDefence.Combat
         public float GetHealth() => currentHealth;
         public int GetCurrentWaypointIndex() => currentWaypointIndex;
         public Vector3 GetCurrentMoveTarget() => currentMoveTarget;
+        public bool IsAttacking() => isAttacking;
+        public IDamageable GetTarget() => targetCombatant;
+
+        // --- BLOCKING SYSTEM ---
+        private bool isBlocked;
+        private Unit currentBlocker;
+        private List<Unit> blockedEnemies = new List<Unit>(); // Bizim engellediğimiz düşmanlar
+        public bool IsBlocked => isBlocked;
+        public void Block(Unit blocker) { isBlocked = true; currentBlocker = blocker; }
+        public void Unblock() { isBlocked = false; currentBlocker = null; }
 
         private void Awake()
         {
@@ -48,7 +58,7 @@ namespace TowerDefence.Combat
             if (unitData != null) Initialize(unitData);
         }
 
-        public void Initialize(UnitData data)
+        public void Initialize(UnitData data, float statMultiplier = 1f)
         {
             this.unitData = data;
             unitSide = data.side;
@@ -58,9 +68,9 @@ namespace TowerDefence.Combat
             float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.SpeedBonus, unitSide);
             float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.DamageBonus, unitSide);
 
-            maxHealth = data.maxHealth * healthMult;
+            maxHealth = data.maxHealth * healthMult * statMultiplier;
             moveSpeed = data.moveSpeed * speedMult;
-            attackDamage = data.attackDamage * damageMult;
+            attackDamage = data.attackDamage * damageMult * statMultiplier;
             attackRange = data.attackRange;
             attackRate = data.attackRate;
 
@@ -113,7 +123,7 @@ namespace TowerDefence.Combat
             FindTargetBase();
         }
 
-        private void Update()
+        protected virtual void Update()
         {
             if (isDead) return;
 
@@ -122,12 +132,13 @@ namespace TowerDefence.Combat
             HandleStatusEffects();
             UpdateTargetConflict();
 
-            // Savaş Durumu Check
+            // Savaş Durumu Check — isBlocked'dan bağımsız çalışır
             bool isFighting = false;
             if (targetCombatant != null && !targetCombatant.IsDead)
             {
                 float distance = Vector3.Distance(transform.position, ((MonoBehaviour)targetCombatant).transform.position);
-                if (distance <= attackRange)
+                // Saldırı menziline küçük bir tolerans ekle (+0.5f)
+                if (distance <= attackRange + 0.5f)
                 {
                     isFighting = true;
                     HandleRotation(((MonoBehaviour)targetCombatant).transform.position);
@@ -140,29 +151,41 @@ namespace TowerDefence.Combat
                 }
             }
 
-            // Hareket Mantığı
+            // Hareket Mantığı — isBlocked sadece yol/kovalama hareketini engeller
             bool isStunned = activeEffects.Exists(e => e.type == StatusEffectType.Stun);
-            
+
             if (!isFighting && !isStunned && !isAttacking)
             {
+                // Değişiklik: isBlocked olsa bile eğer bir hedefimiz (düello partnerimiz) varsa ona yürüyebilelim
                 if (targetCombatant != null && !targetCombatant.IsDead)
                 {
-                    // 1. Hedefi Kovala (Chase Logic - aggro radius içindelerse)
+                    // 1. Hedefi Kovala (Chase Logic)
                     Vector3 chaseTarget = ((MonoBehaviour)targetCombatant).transform.position;
-                    MoveTowardsTarget(chaseTarget);
+                    float distance = Vector3.Distance(transform.position, chaseTarget);
+                    
+                    // Yakın dövüşçü ise (Projectile yoksa) iyice dibine (1.2f) gir
+                    float stopDistance = (unitData.projectilePrefab == null) ? 1.2f : attackRange * 0.8f;
+                    
+                    if (distance > stopDistance)
+                    {
+                        MoveTowardsTarget(chaseTarget);
+                        if (animator != null) animator.SetBool("IsMoving", true);
+                    }
+                    else
+                    {
+                        if (animator != null) animator.SetBool("IsMoving", false);
+                    }
+                    
                     HandleRotation(chaseTarget);
-                    if (animator != null) animator.SetBool("IsMoving", true);
                 }
-                else
+                else if (!isBlocked)
                 {
-                    // 2. Düşman yoksa Waypoint Takibi yap
+                    // 2. Düşman yoksa ve engellenmemişsek Waypoint Takibi yap
                     Vector3 targetPos = Vector3.zero;
 
-                    // 1. Waypoint Takibi
                     if (currentPath != null && currentWaypointIndex < currentPath.GetWaypoints().Count)
                     {
                         targetPos = currentPath.GetWaypoints()[currentWaypointIndex].position;
-                        // Y Eksenini yoksayarak mesafe ölçümü yap (Overshoot ve geri gitmeyi engeller)
                         Vector3 flatPos = new Vector3(transform.position.x, 0, transform.position.z);
                         Vector3 flatTarget = new Vector3(currentMoveTarget.x, 0, currentMoveTarget.z);
                         
@@ -174,10 +197,9 @@ namespace TowerDefence.Combat
                                 OnReachPathEnd();
                                 return;
                             }
-                            UpdateMoveTarget(); // Yeni waypoint için hedefi güncelle
+                            UpdateMoveTarget();
                         }
                     }
-                    // 3. Üs Hedefi
                     else if (targetBase != null)
                     {
                         targetPos = targetBase.transform.position;
@@ -194,6 +216,13 @@ namespace TowerDefence.Combat
                         if (animator != null) animator.SetBool("IsMoving", false);
                     }
                 }
+                else
+                {
+                    // isBlocked: Yerinde dur, hedefe dön
+                    if (currentBlocker != null)
+                        HandleRotation(currentBlocker.transform.position);
+                    if (animator != null) animator.SetBool("IsMoving", false);
+                }
             }
             else
             {
@@ -201,7 +230,7 @@ namespace TowerDefence.Combat
             }
         }
 
-        private void MoveTowardsTarget(Vector3 targetPos)
+        protected void MoveTowardsTarget(Vector3 targetPos)
         {
             Vector3 targetWithMyY = new Vector3(targetPos.x, transform.position.y, targetPos.z);
             // MoveTowards kullanımı, hedefi geçip geri dönme (titreme) sorununu tamamen engeller
@@ -228,7 +257,7 @@ namespace TowerDefence.Combat
             }
         }
 
-        private void HandleRotation(Vector3 targetPos)
+        protected void HandleRotation(Vector3 targetPos)
         {
             Vector3 direction = (targetPos - transform.position);
             direction.y = 0; // Yerden yükselmeyi veya aşağı bakmayı engelle
@@ -251,42 +280,56 @@ namespace TowerDefence.Combat
             }
         }
 
+        public bool IsBlockingSomeone() => blockedEnemies.Count > 0;
+
         private void UpdateTargetConflict()
         {
-            // Aggro Range: Menzilli ise menzili kadar, yakın dövüş ise en az 8 birimlik geniş aggro yelpazesi
+            // 1. ÖNCELİK: Düello Partneri Kontrolü
+            if (blockedEnemies.Count > 0 && blockedEnemies[0] != null && !blockedEnemies[0].IsDead)
+            {
+                targetCombatant = blockedEnemies[0];
+                return;
+            }
+            if (isBlocked && currentBlocker != null && !currentBlocker.IsDead)
+            {
+                targetCombatant = currentBlocker;
+                return;
+            }
+
+            // 2. Yeni Hedef Arama (Sadece boştaki birimleri seç)
             float aggroRange = Mathf.Max(attackRange, 8f);
-            
-            // Önce yakındaki birimleri tara
             Collider[] colliders = Physics.OverlapSphere(transform.position, aggroRange, targetLayer);
             float shortestDist = aggroRange;
             IDamageable nearestUnit = null;
 
             foreach (var col in colliders)
             {
-                IDamageable damageable = col.GetComponent<IDamageable>();
-                if (damageable != null && !damageable.IsDead && damageable.GetSide() != unitSide)
+                Unit otherUnit = col.GetComponent<Unit>();
+                if (otherUnit != null && !otherUnit.IsDead && otherUnit.GetSide() != unitSide)
                 {
-                    // FİLTRE: Yakın dövüş birimleri kuleleri hedef alamaz
-                    if (unitData.projectilePrefab == null && damageable is Tower)
+                    // 1'E 1 KURALI: 
+                    // Eğer bu düşman birini engelliyorsa VE engellediği kişi BİZ DEĞİLSEK, ona dokunma!
+                    if (otherUnit.IsBlockingSomeone() && otherUnit.blockedEnemies[0] != this)
+                        continue;
+                    
+                    // Eğer bu düşman başkası tarafından engellenmişse, ona dokunma!
+                    if (otherUnit.IsBlocked && otherUnit.currentBlocker != this)
+                        continue;
+
+                    // Yakın dövüş birimleri kuleleri hedef alamaz
+                    if (unitData.projectilePrefab == null && otherUnit is Tower)
                         continue;
 
                     float dist = Vector3.Distance(transform.position, col.transform.position);
                     if (dist < shortestDist)
                     {
                         shortestDist = dist;
-                        nearestUnit = damageable;
+                        nearestUnit = otherUnit;
                     }
                 }
             }
 
-            if (nearestUnit != null)
-            {
-                targetCombatant = nearestUnit;
-            }
-            else
-            {
-                targetCombatant = null;
-            }
+            targetCombatant = nearestUnit;
         }
 
         private PathWaypoints currentPath;
@@ -534,6 +577,21 @@ namespace TowerDefence.Combat
         private void Die()
         {
             isDead = true;
+            
+            // Bizi engelleyen varsa onu boşa çıkar
+            if (currentBlocker != null)
+            {
+                currentBlocker.OnBlockedEnemyDied(this);
+                currentBlocker = null;
+            }
+
+            // Bizim engellediğimiz düşmanlar varsa onları serbest bırak
+            foreach (var enemy in blockedEnemies)
+            {
+                if (enemy != null) enemy.Unblock();
+            }
+            blockedEnemies.Clear();
+
             if (animator != null) animator.SetTrigger("Die");
             if (healthBar != null) healthBar.SetVisible(false);
 
@@ -562,6 +620,29 @@ namespace TowerDefence.Combat
             }
 
             Destroy(gameObject, 2f);
+        }
+
+        // --- SOLDIER SPECIFIC LOGIC ---
+        public void OnBlockedEnemyDied(Unit enemy)
+        {
+            blockedEnemies.Remove(enemy);
+            if (blockedEnemies.Count == 0)
+            {
+                // Artık birini engellemiyoruz, normal harekete dönebiliriz (Veya rally point'e)
+            }
+        }
+
+        public bool CanBlockMore() => blockedEnemies.Count < 1; // Şimdilik 1 asker 1 düşman
+
+        public void StartBlocking(Unit enemy)
+        {
+            if (!blockedEnemies.Contains(enemy))
+            {
+                blockedEnemies.Add(enemy);
+                enemy.Block(this);
+                // Düşmana kilitlen
+                targetCombatant = enemy;
+            }
         }
     }
 }

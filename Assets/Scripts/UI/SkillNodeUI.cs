@@ -17,6 +17,7 @@ namespace TowerDefence.UI
         [SerializeField] private TextMeshProUGUI costText;
         [SerializeField] private Image lockedOverlay;
         [SerializeField] private Image purchasedOverlay;
+        [SerializeField] private TextMeshProUGUI typeText; // Yeni: PASİF / AKTİF etiketi
 
         [Header("Audio")]
         [SerializeField] private AudioClip unlockSFX;
@@ -24,7 +25,13 @@ namespace TowerDefence.UI
 
         private void Start()
         {
-            if (skillData != null) SetupUI(skillData);
+            if (skillData == null)
+            {
+                gameObject.SetActive(false);
+                return;
+            }
+
+            SetupUI(skillData);
             buyButton.onClick.AddListener(OnBuyClicked);
         }
 
@@ -33,11 +40,21 @@ namespace TowerDefence.UI
             skillData = data;
             iconImage.sprite = data.icon;
             costText.text = data.karmaCost.ToString();
+
+            if (typeText != null)
+            {
+                bool isActive = data.upgradeType == UpgradeType.UnlockSpell;
+                typeText.text = isActive ? "ACTIVE" : "PASSIVE";
+                typeText.color = isActive ? new Color(1f, 0.8f, 0.2f) : Color.white; // Aktifler altın sarısı
+            }
+
             RefreshStatus();
         }
 
         public void RefreshStatus()
         {
+            if (skillData == null) return;
+
             bool isUnlocked = MetaProgressionManager.Instance.IsSkillUnlocked(skillData.skillID);
             
             purchasedOverlay.gameObject.SetActive(isUnlocked);

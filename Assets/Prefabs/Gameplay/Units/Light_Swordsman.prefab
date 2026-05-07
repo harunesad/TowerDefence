@@ -193,8 +193,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2742840613312453450}
   - component: {fileID: 8358554767434690941}
-  - component: {fileID: 2746358362801263459}
   - component: {fileID: 6893728513188048735}
+  - component: {fileID: 8288764232906874855}
   m_Layer: 6
   m_Name: Light_Swordsman
   m_TagString: Untagged
@@ -241,22 +241,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &2746358362801263459
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5537708628925015529}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a55f444bbf4d8814c8ebe1bb72f25d7c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.Unit
-  unitData: {fileID: 11400000, guid: 2d71f26914620494399155c788c7049d, type: 2}
-  moveSpeed: 3
-  rotationSpeed: 10
-  healthBar: {fileID: 6409501507313759701}
 --- !u!136 &6893728513188048735
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -280,6 +264,23 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!114 &8288764232906874855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5537708628925015529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3b25819ca31f6d4e9f433000abf7e3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.Soldier
+  unitData: {fileID: 11400000, guid: 2d71f26914620494399155c788c7049d, type: 2}
+  moveSpeed: 3
+  rotationSpeed: 10
+  healthBar: {fileID: 6409501507313759701}
+  searchRadius: 1.5
 --- !u!1 &8424559565875265096
 GameObject:
   m_ObjectHideFlags: 0

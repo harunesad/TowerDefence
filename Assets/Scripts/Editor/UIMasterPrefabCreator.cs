@@ -126,12 +126,38 @@ namespace TowerDefence.Editor
             TextMeshProUGUI karmaTmp = CreateTMP(header.transform, "KarmaText", "Karma: 0", 32, 280, 60);
             karmaTmp.color = new Color(0.6f, 1f, 0.6f);
 
-            // Bilgi/Hata Mesajı Alanı (Yeni)
-            TextMeshProUGUI feedbackTmp = CreateTMP(root.transform, "FeedbackText", "", 24, 600, 40);
-            feedbackTmp.rectTransform.anchorMin = new Vector2(0.5f, 0f);
-            feedbackTmp.rectTransform.anchorMax = new Vector2(0.5f, 0f);
-            feedbackTmp.rectTransform.anchoredPosition = new Vector2(0, 50);
-            feedbackTmp.alignment = TMPro.TextAlignmentOptions.Center;
+            // --- Tabs: Side Selection ---
+            GameObject sideTabs = CreateUINode(root.transform, "SideTabs", new Vector2(800, 60));
+            RectTransform sideRT = sideTabs.GetComponent<RectTransform>();
+            sideRT.anchorMin = new Vector2(0.5f, 1f);
+            sideRT.anchorMax = new Vector2(0.5f, 1f);
+            sideRT.pivot = new Vector2(0.5f, 1f);
+            sideRT.anchoredPosition = new Vector2(0, -100); // Header'ın (400->-50) altında
+
+            HorizontalLayoutGroup sHlg = sideTabs.AddComponent<HorizontalLayoutGroup>();
+            sHlg.childAlignment = TextAnchor.MiddleCenter;
+            sHlg.spacing = 20;
+
+            Button btnLight = CreateButton(sideTabs.transform, "LightTab", "LIGHT", 180, 50, 18);
+            Button btnDark  = CreateButton(sideTabs.transform, "DarkTab", "DARK", 180, 50, 18);
+            Button btnNeut  = CreateButton(sideTabs.transform, "NeutralTab", "GENERAL", 180, 50, 18);
+
+            // --- Tabs: Category Selection ---
+            GameObject catTabs = CreateUINode(root.transform, "CategoryTabs", new Vector2(600, 50));
+            RectTransform catRT = catTabs.GetComponent<RectTransform>();
+            catRT.anchorMin = new Vector2(0.5f, 1f);
+            catRT.anchorMax = new Vector2(0.5f, 1f);
+            catRT.pivot = new Vector2(0.5f, 1f);
+            catRT.anchoredPosition = new Vector2(0, -170); // SideTabs'ın altında
+
+            HorizontalLayoutGroup cHlg = catTabs.AddComponent<HorizontalLayoutGroup>();
+            cHlg.childAlignment = TextAnchor.MiddleCenter;
+            cHlg.spacing = 15;
+
+            Button btnPassives = CreateButton(catTabs.transform, "PassivesTab", "PASSIVES", 200, 45, 16);
+            Button btnSpells   = CreateButton(catTabs.transform, "SpellsTab", "ACTIVE SPELLS", 200, 45, 16);
+
+            SkillTreeUI uiScript = root.GetComponent<SkillTreeUI>();
 
             // Geri Butonu (sol üst)
             Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 160, 55, 22);
@@ -139,6 +165,25 @@ namespace TowerDefence.Editor
             backRT.anchorMin = new Vector2(0, 1); backRT.anchorMax = new Vector2(0, 1);
             backRT.pivot = new Vector2(0, 1);
             backRT.anchoredPosition = new Vector2(20, -12);
+
+            // Feedback Text
+            TextMeshProUGUI feedbackTmp = CreateTMP(root.transform, "FeedbackText", "", 24, 600, 40);
+            feedbackTmp.rectTransform.anchoredPosition = new Vector2(0, -320);
+            feedbackTmp.alignment = TMPro.TextAlignmentOptions.Center;
+
+            // Link master references
+            var so = new UnityEditor.SerializedObject(uiScript);
+            so.FindProperty("totalKarmaText").objectReferenceValue = karmaTmp;
+            so.FindProperty("feedbackText").objectReferenceValue   = feedbackTmp;
+            so.FindProperty("backButton").objectReferenceValue     = backBtn;
+            
+            so.FindProperty("btnLight").objectReferenceValue       = btnLight;
+            so.FindProperty("btnDark").objectReferenceValue        = btnDark;
+            so.FindProperty("btnNeutral").objectReferenceValue     = btnNeut;
+            so.FindProperty("btnPassives").objectReferenceValue    = btnPassives;
+            so.FindProperty("btnSpells").objectReferenceValue      = btnSpells;
+            
+            so.ApplyModifiedProperties();
 
             // --- Scroll View ---
             GameObject scroll = new GameObject("NodesScrollView", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
@@ -148,7 +193,7 @@ namespace TowerDefence.Editor
             scrollRT.anchorMin = new Vector2(0, 0);
             scrollRT.anchorMax = new Vector2(1, 1);
             scrollRT.offsetMin = new Vector2(10, 10);
-            scrollRT.offsetMax = new Vector2(-10, -90);
+            scrollRT.offsetMax = new Vector2(-10, -230); // Sekmelerin altında başlasın
 
             // Content (grid içindeki node'lar burada)
             GameObject content = new GameObject("Content", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
@@ -179,7 +224,7 @@ namespace TowerDefence.Editor
             sr.scrollSensitivity = 30;
 
             // --- Tüm SkillNodeData'ları otomatik bul ve node oluştur ---
-            string[] guids = AssetDatabase.FindAssets("t:SkillNodeData");
+            string[] guids = AssetDatabase.FindAssets("t:SkillNodeData", new[] { "Assets/Data/Skills" });
             var nodeUIList = new System.Collections.Generic.List<SkillNodeUI>();
 
             foreach (string guid in guids)
@@ -233,6 +278,15 @@ namespace TowerDefence.Editor
                 purchasedGO.GetComponent<Image>().color = new Color(0.1f, 0.8f, 0.1f, 0.55f);
                 purchasedGO.SetActive(false);
 
+                // Type Label (Passive/Active)
+                TextMeshProUGUI typeTmp = CreateTMP(node.transform, "TypeText", "PASSIVE", 12, 100, 20);
+                typeTmp.rectTransform.anchorMin = new Vector2(0, 0.9f);
+                typeTmp.rectTransform.anchorMax = new Vector2(1, 1);
+                typeTmp.rectTransform.offsetMin = new Vector2(5, 0);
+                typeTmp.rectTransform.offsetMax = new Vector2(-5, -2);
+                typeTmp.alignment = TMPro.TextAlignmentOptions.Left;
+                typeTmp.fontStyle = TMPro.FontStyles.Bold | TMPro.FontStyles.Italic;
+
                 // SkillNodeUI referanslarını bağla
                 SkillNodeUI nodeUI = node.GetComponent<SkillNodeUI>();
                 var nodeSO = new UnityEditor.SerializedObject(nodeUI);
@@ -242,6 +296,7 @@ namespace TowerDefence.Editor
                 nodeSO.FindProperty("costText").objectReferenceValue         = costTmp;
                 nodeSO.FindProperty("lockedOverlay").objectReferenceValue    = lockedGO.GetComponent<Image>();
                 nodeSO.FindProperty("purchasedOverlay").objectReferenceValue = purchasedGO.GetComponent<Image>();
+                nodeSO.FindProperty("typeText").objectReferenceValue         = typeTmp;
                 nodeSO.ApplyModifiedProperties();
                 nodeUIList.Add(nodeUI);
             }
@@ -489,15 +544,51 @@ namespace TowerDefence.Editor
             GameObject btnRow = CreateUINode(root.transform, "SideButtonContainer", new Vector2(900, 100));
             btnRow.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
             HorizontalLayoutGroup hlg = btnRow.AddComponent<HorizontalLayoutGroup>();
-            hlg.childAlignment = TextAnchor.MiddleCenter;
-            hlg.spacing = 100;
-            hlg.childControlWidth = false;
-            hlg.childForceExpandWidth = false;
+            // --- Phase 1: Side Selection ---
+            GameObject sideGroup = CreateUINode(root.transform, "SideSelectionGroup", new Vector2(800, 400));
+            VerticalLayoutGroup sideVlg = sideGroup.AddComponent<VerticalLayoutGroup>();
+            sideVlg.childAlignment = TextAnchor.MiddleCenter;
+            sideVlg.spacing = 30;
 
-            Button lightBtn = CreateButton(btnRow.transform, "LightSideButton", "☀ LIGHT", 350, 90, 36);
-            lightBtn.GetComponent<Image>().color = new Color(0.95f, 0.9f, 0.5f);
-            Button darkBtn  = CreateButton(btnRow.transform, "DarkSideButton",  "☾ DARK", 350, 90, 36);
+            TextMeshProUGUI sideTitle = CreateTMP(sideGroup.transform, "Title", "CHOOSE YOUR SIDE", 48, 600, 70);
+            sideTitle.color = Color.white;
+
+            GameObject sideBtnRow = CreateUINode(sideGroup.transform, "ButtonRow", new Vector2(800, 200));
+            HorizontalLayoutGroup rowHlg = sideBtnRow.AddComponent<HorizontalLayoutGroup>();
+            rowHlg.childAlignment = TextAnchor.MiddleCenter;
+            rowHlg.spacing = 50;
+
+            Button lightBtn = CreateButton(sideBtnRow.transform, "LightSideButton", "LIGHT SIDE", 300, 100, 28);
+            lightBtn.GetComponent<Image>().color = new Color(0.9f, 0.9f, 1f);
+            
+            Button darkBtn = CreateButton(sideBtnRow.transform, "DarkSideButton", "DARK SIDE", 300, 100, 28);
             darkBtn.GetComponent<Image>().color = new Color(0.25f, 0.1f, 0.4f);
+
+            // --- Phase 2: Spell Loadout ---
+            GameObject loadoutGroup = CreateUINode(root.transform, "SpellLoadoutGroup", new Vector2(1000, 600));
+            loadoutGroup.SetActive(false); // Başlangıçta gizli
+            
+            TextMeshProUGUI loadoutTitle = CreateTMP(loadoutGroup.transform, "Title", "EQUIP YOUR SPELLS (Max 3)", 42, 700, 60);
+            loadoutTitle.rectTransform.anchoredPosition = new Vector2(0, 250);
+
+            GameObject scroll = new GameObject("SpellScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+            scroll.transform.SetParent(loadoutGroup.transform, false);
+            scroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.3f);
+            RectTransform scrollRT = scroll.GetComponent<RectTransform>();
+            scrollRT.sizeDelta = new Vector2(900, 350);
+            scrollRT.anchoredPosition = new Vector2(0, 20);
+
+            GameObject content = CreateUINode(scroll.transform, "Content", new Vector2(850, 300));
+            GridLayoutGroup glg = content.AddComponent<GridLayoutGroup>();
+            glg.cellSize = new Vector2(120, 150);
+            glg.spacing = new Vector2(20, 20);
+            glg.childAlignment = TextAnchor.UpperCenter;
+
+            scroll.GetComponent<ScrollRect>().content = content.GetComponent<RectTransform>();
+
+            Button startMatchBtn = CreateButton(loadoutGroup.transform, "StartMatchButton", "START BATTLE", 350, 90, 32);
+            startMatchBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -220);
+            startMatchBtn.GetComponent<Image>().color = new Color(0.2f, 0.8f, 0.2f);
 
             // Back Button
             Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 180, 60, 22);
@@ -513,10 +604,61 @@ namespace TowerDefence.Editor
             so.FindProperty("lightSideButton").objectReferenceValue = lightBtn;
             so.FindProperty("darkSideButton").objectReferenceValue  = darkBtn;
             so.FindProperty("backButton").objectReferenceValue      = backBtn;
+            
+            so.FindProperty("sideSelectionGroup").objectReferenceValue = sideGroup;
+            so.FindProperty("spellLoadoutGroup").objectReferenceValue   = loadoutGroup;
+            so.FindProperty("spellItemContainer").objectReferenceValue  = content.transform;
+            so.FindProperty("startMatchButton").objectReferenceValue    = startMatchBtn;
+            
+            // Spell Item Prefab
+            GameObject itemPrefab = CreateSpellLoadoutItemPrefab();
+            so.FindProperty("spellItemPrefab").objectReferenceValue = itemPrefab;
+
+            // Auto-Populate allPossibleSpells
+            string[] spellGuids = AssetDatabase.FindAssets("t:SpellData", new[] { "Assets/Data/Spells" });
+            var allSpellsProp = so.FindProperty("allPossibleSpells");
+            allSpellsProp.ClearArray();
+            for (int i = 0; i < spellGuids.Length; i++)
+            {
+                allSpellsProp.InsertArrayElementAtIndex(i);
+                allSpellsProp.GetArrayElementAtIndex(i).objectReferenceValue = AssetDatabase.LoadAssetAtPath<SpellData>(AssetDatabase.GUIDToAssetPath(spellGuids[i]));
+            }
+
             so.ApplyModifiedProperties();
 
             PrefabUtility.SaveAsPrefabAsset(root, PREFAB_PATH + "/SideSelectionPanel.prefab");
             GameObject.DestroyImmediate(root);
+        }
+
+        private static GameObject CreateSpellLoadoutItemPrefab()
+        {
+            EnsureDirectory();
+            GameObject root = new GameObject("SpellLoadoutItem", typeof(RectTransform), typeof(Image), typeof(Button), typeof(SpellLoadoutItemUI));
+            RectTransform rootRT = root.GetComponent<RectTransform>();
+            rootRT.sizeDelta = new Vector2(120, 150);
+            root.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+
+            // Icon
+            Image icon = CreateImage(root.transform, "Icon", new Vector2(100, 100));
+            icon.rectTransform.anchoredPosition = new Vector2(0, 20);
+
+            // Highlight (Seçili olduğunu gösteren çerçeve)
+            Image highlight = CreateImage(root.transform, "Highlight", new Vector2(120, 150));
+            highlight.color = new Color(1f, 0.85f, 0f, 0.5f); // Altın sarısı yarı saydam
+            highlight.gameObject.SetActive(false);
+
+            SpellLoadoutItemUI ui = root.GetComponent<SpellLoadoutItemUI>();
+            var so = new SerializedObject(ui);
+            so.FindProperty("iconImage").objectReferenceValue = icon;
+            so.FindProperty("selectionHighlight").objectReferenceValue = highlight;
+            so.FindProperty("button").objectReferenceValue = root.GetComponent<Button>();
+            so.ApplyModifiedProperties();
+
+            string path = PREFAB_PATH + "/SpellLoadoutItem.prefab";
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            GameObject.DestroyImmediate(root);
+            return prefab;
         }
 
         public static void CreateGameplayHUDMaster()
@@ -561,7 +703,7 @@ namespace TowerDefence.Editor
             hudSo.ApplyModifiedProperties();
 
             // 3. Spell Selection Panel (Bottom Right)
-            GameObject spellPanel = new GameObject("SpellPanel", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(Image));
+            GameObject spellPanel = new GameObject("SpellPanel", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(Image), typeof(SpellSelectionUI));
             spellPanel.transform.SetParent(root.transform);
             RectTransform spellRT = spellPanel.GetComponent<RectTransform>();
             spellRT.anchorMin = new Vector2(1, 0); // Sağ alt
@@ -574,6 +716,40 @@ namespace TowerDefence.Editor
             HorizontalLayoutGroup hlg = spellPanel.GetComponent<HorizontalLayoutGroup>();
             hlg.childAlignment = TextAnchor.MiddleCenter;
             hlg.spacing = 20;
+
+            // SpellSelectionUI Konfigürasyonu
+            SpellSelectionUI ssUI = spellPanel.GetComponent<SpellSelectionUI>();
+            var ssSo = new SerializedObject(ssUI);
+            ssSo.FindProperty("spellContainer").objectReferenceValue = spellPanel.transform;
+            
+            string spellBtnPath = PREFAB_PATH + "/SpellButton_Template.prefab";
+            GameObject spellBtnPfb = AssetDatabase.LoadAssetAtPath<GameObject>(spellBtnPath);
+            if (spellBtnPfb == null) {
+                CreateSpellSlotPrefabs();
+                spellBtnPfb = AssetDatabase.LoadAssetAtPath<GameObject>(spellBtnPath);
+            }
+            ssSo.FindProperty("spellButtonPrefab").objectReferenceValue = spellBtnPfb;
+            
+            // Büyü listelerini otomatik doldur
+            string[] sGuids = AssetDatabase.FindAssets("t:SpellData", new[] { "Assets/Data/Spells" });
+            var lightList = ssSo.FindProperty("lightSpells");
+            var darkList = ssSo.FindProperty("darkSpells");
+            lightList.ClearArray();
+            darkList.ClearArray();
+            
+            foreach (var guid in sGuids)
+            {
+                var sData = AssetDatabase.LoadAssetAtPath<SpellData>(AssetDatabase.GUIDToAssetPath(guid));
+                if (sData == null) continue;
+                if (sData.side == Side.Light) {
+                    lightList.InsertArrayElementAtIndex(lightList.arraySize);
+                    lightList.GetArrayElementAtIndex(lightList.arraySize - 1).objectReferenceValue = sData;
+                } else {
+                    darkList.InsertArrayElementAtIndex(darkList.arraySize);
+                    darkList.GetArrayElementAtIndex(darkList.arraySize - 1).objectReferenceValue = sData;
+                }
+            }
+            ssSo.ApplyModifiedProperties();
 
             // 4. Unit Selection Panel (New)
             GameObject unitPanel = new GameObject("UnitPanel", typeof(RectTransform), typeof(HorizontalLayoutGroup));
@@ -1105,6 +1281,7 @@ namespace TowerDefence.Editor
             Debug.Log("✔ Level designs initialized. Now click 'GENERATE ALL LEVEL MAPS' to apply.");
         }
 
+        [MenuItem("Tools/TD Setup/REGENERATE ALL LEVEL MAPS")]
         public static void GenerateAllLevelMaps()
         {
             // Eski haritaları temizle (Pembe kalıntıları önlemek için)
@@ -1362,6 +1539,21 @@ namespace TowerDefence.Editor
                     tile.transform.forward = dir;
                     tile.transform.localScale = new Vector3(6.0f, 2.0f, 2.5f); // Genişlik ve uzunluk biraz artırıldı
                     
+                    // YENİ: Katman ataması ve Collider kontrolü (Tüm alt objeler dahil)
+                    tile.layer = LayerMask.NameToLayer("Path");
+                    if (tile.GetComponentInChildren<Collider>() == null)
+                    {
+                        var col = tile.AddComponent<BoxCollider>();
+                        col.size = new Vector3(1, 0.5f, 1);
+                        col.center = new Vector3(0, 0.25f, 0);
+                    }
+                    
+                    // Tüm çocukları da aynı katmana al
+                    foreach (Transform child in tile.GetComponentsInChildren<Transform>(true))
+                    {
+                        child.gameObject.layer = tile.layer;
+                    }
+
                     FixMaterialRecursive(tile);
                     placedPathTiles.Add(key);
                 }

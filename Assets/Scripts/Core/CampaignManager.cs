@@ -59,6 +59,21 @@ namespace TowerDefence.Core
             }
         }
 
+        public void RestartLevel()
+        {
+            if (currentSelectedLevel != null)
+            {
+                // Her şeyi temizle
+                if (currentMapInstance != null) Destroy(currentMapInstance);
+                
+                // Sahne yüklendiğinde haritayı tekrar kurması için abone ol
+                SceneManager.sceneLoaded += OnLevelSceneLoaded;
+                SceneManager.LoadScene(currentSelectedLevel.sceneIndex);
+                
+                Debug.Log($"[CampaignManager] Restarting Level: {currentSelectedLevel.levelName}");
+            }
+        }
+
         private void OnLevelSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             // Sadece bir kez çalışması için çıkar

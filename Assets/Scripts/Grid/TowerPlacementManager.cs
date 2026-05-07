@@ -37,8 +37,8 @@ namespace TowerDefence.Grid
 
         private void Update()
         {
-            // Yeni Input Sistemi kontrolü
-            if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+            // Yeni Input Sistemi'nde hem fare hem dokunmatik için en iyi yöntem: Pointer.current
+            if (Pointer.current != null && Pointer.current.press.wasPressedThisFrame)
             {
                 bool isOverUI = false;
                 string uiName = "None";
@@ -50,7 +50,7 @@ namespace TowerDefence.Grid
                     if (isOverUI)
                     {
                         var pointerData = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current);
-                        pointerData.position = Mouse.current.position.ReadValue();
+                        pointerData.position = Pointer.current.position.ReadValue();
                         var results = new List<UnityEngine.EventSystems.RaycastResult>();
                         UnityEngine.EventSystems.EventSystem.current.RaycastAll(pointerData, results);
                         if (results.Count > 0) uiName = results[0].gameObject.name;
@@ -62,12 +62,15 @@ namespace TowerDefence.Grid
                 if (isOverUI) 
                 {
                     // Şeffaf ama Raycast Target'ı açık kalmış GameplayHUD_MasterPrefab gibi kapsayıcıları veya metinleri görmezden gel
-                    // AYRICA: Kulelerin kendi üzerindeki (World Space) menülerin tıklamayı bloklamasını engelle (Archer_Tower, TowerUpgradeUI vb.)
+                    // AYRICA: Dünyadaki objelerin (tile, path) PhysicsRaycaster yüzünden UI gibi algılanmasını engelle
                     bool isIgnorable = uiName.Contains("MasterPrefab") || 
+                                     uiName.Contains("MainPanel") || uiName.Contains("Clone") ||
+                                     uiName.Contains("tile") || uiName.Contains("path") || // DÜZELTME: Yolları engel olarak görme!
                                      (uiName.Contains("Panel") && !uiName.Contains("Selection") && !uiName.Contains("Upgrade")) ||
                                      uiName.Contains("Label") || uiName.Contains("Text") || uiName.Contains("TMP") || uiName.Contains("TextMesh") ||
                                      uiName.Contains("_Tower") || uiName.Contains("TowerUpgradeUI") || uiName.Contains("SelectionPrefab") ||
-                                     uiName.Contains("BaseTowerSlotPrefab") || uiName.Contains("Background");
+                                     uiName.Contains("BaseTowerSlotPrefab") || uiName.Contains("Background") ||
+                                     uiName.Contains("Barracks") || uiName.Contains("Graveyard");
 
                     if (isIgnorable)
                     {
@@ -80,15 +83,100 @@ namespace TowerDefence.Grid
             }
         }
 
+        private BarracksTower currentRallyBarracks;
+        private bool isInRallyMode = false;
+
+        public void EnterRallyPlacementMode(BarracksTower barracks)
+        {
+            isInRallyMode = true;
+            currentRallyBarracks = barracks;
+            barracks.SetRangeVisible(true); // Rally modunda menzili göster
+            Debug.Log("[Rally] Entered Rally Mode for " + barracks.gameObject.name);
+        }
+
         private void HandleMouseClick()
         {
             if (Camera.main == null) return;
+            Debug.Log("<color=white>[CLICK-TRACE]</color> HandleMouseClick Called!");
 
             Vector2 mousePos = Mouse.current.position.ReadValue();
             Ray ray = Camera.main.ScreenPointToRay(mousePos);
             RaycastHit hit;
 
-            bool hitSomething = Physics.Raycast(ray, out hit, 150f);
+            int pathLayerMask = 1 << LayerMask.NameToLayer("Path");
+            bool hitSomething = false;
+
+            if (isInRallyMode)
+            {
+                // Rally modunda sadece yolu gör (Kuleleri ve üniteleri delip geç)
+                hitSomething = Physics.Raycast(ray, out hit, 150f, pathLayerMask, QueryTriggerInteraction.Collide);
+            }
+            else
+            {
+                // Normal modda her şeyi gör
+                hitSomething = Physics.Raycast(ray, out hit, 150f, Physics.AllLayers, QueryTriggerInteraction.Collide);
+            }
+            
+            // --- RALLY MODE HANDLING ---
+            if (isInRallyMode && currentRallyBarracks != null)
+            {
+                int pathLayer = LayerMask.NameToLayer("Path");
+                Debug.Log($"<color=cyan>[RALLY-DEBUG]</color> Click Attempt! Hit Something: {hitSomething}");
+                
+                if (hitSomething)
+                {
+                    GameObject hitGO = hit.collider.gameObject;
+                    int hitLayer = hitGO.layer;
+                    string hitName = hitGO.name.ToLower();
+                    Vector3 targetPoint = hit.point;
+                    float dist = Vector3.Distance(currentRallyBarracks.transform.position, targetPoint);
+
+                    bool layerMatch = (pathLayer != -1 && hitLayer == pathLayer);
+                    bool nameMatch = (hitName.Contains("tile") || hitName.Contains("path"));
+
+                    // HER DURUMDA LOGLA: Neyin üzerine tıkladık ve ne kadar uzaktayız?
+                    Debug.Log($"<color=cyan>[RALLY-DEBUG]</color> Hit: <b>{hitGO.name}</b> | Layer: {hitLayer} | Dist: {dist:F2} | LayerMatch: {layerMatch} | NameMatch: {nameMatch}");
+
+                    if (layerMatch || nameMatch)
+                    {
+                        // MENZİL DIŞINDAYSA: Sınıra çek (Clamp)
+                        if (dist > currentRallyBarracks.rallyRadius)
+                        {
+                            Vector3 direction = (targetPoint - currentRallyBarracks.transform.position).normalized;
+                            targetPoint = currentRallyBarracks.transform.position + direction * currentRallyBarracks.rallyRadius;
+                            
+                            Debug.Log($"<color=cyan>[RALLY-DEBUG]</color> <color=orange>CLAMPED!</color> Original: {dist:F1} -> Target: {currentRallyBarracks.rallyRadius:F1}");
+                        }
+
+                        currentRallyBarracks.SetRallyPoint(targetPoint);
+                        currentRallyBarracks.SetRangeVisible(false); // İşlem bitince gizle
+                        
+                        if (VFXManager.Instance != null)
+                            VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, targetPoint, Quaternion.identity);
+
+                        isInRallyMode = false;
+                        currentRallyBarracks = null;
+                        Debug.Log("<color=cyan>[RALLY-DEBUG]</color> <color=green>SUCCESS!</color> Rally Point Set.");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"<color=cyan>[RALLY-DEBUG]</color> Invalid Object! <b>{hitGO.name}</b> is not a Path. Cancelled.");
+                        if (currentRallyBarracks != null) currentRallyBarracks.SetRangeVisible(false);
+                        isInRallyMode = false;
+                        currentRallyBarracks = null;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("<color=cyan>[RALLY-DEBUG]</color> Raycast hit nothing! Cancelled.");
+                    if (currentRallyBarracks != null) currentRallyBarracks.SetRangeVisible(false);
+                    isInRallyMode = false;
+                    currentRallyBarracks = null;
+                }
+
+                return;
+            }
+
             Debug.Log($"[TowerPlacementManager] Click detected on: {(hitSomething ? hit.collider.gameObject.name : "Nothing")}");
 
             if (hitSomething)

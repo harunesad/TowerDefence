@@ -43,7 +43,10 @@ namespace TowerDefence.Grid
             
             // Mevcut durumu kontrol et (Zaten açıksa toggle yapacak)
             bool isSelectionOpen = !isOccupied && localUI != null && localUI.gameObject.activeSelf;
-            bool isUpgradeOpen = isOccupied && currentTower != null && currentTower.GetComponentInChildren<UI.TowerUpgradeUI>(true).gameObject.activeSelf;
+            var upgradeUIComp = isOccupied && currentTower != null 
+                ? currentTower.GetComponentInChildren<UI.TowerUpgradeUI>(true) 
+                : null;
+            bool isUpgradeOpen = upgradeUIComp != null && upgradeUIComp.gameObject.activeSelf;
 
             if (isSelectionOpen || isUpgradeOpen)
             {
@@ -59,9 +62,10 @@ namespace TowerDefence.Grid
 
             if (isOccupied)
             {
-                // Yükseltme/Satış menüsünü aç
-                if (TowerPlacementManager.Instance != null)
-                    TowerPlacementManager.Instance.ShowUpgradeUI(this, currentTower.GetComponent<Combat.Tower>());
+                // Yükseltme/Satış menüsünü aç (BarracksTower da Tower'dan türediği için GetComponent<Tower> çalışır)
+                Combat.Tower towerComp = currentTower.GetComponent<Combat.Tower>();
+                if (TowerPlacementManager.Instance != null && towerComp != null)
+                    TowerPlacementManager.Instance.ShowUpgradeUI(this, towerComp);
                 return;
             }
 

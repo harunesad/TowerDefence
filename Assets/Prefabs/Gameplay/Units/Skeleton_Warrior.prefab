@@ -85,8 +85,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4105015178959783916}
   - component: {fileID: 7981357568042656443}
-  - component: {fileID: 5436408962784308416}
   - component: {fileID: 965742404794032564}
+  - component: {fileID: 7082723777697077279}
   m_Layer: 7
   m_Name: Skeleton_Warrior
   m_TagString: Untagged
@@ -133,22 +133,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &5436408962784308416
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5327368710715407074}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a55f444bbf4d8814c8ebe1bb72f25d7c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.Unit
-  unitData: {fileID: 11400000, guid: 6f38bb04e9f390e478419c63f24ace41, type: 2}
-  moveSpeed: 3
-  rotationSpeed: 10
-  healthBar: {fileID: 8070621364067770637}
 --- !u!136 &965742404794032564
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -172,6 +156,23 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!114 &7082723777697077279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5327368710715407074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3b25819ca31f6d4e9f433000abf7e3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.Soldier
+  unitData: {fileID: 11400000, guid: 6f38bb04e9f390e478419c63f24ace41, type: 2}
+  moveSpeed: 3
+  rotationSpeed: 10
+  healthBar: {fileID: 8070621364067770637}
+  searchRadius: 1.5
 --- !u!1 &7681763134041398270
 GameObject:
   m_ObjectHideFlags: 0

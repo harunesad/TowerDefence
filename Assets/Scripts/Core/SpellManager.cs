@@ -72,6 +72,42 @@ namespace TowerDefence.Core
                 case Data.SpellType.GoldBoost:
                     CurrencyManager.Instance.AddCurrency(SideController.Instance.GetPlayerSide(), (int)spell.power);
                     break;
+                case Data.SpellType.Shield:
+                    ApplyAoEShield(targetPos, spell.radius, spell.power);
+                    break;
+                case Data.SpellType.Buff:
+                    ApplyAoEBuff(targetPos, spell.radius, spell.power, 5f); // 5 saniyelik buff
+                    break;
+            }
+        }
+
+        private void ApplyAoEShield(Vector3 center, float radius, float duration)
+        {
+            Collider[] colliders = Physics.OverlapSphere(center, radius);
+            foreach (var col in colliders)
+            {
+                Tower tower = col.GetComponent<Tower>();
+                if (tower == null) tower = col.GetComponentInParent<Tower>();
+                
+                if (tower != null && tower.GetSide() == SideController.Instance.GetPlayerSide())
+                {
+                    tower.SetInvulnerable(duration);
+                }
+            }
+        }
+
+        private void ApplyAoEBuff(Vector3 center, float radius, float multiplier, float duration)
+        {
+            Collider[] colliders = Physics.OverlapSphere(center, radius);
+            foreach (var col in colliders)
+            {
+                Tower tower = col.GetComponent<Tower>();
+                if (tower == null) tower = col.GetComponentInParent<Tower>();
+
+                if (tower != null && tower.GetSide() == SideController.Instance.GetPlayerSide())
+                {
+                    tower.ApplyTempBuff(multiplier, duration);
+                }
             }
         }
 

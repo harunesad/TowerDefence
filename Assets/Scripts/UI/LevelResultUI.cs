@@ -14,6 +14,7 @@ namespace TowerDefence.UI
         [SerializeField] private Image[] starImages;
         [SerializeField] private Button menuButton;
         [SerializeField] private Button nextLevelButton;
+        [SerializeField] private Button restartButton;
 
         [Header("Settings")]
         [SerializeField] private Color activeStarColor = Color.yellow;
@@ -21,9 +22,25 @@ namespace TowerDefence.UI
 
         private void Awake()
         {
+            // Eğer Restart butonu atanmamışsa, Menü butonundan otomatik kopyala
+            if (restartButton == null && menuButton != null)
+            {
+                GameObject restartGO = Instantiate(menuButton.gameObject, menuButton.transform.parent);
+                restartGO.name = "RestartButton";
+                restartButton = restartGO.GetComponent<Button>();
+                
+                var btnText = restartGO.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+                if (btnText != null) btnText.text = "RESTART";
+
+                // Menü butonunun yanına/altına itmek için (Basit offset)
+                restartGO.transform.localPosition += new Vector3(0, -120, 0); 
+            }
+
             menuButton.onClick.AddListener(OnMenuClicked);
             if (nextLevelButton != null)
                 nextLevelButton.onClick.AddListener(OnNextLevelClicked);
+            if (restartButton != null)
+                restartButton.onClick.AddListener(OnRestartClicked);
         }
 
         public void Show(bool isVictory, int livesRemaining, int totalLives)
@@ -64,7 +81,10 @@ namespace TowerDefence.UI
 
         private void OnMenuClicked()
         {
-            // Ana Menüye Dön (Senin projende index 1 MainScene/Menu sahnesidir)
+            // Zamanı normale döndür
+            Time.timeScale = 1f;
+            
+            // Ana Menüye Dön
             SceneManager.LoadScene(1); 
         }
 
@@ -73,6 +93,23 @@ namespace TowerDefence.UI
             // CampaignManager üzerinden sıradaki bölümü yükleme mantığı 
             // Şimdilik sadece menüye dönmek de yeterli olabilir
             OnMenuClicked();
+        }
+
+        private void OnRestartClicked()
+        {
+            // Zamanı normale döndür
+            Time.timeScale = 1f;
+            
+            // CampaignManager üzerinden temiz bir restart at
+            if (CampaignManager.Instance != null)
+            {
+                CampaignManager.Instance.RestartLevel();
+            }
+            else
+            {
+                // Fallback: Manager yoksa sahneyi yükle (ama gri ekran riski var)
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            }
         }
     }
 }
