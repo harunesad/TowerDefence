@@ -24,6 +24,7 @@ namespace TowerDefence.UI
         [SerializeField] private Button speedX1Button;
         [SerializeField] private Button speedX2Button;
         [SerializeField] private Button speedX3Button;
+        [SerializeField] private Button pauseButton;
 
         private readonly Color speedActiveColor   = new Color(1f,   0.75f, 0.1f); // Sarı - aktif
         private readonly Color speedInactiveColor = new Color(0.2f, 0.2f,  0.2f); // Koyu - pasif
@@ -61,6 +62,7 @@ namespace TowerDefence.UI
             if (speedX1Button != null) speedX1Button.onClick.AddListener(() => OnSpeedButtonClicked(0));
             if (speedX2Button != null) speedX2Button.onClick.AddListener(() => OnSpeedButtonClicked(1));
             if (speedX3Button != null) speedX3Button.onClick.AddListener(() => OnSpeedButtonClicked(2));
+            if (pauseButton != null) pauseButton.onClick.AddListener(OnPauseClicked);
 
             // Hız değişikliği eventine abone ol
             if (GameSpeedManager.Instance != null)
@@ -179,11 +181,29 @@ namespace TowerDefence.UI
                 GameSpeedManager.Instance.SetSpeed(speedIndex);
         }
 
+        private void OnPauseClicked()
+        {
+            if (GameSpeedManager.Instance != null)
+                GameSpeedManager.Instance.TogglePause();
+        }
+
         private void UpdateSpeedButtonHighlights(int activeIndex)
         {
+            bool isPaused = activeIndex == -1;
+
             SetButtonHighlight(speedX1Button, activeIndex == 0);
             SetButtonHighlight(speedX2Button, activeIndex == 1);
             SetButtonHighlight(speedX3Button, activeIndex == 2);
+            SetButtonHighlight(pauseButton, isPaused);
+
+            if (pauseButton != null)
+            {
+                var label = pauseButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null)
+                {
+                    label.text = isPaused ? "RESUME" : "PAUSE";
+                }
+            }
         }
 
         private void SetButtonHighlight(Button btn, bool active)

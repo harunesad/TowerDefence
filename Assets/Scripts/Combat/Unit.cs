@@ -36,6 +36,10 @@ namespace TowerDefence.Combat
         // Status effects
         private List<StatusEffect> activeEffects = new List<StatusEffect>();
 
+        // Physics Throttling
+        private float targetSearchTimer;
+        private const float TARGET_SEARCH_INTERVAL = 0.15f;
+
         public bool IsDead => isDead;
         public Side GetSide() => unitSide;
         public float GetHealth() => currentHealth;
@@ -130,7 +134,13 @@ namespace TowerDefence.Combat
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
             HandleStatusEffects();
-            UpdateTargetConflict();
+            
+            targetSearchTimer -= Time.deltaTime;
+            if (targetSearchTimer <= 0)
+            {
+                UpdateTargetConflict();
+                targetSearchTimer = TARGET_SEARCH_INTERVAL;
+            }
 
             // Savaş Durumu Check — isBlocked'dan bağımsız çalışır
             bool isFighting = false;

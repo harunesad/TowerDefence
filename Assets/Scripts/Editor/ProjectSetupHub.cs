@@ -25,6 +25,9 @@ namespace TowerDefence.Editor
                 GUI.backgroundColor = new Color(0.7f, 1f, 0.7f); // Yeşil tonlu (Başarılı/Güvenli)
                 if (GUILayout.Button("COMPLETE SYSTEM REPAIR (Data, UI, Prefabs)", GUILayout.Height(40)))
                 {
+                    // 0. Build/Update all base gameplay prefabs (incorporating new Meshy 3D Models for towers & preserving Mixamo models for units)
+                    EditorPrefabBuilder.GeneratePrefabs();
+
                     // 1. Data & Logic
                     DataAssetGenerator.GenerateAllData(); 
                     

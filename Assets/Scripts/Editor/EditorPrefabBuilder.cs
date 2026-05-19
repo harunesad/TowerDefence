@@ -42,34 +42,35 @@ public class EditorPrefabBuilder : Editor
         CreateProjectileTemplate(projectilesFolder, "Soul_Orb", new Color(0.5f, 0, 0));
         CreateProjectileTemplate(projectilesFolder, "Void_Missile", new Color(0.2f, 0, 0.2f));
 
-        // Kule Varyasyonları (10 Adet)
-        CreateTowerTemplate(towersFolder, projectilesFolder, "Archer_Tower", Color.green);
-        CreateTowerTemplate(towersFolder, projectilesFolder, "Ballista_Tower", Color.gray);
-        CreateTowerTemplate(towersFolder, projectilesFolder, "Bone_Catapult", Color.white);
-        CreateTowerTemplate(towersFolder, projectilesFolder, "Cannon_Tower", Color.black);
-        CreateTowerTemplate(towersFolder, projectilesFolder, "Dark_Sentry", Color.magenta);
-        CreateTowerTemplate(towersFolder, projectilesFolder, "Mage_Tower", Color.blue);
-        CreateTowerTemplate(towersFolder, projectilesFolder, "Poison_Spitter", new Color(0.1f, 0.5f, 0.1f));
-        CreateTowerTemplate(towersFolder, projectilesFolder, "Solar_Prism", Color.yellow);
-        CreateTowerTemplate(towersFolder, projectilesFolder, "Soul_Harvester", new Color(0.5f, 0, 0));
-        CreateTowerTemplate(towersFolder, projectilesFolder, "Void_Obelisk", new Color(0.2f, 0, 0.2f));
+        // --- DİNAMİK YAPI: Projedeki tüm TowerData asset'lerini tara ve otomatik olarak Prefab oluştur! ---
+        string[] towerDataGuids = AssetDatabase.FindAssets("t:TowerData", new[] { "Assets/Data/Towers" });
+        Debug.Log($"[EditorPrefabBuilder] Found {towerDataGuids.Length} TowerData assets to build prefabs for.");
+        foreach (var guid in towerDataGuids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            TowerData data = AssetDatabase.LoadAssetAtPath<TowerData>(path);
+            if (data != null)
+            {
+                CreateTowerTemplate(towersFolder, projectilesFolder, data.name, Color.white);
+            }
+        }
 
-        // Ünite Varyasyonları (10 Adet)
-        CreateUnitTemplate(unitsFolder, "Celestial_Archer", Color.cyan);
-        CreateUnitTemplate(unitsFolder, "Holy_Scout", Color.yellow);
-        CreateUnitTemplate(unitsFolder, "Iron_Knight", Color.white);
-        CreateUnitTemplate(unitsFolder, "Light_Swordsman", Color.white);
-        CreateUnitTemplate(unitsFolder, "Shield_Bearer", Color.blue);
-
-        CreateUnitTemplate(unitsFolder, "Abyssal_Behemoth", Color.red);
-        CreateUnitTemplate(unitsFolder, "Plague_Runner", new Color(0.3f, 0.4f, 0));
-        CreateUnitTemplate(unitsFolder, "Shadow_Stalker", Color.black);
-        CreateUnitTemplate(unitsFolder, "Skeleton_Warrior", Color.gray);
-        CreateUnitTemplate(unitsFolder, "Wraith", Color.magenta);
+        // --- DİNAMİK YAPI: Projedeki tüm UnitData asset'lerini tara ve otomatik olarak Prefab oluştur! ---
+        string[] unitDataGuids = AssetDatabase.FindAssets("t:UnitData", new[] { "Assets/Data/Units" });
+        Debug.Log($"[EditorPrefabBuilder] Found {unitDataGuids.Length} UnitData assets to build prefabs for.");
+        foreach (var guid in unitDataGuids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            UnitData data = AssetDatabase.LoadAssetAtPath<UnitData>(path);
+            if (data != null)
+            {
+                CreateUnitTemplate(unitsFolder, data.name, Color.white);
+            }
+        }
 
         CreateWaypointsPrefab(gameplayBase);
         CreateVFXPrefab(gameplayBase);
-        CreateTowerSlotPrefab(gameplayBase, uiFolder);
+        TowerDefence.Editor.UIMasterPrefabCreator.CreateTowerSlotPrefab();
 
         // Counterpart ve Icon Bağlantıları
         LinkAllCounterparts();
@@ -297,20 +298,18 @@ public class EditorPrefabBuilder : Editor
 
     private static string GetProjectileNameForTower(string towerName)
     {
-        switch (towerName)
-        {
-            case "Archer_Tower": return "Archer_Arrow";
-            case "Ballista_Tower": return "Ballista_Bolt";
-            case "Bone_Catapult": return "Bone_Projectyle";
-            case "Cannon_Tower": return "Cannon_Ball";
-            case "Dark_Sentry": return "Dark_Pulse";
-            case "Mage_Tower": return "Mage_Bolt";
-            case "Poison_Spitter": return "Poison_Drip";
-            case "Solar_Prism": return "Solar_Beam";
-            case "Soul_Harvester": return "Soul_Orb";
-            case "Void_Obelisk": return "Void_Missile";
-            default: return "";
-        }
+        string n = towerName.ToLower();
+        if (n.Contains("archer") || n.Contains("ranger") || n.Contains("sniper")) return "Archer_Arrow";
+        if (n.Contains("ballista") || n.Contains("bolt")) return "Ballista_Bolt";
+        if (n.Contains("bone") || n.Contains("catapult") || n.Contains("fossil")) return "Bone_Projectyle";
+        if (n.Contains("cannon") || n.Contains("siege") || n.Contains("mortar") || n.Contains("lobber") || n.Contains("volley")) return "Cannon_Ball";
+        if (n.Contains("dark") || n.Contains("sentry") || n.Contains("reaper")) return "Dark_Pulse";
+        if (n.Contains("mage") || n.Contains("archmage") || n.Contains("summoner") || n.Contains("entropy")) return "Mage_Bolt";
+        if (n.Contains("poison") || n.Contains("spitter") || n.Contains("acid") || n.Contains("venomous")) return "Poison_Drip";
+        if (n.Contains("solar") || n.Contains("prism") || n.Contains("luminous")) return "Solar_Beam";
+        if (n.Contains("soul") || n.Contains("harvester") || n.Contains("life") || n.Contains("emitter")) return "Soul_Orb";
+        if (n.Contains("void") || n.Contains("obelisk") || n.Contains("singularity")) return "Void_Missile";
+        return "";
     }
 
     private static void CreateProjectileTemplate(string folder, string name, Color color)
@@ -787,53 +786,41 @@ public class EditorPrefabBuilder : Editor
         visuals.transform.SetParent(root.transform);
         visuals.transform.localPosition = Vector3.zero;
 
-        string basePath = "";
-        string weaponPath = "";
-        string baseModel = "";
-        string weaponModel = "";
+        string cleanName = towerName.Replace("_", "");
+        string fbxPath = $"Assets/Models/Towers/{cleanName}/{cleanName}.fbx";
+        GameObject modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
 
-        switch (towerName)
+        if (modelPrefab == null)
         {
-            case "Archer_Tower": baseModel = "tower-round-build-a.fbx"; weaponModel = "weapon-ballista.fbx"; break;
-            case "Ballista_Tower": baseModel = "tower-round-build-b.fbx"; weaponModel = "weapon-ballista.fbx"; break;
-            case "Bone_Catapult": baseModel = "tower-round-build-c.fbx"; weaponModel = "weapon-catapult.fbx"; break;
-            case "Cannon_Tower": baseModel = "tower-round-build-d.fbx"; weaponModel = "weapon-cannon.fbx"; break;
-            case "Dark_Sentry": baseModel = "tower-round-build-e.fbx"; weaponModel = "weapon-turret.fbx"; break;
-            case "Mage_Tower": baseModel = "tower-round-build-f.fbx"; weaponModel = "tower-round-crystals.fbx"; break;
-            case "Poison_Spitter": baseModel = "tower-round-crystals.fbx"; weaponModel = "weapon-turret.fbx"; break;
-            case "Solar_Prism": baseModel = "tower-square-build-a.fbx"; weaponModel = "detail-crystal-large.fbx"; break;
-            case "Soul_Harvester": baseModel = "tower-square-build-b.fbx"; weaponModel = "detail-crystal.fbx"; break;
-            case "Void_Obelisk": baseModel = "tower-square-build-c.fbx"; weaponModel = "detail-rocks-large.fbx"; break;
+            // Fallback: Alt klasör olmadan doğrudan model araması yap
+            fbxPath = $"Assets/Models/Towers/{cleanName}.fbx";
+            modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
         }
 
-        string fbxFolder = "Assets/kenney_tower-defense-kit/Models/FBX format/";
-
-        if (!string.IsNullOrEmpty(baseModel))
+        if (modelPrefab != null)
         {
-            GameObject basePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(fbxFolder + baseModel);
-            if (basePrefab != null)
-            {
-                GameObject b = (GameObject)PrefabUtility.InstantiatePrefab(basePrefab);
-                b.transform.SetParent(visuals.transform);
-                b.transform.localPosition = Vector3.zero;
-            }
+            GameObject modelInstance = (GameObject)PrefabUtility.InstantiatePrefab(modelPrefab);
+            modelInstance.name = cleanName;
+            modelInstance.transform.SetParent(visuals.transform);
+            modelInstance.transform.localPosition = new Vector3(0f, 2.5f, 0f);
+            modelInstance.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            modelInstance.transform.localScale = Vector3.one;
+
+            // Kulelerin hedef alıp dönmesi (partToRotate) ve mermi fırlatması (FirePoint) için
+            // Meshy modelinin tepesinde konumlanacak bir "Weapon" (Silah) taşıyıcısı oluşturalım.
+            GameObject weapon = new GameObject("Weapon");
+            weapon.transform.SetParent(visuals.transform);
+            
+            // Ortalama kule yüksekliği 1.8f olarak baz alınmıştır (Tepesinde konumlandırma)
+            weapon.transform.localPosition = new Vector3(0, 1.8f, 0); 
+
+            GameObject firePoint = new GameObject("FirePoint");
+            firePoint.transform.SetParent(weapon.transform);
+            firePoint.transform.localPosition = new Vector3(0, 0, 1f); // Silahın biraz önünde
         }
-
-        if (!string.IsNullOrEmpty(weaponModel))
+        else
         {
-            GameObject weaponPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(fbxFolder + weaponModel);
-            if (weaponPrefab != null)
-            {
-                GameObject w = (GameObject)PrefabUtility.InstantiatePrefab(weaponPrefab);
-                w.name = "Weapon";
-                w.transform.SetParent(visuals.transform);
-                w.transform.localPosition = new Vector3(0, 1.2f, 0); // Kule üzerine yerleştir
-
-                // FirePoint'i Silaha Bağla (Böylece mermiler silahla birlikte döner)
-                GameObject firePoint = new GameObject("FirePoint");
-                firePoint.transform.SetParent(w.transform);
-                firePoint.transform.localPosition = new Vector3(0, 0, 1f); // Silahın biraz önünde
-            }
+            Debug.LogWarning($"[EditorPrefabBuilder] Meshy FBX model not found for tower {towerName} at path: {fbxPath}");
         }
     }
 
@@ -866,7 +853,7 @@ public class EditorPrefabBuilder : Editor
             {
                 GameObject modelInstance = (GameObject)PrefabUtility.InstantiatePrefab(modelPrefab);
                 modelInstance.transform.SetParent(visuals.transform);
-                modelInstance.transform.localPosition = Vector3.zero;
+                modelInstance.transform.localPosition = new Vector3(0f, 2f, 0f);
                 modelInstance.transform.localRotation = Quaternion.identity; 
                 modelInstance.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
 

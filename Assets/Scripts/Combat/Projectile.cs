@@ -74,10 +74,17 @@ namespace TowerDefence.Combat
 
         private void Explode()
         {
+            if (target == null) return;
+
+            // Hedefin tarafını (Side) alalım ki sadece hedefle aynı taraftaki birimlere hasar verelim.
+            Unit targetUnit = target.GetComponent<Unit>();
+            Side targetSide = targetUnit != null ? targetUnit.GetSide() : Side.Dark; // Varsayılan Dark (Düşman)
+
             Collider[] colliders = Physics.OverlapSphere(transform.position, explosionRadius);
             foreach (Collider collider in colliders)
             {
-                if (collider.CompareTag("Enemy"))
+                Unit unit = collider.GetComponent<Unit>();
+                if (unit != null && unit.GetSide() == targetSide)
                 {
                     Damage(collider.transform);
                 }

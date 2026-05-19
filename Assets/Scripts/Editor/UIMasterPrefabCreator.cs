@@ -830,11 +830,26 @@ namespace TowerDefence.Editor
             speedX2Btn.GetComponent<Image>().color = new Color(0.2f, 0.2f,  0.2f);
             speedX3Btn.GetComponent<Image>().color = new Color(0.2f, 0.2f,  0.2f);
 
+            // 5.b Duraklat/Başlat Butonu (Hız butonlarının hemen altında)
+            GameObject pausePanel = new GameObject("PausePanel", typeof(RectTransform), typeof(Image));
+            pausePanel.transform.SetParent(root.transform);
+            pausePanel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
+            RectTransform pauseRT = pausePanel.GetComponent<RectTransform>();
+            pauseRT.anchorMin = new Vector2(1f, 1f); // Sağ üst
+            pauseRT.anchorMax = new Vector2(1f, 1f);
+            pauseRT.pivot     = new Vector2(1f, 1f);
+            pauseRT.anchoredPosition = new Vector2(-20f, -90f);
+            pauseRT.sizeDelta = new Vector2(240f, 50f);
+
+            Button pauseBtn = CreateButton(pausePanel.transform, "PauseButton", "PAUSE", 220, 36, 18);
+            pauseBtn.GetComponent<Image>().color = new Color(0.2f, 0.2f,  0.2f);
+
             // HUDController'a hız buton referanslarını bağla
             var hudSpeedSo = new SerializedObject(hud);
             hudSpeedSo.FindProperty("speedX1Button").objectReferenceValue = speedX1Btn;
             hudSpeedSo.FindProperty("speedX2Button").objectReferenceValue = speedX2Btn;
             hudSpeedSo.FindProperty("speedX3Button").objectReferenceValue = speedX3Btn;
+            hudSpeedSo.FindProperty("pauseButton").objectReferenceValue = pauseBtn;
             hudSpeedSo.ApplyModifiedProperties();
 
             // 6. Level Result Panel (Phase 4) - BAŞLAĞIÇTA GİZLİ

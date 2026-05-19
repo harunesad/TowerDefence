@@ -42,6 +42,8 @@ namespace TowerDefence.Grid
             {
                 bool isOverUI = false;
                 string uiName = "None";
+                bool isRealUIElement = false;
+                var results = new List<UnityEngine.EventSystems.RaycastResult>();
 
                 if (UnityEngine.EventSystems.EventSystem.current != null)
                 {
@@ -51,26 +53,33 @@ namespace TowerDefence.Grid
                     {
                         var pointerData = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current);
                         pointerData.position = Pointer.current.position.ReadValue();
-                        var results = new List<UnityEngine.EventSystems.RaycastResult>();
                         UnityEngine.EventSystems.EventSystem.current.RaycastAll(pointerData, results);
-                        if (results.Count > 0) uiName = results[0].gameObject.name;
+                        if (results.Count > 0)
+                        {
+                            uiName = results[0].gameObject.name;
+                            isRealUIElement = (results[0].gameObject.layer == LayerMask.NameToLayer("UI")) ||
+                                              (results[0].module is UnityEngine.UI.GraphicRaycaster);
+                        }
                     }
                 }
                 
-                Debug.Log($"[TowerPlacementManager] Click detected! isOverUI: {isOverUI}, Blocking UI: {uiName}");
+                Debug.Log($"[TowerPlacementManager] Click detected! isOverUI: {isOverUI}, Blocking UI: {uiName}, IsRealUI: {isRealUIElement}");
                 
-                if (isOverUI) 
+                if (isOverUI && isRealUIElement) 
                 {
-                    // Şeffaf ama Raycast Target'ı açık kalmış GameplayHUD_MasterPrefab gibi kapsayıcıları veya metinleri görmezden gel
-                    // AYRICA: Dünyadaki objelerin (tile, path) PhysicsRaycaster yüzünden UI gibi algılanmasını engelle
-                    bool isIgnorable = uiName.Contains("MasterPrefab") || 
-                                     uiName.Contains("MainPanel") || uiName.Contains("Clone") ||
-                                     uiName.Contains("tile") || uiName.Contains("path") || // DÜZELTME: Yolları engel olarak görme!
+                    // Tıklanan eleman veya onun parent'ları arasında etkileşimli bir UI elemanı (Button, Slider vb.) var mı?
+                    bool isInteractive = results.Count > 0 && results[0].gameObject.GetComponentInParent<UnityEngine.UI.Selectable>() != null;
+                    bool isIgnorable = false;
+
+                    if (!isInteractive)
+                    {
+                        // Şeffaf ama Raycast Target'ı açık kalmış GameplayHUD_MasterPrefab gibi kapsayıcıları veya metinleri görmezden gel
+                        isIgnorable = uiName.Contains("MasterPrefab") || 
+                                     uiName.Contains("MainPanel") ||
                                      (uiName.Contains("Panel") && !uiName.Contains("Selection") && !uiName.Contains("Upgrade")) ||
                                      uiName.Contains("Label") || uiName.Contains("Text") || uiName.Contains("TMP") || uiName.Contains("TextMesh") ||
-                                     uiName.Contains("_Tower") || uiName.Contains("TowerUpgradeUI") || uiName.Contains("SelectionPrefab") ||
-                                     uiName.Contains("BaseTowerSlotPrefab") || uiName.Contains("Background") ||
-                                     uiName.Contains("Barracks") || uiName.Contains("Graveyard");
+                                     uiName.Contains("Background");
+                    }
 
                     if (isIgnorable)
                     {

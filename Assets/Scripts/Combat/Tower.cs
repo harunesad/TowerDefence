@@ -50,6 +50,10 @@ namespace TowerDefence.Combat
         private bool isDisabled;
         private float disableTimer;
 
+        // Physics Throttling
+        private float targetScanTimer;
+        private const float TARGET_SCAN_INTERVAL = 0.15f;
+
         private TowerSlot mySlot;
         public void SetSlot(TowerSlot slot) => mySlot = slot;
         public TowerSlot GetSlot() => mySlot;
@@ -231,7 +235,12 @@ namespace TowerDefence.Combat
             // Aura kuleleri ateş etmez, sadece buff verir
             if (fireRate <= 0f) return;
 
-            UpdateTarget();
+            targetScanTimer -= Time.deltaTime;
+            if (targetScanTimer <= 0)
+            {
+                UpdateTarget();
+                targetScanTimer = TARGET_SCAN_INTERVAL;
+            }
 
             if (target != null)
             {

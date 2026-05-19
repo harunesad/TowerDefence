@@ -26,6 +26,10 @@ namespace TowerDefence.Combat
         // Şu an buffluyor olduğumuz kuleler
         private readonly HashSet<Tower> buffedTowers = new HashSet<Tower>();
 
+        // Physics Throttling
+        private float scanTimer;
+        private const float SCAN_INTERVAL = 0.25f;
+
         private void Awake()
         {
             myTower = GetComponent<Tower>();
@@ -116,7 +120,12 @@ namespace TowerDefence.Combat
             if (PhaseManager.Instance == null) return;
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
-            RefreshBuffedTowers();
+            scanTimer -= Time.deltaTime;
+            if (scanTimer <= 0)
+            {
+                RefreshBuffedTowers();
+                scanTimer = SCAN_INTERVAL;
+            }
         }
 
         private void RefreshBuffedTowers()

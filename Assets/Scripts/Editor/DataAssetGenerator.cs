@@ -784,24 +784,32 @@ public class DataAssetGenerator : Editor
 
         // 3. Embedded UI
         Transform uiTransform = root.transform.Find("TowerUpgradeUI");
-        if (uiTransform == null)
+        if (uiTransform != null)
+        {
+            uiTransform.localPosition = new Vector3(0, 6.5f, 0); // Kule tepesi (+2.5f)
+        }
+        else
         {
             GameObject uiPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/TowerUpgradeUI.prefab");
             if (uiPrefab != null)
             {
                 GameObject uiInstance = (GameObject)PrefabUtility.InstantiatePrefab(uiPrefab, root.transform);
                 uiInstance.name = "TowerUpgradeUI";
-                uiInstance.transform.localPosition = new Vector3(0, 4f, 0); // Kule tepesi
+                uiInstance.transform.localPosition = new Vector3(0, 6.5f, 0); // Kule tepesi (+2.5f)
             }
         }
 
         // 5. Health Bar UI (Düşmanlardaki sistemin aynısı)
         Transform hbTransform = root.transform.Find("HealthBarCanvas");
-        if (hbTransform == null)
+        if (hbTransform != null)
+        {
+            hbTransform.localPosition = new Vector3(0, 6.0f, 0); // Can barı (+2.5f)
+        }
+        else
         {
             GameObject canvasGo = new GameObject("HealthBarCanvas", typeof(RectTransform), typeof(Canvas), typeof(UnityEngine.UI.CanvasScaler), typeof(TowerDefence.UI.HealthBarUI));
             canvasGo.transform.SetParent(root.transform);
-            canvasGo.transform.localPosition = new Vector3(0, 3.5f, 0); 
+            canvasGo.transform.localPosition = new Vector3(0, 6.0f, 0); 
             canvasGo.GetComponent<RectTransform>().sizeDelta = new Vector2(1.5f, 0.2f);
             
             Canvas canvas = canvasGo.GetComponent<Canvas>();
@@ -1111,12 +1119,12 @@ public class DataAssetGenerator : Editor
         // 2. Health Bar UI Setup
         Transform hbTransform = root.transform.Find("HealthBarCanvas");
         HealthBarUI hbScript = null;
+        float targetY = (root.name.Contains("Behemoth")) ? 7.5f : 5.5f; // Karakterin kafasının üzerine çıkarıldı (Kullanıcı Talebi: Yükseklik 2.5f artırıldı)
 
         if (hbTransform == null)
         {
             GameObject canvasGo = new GameObject("HealthBarCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(HealthBarUI));
             canvasGo.transform.SetParent(root.transform);
-            float targetY = (root.name.Contains("Behemoth")) ? 1.8f : 1.2f; // Karakterin kafasının üzerine çıkarıldı
             canvasGo.transform.localPosition = new Vector3(0, targetY, 0); 
             canvasGo.GetComponent<RectTransform>().sizeDelta = new Vector2(1.5f, 0.2f);
             
@@ -1157,7 +1165,6 @@ public class DataAssetGenerator : Editor
         }
         else
         {
-            float targetY = (root.name.Contains("Behemoth")) ? 1.8f : 1.2f;
             hbTransform.localPosition = new Vector3(0, targetY, 0);
             hbScript = hbTransform.GetComponent<HealthBarUI>();
         }

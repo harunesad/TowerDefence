@@ -173,20 +173,60 @@ namespace TowerDefence.Core
             return totalMultiplier; 
         }
 
+        private static readonly string encryptionKey = "TowerDefenceSecretKey123";
+
+        private string EncryptDecrypt(string text)
+        {
+            System.Text.StringBuilder result = new System.Text.StringBuilder();
+            for (int i = 0; i < text.Length; i++)
+            {
+                result.Append((char)(text[i] ^ encryptionKey[i % encryptionKey.Length]));
+            }
+            return result.ToString();
+        }
+
         private void SaveGame()
         {
-            string json = JsonUtility.ToJson(saveData);
-            File.WriteAllText(savePath, json);
-            Debug.Log($"Game Saved to: {savePath}");
+            try
+            {
+                string json = JsonUtility.ToJson(saveData);
+                string encrypted = EncryptDecrypt(json);
+                File.WriteAllText(savePath, encrypted);
+                Debug.Log($"Game Saved and Encrypted to: {savePath}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Error saving game: {ex.Message}");
+            }
         }
 
         private void LoadGame()
         {
             if (File.Exists(savePath))
             {
-                string json = File.ReadAllText(savePath);
-                saveData = JsonUtility.FromJson<SaveData>(json);
-                Debug.Log("Game Loaded");
+                try
+                {
+                    string fileContent = File.ReadAllText(savePath);
+                    
+                    // Geriye dönük uyumluluk: Eğer kayıt dosyası şifrelenmemiş düz JSON ise doğrudan oku
+                    if (fileContent.TrimStart().StartsWith("{"))
+                    {
+                        saveData = JsonUtility.FromJson<SaveData>(fileContent);
+                        Debug.Log("Game Loaded from plain-text JSON (Will be encrypted on next save)");
+                    }
+                    else
+                    {
+                        string decrypted = EncryptDecrypt(fileContent);
+                        saveData = JsonUtility.FromJson<SaveData>(decrypted);
+                        Debug.Log("Game Loaded and Decrypted successfully");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"Error loading save game: {ex.Message}. Resetting progress.");
+                    saveData = new SaveData();
+                    saveData.totalKarma = 200;
+                }
             }
             else
             {
