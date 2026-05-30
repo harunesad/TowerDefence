@@ -23,7 +23,8 @@ namespace TowerDefence.Editor
             TowerUpgradeUI uiScript = root.GetComponent<TowerUpgradeUI>();
             RectTransform rootRT = root.GetComponent<RectTransform>();
             rootRT.sizeDelta = new Vector2(300, 400); 
-            rootRT.localScale = new Vector3(0.005f, 0.005f, 0.005f); 
+            rootRT.localScale = new Vector3(0.03f, 0.03f, 0.005f); 
+            rootRT.localRotation = Quaternion.Euler(65f, 0f, 0f);
 
             Canvas canvas = root.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;

@@ -67,8 +67,11 @@ namespace TowerDefence.Combat
 
         private void MoveToRallyPoint()
         {
-            float dist = Vector3.Distance(transform.position, rallyPoint);
-            if (dist > 0.5f)
+            Vector3 flatPos = new Vector3(transform.position.x, 0, transform.position.z);
+            Vector3 flatRally = new Vector3(rallyPoint.x, 0, rallyPoint.z);
+            float dist = Vector3.Distance(flatPos, flatRally);
+            
+            if (dist > 0.2f)
             {
                 // Unit.cs'deki MoveTowardsTarget ve HandleRotation metodlarını kullan
                 MoveTowardsTarget(rallyPoint);
