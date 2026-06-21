@@ -94,6 +94,7 @@ public class DataAssetGenerator : Editor
         
         ConfigureTowerPrefabs(towerPath);
         ConfigureUnitPrefabs(unitPath);
+        GenerateHeroes(); // YENİ: Kahramanları üret
         
         GenerateDefaultSpells(); // Büyüleri önce üret (Yetenekler bunlara bağlı)
         LinkMetaSkills("Assets/Data/Skills");
@@ -105,6 +106,7 @@ public class DataAssetGenerator : Editor
         // --- UI REGENERATION (Kritik: Yeni yetenekleri UI'ya ekler) ---
         TowerDefence.Editor.UIMasterPrefabCreator.CreateSkillTreeUIPrefab();
         TowerDefence.Editor.UIMasterPrefabCreator.CreateSideSelectionPanelPrefab();
+        TowerDefence.Editor.UIMasterPrefabCreator.CreateHeroShopPanelPrefab();
         TowerDefence.Editor.UIMasterPrefabCreator.CreateGameplayHUDMaster();
 
         LinkUnitProjectiles();
@@ -114,6 +116,232 @@ public class DataAssetGenerator : Editor
         AssetDatabase.Refresh();
 
         Debug.Log("✔ ALL DATA, PREFABS AND UI GENERATED, LINKED, AND REPAIRED SUCCESSFULLY!");
+    }
+
+    public static void GenerateHeroes()
+    {
+        string heroDataPath = "Assets/Data/Heroes";
+        string heroPrefabPath = "Assets/Prefabs/Gameplay/Heroes";
+
+        EnsureDirectory(heroDataPath);
+        EnsureDirectory(heroPrefabPath);
+
+        var heroDefs = new (string id, string name, Side side, string sourceUnit, float hp, float spd, float dmg, float rng, float rate, int unlockCost, bool starter, HeroAbilityType ability, string abName, string abDesc, float abCd, float abPow, float abRad)[]
+        {
+            ("Hero_Light_Arthur",  "Arthur Pendragon",  Side.Light, "Light_Swordsman",   500, 1.0f,  40, 1.8f, 1.0f, 0,   true,  HeroAbilityType.RallyHeal,     "Rally Heal",      "Restores 15% of max health.", 14f, 1f, 0f),
+            ("Hero_Light_Paladin", "Iron Paladin",      Side.Light, "Iron_Knight",       650, 0.85f, 35, 1.6f, 0.9f, 600, false, HeroAbilityType.HolyShield,     "Holy Shield",     "Heals when health drops below 35%.", 16f, 1f, 0f),
+            ("Hero_Light_Archon",  "Celestial Archon",  Side.Light, "Celestial_Archer",  420, 1.1f,  45, 2.2f, 1.1f, 750, false, HeroAbilityType.ArrowRain,      "Arrow Rain",      "Damages all enemies in an area.", 12f, 1f, 4f),
+            ("Hero_Light_Scout",   "Holy Scout",        Side.Light, "Holy_Scout",        380, 1.25f, 32, 1.7f, 1.3f, 550, false, HeroAbilityType.SwiftStrike,    "Swift Strike",    "Deals a burst of bonus damage.", 10f, 1f, 0f),
+            ("Hero_Light_Bulwark", "Shield Bearer",     Side.Light, "Shield_Bearer",     720, 0.8f,  30, 1.5f, 0.85f,650, false, HeroAbilityType.FortifyTaunt,   "Fortify",         "Taunts nearby enemies.", 18f, 1f, 5f),
+            ("Hero_Light_Solar",   "Sun Knight",        Side.Light, "Iron_Knight",       480, 1.0f,  38, 1.9f, 1.0f, 800, false, HeroAbilityType.SolarSmite,     "Solar Smite",     "Holy explosion around the hero.", 13f, 1f, 3.5f),
+            ("Hero_Dark_Vampire",  "Vampire Lord",      Side.Dark,  "Shadow_Stalker",    450, 1.2f,  35, 1.5f, 1.2f, 600, false, HeroAbilityType.LifeDrain,      "Life Drain",      "Steals health from the target.", 11f, 1f, 0f),
+            ("Hero_Dark_Reaper",   "Soul Reaper",       Side.Dark,  "Wraith",            380, 1.3f,  42, 1.7f, 1.3f, 750, false, HeroAbilityType.SoulExecute,    "Soul Execute",    "Executes wounded enemies.", 15f, 1f, 0f),
+            ("Hero_Dark_Behemoth", "Abyssal Lord",      Side.Dark,  "Abyssal_Behemoth",  700, 0.75f, 50, 1.4f, 0.8f, 900, false, HeroAbilityType.GroundSlam,     "Ground Slam",     "Slams the ground for heavy AoE damage.", 14f, 1f, 4f),
+            ("Hero_Dark_Plague",   "Plague Herald",     Side.Dark,  "Plague_Runner",     400, 1.15f, 36, 1.6f, 1.15f,550, false, HeroAbilityType.PlagueCloud,    "Plague Cloud",    "Poisons enemies in an area.", 12f, 1f, 4f),
+            ("Hero_Dark_Bone",     "Bone Commander",    Side.Dark,  "Skeleton_Warrior",  520, 0.95f, 34, 1.5f, 1.0f, 650, false, HeroAbilityType.BoneArmor,      "Bone Armor",      "Reinforces the hero with bone plating.", 16f, 1f, 0f),
+            ("Hero_Dark_Stalker",  "Night Stalker",     Side.Dark,  "Shadow_Stalker",    430, 1.35f, 40, 1.6f, 1.25f,800, false, HeroAbilityType.ShadowStep,     "Shadow Step",     "Teleports behind the target.", 13f, 1f, 0f),
+        };
+
+        foreach (var def in heroDefs)
+        {
+            string safeName = def.name.Replace(" ", "_");
+            string sourcePfb = $"Assets/Prefabs/Gameplay/Units/{def.sourceUnit}.prefab";
+            string targetPfb = $"{heroPrefabPath}/{safeName}.prefab";
+
+            if (!System.IO.File.Exists(targetPfb) && System.IO.File.Exists(sourcePfb))
+                AssetDatabase.CopyAsset(sourcePfb, targetPfb);
+        }
+
+        AssetDatabase.Refresh();
+
+        foreach (var def in heroDefs)
+        {
+            string safeName = def.name.Replace(" ", "_");
+            string targetPfb = $"{heroPrefabPath}/{safeName}.prefab";
+
+            UnitData unitData = CreateHeroAsset(heroDataPath, def.name, def.side, 0, 0,
+                def.hp, def.spd, def.dmg, def.rng, def.rate, targetPfb);
+
+            ConfigureHeroPrefab(targetPfb, unitData);
+
+            CreateHeroDataAsset(heroDataPath, def.id, def.name, def.side, unitData,
+                def.unlockCost, def.starter, def.ability, def.abName, def.abDesc, def.abCd, def.abPow, def.abRad);
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log("✔ Heroes (UnitData + HeroData) generated successfully!");
+    }
+
+    private static HeroData CreateHeroDataAsset(string path, string heroID, string displayName, Side side,
+        UnitData unitData, int unlockCost, bool isStarter, HeroAbilityType abilityType, string abilityName,
+        string abilityDescription, float abilityCooldown, float abilityPower, float abilityRadius)
+    {
+        string safeName = displayName.Replace(" ", "_");
+        string assetPath = $"{path}/{safeName}_HeroData.asset";
+
+        HeroData data = AssetDatabase.LoadAssetAtPath<HeroData>(assetPath);
+        if (data == null)
+        {
+            data = ScriptableObject.CreateInstance<HeroData>();
+            AssetDatabase.CreateAsset(data, assetPath);
+        }
+
+        data.heroID = heroID;
+        data.displayName = displayName;
+        data.side = side;
+        data.unitData = unitData;
+        data.icon = unitData != null ? unitData.icon : null;
+        data.unlockKarmaCost = unlockCost;
+        data.isStarterHero = isStarter;
+        data.maxUpgradeLevel = 5;
+        data.upgradeKarmaCost = 150;
+        data.healthBonusPerLevel = 0.15f;
+        data.damageBonusPerLevel = 0.10f;
+        data.abilityType = abilityType;
+        data.abilityName = abilityName;
+        data.abilityDescription = abilityDescription;
+        data.abilityCooldown = abilityCooldown;
+        data.abilityPower = abilityPower;
+        data.abilityRadius = abilityRadius;
+
+        EditorUtility.SetDirty(data);
+        return data;
+    }
+
+    private static UnitData CreateHeroAsset(string path, string name, Side side, int cost, int reward, float health, float speed, float damage, float range, float rate, string prefabPath)
+    {
+        string safeName = name.Replace(" ", "_");
+        string assetPath = $"{path}/{safeName}.asset";
+
+        UnitData data = AssetDatabase.LoadAssetAtPath<UnitData>(assetPath);
+        if (data == null)
+        {
+            data = ScriptableObject.CreateInstance<UnitData>();
+            AssetDatabase.CreateAsset(data, assetPath);
+        }
+
+        data.unitName = name;
+        data.side = side;
+        data.spawnCost = cost;
+        data.killReward = reward;
+        data.maxHealth = health;
+        data.moveSpeed = speed;
+        data.attackDamage = damage;
+        data.attackRange = range;
+        data.attackRate = rate;
+
+        data.prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        data.icon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{safeName}_Icon.png");
+        if (data.icon == null)
+        {
+            // Fallback to source icons if hero-specific ones don't exist
+            string fallbackIconName = (side == Side.Light) ? "Light_Swordsman_Icon" : "Shadow_Stalker_Icon";
+            data.icon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{fallbackIconName}.png");
+        }
+
+        EditorUtility.SetDirty(data);
+        return data;
+    }
+
+    private static void ConfigureHeroPrefab(string prefabPath, UnitData data)
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
+        if (root == null) return;
+
+        // Set Layer
+        int targetLayer = (data.side == Side.Light) ? 6 : 7;
+        SetLayerRecursive(root, targetLayer);
+
+        // Replace Unit/Soldier component with HeroUnit
+        Unit existingUnit = root.GetComponent<Unit>();
+        if (existingUnit != null)
+        {
+            DestroyImmediate(existingUnit, true);
+        }
+
+        HeroUnit heroComp = root.AddComponent<HeroUnit>();
+
+        // Wire UnitData reference
+        SerializedObject so = new SerializedObject(heroComp);
+        so.FindProperty("unitData").objectReferenceValue = data;
+        so.ApplyModifiedProperties();
+
+        // 2. Health Bar UI Setup (Same as normal unit setup but offset for hero visual distinction if desired)
+        Transform hbTransform = root.transform.Find("HealthBarCanvas");
+        HealthBarUI hbScript = null;
+        float targetY = 6.0f; // Above unit head
+
+        if (hbTransform == null)
+        {
+            GameObject canvasGo = new GameObject("HealthBarCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(HealthBarUI));
+            canvasGo.transform.SetParent(root.transform);
+            canvasGo.transform.localPosition = new Vector3(0, targetY, 0); 
+            canvasGo.GetComponent<RectTransform>().sizeDelta = new Vector2(1.8f, 0.25f); // Slightly larger for Heroes
+            
+            Canvas canvas = canvasGo.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            
+            hbScript = canvasGo.GetComponent<HealthBarUI>();
+
+            // Background
+            GameObject bgGo = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            bgGo.transform.SetParent(canvasGo.transform);
+            bgGo.transform.localPosition = Vector3.zero;
+            bgGo.GetComponent<RectTransform>().sizeDelta = new Vector2(1.8f, 0.25f);
+            bgGo.GetComponent<Image>().color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+
+            // Fill
+            GameObject fillGo = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            fillGo.transform.SetParent(bgGo.transform);
+            fillGo.transform.localPosition = Vector3.zero;
+            RectTransform fillRect = fillGo.GetComponent<RectTransform>();
+            fillRect.sizeDelta = new Vector2(1.8f, 0.25f);
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+
+            Image fillImg = fillGo.GetComponent<Image>();
+            fillImg.color = Color.yellow; // Yellow color to differentiate Hero health bar
+            fillImg.type = Image.Type.Filled;
+            fillImg.fillMethod = Image.FillMethod.Horizontal;
+            fillImg.fillOrigin = (int)Image.OriginHorizontal.Left;
+
+            // HealthBarUI Link
+            var hbSo = new SerializedObject(hbScript);
+            hbSo.FindProperty("fillImage").objectReferenceValue = fillImg;
+            hbSo.FindProperty("container").objectReferenceValue = canvasGo;
+            hbSo.ApplyModifiedProperties();
+        }
+        else
+        {
+            hbTransform.localPosition = new Vector3(0, targetY, 0);
+            hbScript = hbTransform.GetComponent<HealthBarUI>();
+        }
+
+        // Link Hero to its HealthBar
+        var heroSo = new SerializedObject(heroComp);
+        heroSo.FindProperty("healthBar").objectReferenceValue = hbScript;
+        heroSo.ApplyModifiedProperties();
+
+        FixVisualModelGroundOffset(root);
+
+        PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+        PrefabUtility.UnloadPrefabContents(root);
+        Debug.Log($"✔ Configured Hero Prefab: {prefabPath}");
+    }
+
+    private static void FixVisualModelGroundOffset(GameObject root)
+    {
+        Transform visuals = root.transform.Find("Visuals");
+        if (visuals == null) return;
+
+        foreach (Transform child in visuals)
+        {
+            Vector3 lp = child.localPosition;
+            child.localPosition = new Vector3(lp.x, 0f, lp.z);
+        }
     }
 
     /// <summary>
@@ -1174,6 +1402,8 @@ public class DataAssetGenerator : Editor
         unitSo.FindProperty("healthBar").objectReferenceValue = hbScript;
         unitSo.ApplyModifiedProperties();
 
+        FixVisualModelGroundOffset(root);
+
         PrefabUtility.SaveAsPrefabAsset(root, path);
         PrefabUtility.UnloadPrefabContents(root);
         Debug.Log($"✔ Configured unit prefab with HealthBar & Layer: {prefab.name}");
@@ -1193,67 +1423,343 @@ public class DataAssetGenerator : Editor
         string levelPath = "Assets/Levels";
         EnsureDirectory(levelPath);
 
-        // --- LEVEL 1: Orman Yolu (3 Merging Paths Style) ---
-        string lvl1Dir = $"{levelPath}/Level1";
-        EnsureDirectory(lvl1Dir);
+        for (int lvlIdx = 1; lvlIdx <= 50; lvlIdx++)
+        {
+            string lvlDir = $"{levelPath}/Level{lvlIdx}";
+            EnsureDirectory(lvlDir);
+
+            // Generate waves dynamically based on design structure (layout complexity)
+            List<WaveData> waves = new List<WaveData>();
+            int waveCount = GetWaveCountForLevel(lvlIdx);
+            int spawnerCount = GetSpawnerCountForLevel(lvlIdx);
+
+            for (int w = 1; w <= waveCount; w++)
+            {
+                var composition = GetWaveComposition(lvlIdx, w);
+                waves.Add(CreateWave(lvlDir, $"Wave{w}", composition, spawnerCount));
+            }
+
+            // Generate paths, bases and custom slots
+            List<LevelPath> paths = GetPathsForLevel(lvlIdx);
+            List<Vector3> bases = GetBasesForLevel(lvlIdx);
+            List<Vector3> customSlots = GetCustomSlotsForLevel(lvlIdx);
+            LevelTheme theme = GetThemeForLevel(lvlIdx);
+            string levelName = $"Level {lvlIdx}: " + GetLevelNameSuffix(lvlIdx);
+
+            int startCurrencyLight = 200 + (lvlIdx * 10);
+            int startCurrencyDark = 300 + (lvlIdx * 10);
+
+            CreateLevel(lvlDir, $"Level{lvlIdx}", levelName, startCurrencyLight, startCurrencyDark, theme, waves, paths, bases, customSlots);
+        }
+        Debug.Log("✔ 50 LEVELS AND WAVES GENERATED SUCCESSFULLY!");
+    }
+
+    private static LevelTheme GetThemeForLevel(int lvlIdx)
+    {
+        if (lvlIdx <= 12) return LevelTheme.Forest;
+        if (lvlIdx <= 25) return LevelTheme.Desert;
+        if (lvlIdx <= 38) return LevelTheme.Snow;
+        return LevelTheme.Underworld;
+    }
+
+    private static int GetWaveCountForLevel(int lvlIdx)
+    {
+        int layout = lvlIdx % 10;
+        if (lvlIdx == 50) layout = 0;
+
+        switch (layout)
+        {
+            case 0: return 8; // 4 spawner boss maps
+            case 7: 
+            case 8: return 6; // 3 spawner maps
+            case 3: 
+            case 5: 
+            case 6: return 5; // 2 spawner maps
+            case 1: 
+            case 2: 
+            case 4: 
+            case 9: 
+            default: return 4; // 1 spawner maps
+        }
+    }
+
+    private static string GetLevelNameSuffix(int lvlIdx)
+    {
+        string[] forestNames = { "Green Glade", "Whispering Woods", "Mossy Path", "Ancient Grove", "Wildwood", "Deep Forest", "Shaded Valley", "Timberland", "Shadowy Glen", "Sunken Swamp", "Overgrown Ruins", "Forest Core" };
+        string[] desertNames = { "Dusty Pass", "Dune Crossing", "Sandstorm Ridge", "Scorched Oasis", "Canyon Gorge", "Arid Sands", "Mirage Valley", "Redstone Mesa", "Blighted Badlands", "Sinking Dunes", "Dust Devil Ravine", "Desert Heart", "Solar Furnace" };
+        string[] snowNames = { "Frosty Foothills", "Frozen Lake", "Snowy Labyrinth", "Glacier Gates", "Winter Peak", "Avalanche Pass", "Ice Crystal Cave", "Tundra Waste", "Blizzard Plateau", "Chillwind Valley", "Frostbite Gorge", "Everfrost Sanctuary", "Glistening Summit" };
+        string[] underworldNames = { "Lava Fissure", "Sulfur Pits", "Basalt Plains", "Obsidian Keep", "Nether Gate", "Shadow Abyss", "Infernal Core", "Doom Crater", "Plague Swamplands", "Crypt of Shadows", "Ashen Wastes", "Master's Domain" };
+
+        if (lvlIdx <= 12) return forestNames[(lvlIdx - 1) % forestNames.Length];
+        if (lvlIdx <= 25) return desertNames[(lvlIdx - 13) % desertNames.Length];
+        if (lvlIdx <= 38) return snowNames[(lvlIdx - 26) % snowNames.Length];
+        return underworldNames[(lvlIdx - 39) % underworldNames.Length];
+    }
+
+    private static List<LevelPath> GetPathsForLevel(int lvlIdx)
+    {
+        List<LevelPath> paths = new List<LevelPath>();
+        int layout = lvlIdx % 10;
         
-        List<WaveData> lvl1Waves = new List<WaveData>();
-        // 3 giriş için 3 ayrı grup (Dengeli Dağılım)
-        lvl1Waves.Add(CreateWave(lvl1Dir, "Wave1", new (string, int)[] { ("Skeleton_Warrior", 3), ("Light_Swordsman", 2), ("Plague_Runner", 2) }, 3));
-        lvl1Waves.Add(CreateWave(lvl1Dir, "Wave2", new (string, int)[] { ("Skeleton_Warrior", 8), ("Light_Swordsman", 5), ("Iron_Knight", 2) }, 3));
-        lvl1Waves.Add(CreateWave(lvl1Dir, "Wave3", new (string, int)[] { ("Abyssal_Behemoth", 1), ("Shadow_Stalker", 5), ("Wraith", 3) }, 3));
+        if (lvlIdx == 50) layout = 0; // Level 50 is the ultimate 4-corner layout
 
-        // Çizimdeki (2. resim) 3 girişli yapı - Daha temiz birleşme için koordinat revizyonu
-        List<LevelPath> lvl1Paths = new List<LevelPath> {
-            new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-25, 0, 20), new Vector3(-5, 0, 20), new Vector3(5, 0, 0), new Vector3(25, 0, 0) }},
-            new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(-25, 0, 0), new Vector3(25, 0, 0) }},
-            new LevelPath { spawnerIndex = 2, points = new List<Vector3> { new Vector3(-25, 0, -20), new Vector3(-5, 0, -20), new Vector3(5, 0, 0), new Vector3(25, 0, 0) }}
-        };
-        List<Vector3> lvl1Bases = new List<Vector3> { new Vector3(25, 0, 0) };
+        switch (layout)
+        {
+            case 1: // Diagonal/Zigzag
+                if (lvlIdx < 15)
+                {
+                    paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(40, 0, -40) } });
+                }
+                else if (lvlIdx < 30)
+                {
+                    paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(40, 0, 40), new Vector3(40, 0, -40) } });
+                }
+                else
+                {
+                    paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(-40, 0, 10), new Vector3(10, 0, 10), new Vector3(10, 0, -20), new Vector3(40, 0, -20), new Vector3(40, 0, -40) } });
+                }
+                break;
 
-        CreateLevel(lvl1Dir, "Level1", "Level 1: Triple Path", 250, 350, LevelTheme.Forest, lvl1Waves, lvl1Paths, lvl1Bases);
+            case 2: // Level 2: L-shape
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 35), new Vector3(-30, 0, -30), new Vector3(30, 0, -30) } });
+                break;
 
-        // --- LEVEL 2: Çöl Karşılaşması (Split Paths & 2 Bases) ---
-        string lvl2Dir = $"{levelPath}/Level2";
-        EnsureDirectory(lvl2Dir);
+            case 3: // Level 3: Z-shape / "2"-shape
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { 
+                    new Vector3(-30, 0, 35), new Vector3(10, 0, 35), new Vector3(10, 0, 0), 
+                    new Vector3(-15, 0, 0), new Vector3(-15, 0, -35), new Vector3(30, 0, -35) 
+                } });
+                break;
 
-        List<WaveData> lvl2Waves = new List<WaveData>();
-        lvl2Waves.Add(CreateWave(lvl2Dir, "Wave1", new (string, int)[] { ("Iron_Knight", 5), ("Skeleton_Warrior", 10) }, 2));
-        lvl2Waves.Add(CreateWave(lvl2Dir, "Wave2", new (string, int)[] { ("Shadow_Stalker", 8), ("Celestial_Archer", 5) }, 2));
-        lvl2Waves.Add(CreateWave(lvl2Dir, "Wave3", new (string, int)[] { ("Plague_Runner", 12), ("Wraith", 4) }, 2));
-        lvl2Waves.Add(CreateWave(lvl2Dir, "Wave4", new (string, int)[] { ("Abyssal_Behemoth", 2), ("Iron_Knight", 8) }, 2));
+            case 4: // Level 4: Y-shape
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-35, 0, 35), new Vector3(-20, 0, 5), new Vector3(0, 0, -15), new Vector3(0, 0, -35) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(35, 0, 35), new Vector3(20, 0, 5), new Vector3(0, 0, -15), new Vector3(0, 0, -35) } });
+                break;
 
-        List<LevelPath> lvl2Paths = new List<LevelPath> {
-            new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-20, 0, 20), new Vector3(5, 0, 25), new Vector3(20, 0, 25) }},
-            new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(-20, 0, -20), new Vector3(5, 0, -25), new Vector3(20, 0, -25) }}
-        };
-        List<Vector3> lvl2Bases = new List<Vector3> { new Vector3(20, 0, 25), new Vector3(20, 0, -25) };
+            case 5: // Level 5: Spiral G-loop
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { 
+                    new Vector3(-35, 0, 35), new Vector3(-25, 0, 15), new Vector3(-25, 0, -25), 
+                    new Vector3(15, 0, -25), new Vector3(15, 0, 15), new Vector3(-10, 0, 15), 
+                    new Vector3(-10, 0, 0), new Vector3(10, 0, 0), new Vector3(25, 0, -10), new Vector3(30, 0, -35) 
+                } });
+                break;
 
-        CreateLevel(lvl2Dir, "Level2", "Level 2: Dusty Pass", 400, 500, LevelTheme.Desert, lvl2Waves, lvl2Paths, lvl2Bases);
+            case 6: // Level 6: T-shape
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 25), new Vector3(0, 0, 25), new Vector3(0, 0, -35) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(40, 0, 25), new Vector3(0, 0, 25), new Vector3(0, 0, -35) } });
+                break;
 
-        // --- LEVEL 3: Buzlu Labirent (Complex Winding) ---
-        string lvl3Dir = $"{levelPath}/Level3";
-        EnsureDirectory(lvl3Dir);
+            case 7: // Level 7: S-curve S
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { 
+                    new Vector3(0, 0, 35), new Vector3(0, 0, 20), new Vector3(30, 0, 15), 
+                    new Vector3(-25, 0, 0), new Vector3(25, 0, -15), new Vector3(0, 0, -20), new Vector3(0, 0, -35) 
+                } });
+                break;
 
-        List<WaveData> lvl3Waves = new List<WaveData>();
-        lvl3Waves.Add(CreateWave(lvl3Dir, "Wave1", new (string, int)[] { ("Abyssal_Behemoth", 2), ("Wraith", 5), ("Shadow_Stalker", 5) }, 1));
-        lvl3Waves.Add(CreateWave(lvl3Dir, "Wave2", new (string, int)[] { ("Shadow_Stalker", 10), ("Iron_Knight", 5), ("Wraith", 2) }, 1));
-        lvl3Waves.Add(CreateWave(lvl3Dir, "Wave3", new (string, int)[] { ("Abyssal_Behemoth", 5), ("Skeleton_Warrior", 20), ("Wraith", 10) }, 1));
-        lvl3Waves.Add(CreateWave(lvl3Dir, "Wave4", new (string, int)[] { ("Celestial_Archer", 15), ("Holy_Scout", 10) }, 1));
-        lvl3Waves.Add(CreateWave(lvl3Dir, "Wave5", new (string, int)[] { ("Abyssal_Behemoth", 8), ("Iron_Knight", 15), ("Wraith", 15) }, 1));
-        
-        List<LevelPath> lvl3Paths = new List<LevelPath> {
-            new LevelPath { spawnerIndex = 0, points = new List<Vector3> { 
-                new Vector3(-40, 0, 30), new Vector3(-20, 0, 30), new Vector3(-20, 0, 10), 
-                new Vector3(20, 0, 10), new Vector3(20, 0, -10), new Vector3(-20, 0, -10),
-                new Vector3(-20, 0, -30), new Vector3(40, 0, -30) 
-            }}
-        };
-        List<Vector3> lvl3Bases = new List<Vector3> { new Vector3(40, 0, -30) };
+            case 8: // Trident Merge (3 spawners)
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(-20, 0, 10), new Vector3(0, 0, -10), new Vector3(0, 0, -40) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(0, 0, 40), new Vector3(0, 0, -40) } });
+                paths.Add(new LevelPath { spawnerIndex = 2, points = new List<Vector3> { new Vector3(40, 0, 40), new Vector3(20, 0, 10), new Vector3(0, 0, -10), new Vector3(0, 0, -40) } });
+                break;
 
-        CreateLevel(lvl3Dir, "Level3", "Level 3: Snow Labyrinth", 600, 700, LevelTheme.Snow, lvl3Waves, lvl3Paths, lvl3Bases);
+            case 9: // Helix or overlap
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(40, 0, 40), new Vector3(-40, 0, -40), new Vector3(40, 0, -40) } });
+                break;
 
-        Debug.Log("✔ ALL LEVELS AND WAVES GENERATED SUCCESSFULLY!");
+            case 0: // 4 Corners to Center
+            default:
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(-20, 0, 20), new Vector3(0, 0, 0) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(40, 0, 40), new Vector3(20, 0, 20), new Vector3(0, 0, 0) } });
+                paths.Add(new LevelPath { spawnerIndex = 2, points = new List<Vector3> { new Vector3(-40, 0, -40), new Vector3(-20, 0, -20), new Vector3(0, 0, 0) } });
+                paths.Add(new LevelPath { spawnerIndex = 3, points = new List<Vector3> { new Vector3(40, 0, -40), new Vector3(20, 0, -20), new Vector3(0, 0, 0) } });
+                break;
+        }
+        return paths;
+    }
+
+    private static List<Vector3> GetBasesForLevel(int lvlIdx)
+    {
+        List<Vector3> bases = new List<Vector3>();
+        int layout = lvlIdx % 10;
+        if (lvlIdx == 50) layout = 0;
+
+        switch (layout)
+        {
+            case 1:
+                if (lvlIdx < 41) bases.Add(new Vector3(40, 0, -40));
+                else bases.Add(new Vector3(20, 0, 0));
+                break;
+            case 2:
+                bases.Add(new Vector3(30, 0, -40));
+                break;
+            case 3:
+                bases.Add(new Vector3(0, 0, -40));
+                break;
+            case 4:
+                if (lvlIdx < 20) bases.Add(new Vector3(40, 0, 0));
+                else bases.Add(new Vector3(40, 0, -40));
+                break;
+            case 5:
+                bases.Add(new Vector3(0, 0, -40));
+                break;
+            case 6:
+                bases.Add(new Vector3(0, 0, -40));
+                break;
+            case 7:
+                bases.Add(new Vector3(0, 0, -40));
+                break;
+            case 8:
+                bases.Add(new Vector3(0, 0, -40));
+                break;
+            case 9:
+                bases.Add(new Vector3(40, 0, -40));
+                break;
+            case 0:
+            default:
+                bases.Add(new Vector3(0, 0, 0));
+                break;
+        }
+        return bases;
+    }
+
+    private static List<Vector3> GetCustomSlotsForLevel(int lvlIdx)
+    {
+        List<Vector3> slots = new List<Vector3>();
+        int layout = lvlIdx % 10;
+        if (lvlIdx == 50) layout = 0;
+
+        switch (layout)
+        {
+            case 1: // Level 1: Diagonal
+                slots.Add(new Vector3(-15, 0, 25));
+                slots.Add(new Vector3(-25, 0, 15));
+                slots.Add(new Vector3(25, 0, -15));
+                slots.Add(new Vector3(15, 0, -25));
+                break;
+            case 2: // Level 2: L-shape
+                slots.Add(new Vector3(-45, 0, -5)); // Left of vertical
+                slots.Add(new Vector3(-15, 0, 20)); // Right of vertical (upper)
+                slots.Add(new Vector3(-15, 0, -5)); // Right of vertical (lower)
+                slots.Add(new Vector3(-5, 0, -15)); // Above horizontal (left)
+                slots.Add(new Vector3(15, 0, -15)); // Above horizontal (right)
+                slots.Add(new Vector3(-5, 0, -45)); // Below horizontal (left)
+                slots.Add(new Vector3(15, 0, -45)); // Below horizontal (right)
+                break;
+            case 3: // Level 3: Z-shape
+                slots.Add(new Vector3(-30, 0, -15));
+                slots.Add(new Vector3(-5, 0, 15));
+                slots.Add(new Vector3(25, 0, 20));
+                slots.Add(new Vector3(15, 0, -20));
+                break;
+            case 4: // Level 4: Y-shape
+                slots.Add(new Vector3(-35, 0, 5));
+                slots.Add(new Vector3(-15, 0, 20));
+                slots.Add(new Vector3(-15, 0, -15));
+                slots.Add(new Vector3(35, 0, 5));
+                slots.Add(new Vector3(15, 0, 20));
+                slots.Add(new Vector3(15, 0, -15));
+                break;
+            case 5: // Level 5: Loop / spiral
+                slots.Add(new Vector3(-40, 0, 10));
+                slots.Add(new Vector3(-40, 0, -15));
+                slots.Add(new Vector3(-10, 0, 30));
+                slots.Add(new Vector3(-15, 0, -15));
+                slots.Add(new Vector3(0, 0, -35));
+                slots.Add(new Vector3(35, 0, -5));
+                break;
+            case 6: // Level 6: T-shape
+                slots.Add(new Vector3(-15, 0, 10));
+                slots.Add(new Vector3(-15, 0, -15));
+                slots.Add(new Vector3(15, 0, 10));
+                slots.Add(new Vector3(15, 0, -15));
+                break;
+            case 7: // Level 7: S-curve S
+                slots.Add(new Vector3(15, 0, 25));
+                slots.Add(new Vector3(-20, 0, 10));
+                slots.Add(new Vector3(15, 0, -15));
+                slots.Add(new Vector3(-20, 0, -25));
+                slots.Add(new Vector3(15, 0, -25));
+                break;
+            case 8: // Level 8: Crossover / DNA
+                slots.Add(new Vector3(-15, 0, 25));
+                slots.Add(new Vector3(15, 0, 25));
+                slots.Add(new Vector3(-25, 0, -5));
+                slots.Add(new Vector3(25, 0, -5));
+                slots.Add(new Vector3(-15, 0, -35));
+                slots.Add(new Vector3(15, 0, -35));
+                break;
+            case 9: // Level 9: Trident
+                slots.Add(new Vector3(-20, 0, 25));
+                slots.Add(new Vector3(-35, 0, 10));
+                slots.Add(new Vector3(-15, 0, -5));
+                slots.Add(new Vector3(-10, 0, -25));
+                slots.Add(new Vector3(20, 0, 25));
+                slots.Add(new Vector3(35, 0, 10));
+                slots.Add(new Vector3(15, 0, -5));
+                slots.Add(new Vector3(10, 0, -25));
+                break;
+            case 0: // Level 10: Loop / arrow split-merge
+            default:
+                slots.Add(new Vector3(-25, 0, 25));
+                slots.Add(new Vector3(15, 0, 25));
+                slots.Add(new Vector3(-30, 0, 0));
+                slots.Add(new Vector3(0, 0, -10));
+                slots.Add(new Vector3(-10, 0, -35));
+                slots.Add(new Vector3(25, 0, -25));
+                break;
+        }
+        return slots;
+    }
+
+    private static int GetSpawnerCountForLevel(int lvlIdx)
+    {
+        int layout = lvlIdx % 10;
+        if (lvlIdx == 50) layout = 0;
+
+        if (layout == 0) return 4;
+        if (layout == 7 || layout == 8) return 3;
+        if (layout == 3 || layout == 5 || layout == 6) return 2;
+        return 1;
+    }
+
+    private static (string unit, int count)[] GetWaveComposition(int lvlIdx, int wave)
+    {
+        int multiplier = 1 + (lvlIdx / 10);
+        int basicCount = 3 + wave * 2 * multiplier;
+        int eliteCount = Mathf.Max(0, -2 + wave * multiplier);
+
+        if (lvlIdx <= 12)
+        {
+            return new (string, int)[] {
+                ("Skeleton_Warrior", basicCount),
+                ("Light_Swordsman", basicCount / 2),
+                ("Plague_Runner", basicCount / 3)
+            };
+        }
+        else if (lvlIdx <= 25)
+        {
+            return new (string, int)[] {
+                ("Skeleton_Warrior", basicCount),
+                ("Shadow_Stalker", basicCount / 2),
+                ("Iron_Knight", eliteCount)
+            };
+        }
+        else if (lvlIdx <= 38)
+        {
+            return new (string, int)[] {
+                ("Shield_Bearer", basicCount),
+                ("Celestial_Archer", basicCount / 2),
+                ("Wraith", eliteCount)
+            };
+        }
+        else
+        {
+            return new (string, int)[] {
+                ("Abyssal_Behemoth", eliteCount + 1),
+                ("Wraith", basicCount / 2),
+                ("Shadow_Stalker", basicCount)
+            };
+        }
     }
 
     private static WaveData CreateWave(string path, string name, (string unit, int count)[] composition, int pathCount = 1)
@@ -1287,7 +1793,7 @@ public class DataAssetGenerator : Editor
         return wave;
     }
 
-    private static void CreateLevel(string path, string id, string name, int startLight, int startDark, LevelTheme theme, List<WaveData> waves, List<LevelPath> paths, List<Vector3> bases)
+    private static void CreateLevel(string path, string id, string name, int startLight, int startDark, LevelTheme theme, List<WaveData> waves, List<LevelPath> paths, List<Vector3> bases, List<Vector3> customSlots)
     {
         string assetPath = $"{path}/{id}.asset";
         LevelData level = AssetDatabase.LoadAssetAtPath<LevelData>(assetPath);
@@ -1303,40 +1809,26 @@ public class DataAssetGenerator : Editor
         level.startingCurrencyDark = startDark;
         level.theme = theme;
         level.difficulty = 1;
-        level.waves = waves;
-        level.paths = paths;
-        level.basePoints = bases;
+        if (level.waves == null) level.waves = new List<WaveData>();
+        level.waves.Clear();
+        level.waves.AddRange(waves);
+
+        if (level.paths == null) level.paths = new List<LevelPath>();
+        level.paths.Clear();
+        level.paths.AddRange(paths);
+
+        if (level.basePoints == null) level.basePoints = new List<Vector3>();
+        level.basePoints.Clear();
+        level.basePoints.AddRange(bases);
+
+        if (level.customSlotPositions == null) level.customSlotPositions = new List<Vector3>();
+        level.customSlotPositions.Clear();
+        level.customSlotPositions.AddRange(customSlots);
+
         level.towerSlotCount = 15 + (waves.Count * 2); // Dalga sayısına göre slot artırımı
         level.sceneIndex = 2; // Default Gameplay Scene
 
-        // Otomatik Harita Ataması (Senin dosya isimlendirme formatına uyarlandı)
-        GameObject mapPfb = null;
-        
-        // 1. Level numarasını ayıkla (Level1 -> 1)
-        string numStr = id.Replace("Level", "");
-        string[] mapGuids = new string[0];
-
-        if (int.TryParse(numStr, out int num))
-        {
-            // Senin formatın: "Level_1__" şeklinde başlıyor
-            mapGuids = AssetDatabase.FindAssets($"Level_{num}__ t:GameObject");
-        }
-
-        // 2. Eğer hala bulunamadıysa ID ile genel arama yap
-        if (mapGuids.Length == 0)
-        {
-            mapGuids = AssetDatabase.FindAssets($"{id} t:GameObject", new[] { "Assets/Maps" });
-        }
-
-        if (mapGuids.Length > 0)
-        {
-            string mapPath = AssetDatabase.GUIDToAssetPath(mapGuids[0]);
-            mapPfb = AssetDatabase.LoadAssetAtPath<GameObject>(mapPath);
-        }
-
-        level.mapPrefab = mapPfb;
-        if (mapPfb != null) Debug.Log($"✔ [LevelGen] Harita atandı: {id} -> {mapPfb.name}");
-        else Debug.LogWarning($"⚠ [LevelGen] DİKKAT: {id} ({name}) için harita bulunamadı! Lütfen Assets/Maps/ altını kontrol edin.");
+        // NOT: mapPrefab ataması elle yapılacak, otomatik arama kaldırıldı.
 
         EditorUtility.SetDirty(level);
     }

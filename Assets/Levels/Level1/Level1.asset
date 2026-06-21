@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa17066cf895d7046b530b990028bf3d, type: 3}
   m_Name: Level1
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Data.LevelData
-  levelName: 'Level 1: Triple Path'
+  levelName: 'Level 1: Green Glade'
   sceneIndex: 2
   levelPreview: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   levelType: 0
@@ -21,28 +21,22 @@ MonoBehaviour:
   theme: 0
   paths:
   - points:
-    - {x: -25, y: 0, z: 20}
-    - {x: -5, y: 0, z: 20}
-    - {x: 5, y: 0, z: 0}
-    - {x: 25, y: 0, z: 0}
+    - {x: -40, y: 0, z: 40}
+    - {x: 40, y: 0, z: -40}
     spawnerIndex: 0
-  - points:
-    - {x: -25, y: 0, z: 0}
-    - {x: 25, y: 0, z: 0}
-    spawnerIndex: 1
-  - points:
-    - {x: -25, y: 0, z: -20}
-    - {x: -5, y: 0, z: -20}
-    - {x: 5, y: 0, z: 0}
-    - {x: 25, y: 0, z: 0}
-    spawnerIndex: 2
   basePoints:
-  - {x: 25, y: 0, z: 0}
-  towerSlotCount: 21
-  mapPrefab: {fileID: 2625464787169573106, guid: 942b996adc040f240a79b7134c7b4dd7, type: 3}
+  - {x: 40, y: 0, z: -40}
+  customSlotPositions:
+  - {x: -15, y: 0, z: 25}
+  - {x: -25, y: 0, z: 15}
+  - {x: 25, y: 0, z: -15}
+  - {x: 15, y: 0, z: -25}
+  towerSlotCount: 23
+  mapPrefab: {fileID: 2102890405301241159, guid: 6df41772d1effac40b507afc66a06d16, type: 3}
   waves:
   - {fileID: 11400000, guid: e140b5d24f388934fadf094b212367fb, type: 2}
   - {fileID: 11400000, guid: a588de15da1b80243ae8a4e76250eac6, type: 2}
   - {fileID: 11400000, guid: 061d2114bf6e77e4f8810fd1fc6dabf7, type: 2}
-  startingCurrencyLight: 250
-  startingCurrencyDark: 350
+  - {fileID: 11400000, guid: bf362106a13d5a54eab85b0a9adebd00, type: 2}
+  startingCurrencyLight: 210
+  startingCurrencyDark: 310

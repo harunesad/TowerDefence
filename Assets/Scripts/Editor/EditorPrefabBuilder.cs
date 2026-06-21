@@ -853,7 +853,7 @@ public class EditorPrefabBuilder : Editor
             {
                 GameObject modelInstance = (GameObject)PrefabUtility.InstantiatePrefab(modelPrefab);
                 modelInstance.transform.SetParent(visuals.transform);
-                modelInstance.transform.localPosition = new Vector3(0f, 2f, 0f);
+                modelInstance.transform.localPosition = Vector3.zero;
                 modelInstance.transform.localRotation = Quaternion.identity; 
                 modelInstance.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
 

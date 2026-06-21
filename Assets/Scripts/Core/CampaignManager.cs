@@ -110,23 +110,41 @@ namespace TowerDefence.Core
             {
                 CenterCameraAtRuntime(currentMapInstance);
             }
+
+            if (HeroManager.Instance != null)
+                HeroManager.Instance.InitializeForLevel();
+        }
+
+        private int currentDifficultyLevel = 1;
+        public int CurrentDifficultyLevel => currentDifficultyLevel;
+
+        public void SetDifficulty(int difficulty)
+        {
+            if (difficulty >= 1 && difficulty <= MetaProgressionManager.Instance.GetHighestUnlockedGlobalDifficulty())
+            {
+                currentDifficultyLevel = difficulty;
+                Debug.Log($"[CampaignManager] Difficulty set to: {currentDifficultyLevel}");
+            }
         }
 
         public void CompleteCurrentLevel()
         {
             if (currentSelectedLevel == null) return;
 
-            Debug.Log($"Level Completed: {currentSelectedLevel.levelName}");
+            Debug.Log($"Level Completed: {currentSelectedLevel.levelName} on Difficulty {currentDifficultyLevel}");
 
             // Seviye bitiş ödülü (Karma)
-            int reward = 50; // Temel ödül, LevelData'dan çekilebilir
+            int reward = 50 * currentDifficultyLevel; // Zorluğa göre ödül artabilir
             MetaProgressionManager.Instance.AddKarma(reward);
+
+            // Bölümü tamamlandı olarak kaydet
+            MetaProgressionManager.Instance.SaveLevelProgress(currentSelectedLevel.levelID, 3, currentDifficultyLevel);
 
             // Bir sonraki seviyenin kilidini aç (Yazılımsal mantık)
             UnlockNextLevel();
 
-            // Veriyi kaydet
-            // SaveManager.Instance.SaveGame(); // Gelecek için
+            // Tüm bölümler bittiyse bir sonraki zorluğu aç
+            CheckDifficultyUnlock();
         }
 
         private void UnlockNextLevel()
@@ -137,11 +155,29 @@ namespace TowerDefence.Core
             if (nextIndex < allLevels.Count)
             {
                 // Eğer açılan yeni bölüm, kayıttaki en yüksek bölümden büyükse kaydı güncelle
-                if (nextIndex > MetaProgressionManager.Instance.GetHighestUnlockedLevel())
+                if (nextIndex > MetaProgressionManager.Instance.GetHighestUnlockedLevel(currentDifficultyLevel))
                 {
-                    MetaProgressionManager.Instance.UpdateHighestLevel(nextIndex);
-                    Debug.Log($"Next Level Unlocked and Saved: {allLevels[nextIndex].levelName}");
+                    MetaProgressionManager.Instance.UpdateHighestLevel(nextIndex, currentDifficultyLevel);
+                    Debug.Log($"Next Level Unlocked and Saved: {allLevels[nextIndex].levelName} for Difficulty {currentDifficultyLevel}");
                 }
+            }
+        }
+
+        private void CheckDifficultyUnlock()
+        {
+            bool allCompleted = true;
+            foreach (var level in allLevels)
+            {
+                if (!MetaProgressionManager.Instance.IsLevelCompleted(level.levelID, currentDifficultyLevel))
+                {
+                    allCompleted = false;
+                    break;
+                }
+            }
+
+            if (allCompleted && currentDifficultyLevel == MetaProgressionManager.Instance.GetHighestUnlockedGlobalDifficulty())
+            {
+                MetaProgressionManager.Instance.UnlockNextGlobalDifficulty();
             }
         }
 
@@ -153,7 +189,7 @@ namespace TowerDefence.Core
             if (index <= 0) return true; // İlk bölüm veya liste dışı (hata koruması) her zaman açık
             
             // Kayıtlı en yüksek bölüm indeksinden küçük veya eşitse açıktır
-            return index <= MetaProgressionManager.Instance.GetHighestUnlockedLevel();
+            return index <= MetaProgressionManager.Instance.GetHighestUnlockedLevel(currentDifficultyLevel);
         }
 
         private void CenterCameraAtRuntime(GameObject mapInstance)

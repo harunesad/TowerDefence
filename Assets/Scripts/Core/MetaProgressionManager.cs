@@ -9,8 +9,16 @@ namespace TowerDefence.Core
     public class LevelProgress
     {
         public string levelID;
+        public int difficultyLevel = 1; // 1: Normal, 2: Hard, 3: Expert
         public int stars;
         public bool isCompleted;
+    }
+
+    [System.Serializable]
+    public class HeroProgressEntry
+    {
+        public string heroID;
+        public int level = 1;
     }
 
     [System.Serializable]
@@ -20,7 +28,17 @@ namespace TowerDefence.Core
         public List<string> unlockedSkillIDs = new List<string>();
         public List<string> unlockedSpellIDs = new List<string>(); // Açılan aktif büyüler
         public List<string> equippedSpellIDs = new List<string>(); // Kuşatılan büyüler
+        public List<string> unlockedHeroIDs = new List<string>();
+        public List<string> equippedHeroIDs = new List<string>(); // Maksimum 2
+        public List<HeroProgressEntry> heroProgressList = new List<HeroProgressEntry>();
+        
+        // Geriye dönük uyumluluk için tutuluyor
         public int highestUnlockedLevelIndex = 0;
+        
+        // Yeni Zorluk Sistemi Değişkenleri
+        public int highestUnlockedGlobalDifficulty = 1;
+        public List<int> highestUnlockedLevelIndexPerDifficulty = new List<int> { 0, 0, 0, 0 }; // İndeksler: 1=Normal, 2=Hard, 3=Expert
+        
         public List<LevelProgress> levelProgressList = new List<LevelProgress>();
     }
 
@@ -49,8 +67,16 @@ namespace TowerDefence.Core
             }
         }
 
+        private void Start()
+        {
+            EnsureStarterHeroUnlocked();
+        }
+
         [Header("Config")]
         [SerializeField] private List<SkillNodeData> allAvailableSkills;
+        [SerializeField] private List<HeroData> allAvailableHeroes;
+
+        public event System.Action OnHeroProgressChanged;
 
         public void AddKarma(int amount)
         {
@@ -111,28 +137,174 @@ namespace TowerDefence.Core
 
         public List<string> GetEquippedSpellIDs() => saveData.equippedSpellIDs;
 
+        // --- HERO PROGRESSION ---
+
+        public IReadOnlyList<HeroData> GetAllHeroes() => allAvailableHeroes;
+
+        public HeroData GetHeroByID(string heroID)
+        {
+            return allAvailableHeroes.Find(h => h != null && h.heroID == heroID);
+        }
+
+        public bool IsHeroUnlocked(string heroID) => saveData.unlockedHeroIDs.Contains(heroID);
+
+        public int GetHeroLevel(string heroID)
+        {
+            if (!IsHeroUnlocked(heroID)) return 0;
+            HeroProgressEntry entry = saveData.heroProgressList.Find(p => p.heroID == heroID);
+            return entry != null ? entry.level : 1;
+        }
+
+        public bool TryUnlockHero(HeroData hero)
+        {
+            if (hero == null || IsHeroUnlocked(hero.heroID)) return false;
+            if (saveData.totalKarma < hero.unlockKarmaCost) return false;
+
+            saveData.totalKarma -= hero.unlockKarmaCost;
+            saveData.unlockedHeroIDs.Add(hero.heroID);
+            saveData.heroProgressList.Add(new HeroProgressEntry { heroID = hero.heroID, level = 1 });
+            SaveGame();
+            OnHeroProgressChanged?.Invoke();
+            return true;
+        }
+
+        public bool TryUpgradeHero(HeroData hero)
+        {
+            if (hero == null || !IsHeroUnlocked(hero.heroID)) return false;
+
+            int currentLevel = GetHeroLevel(hero.heroID);
+            if (currentLevel >= hero.maxUpgradeLevel) return false;
+            if (saveData.totalKarma < hero.upgradeKarmaCost) return false;
+
+            saveData.totalKarma -= hero.upgradeKarmaCost;
+            HeroProgressEntry entry = saveData.heroProgressList.Find(p => p.heroID == hero.heroID);
+            if (entry == null)
+            {
+                entry = new HeroProgressEntry { heroID = hero.heroID, level = 1 };
+                saveData.heroProgressList.Add(entry);
+            }
+            entry.level++;
+            SaveGame();
+            OnHeroProgressChanged?.Invoke();
+            return true;
+        }
+
+        public float GetHeroStatMultiplier(string heroID)
+        {
+            HeroData hero = GetHeroByID(heroID);
+            if (hero == null) return 1f;
+
+            int level = GetHeroLevel(heroID);
+            if (level <= 1) return 1f;
+
+            float healthMult = 1f + (level - 1) * hero.healthBonusPerLevel;
+            float damageMult = 1f + (level - 1) * hero.damageBonusPerLevel;
+            return (healthMult + damageMult) * 0.5f;
+        }
+
+        public float GetHeroHealthMultiplier(string heroID)
+        {
+            HeroData hero = GetHeroByID(heroID);
+            if (hero == null) return 1f;
+            int level = GetHeroLevel(heroID);
+            return 1f + Mathf.Max(0, level - 1) * hero.healthBonusPerLevel;
+        }
+
+        public float GetHeroDamageMultiplier(string heroID)
+        {
+            HeroData hero = GetHeroByID(heroID);
+            if (hero == null) return 1f;
+            int level = GetHeroLevel(heroID);
+            return 1f + Mathf.Max(0, level - 1) * hero.damageBonusPerLevel;
+        }
+
+        public void GetHeroCombatStats(HeroData hero, out float health, out float damage, out float speed, out float range, out float attackRate)
+        {
+            health = damage = speed = range = attackRate = 0f;
+            if (hero == null || hero.unitData == null) return;
+
+            float healthMult = GetHeroHealthMultiplier(hero.heroID);
+            float damageMult = GetHeroDamageMultiplier(hero.heroID);
+
+            health = hero.unitData.maxHealth * healthMult;
+            damage = hero.unitData.attackDamage * damageMult;
+            speed = hero.unitData.moveSpeed;
+            range = hero.unitData.attackRange;
+            attackRate = hero.unitData.attackRate;
+        }
+
+        public IReadOnlyList<HeroData> GetAllHeroesSorted()
+        {
+            var sorted = new List<HeroData>(allAvailableHeroes);
+            sorted.RemoveAll(h => h == null);
+            sorted.Sort((a, b) =>
+            {
+                int side = a.side.CompareTo(b.side);
+                return side != 0 ? side : string.Compare(a.displayName, b.displayName, System.StringComparison.Ordinal);
+            });
+            return sorted;
+        }
+
+        public void EquipHero(string heroID)
+        {
+            if (!IsHeroUnlocked(heroID)) return;
+            if (saveData.equippedHeroIDs.Contains(heroID)) return;
+            if (saveData.equippedHeroIDs.Count >= 2) return;
+
+            saveData.equippedHeroIDs.Add(heroID);
+            SaveGame();
+            OnHeroProgressChanged?.Invoke();
+        }
+
+        public void UnequipHero(string heroID)
+        {
+            if (saveData.equippedHeroIDs.Remove(heroID))
+            {
+                SaveGame();
+                OnHeroProgressChanged?.Invoke();
+            }
+        }
+
+        public List<string> GetEquippedHeroIDs() => saveData.equippedHeroIDs;
+
+        public void SanitizeEquippedHeroesForSide(Side side)
+        {
+            saveData.equippedHeroIDs.RemoveAll(id =>
+            {
+                HeroData hero = GetHeroByID(id);
+                return hero == null || hero.side != side;
+            });
+            SaveGame();
+        }
+
         public bool IsSkillUnlocked(string skillID)
         {
             return saveData.unlockedSkillIDs.Contains(skillID);
         }
 
-        public int GetHighestUnlockedLevel() => saveData.highestUnlockedLevelIndex;
-
-        public void UpdateHighestLevel(int index)
+        public int GetHighestUnlockedLevel(int difficulty = 1)
         {
-            if (index > saveData.highestUnlockedLevelIndex)
+            if (difficulty < 1 || difficulty > 3) difficulty = 1;
+            return saveData.highestUnlockedLevelIndexPerDifficulty[difficulty];
+        }
+
+        public void UpdateHighestLevel(int index, int difficulty = 1)
+        {
+            if (difficulty < 1 || difficulty > 3) difficulty = 1;
+            
+            if (index > saveData.highestUnlockedLevelIndexPerDifficulty[difficulty])
             {
-                saveData.highestUnlockedLevelIndex = index;
+                saveData.highestUnlockedLevelIndexPerDifficulty[difficulty] = index;
                 SaveGame();
             }
         }
 
-        public void SaveLevelProgress(string levelID, int stars)
+        public void SaveLevelProgress(string levelID, int stars, int difficulty = 1)
         {
-            LevelProgress progress = saveData.levelProgressList.Find(p => p.levelID == levelID);
+            LevelProgress progress = saveData.levelProgressList.Find(p => p.levelID == levelID && p.difficultyLevel == difficulty);
             if (progress == null)
             {
-                progress = new LevelProgress { levelID = levelID };
+                progress = new LevelProgress { levelID = levelID, difficultyLevel = difficulty };
                 saveData.levelProgressList.Add(progress);
             }
 
@@ -145,11 +317,29 @@ namespace TowerDefence.Core
             SaveGame();
         }
 
-        public int GetLevelStars(string levelID)
+        public int GetLevelStars(string levelID, int difficulty = 1)
         {
-            LevelProgress progress = saveData.levelProgressList.Find(p => p.levelID == levelID);
+            LevelProgress progress = saveData.levelProgressList.Find(p => p.levelID == levelID && p.difficultyLevel == difficulty);
             return progress != null ? progress.stars : 0;
         }
+
+        public bool IsLevelCompleted(string levelID, int difficulty = 1)
+        {
+            LevelProgress progress = saveData.levelProgressList.Find(p => p.levelID == levelID && p.difficultyLevel == difficulty);
+            return progress != null && progress.isCompleted;
+        }
+
+        public void UnlockNextGlobalDifficulty()
+        {
+            if (saveData.highestUnlockedGlobalDifficulty < 3)
+            {
+                saveData.highestUnlockedGlobalDifficulty++;
+                SaveGame();
+                Debug.Log($"[Progression] Global Difficulty Unlocked: {saveData.highestUnlockedGlobalDifficulty}");
+            }
+        }
+
+        public int GetHighestUnlockedGlobalDifficulty() => saveData.highestUnlockedGlobalDifficulty;
 
         public int GetTotalKarma() => saveData.totalKarma;
 
@@ -234,6 +424,24 @@ namespace TowerDefence.Core
                 saveData.totalKarma = 200; // Başlangıç Karma puanı
             }
 
+            // Migration: Yeni array sistemi için eksik eleman varsa doldur
+            while (saveData.highestUnlockedLevelIndexPerDifficulty.Count <= 3)
+            {
+                saveData.highestUnlockedLevelIndexPerDifficulty.Add(0);
+            }
+
+            // Migration: Eski sistemdeki progress değerini Zorluk 1'e aktar
+            if (saveData.highestUnlockedLevelIndex > saveData.highestUnlockedLevelIndexPerDifficulty[1])
+            {
+                saveData.highestUnlockedLevelIndexPerDifficulty[1] = saveData.highestUnlockedLevelIndex;
+            }
+            
+            // Migration: Tüm mevcut level progress'lerde difficulty yoksa 1 yap
+            foreach (var progress in saveData.levelProgressList)
+            {
+                if (progress.difficultyLevel == 0) progress.difficultyLevel = 1;
+            }
+
             // Başlangıç büyülerini ve yeteneklerini otomatik aç (Eğer hiç büyü yoksa)
             if (saveData.unlockedSpellIDs.Count == 0)
             {
@@ -247,6 +455,27 @@ namespace TowerDefence.Core
                 if (!saveData.unlockedSkillIDs.Contains("Skill_Unlock_Dark_Bloodlust"))
                     saveData.unlockedSkillIDs.Add("Skill_Unlock_Dark_Bloodlust");
 
+                SaveGame();
+            }
+
+            EnsureStarterHeroUnlocked();
+        }
+
+        private void EnsureStarterHeroUnlocked()
+        {
+            if (allAvailableHeroes == null || allAvailableHeroes.Count == 0) return;
+
+            bool anyUnlocked = saveData.unlockedHeroIDs.Count > 0;
+            if (anyUnlocked) return;
+
+            HeroData starter = allAvailableHeroes.Find(h => h != null && h.isStarterHero);
+            if (starter == null)
+                starter = allAvailableHeroes.Find(h => h != null);
+
+            if (starter != null)
+            {
+                saveData.unlockedHeroIDs.Add(starter.heroID);
+                saveData.heroProgressList.Add(new HeroProgressEntry { heroID = starter.heroID, level = 1 });
                 SaveGame();
             }
         }

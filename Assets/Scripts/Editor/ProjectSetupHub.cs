@@ -23,125 +23,46 @@ namespace TowerDefence.Editor
             // 0. MASTER REPAIR (New)
             DrawSection("MASTER SYSTEMS", () => {
                 GUI.backgroundColor = new Color(0.7f, 1f, 0.7f); // Yeşil tonlu (Başarılı/Güvenli)
-                if (GUILayout.Button("COMPLETE SYSTEM REPAIR (Data, UI, Prefabs)", GUILayout.Height(40)))
+                if (GUILayout.Button("COMPLETE SYSTEM REPAIR (Data, UI, Prefabs)", GUILayout.Height(50)))
                 {
-                    // 0. Build/Update all base gameplay prefabs (incorporating new Meshy 3D Models for towers & preserving Mixamo models for units)
+                    Debug.Log("Starting COMPLETE SYSTEM REPAIR...");
+
+                    // 0. Build/Update all base gameplay prefabs
                     EditorPrefabBuilder.GeneratePrefabs();
 
-                    // 1. Data & Logic
+                    // 1. Create Tower Slot Prefabs (Visuals)
+                    UIMasterPrefabCreator.CreateTowerSlotPrefab();
+
+                    // 2. Data & Logic
                     DataAssetGenerator.GenerateAllData(); 
                     
-                    // 2. UI Panels (Atomic)
+                    // 3. UI Panels (Atomic)
                     UIMasterPrefabCreator.CreateTowerUpgradeUIPrefab();
                     UIMasterPrefabCreator.CreateSkillTreeUIPrefab();
                     UIMasterPrefabCreator.CreateLevelSelectionPanelPrefab();
                     UIMasterPrefabCreator.CreateSideSelectionPanelPrefab();
+                    UIMasterPrefabCreator.CreateHeroShopPanelPrefab();
                     UIMasterPrefabCreator.CreateLevelResultUIPrefab();
                     UIMasterPrefabCreator.CreateSpellSlotPrefabs();
                     UIMasterPrefabCreator.CreateUnitButtonPrefab();
 
-                    // 3. Configurations
+                    // 4. Configurations
                     DataAssetGenerator.ConfigureTowerPrefabs();
                     DataAssetGenerator.ConfigureUnitPrefabs();
                     
-                    // 4. Master Prefabs (Composite)
+                    // 5. Master Prefabs (Composite)
                     UIMasterPrefabCreator.CreateCoreEnginePrefab();
                     UIMasterPrefabCreator.CreateMainMenuMaster();
                     UIMasterPrefabCreator.CreateGameplayHUDMaster();
-                    
+
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();
-                    Debug.Log("✔ ALL SYSTEMS REPAIRED SUCCESSFULLY!");
+                    Debug.Log("✔ ALL SYSTEMS REPAIRED SUCCESSFULLY! (Map prefabs are not touched — assign manually)");
                 }
                 GUI.backgroundColor = Color.white;
             });
 
-            // 1. Core Systems Group
-            DrawSection("Core Infrastructure", () => {
-                if (GUILayout.Button("Generate/Update CORE ENGINE Master Prefab"))
-                {
-                    UIMasterPrefabCreator.CreateCoreEnginePrefab();
-                }
-            });
-
-            // 2. Veri Asset Grubu
-            DrawSection("Data Asset Generation", () => {
-                if (GUILayout.Button("Generate/Update All Data Assets (Towers, Units, Skills, Spells)"))
-                {
-                    DataAssetGenerator.GenerateAllData(); // Bu zaten içerideydi
-                }
-                if (GUILayout.Button("REGENERATE ALL LEVELS (New Paths & Teams)"))
-                {
-                    DataAssetGenerator.GenerateLevels();
-                }
-                if (GUILayout.Button("Configure All Tower Prefabs (Embedded UI)"))
-                {
-                    DataAssetGenerator.ConfigureTowerPrefabs();
-                }
-                if (GUILayout.Button("AUTO-REPAIR MISSING TOWER REFERENCES (Prefabs, Icons)"))
-                {
-                    DataAssetGenerator.FixMissingTowerReferences();
-                }
-                if (GUILayout.Button("AUTO-REPAIR MISSING UNIT REFERENCES (Safe-Link)"))
-                {
-                    DataAssetGenerator.FixMissingUnitReferences();
-                }
-                if (GUILayout.Button("Configure All Unit Prefabs (Health Bars)"))
-                {
-                    DataAssetGenerator.ConfigureUnitPrefabs();
-                }
-            });
-
-            // 2. UI Prefab Grubu
-            DrawSection("Standard UI Prefabs", () => {
-                if (GUILayout.Button("Create/Update TowerUpgradeUI Prefab"))
-                    UIMasterPrefabCreator.CreateTowerUpgradeUIPrefab();
-                
-                if (GUILayout.Button("Create/Update SkillTree UI Prefab"))
-                    UIMasterPrefabCreator.CreateSkillTreeUIPrefab();
-
-                if (GUILayout.Button("Create/Update Level Selection Panel (+ LevelButton)"))
-                    UIMasterPrefabCreator.CreateLevelSelectionPanelPrefab();
-
-                if (GUILayout.Button("Create/Update Side Selection Panel"))
-                    UIMasterPrefabCreator.CreateSideSelectionPanelPrefab();
-
-                if (GUILayout.Button("Create/Update UnitButton Prefab"))
-                    UIMasterPrefabCreator.CreateUnitButtonPrefab();
-
-                if (GUILayout.Button("Create/Update Gameplay HUD Prefab"))
-                    UIMasterPrefabCreator.CreateGameplayHUDMaster();
-
-                if (GUILayout.Button("Create/Update Level Result Panel"))
-                    UIMasterPrefabCreator.CreateLevelResultUIPrefab();
-
-                if (GUILayout.Button("Create/Update Tower Slot Prefab (Visuals)"))
-                    UIMasterPrefabCreator.CreateTowerSlotPrefab();
-
-                if (GUILayout.Button("Initialize Default Level Layout Designs"))
-                    UIMasterPrefabCreator.InitializeDefaultLevelLayouts();
-
-                if (GUILayout.Button("GENERATE ALL LEVEL MAPS (Advanced)"))
-                    UIMasterPrefabCreator.GenerateAllLevelMaps();
-
-                if (GUILayout.Button("MASSIVE SCALE & MATERIAL POLISH (Gameplay)"))
-                    UIMasterPrefabCreator.PolishAllGameplayPrefabs();
-            });
-
-            // 3. MASTER PREFABS
-            DrawSection("MASTER PREFABS (Everything-as-Prefab)", () => {
-                if (GUILayout.Button("Generate/Update MainMenu Master Prefab"))
-                    UIMasterPrefabCreator.CreateMainMenuMaster();
-
-                if (GUILayout.Button("Generate/Update Gameplay HUD Master Prefab"))
-                    UIMasterPrefabCreator.CreateGameplayHUDMaster();
-            });
-
-            // 4. Other Tools
-            DrawSection("Spell System Setup", () => {
-                if (GUILayout.Button("Create/Update Spell Slot Prefabs"))
-                    UIMasterPrefabCreator.CreateSpellSlotPrefabs();
-            });
+            EditorGUILayout.HelpBox("Use the button above to regenerate, link, and repair all Data Assets, Game Prefabs, and UI Systems. Map prefabs are NOT regenerated — assign them manually via LevelData.", MessageType.Info);
 
             GUILayout.EndScrollView();
         }

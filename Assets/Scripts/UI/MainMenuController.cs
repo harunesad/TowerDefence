@@ -10,11 +10,13 @@ namespace TowerDefence.UI
         [SerializeField] private GameObject mainMenuPanel;
         [SerializeField] private GameObject levelSelectPanel;
         [SerializeField] private GameObject skillTreePanel;
+        [SerializeField] private GameObject heroShopPanel;
         [SerializeField] private GameObject sideSelectionPanel;
 
         [Header("Buttons")]
         [SerializeField] private Button playButton;
         [SerializeField] private Button skillTreeButton;
+        [SerializeField] private Button heroesButton;
         [SerializeField] private Button quitButton;
 
         [Header("Animation Settings")]
@@ -38,11 +40,13 @@ namespace TowerDefence.UI
             InitPanel(mainMenuPanel);
             InitPanel(levelSelectPanel);
             InitPanel(skillTreePanel);
+            InitPanel(heroShopPanel);
             InitPanel(sideSelectionPanel);
 
             // Buton olaylarını bağla
             if (playButton      != null) playButton.onClick.AddListener(ShowLevelSelect);
             if (skillTreeButton != null) skillTreeButton.onClick.AddListener(ShowSkillTree);
+            if (heroesButton    != null) heroesButton.onClick.AddListener(ShowHeroShop);
             if (quitButton      != null) quitButton.onClick.AddListener(QuitGame);
 
             // Ana menüyü hemen görünür olarak aç (fade yok, anında)
@@ -81,6 +85,7 @@ namespace TowerDefence.UI
         public void ShowMainMenu() => TransitionToPanel(mainMenuPanel);
         public void ShowLevelSelect() => TransitionToPanel(levelSelectPanel);
         public void ShowSkillTree() => TransitionToPanel(skillTreePanel);
+        public void ShowHeroShop() => TransitionToPanel(heroShopPanel);
         public void ShowSideSelection() => TransitionToPanel(sideSelectionPanel);
 
         private void TransitionToPanel(GameObject targetPanel)

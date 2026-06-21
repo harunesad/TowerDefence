@@ -43,6 +43,7 @@ namespace TowerDefence.Combat
         public bool IsDead => isDead;
         public Side GetSide() => unitSide;
         public float GetHealth() => currentHealth;
+        public float GetMaxHealth() => maxHealth;
         public int GetCurrentWaypointIndex() => currentWaypointIndex;
         public Vector3 GetCurrentMoveTarget() => currentMoveTarget;
         public bool IsAttacking() => isAttacking;
@@ -80,8 +81,9 @@ namespace TowerDefence.Combat
 
             currentHealth = maxHealth;
             
-            // Rastgele yanal sapma ata
-            pathOffset = Random.Range(-0.8f, 0.8f);
+            // 4 farklı random şerit (lane) ilerleyişi ata
+            float[] lanes = new float[] { -1.5f, -0.5f, 0.5f, 1.5f };
+            pathOffset = lanes[Random.Range(0, lanes.Length)];
 
             // Animasyon hızını hareket hızıyla senkronize et
             // 1.0f = referans hız, animasyon bu hıza göre kalibre edilmiş sayılır
@@ -124,7 +126,29 @@ namespace TowerDefence.Combat
 
         private void Start()
         {
-            FindTargetBase();
+            if (ShouldSeekEnemyBase())
+                FindTargetBase();
+        }
+
+        protected virtual bool ShouldFollowPath() => true;
+        protected virtual bool ShouldSeekEnemyBase() => true;
+        protected virtual void TryMoveToManualDestination() { }
+        protected virtual bool CanAcquireTarget() => true;
+
+        protected void ClearTarget()
+        {
+            targetCombatant = null;
+            if (isBlocked && currentBlocker != null)
+            {
+                currentBlocker.OnBlockedEnemyDied(this);
+                currentBlocker = null;
+                isBlocked = false;
+            }
+            foreach (var enemy in blockedEnemies)
+            {
+                if (enemy != null) enemy.Unblock();
+            }
+            blockedEnemies.Clear();
         }
 
         protected virtual void Update()
@@ -138,7 +162,10 @@ namespace TowerDefence.Combat
             targetSearchTimer -= Time.deltaTime;
             if (targetSearchTimer <= 0)
             {
-                UpdateTargetConflict();
+                if (CanAcquireTarget())
+                {
+                    UpdateTargetConflict();
+                }
                 targetSearchTimer = TARGET_SEARCH_INTERVAL;
             }
 
@@ -146,7 +173,13 @@ namespace TowerDefence.Combat
             bool isFighting = false;
             if (targetCombatant != null && !targetCombatant.IsDead)
             {
-                float distance = Vector3.Distance(transform.position, ((MonoBehaviour)targetCombatant).transform.position);
+                float distance = GetFlatDistance(transform.position, ((MonoBehaviour)targetCombatant).transform.position);
+                
+                if (this is HeroUnit)
+                {
+                    Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} target: {((MonoBehaviour)targetCombatant).name}, distance: {distance}, attackRange: {attackRange}, nextAttackTime: {nextAttackTime}, Time.time: {Time.time}, isAttacking: {isAttacking}");
+                }
+
                 // Saldırı menziline küçük bir tolerans ekle (+0.5f)
                 if (distance <= attackRange + 0.5f)
                 {
@@ -155,6 +188,10 @@ namespace TowerDefence.Combat
                     
                     if (Time.time >= nextAttackTime && !isAttacking)
                     {
+                        if (this is HeroUnit)
+                        {
+                            Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} starting PerformAttack coroutine.");
+                        }
                         StartCoroutine(PerformAttack((MonoBehaviour)targetCombatant));
                         nextAttackTime = Time.time + 1f / attackRate;
                     }
@@ -171,18 +208,20 @@ namespace TowerDefence.Combat
                 {
                     // 1. Hedefi Kovala (Chase Logic)
                     Vector3 chaseTarget = ((MonoBehaviour)targetCombatant).transform.position;
-                    float distance = Vector3.Distance(transform.position, chaseTarget);
+                    float distance = GetFlatDistance(transform.position, chaseTarget);
                     
                     // Yakın dövüşçü ise (Projectile yoksa) iyice dibine (1.2f) gir
                     float stopDistance = (unitData.projectilePrefab == null) ? 1.2f : attackRange * 0.8f;
                     
                     if (distance > stopDistance)
                     {
+                        if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} chasing: moving towards target. stopDistance: {stopDistance}");
                         MoveTowardsTarget(chaseTarget);
                         if (animator != null) animator.SetBool("IsMoving", true);
                     }
                     else
                     {
+                        if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} close enough to stop chasing. stopDistance: {stopDistance}");
                         if (animator != null) animator.SetBool("IsMoving", false);
                     }
                     
@@ -190,6 +229,12 @@ namespace TowerDefence.Combat
                 }
                 else if (!isBlocked)
                 {
+                    if (!ShouldFollowPath())
+                    {
+                        TryMoveToManualDestination();
+                    }
+                    else
+                    {
                     // 2. Düşman yoksa ve engellenmemişsek Waypoint Takibi yap
                     Vector3 targetPos = Vector3.zero;
 
@@ -210,7 +255,7 @@ namespace TowerDefence.Combat
                             UpdateMoveTarget();
                         }
                     }
-                    else if (targetBase != null)
+                    else if (targetBase != null && ShouldSeekEnemyBase())
                     {
                         targetPos = targetBase.transform.position;
                     }
@@ -224,6 +269,7 @@ namespace TowerDefence.Combat
                     else
                     {
                         if (animator != null) animator.SetBool("IsMoving", false);
+                    }
                     }
                 }
                 else
@@ -298,11 +344,19 @@ namespace TowerDefence.Combat
             if (blockedEnemies.Count > 0 && blockedEnemies[0] != null && !blockedEnemies[0].IsDead)
             {
                 targetCombatant = blockedEnemies[0];
+                if (this is HeroUnit)
+                {
+                    Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} targeting blockedEnemy: {((MonoBehaviour)targetCombatant).name}");
+                }
                 return;
             }
             if (isBlocked && currentBlocker != null && !currentBlocker.IsDead)
             {
                 targetCombatant = currentBlocker;
+                if (this is HeroUnit)
+                {
+                    Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} targeting currentBlocker: {currentBlocker.name}");
+                }
                 return;
             }
 
@@ -312,31 +366,58 @@ namespace TowerDefence.Combat
             float shortestDist = aggroRange;
             IDamageable nearestUnit = null;
 
+            if (this is HeroUnit && colliders.Length > 0)
+            {
+                Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} searching targets. Found {colliders.Length} colliders in aggroRange {aggroRange}.");
+            }
+
             foreach (var col in colliders)
             {
                 Unit otherUnit = col.GetComponent<Unit>();
                 if (otherUnit != null && !otherUnit.IsDead && otherUnit.GetSide() != unitSide)
                 {
-                    // 1'E 1 KURALI: 
-                    // Eğer bu düşman birini engelliyorsa VE engellediği kişi BİZ DEĞİLSEK, ona dokunma!
-                    if (otherUnit.IsBlockingSomeone() && otherUnit.blockedEnemies[0] != this)
-                        continue;
-                    
-                    // Eğer bu düşman başkası tarafından engellenmişse, ona dokunma!
-                    if (otherUnit.IsBlocked && otherUnit.currentBlocker != this)
-                        continue;
+                    if (this is HeroUnit)
+                    {
+                        Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} evaluating enemy {otherUnit.name}. IsBlockingSomeone: {otherUnit.IsBlockingSomeone()}, IsBlocked: {otherUnit.IsBlocked}");
+                    }
+
+                    // 1'E 1 KURALI: Sadece Asker vs Asker durumlarında geçerlidir.
+                    // Kahramanlar bu kısıtlamadan muaftır ve takım savaşına her zaman katılırlar.
+                    if (!(this is HeroUnit) && !(otherUnit is HeroUnit))
+                    {
+                        // Eğer bu düşman birini engelliyorsa VE engellediği kişi BİZ DEĞİLSEK, ona dokunma!
+                        if (otherUnit.IsBlockingSomeone() && otherUnit.blockedEnemies[0] != this)
+                        {
+                            continue;
+                        }
+                        
+                        // Eğer bu düşman başkası tarafından engellenmişse, ona dokunma!
+                        if (otherUnit.IsBlocked && otherUnit.currentBlocker != this)
+                        {
+                            continue;
+                        }
+                    }
 
                     // Yakın dövüş birimleri kuleleri hedef alamaz
                     if (unitData.projectilePrefab == null && otherUnit is Tower)
                         continue;
 
-                    float dist = Vector3.Distance(transform.position, col.transform.position);
+                    float dist = GetFlatDistance(transform.position, col.transform.position);
                     if (dist < shortestDist)
                     {
                         shortestDist = dist;
                         nearestUnit = otherUnit;
                     }
                 }
+            }
+
+            if (this is HeroUnit && nearestUnit != null)
+            {
+                Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} selected nearest target: {((MonoBehaviour)nearestUnit).name}");
+            }
+            else if (this is HeroUnit && targetCombatant != nearestUnit)
+            {
+                Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} found no valid targets in range.");
             }
 
             targetCombatant = nearestUnit;
@@ -499,6 +580,7 @@ namespace TowerDefence.Combat
 
         private System.Collections.IEnumerator PerformAttack(MonoBehaviour targetMB)
         {
+            if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} PerformAttack started.");
             isAttacking = true;
             IDamageable targetC = targetMB as IDamageable;
 
@@ -553,6 +635,7 @@ namespace TowerDefence.Combat
             
             if (animator != null) animator.speed = 1f; // Animator hızını normale çek
             isAttacking = false;
+            if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} PerformAttack finished. isAttacking reset to false.");
         }
 
         public void TakeDamage(float amount)
@@ -584,7 +667,7 @@ namespace TowerDefence.Combat
             }
         }
 
-        private void Die()
+        protected virtual void Die()
         {
             isDead = true;
             
@@ -653,6 +736,11 @@ namespace TowerDefence.Combat
                 // Düşmana kilitlen
                 targetCombatant = enemy;
             }
+        }
+
+        private float GetFlatDistance(Vector3 a, Vector3 b)
+        {
+            return Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
         }
     }
 }

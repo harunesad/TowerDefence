@@ -46,7 +46,7 @@ namespace TowerDefence.Combat
             }
         }
 
-        private void SearchAndBlockEnemy()
+        protected void SearchAndBlockEnemy()
         {
             // Düşman katmanını belirle (Side.Light isek Dark olanlara (7) bak)
             int enemyLayer = (GetSide() == Side.Light) ? (1 << 7) : (1 << 6);

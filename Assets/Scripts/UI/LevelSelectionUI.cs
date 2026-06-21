@@ -16,6 +16,13 @@ namespace TowerDefence.UI
         [SerializeField] private Button backButton;
         [SerializeField] private bool useMapMode = false; // Harita üzerinde elle yerleştirme modu
 
+        [Header("Difficulty Selection")]
+        [SerializeField] private Button btnDiffNormal;
+        [SerializeField] private Button btnDiffHard;
+        [SerializeField] private Button btnDiffExpert;
+        
+        private List<GameObject> activeLevelButtons = new List<GameObject>();
+
         private void Start()
         {
             if (backButton != null)
@@ -26,11 +33,45 @@ namespace TowerDefence.UI
                 });
             }
 
+            SetupDifficultyButtons();
             InitializeUI();
+            RefreshDifficultyButtonsUI();
+        }
+
+        private void SetupDifficultyButtons()
+        {
+            if (btnDiffNormal != null) btnDiffNormal.onClick.AddListener(() => OnDifficultySelected(1));
+            if (btnDiffHard != null) btnDiffHard.onClick.AddListener(() => OnDifficultySelected(2));
+            if (btnDiffExpert != null) btnDiffExpert.onClick.AddListener(() => OnDifficultySelected(3));
+        }
+
+        private void OnDifficultySelected(int difficulty)
+        {
+            if (difficulty > MetaProgressionManager.Instance.GetHighestUnlockedGlobalDifficulty()) return;
+
+            CampaignManager.Instance.SetDifficulty(difficulty);
+            RefreshDifficultyButtonsUI();
+            RefreshUI();
+        }
+
+        private void RefreshDifficultyButtonsUI()
+        {
+            int maxDiff = MetaProgressionManager.Instance.GetHighestUnlockedGlobalDifficulty();
+            int currentDiff = CampaignManager.Instance.CurrentDifficultyLevel;
+
+            if (btnDiffNormal != null) 
+            {
+                btnDiffNormal.interactable = (1 <= maxDiff);
+                // Burada buton rengi/seçili olma durumu ayarlanabilir (Örn: image.color)
+            }
+            if (btnDiffHard != null) btnDiffHard.interactable = (2 <= maxDiff);
+            if (btnDiffExpert != null) btnDiffExpert.interactable = (3 <= maxDiff);
         }
 
         private void InitializeUI()
         {
+            activeLevelButtons.Clear();
+
             if (useMapMode)
             {
                 // Mevcut butonları (Hierarchy'deki) kullan
@@ -39,6 +80,7 @@ namespace TowerDefence.UI
                     if (i >= container.childCount) break;
                     
                     GameObject buttonGO = container.GetChild(i).gameObject;
+                    activeLevelButtons.Add(buttonGO);
                     SetupButton(buttonGO, levels[i]);
                 }
             }
@@ -48,7 +90,19 @@ namespace TowerDefence.UI
                 foreach (LevelData level in levels)
                 {
                     GameObject buttonGO = Instantiate(levelButtonPrefab, container);
+                    activeLevelButtons.Add(buttonGO);
                     SetupButton(buttonGO, level);
+                }
+            }
+        }
+
+        private void RefreshUI()
+        {
+            for (int i = 0; i < activeLevelButtons.Count; i++)
+            {
+                if (i < levels.Count)
+                {
+                    SetupButton(activeLevelButtons[i], levels[i]);
                 }
             }
         }

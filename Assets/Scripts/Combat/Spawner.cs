@@ -146,7 +146,15 @@ namespace TowerDefence.Combat
             Unit unit = unitGO.GetComponent<Unit>();
             if (unit != null)
             {
-                unit.Initialize(unitData);
+                float diffMultiplier = 1f;
+                if (SideController.Instance != null && unitData.side != SideController.Instance.GetPlayerSide())
+                {
+                    int diff = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
+                    if (diff == 2) diffMultiplier = 1.5f;
+                    else if (diff == 3) diffMultiplier = 2.0f;
+                }
+
+                unit.Initialize(unitData, diffMultiplier);
                 if (targetWpIdx >= 0)
                 {
                     unit.SetPathWithExactTarget(path, targetWpIdx);
@@ -195,13 +203,20 @@ namespace TowerDefence.Combat
             if (finalUnitData.prefab == null) return;
 
             Vector3 spawnPos = spawnPoint.position;
-            // NavMesh.SamplePosition blokları kaldırıldı.
 
             GameObject unitGO = Instantiate(finalUnitData.prefab, spawnPos, spawnPoint.rotation);
             Unit unit = unitGO.GetComponent<Unit>();
             if (unit != null)
             {
-                unit.Initialize(finalUnitData);
+                float diffMultiplier = 1f;
+                if (SideController.Instance != null && finalUnitData.side != SideController.Instance.GetPlayerSide())
+                {
+                    int diff = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
+                    if (diff == 2) diffMultiplier = 1.5f;
+                    else if (diff == 3) diffMultiplier = 2.0f;
+                }
+
+                unit.Initialize(finalUnitData, diffMultiplier);
                 
                 // Atanan yollardan rastgele birini seç
                 if (assignedPaths != null && assignedPaths.Count > 0)

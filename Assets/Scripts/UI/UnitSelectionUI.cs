@@ -102,7 +102,8 @@ namespace TowerDefence.UI
 
                 if (finalUnit != null && !addedNames.Contains(finalUnit.unitName))
                 {
-                    if (unitButtonPrefab != null && container != null)
+                    // SADECE SPAWN MALIYETI 0'DAN BÜYÜK OLANLARI GÖSTER (0 OLANLAR YAN BİRİMLER/DÜŞMANLARDIR)
+                    if (finalUnit.spawnCost > 0 && unitButtonPrefab != null && container != null)
                     {
                         GameObject buttonGO = Instantiate(unitButtonPrefab, container);
                         UnitButton unitBtn = buttonGO.GetComponent<UnitButton>();

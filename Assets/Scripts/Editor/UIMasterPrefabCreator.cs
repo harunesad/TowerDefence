@@ -366,11 +366,14 @@ namespace TowerDefence.Editor
             // 3c. Buttons
             Button playBtn  = CreateButton(btnContainer.transform, "PlayButton",      "PLAY",  400, 80, 36);
             Button skillBtn = CreateButton(btnContainer.transform, "SkillTreeButton", "SKILL TREE",400, 80, 36);
+            Button heroBtn  = CreateButton(btnContainer.transform, "HeroesButton",    "HEROES",    400, 80, 36);
             CreateButton(btnContainer.transform, "OptionsButton", "SETTINGS", 400, 80, 36);
             Button quitBtn  = CreateButton(btnContainer.transform, "QuitButton",      "QUIT",        400, 80, 36);
 
             // 4. Sub-Panels — başlangıçta kapalı
+            CreateHeroShopPanelPrefab();
             GameObject skillPanel = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/SkillTreePanel.prefab",      false);
+            GameObject heroPanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/HeroShopPanel.prefab",     false);
             GameObject levelPanel = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/LevelSelectionPanel.prefab", false);
             GameObject sidePanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/SideSelectionPanel.prefab",  false);
 
@@ -380,9 +383,11 @@ namespace TowerDefence.Editor
             so.FindProperty("mainMenuPanel").objectReferenceValue    = mainMenuPanel;
             so.FindProperty("levelSelectPanel").objectReferenceValue = levelPanel;
             so.FindProperty("skillTreePanel").objectReferenceValue   = skillPanel;
+            so.FindProperty("heroShopPanel").objectReferenceValue    = heroPanel;
             so.FindProperty("sideSelectionPanel").objectReferenceValue = sidePanel;
             so.FindProperty("playButton").objectReferenceValue       = playBtn;
             so.FindProperty("skillTreeButton").objectReferenceValue  = skillBtn;
+            so.FindProperty("heroesButton").objectReferenceValue     = heroBtn;
             so.FindProperty("quitButton").objectReferenceValue       = quitBtn;
             so.ApplyModifiedProperties();
 
@@ -431,11 +436,31 @@ namespace TowerDefence.Editor
             backRT.pivot = new Vector2(0, 1);
             backRT.anchoredPosition = new Vector2(30, -20);
 
+            // Difficulty Selection Row
+            GameObject diffRow = CreateUINode(root.transform, "DifficultySelectionRow", new Vector2(600, 60));
+            RectTransform diffRowRT = diffRow.GetComponent<RectTransform>();
+            diffRowRT.anchorMin = new Vector2(0.5f, 1f);
+            diffRowRT.anchorMax = new Vector2(0.5f, 1f);
+            diffRowRT.anchoredPosition = new Vector2(0, -170); // Below Title
+
+            HorizontalLayoutGroup hlg = diffRow.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 20;
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childControlWidth = true;
+            hlg.childControlHeight = true;
+
+            Button btnNormal = CreateButton(diffRow.transform, "BtnDiffNormal", "NORMAL", 180, 50, 18);
+            Button btnHard = CreateButton(diffRow.transform, "BtnDiffHard", "HARD", 180, 50, 18);
+            Button btnExpert = CreateButton(diffRow.transform, "BtnDiffExpert", "EXPERT", 180, 50, 18);
+
             // Link LevelSelectionUI references
             LevelSelectionUI ui = root.GetComponent<LevelSelectionUI>();
             var so = new UnityEditor.SerializedObject(ui);
             so.FindProperty("container").objectReferenceValue = container.transform;
             so.FindProperty("backButton").objectReferenceValue = backBtn;
+            so.FindProperty("btnDiffNormal").objectReferenceValue = btnNormal;
+            so.FindProperty("btnDiffHard").objectReferenceValue = btnHard;
+            so.FindProperty("btnDiffExpert").objectReferenceValue = btnExpert;
             if (levelBtnPrefab != null)
                 so.FindProperty("levelButtonPrefab").objectReferenceValue = levelBtnPrefab;
 
@@ -565,30 +590,54 @@ namespace TowerDefence.Editor
             Button darkBtn = CreateButton(sideBtnRow.transform, "DarkSideButton", "DARK SIDE", 300, 100, 28);
             darkBtn.GetComponent<Image>().color = new Color(0.25f, 0.1f, 0.4f);
 
-            // --- Phase 2: Spell Loadout ---
-            GameObject loadoutGroup = CreateUINode(root.transform, "SpellLoadoutGroup", new Vector2(1000, 600));
-            loadoutGroup.SetActive(false); // Başlangıçta gizli
-            
-            TextMeshProUGUI loadoutTitle = CreateTMP(loadoutGroup.transform, "Title", "EQUIP YOUR SPELLS (Max 3)", 42, 700, 60);
-            loadoutTitle.rectTransform.anchoredPosition = new Vector2(0, 250);
+            // --- Phase 2: Hero + Spell Loadout ---
+            GameObject loadoutGroup = CreateUINode(root.transform, "LoadoutGroup", new Vector2(1100, 700));
+            loadoutGroup.SetActive(false);
 
-            GameObject scroll = new GameObject("SpellScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
-            scroll.transform.SetParent(loadoutGroup.transform, false);
-            scroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.3f);
-            RectTransform scrollRT = scroll.GetComponent<RectTransform>();
-            scrollRT.sizeDelta = new Vector2(900, 350);
-            scrollRT.anchoredPosition = new Vector2(0, 20);
+            TextMeshProUGUI loadoutTitle = CreateTMP(loadoutGroup.transform, "Title", "PREPARE FOR BATTLE", 42, 900, 60);
+            loadoutTitle.rectTransform.anchoredPosition = new Vector2(0, 300);
 
-            GameObject content = CreateUINode(scroll.transform, "Content", new Vector2(850, 300));
-            GridLayoutGroup glg = content.AddComponent<GridLayoutGroup>();
+            // Hero section
+            TextMeshProUGUI heroTitle = CreateTMP(loadoutGroup.transform, "HeroTitle", "SELECT HEROES (Max 2)", 28, 700, 40);
+            heroTitle.rectTransform.anchoredPosition = new Vector2(0, 230);
+
+            TextMeshProUGUI heroHint = CreateTMP(loadoutGroup.transform, "HeroHint", "SELECT HEROES (Max 2)", 20, 700, 30);
+            heroHint.rectTransform.anchoredPosition = new Vector2(0, 195);
+
+            GameObject heroScroll = new GameObject("HeroScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+            heroScroll.transform.SetParent(loadoutGroup.transform, false);
+            heroScroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.25f);
+            RectTransform heroScrollRT = heroScroll.GetComponent<RectTransform>();
+            heroScrollRT.sizeDelta = new Vector2(900, 130);
+            heroScrollRT.anchoredPosition = new Vector2(0, 120);
+
+            GameObject heroContent = CreateUINode(heroScroll.transform, "HeroContent", new Vector2(850, 110));
+            HorizontalLayoutGroup heroHlg = heroContent.AddComponent<HorizontalLayoutGroup>();
+            heroHlg.spacing = 15;
+            heroHlg.childAlignment = TextAnchor.MiddleLeft;
+            heroScroll.GetComponent<ScrollRect>().content = heroContent.GetComponent<RectTransform>();
+            heroScroll.GetComponent<ScrollRect>().horizontal = true;
+
+            // Spell section
+            TextMeshProUGUI spellTitle = CreateTMP(loadoutGroup.transform, "SpellTitle", "EQUIP SPELLS (Max 3)", 28, 700, 40);
+            spellTitle.rectTransform.anchoredPosition = new Vector2(0, 40);
+
+            GameObject spellScroll = new GameObject("SpellScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+            spellScroll.transform.SetParent(loadoutGroup.transform, false);
+            spellScroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.25f);
+            RectTransform spellScrollRT = spellScroll.GetComponent<RectTransform>();
+            spellScrollRT.sizeDelta = new Vector2(900, 150);
+            spellScrollRT.anchoredPosition = new Vector2(0, -60);
+
+            GameObject spellContent = CreateUINode(spellScroll.transform, "SpellContent", new Vector2(850, 140));
+            GridLayoutGroup glg = spellContent.AddComponent<GridLayoutGroup>();
             glg.cellSize = new Vector2(120, 150);
             glg.spacing = new Vector2(20, 20);
             glg.childAlignment = TextAnchor.UpperCenter;
-
-            scroll.GetComponent<ScrollRect>().content = content.GetComponent<RectTransform>();
+            spellScroll.GetComponent<ScrollRect>().content = spellContent.GetComponent<RectTransform>();
 
             Button startMatchBtn = CreateButton(loadoutGroup.transform, "StartMatchButton", "START BATTLE", 350, 90, 32);
-            startMatchBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -220);
+            startMatchBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -250);
             startMatchBtn.GetComponent<Image>().color = new Color(0.2f, 0.8f, 0.2f);
 
             // Back Button
@@ -607,11 +656,15 @@ namespace TowerDefence.Editor
             so.FindProperty("backButton").objectReferenceValue      = backBtn;
             
             so.FindProperty("sideSelectionGroup").objectReferenceValue = sideGroup;
-            so.FindProperty("spellLoadoutGroup").objectReferenceValue   = loadoutGroup;
-            so.FindProperty("spellItemContainer").objectReferenceValue  = content.transform;
-            so.FindProperty("startMatchButton").objectReferenceValue    = startMatchBtn;
-            
-            // Spell Item Prefab
+            so.FindProperty("loadoutGroup").objectReferenceValue       = loadoutGroup;
+            so.FindProperty("heroItemContainer").objectReferenceValue  = heroContent.transform;
+            so.FindProperty("heroLoadoutHint").objectReferenceValue    = heroHint;
+            so.FindProperty("spellItemContainer").objectReferenceValue = spellContent.transform;
+            so.FindProperty("startMatchButton").objectReferenceValue   = startMatchBtn;
+
+            GameObject heroItemPrefab = CreateHeroLoadoutItemPrefab();
+            so.FindProperty("heroItemPrefab").objectReferenceValue = heroItemPrefab;
+
             GameObject itemPrefab = CreateSpellLoadoutItemPrefab();
             so.FindProperty("spellItemPrefab").objectReferenceValue = itemPrefab;
 
@@ -656,6 +709,202 @@ namespace TowerDefence.Editor
             so.ApplyModifiedProperties();
 
             string path = PREFAB_PATH + "/SpellLoadoutItem.prefab";
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            GameObject.DestroyImmediate(root);
+            return prefab;
+        }
+
+        private static GameObject CreateHeroLoadoutItemPrefab()
+        {
+            EnsureDirectory();
+            GameObject root = new GameObject("HeroLoadoutItem", typeof(RectTransform), typeof(Image), typeof(Button), typeof(HeroLoadoutItemUI));
+            root.GetComponent<RectTransform>().sizeDelta = new Vector2(120, 110);
+            root.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
+
+            Image icon = CreateImage(root.transform, "Icon", new Vector2(70, 70));
+            icon.rectTransform.anchoredPosition = new Vector2(0, 10);
+
+            Image highlight = CreateImage(root.transform, "Highlight", new Vector2(120, 110));
+            highlight.color = new Color(0.2f, 1f, 0.3f, 0.45f);
+            highlight.gameObject.SetActive(false);
+
+            TextMeshProUGUI nameText = CreateTMP(root.transform, "Name", "Hero", 14, 110, 24);
+            nameText.rectTransform.anchoredPosition = new Vector2(0, -30);
+
+            TextMeshProUGUI levelText = CreateTMP(root.transform, "Level", "Lv.1", 12, 110, 20);
+            levelText.rectTransform.anchoredPosition = new Vector2(0, -48);
+
+            HeroLoadoutItemUI ui = root.GetComponent<HeroLoadoutItemUI>();
+            var so = new SerializedObject(ui);
+            so.FindProperty("iconImage").objectReferenceValue = icon;
+            so.FindProperty("selectionHighlight").objectReferenceValue = highlight;
+            so.FindProperty("nameText").objectReferenceValue = nameText;
+            so.FindProperty("levelText").objectReferenceValue = levelText;
+            so.FindProperty("button").objectReferenceValue = root.GetComponent<Button>();
+            so.ApplyModifiedProperties();
+
+            string path = PREFAB_PATH + "/HeroLoadoutItem.prefab";
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            GameObject.DestroyImmediate(root);
+            return prefab;
+        }
+
+        public static void CreateHeroShopPanelPrefab()
+        {
+            EnsureDirectory();
+
+            GameObject itemPrefab = CreateHeroShopItemPrefabAsset();
+
+            GameObject root = new GameObject("HeroShopPanel", typeof(RectTransform), typeof(Image), typeof(HeroShopUI));
+            root.GetComponent<Image>().color = new Color(0.08f, 0.08f, 0.12f, 0.97f);
+            RectTransform rootRT = root.GetComponent<RectTransform>();
+            rootRT.anchorMin = Vector2.zero;
+            rootRT.anchorMax = Vector2.one;
+            rootRT.offsetMin = Vector2.zero;
+            rootRT.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI title = CreateTMP(root.transform, "Title", "HERO ROSTER", 64, 900, 100);
+            title.rectTransform.anchoredPosition = new Vector2(0, 320);
+            title.color = new Color(1f, 0.85f, 0.2f);
+
+            TextMeshProUGUI karmaText = CreateTMP(root.transform, "KarmaText", "Karma: 0", 28, 400, 40);
+            karmaText.rectTransform.anchoredPosition = new Vector2(0, 250);
+
+            // Left: hero list
+            GameObject scroll = new GameObject("HeroScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+            scroll.transform.SetParent(root.transform, false);
+            scroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.3f);
+            RectTransform scrollRT = scroll.GetComponent<RectTransform>();
+            scrollRT.sizeDelta = new Vector2(520, 480);
+            scrollRT.anchoredPosition = new Vector2(-280, -30);
+
+            GameObject content = CreateUINode(scroll.transform, "Content", new Vector2(480, 460));
+            GridLayoutGroup glg = content.AddComponent<GridLayoutGroup>();
+            glg.cellSize = new Vector2(150, 110);
+            glg.spacing = new Vector2(12, 12);
+            glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            glg.constraintCount = 3;
+            scroll.GetComponent<ScrollRect>().content = content.GetComponent<RectTransform>();
+
+            // Right: detail panel
+            GameObject detailRoot = CreateUINode(root.transform, "DetailPanel", new Vector2(520, 480));
+            detailRoot.GetComponent<RectTransform>().anchoredPosition = new Vector2(280, -30);
+            Image detailBg = detailRoot.AddComponent<Image>();
+            detailBg.color = new Color(0.12f, 0.12f, 0.18f, 0.95f);
+            detailRoot.AddComponent<HeroDetailPanelUI>();
+
+            Image detailIcon = CreateImage(detailRoot.transform, "HeroIcon", new Vector2(120, 120));
+            detailIcon.rectTransform.anchoredPosition = new Vector2(-150, 150);
+
+            TextMeshProUGUI detailName = CreateTMP(detailRoot.transform, "HeroName", "Hero Name", 30, 300, 40);
+            detailName.rectTransform.anchoredPosition = new Vector2(40, 170);
+            TextMeshProUGUI detailSide = CreateTMP(detailRoot.transform, "Side", "LIGHT", 18, 200, 24);
+            detailSide.rectTransform.anchoredPosition = new Vector2(40, 130);
+            TextMeshProUGUI detailLevel = CreateTMP(detailRoot.transform, "Level", "Level 1/5", 20, 250, 28);
+            detailLevel.rectTransform.anchoredPosition = new Vector2(40, 95);
+
+            TextMeshProUGUI healthText = CreateTMP(detailRoot.transform, "Health", "Health: 500", 18, 220, 24);
+            healthText.rectTransform.anchoredPosition = new Vector2(-150, 40);
+            TextMeshProUGUI damageText = CreateTMP(detailRoot.transform, "Damage", "Damage: 40", 18, 220, 24);
+            damageText.rectTransform.anchoredPosition = new Vector2(80, 40);
+            TextMeshProUGUI speedText = CreateTMP(detailRoot.transform, "Speed", "Speed: 1.0", 18, 220, 24);
+            speedText.rectTransform.anchoredPosition = new Vector2(-150, 10);
+            TextMeshProUGUI rangeText = CreateTMP(detailRoot.transform, "Range", "Range: 1.8", 18, 220, 24);
+            rangeText.rectTransform.anchoredPosition = new Vector2(80, 10);
+            TextMeshProUGUI rateText = CreateTMP(detailRoot.transform, "AttackRate", "Attack Rate: 1.0/s", 18, 220, 24);
+            rateText.rectTransform.anchoredPosition = new Vector2(-150, -20);
+
+            TextMeshProUGUI abilityName = CreateTMP(detailRoot.transform, "AbilityName", "Ability", 22, 420, 30);
+            abilityName.rectTransform.anchoredPosition = new Vector2(0, -70);
+            TextMeshProUGUI abilityDesc = CreateTMP(detailRoot.transform, "AbilityDesc", "Description", 16, 460, 80);
+            abilityDesc.rectTransform.anchoredPosition = new Vector2(0, -130);
+            abilityDesc.alignment = TextAlignmentOptions.TopLeft;
+
+            TextMeshProUGUI costText = CreateTMP(detailRoot.transform, "Cost", "500 Karma", 20, 300, 28);
+            costText.rectTransform.anchoredPosition = new Vector2(0, -190);
+
+            Button actionBtn = CreateButton(detailRoot.transform, "ActionButton", "UNLOCK HERO", 220, 50, 20);
+            actionBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -235);
+            Button closeBtn = CreateButton(detailRoot.transform, "CloseButton", "CLOSE", 120, 40, 18);
+            closeBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(170, -235);
+
+            HeroDetailPanelUI detailUI = detailRoot.GetComponent<HeroDetailPanelUI>();
+            var detailSo = new SerializedObject(detailUI);
+            detailSo.FindProperty("panelRoot").objectReferenceValue = detailRoot;
+            detailSo.FindProperty("heroIcon").objectReferenceValue = detailIcon;
+            detailSo.FindProperty("heroNameText").objectReferenceValue = detailName;
+            detailSo.FindProperty("sideText").objectReferenceValue = detailSide;
+            detailSo.FindProperty("levelText").objectReferenceValue = detailLevel;
+            detailSo.FindProperty("healthText").objectReferenceValue = healthText;
+            detailSo.FindProperty("damageText").objectReferenceValue = damageText;
+            detailSo.FindProperty("speedText").objectReferenceValue = speedText;
+            detailSo.FindProperty("rangeText").objectReferenceValue = rangeText;
+            detailSo.FindProperty("attackRateText").objectReferenceValue = rateText;
+            detailSo.FindProperty("abilityNameText").objectReferenceValue = abilityName;
+            detailSo.FindProperty("abilityDescText").objectReferenceValue = abilityDesc;
+            detailSo.FindProperty("costText").objectReferenceValue = costText;
+            detailSo.FindProperty("actionButton").objectReferenceValue = actionBtn;
+            detailSo.FindProperty("actionLabel").objectReferenceValue = actionBtn.GetComponentInChildren<TextMeshProUGUI>();
+            detailSo.FindProperty("closeButton").objectReferenceValue = closeBtn;
+            detailSo.ApplyModifiedProperties();
+            detailRoot.SetActive(false);
+
+            Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 180, 60, 22);
+            RectTransform backRT = backBtn.GetComponent<RectTransform>();
+            backRT.anchorMin = new Vector2(0, 1);
+            backRT.anchorMax = new Vector2(0, 1);
+            backRT.pivot = new Vector2(0, 1);
+            backRT.anchoredPosition = new Vector2(30, -20);
+
+            HeroShopUI shopUI = root.GetComponent<HeroShopUI>();
+            var so = new SerializedObject(shopUI);
+            so.FindProperty("itemContainer").objectReferenceValue = content.transform;
+            so.FindProperty("itemPrefab").objectReferenceValue = itemPrefab;
+            so.FindProperty("karmaText").objectReferenceValue = karmaText;
+            so.FindProperty("backButton").objectReferenceValue = backBtn;
+            so.FindProperty("detailPanel").objectReferenceValue = detailUI;
+            so.ApplyModifiedProperties();
+
+            PrefabUtility.SaveAsPrefabAsset(root, PREFAB_PATH + "/HeroShopPanel.prefab");
+            GameObject.DestroyImmediate(root);
+        }
+
+        private static GameObject CreateHeroShopItemPrefabAsset()
+        {
+            EnsureDirectory();
+            GameObject root = new GameObject("HeroShopItem", typeof(RectTransform), typeof(Image), typeof(Button), typeof(HeroShopItemUI));
+            root.GetComponent<RectTransform>().sizeDelta = new Vector2(150, 110);
+            root.GetComponent<Image>().color = new Color(0.15f, 0.15f, 0.2f, 0.95f);
+
+            Image icon = CreateImage(root.transform, "Icon", new Vector2(60, 60));
+            icon.rectTransform.anchoredPosition = new Vector2(0, 15);
+
+            TextMeshProUGUI nameText = CreateTMP(root.transform, "Name", "Hero", 14, 130, 36);
+            nameText.rectTransform.anchoredPosition = new Vector2(0, -25);
+
+            TextMeshProUGUI levelText = CreateTMP(root.transform, "Level", "Lv.1", 12, 130, 20);
+            levelText.rectTransform.anchoredPosition = new Vector2(0, -45);
+
+            Image lockedOverlay = CreateImage(root.transform, "LockedOverlay", new Vector2(150, 110));
+            lockedOverlay.color = new Color(0, 0, 0, 0.55f);
+
+            Image highlightFrame = CreateImage(root.transform, "Highlight", new Vector2(150, 110));
+            highlightFrame.color = new Color(1f, 0.85f, 0.2f, 0.35f);
+            highlightFrame.gameObject.SetActive(false);
+
+            HeroShopItemUI ui = root.GetComponent<HeroShopItemUI>();
+            var so = new SerializedObject(ui);
+            so.FindProperty("iconImage").objectReferenceValue = icon;
+            so.FindProperty("nameText").objectReferenceValue = nameText;
+            so.FindProperty("levelText").objectReferenceValue = levelText;
+            so.FindProperty("lockedOverlay").objectReferenceValue = lockedOverlay;
+            so.FindProperty("highlightFrame").objectReferenceValue = highlightFrame;
+            so.FindProperty("cardButton").objectReferenceValue = root.GetComponent<Button>();
+            so.ApplyModifiedProperties();
+
+            string path = PREFAB_PATH + "/HeroShopItem.prefab";
             PrefabUtility.SaveAsPrefabAsset(root, path);
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             GameObject.DestroyImmediate(root);
@@ -853,6 +1102,172 @@ namespace TowerDefence.Editor
             hudSpeedSo.FindProperty("pauseButton").objectReferenceValue = pauseBtn;
             hudSpeedSo.ApplyModifiedProperties();
 
+            // --- YENİ: Hero Panel ve Butonları (Sol Alt, UnitPanel'ın Üstü) ---
+            GameObject heroPanel = new GameObject("HeroPanel", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            heroPanel.transform.SetParent(root.transform);
+            RectTransform heroRT = heroPanel.GetComponent<RectTransform>();
+            heroRT.anchorMin = new Vector2(0, 0);
+            heroRT.anchorMax = new Vector2(0, 0);
+            heroRT.pivot = new Vector2(0, 0);
+            heroRT.anchoredPosition = new Vector2(30, 160); // UnitPanel'in (y=30, h=120) hemen üzerinde
+            heroRT.sizeDelta = new Vector2(250, 100);
+
+            HorizontalLayoutGroup heroHlg = heroPanel.GetComponent<HorizontalLayoutGroup>();
+            heroHlg.childAlignment = TextAnchor.MiddleLeft;
+            heroHlg.spacing = 15;
+
+            // Hero 1 Butonu
+            GameObject hero1Obj = new GameObject("HeroButton_1", typeof(RectTransform), typeof(Image), typeof(Button), typeof(HeroButtonUI));
+            hero1Obj.transform.SetParent(heroPanel.transform, false);
+            hero1Obj.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 100);
+            hero1Obj.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
+
+            GameObject hero1Icon = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            hero1Icon.transform.SetParent(hero1Obj.transform, false);
+            hero1Icon.GetComponent<RectTransform>().sizeDelta = new Vector2(80, 80);
+            hero1Icon.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+
+            // Health Slider (Alt Kısımda)
+            GameObject hero1SliderObj = new GameObject("HealthSlider", typeof(RectTransform), typeof(Slider));
+            hero1SliderObj.transform.SetParent(hero1Obj.transform, false);
+            RectTransform h1SliderRT = hero1SliderObj.GetComponent<RectTransform>();
+            h1SliderRT.anchorMin = new Vector2(0, 0);
+            h1SliderRT.anchorMax = new Vector2(1, 0);
+            h1SliderRT.pivot = new Vector2(0.5f, 0);
+            h1SliderRT.anchoredPosition = new Vector2(0, 5);
+            h1SliderRT.sizeDelta = new Vector2(-10, 10);
+
+            GameObject h1Background = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            h1Background.transform.SetParent(hero1SliderObj.transform, false);
+            h1Background.GetComponent<RectTransform>().anchorMin = Vector2.zero;
+            h1Background.GetComponent<RectTransform>().anchorMax = Vector2.one;
+            h1Background.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+            h1Background.GetComponent<Image>().color = Color.gray;
+
+            GameObject h1FillArea = new GameObject("Fill Area", typeof(RectTransform));
+            h1FillArea.transform.SetParent(hero1SliderObj.transform, false);
+            h1FillArea.GetComponent<RectTransform>().anchorMin = Vector2.zero;
+            h1FillArea.GetComponent<RectTransform>().anchorMax = Vector2.one;
+            h1FillArea.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+
+            GameObject h1Fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            h1Fill.transform.SetParent(h1FillArea.transform, false);
+            h1Fill.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+            h1Fill.GetComponent<Image>().color = Color.green;
+
+            Slider h1Slider = hero1SliderObj.GetComponent<Slider>();
+            h1Slider.fillRect = h1Fill.GetComponent<RectTransform>();
+            h1Slider.targetGraphic = h1Fill.GetComponent<Image>();
+            h1Slider.value = 1f;
+
+            // Respawn Overlay
+            GameObject hero1Overlay = new GameObject("RespawnOverlay", typeof(RectTransform), typeof(Image));
+            hero1Overlay.transform.SetParent(hero1Obj.transform, false);
+            hero1Overlay.GetComponent<RectTransform>().anchorMin = Vector2.zero;
+            hero1Overlay.GetComponent<RectTransform>().anchorMax = Vector2.one;
+            hero1Overlay.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+            Image h1OverlayImg = hero1Overlay.GetComponent<Image>();
+            h1OverlayImg.color = new Color(0, 0, 0, 0.7f);
+            h1OverlayImg.type = Image.Type.Filled;
+            h1OverlayImg.fillMethod = Image.FillMethod.Radial360;
+
+            // Timer Text
+            TextMeshProUGUI hero1Timer = CreateTMP(hero1Obj.transform, "TimerText", "30s", 20, 100, 30);
+            hero1Timer.rectTransform.anchoredPosition = Vector2.zero;
+
+            Image hero1SelectionFrame = CreateImage(hero1Obj.transform, "SelectionFrame", new Vector2(100, 100));
+            hero1SelectionFrame.color = new Color(0.2f, 1f, 0.3f, 0.7f);
+            hero1SelectionFrame.gameObject.SetActive(false);
+
+            HeroButtonUI heroUI1 = hero1Obj.GetComponent<HeroButtonUI>();
+            var h1So = new SerializedObject(heroUI1);
+            h1So.FindProperty("iconImage").objectReferenceValue = hero1Icon.GetComponent<Image>();
+            h1So.FindProperty("healthSlider").objectReferenceValue = h1Slider;
+            h1So.FindProperty("respawnOverlay").objectReferenceValue = h1OverlayImg;
+            h1So.FindProperty("timerText").objectReferenceValue = hero1Timer;
+            h1So.FindProperty("selectButton").objectReferenceValue = hero1Obj.GetComponent<Button>();
+            h1So.FindProperty("selectionFrame").objectReferenceValue = hero1SelectionFrame;
+            h1So.ApplyModifiedProperties();
+
+            // Hero 2 Butonu
+            GameObject hero2Obj = new GameObject("HeroButton_2", typeof(RectTransform), typeof(Image), typeof(Button), typeof(HeroButtonUI));
+            hero2Obj.transform.SetParent(heroPanel.transform, false);
+            hero2Obj.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 100);
+            hero2Obj.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
+
+            GameObject hero2Icon = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            hero2Icon.transform.SetParent(hero2Obj.transform, false);
+            hero2Icon.GetComponent<RectTransform>().sizeDelta = new Vector2(80, 80);
+            hero2Icon.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+
+            // Health Slider (Alt Kısımda)
+            GameObject hero2SliderObj = new GameObject("HealthSlider", typeof(RectTransform), typeof(Slider));
+            hero2SliderObj.transform.SetParent(hero2Obj.transform, false);
+            RectTransform h2SliderRT = hero2SliderObj.GetComponent<RectTransform>();
+            h2SliderRT.anchorMin = new Vector2(0, 0);
+            h2SliderRT.anchorMax = new Vector2(1, 0);
+            h2SliderRT.pivot = new Vector2(0.5f, 0);
+            h2SliderRT.anchoredPosition = new Vector2(0, 5);
+            h2SliderRT.sizeDelta = new Vector2(-10, 10);
+
+            GameObject h2Background = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            h2Background.transform.SetParent(hero2SliderObj.transform, false);
+            h2Background.GetComponent<RectTransform>().anchorMin = Vector2.zero;
+            h2Background.GetComponent<RectTransform>().anchorMax = Vector2.one;
+            h2Background.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+            h2Background.GetComponent<Image>().color = Color.gray;
+
+            GameObject h2FillArea = new GameObject("Fill Area", typeof(RectTransform));
+            h2FillArea.transform.SetParent(hero2SliderObj.transform, false);
+            h2FillArea.GetComponent<RectTransform>().anchorMin = Vector2.zero;
+            h2FillArea.GetComponent<RectTransform>().anchorMax = Vector2.one;
+            h2FillArea.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+
+            GameObject h2Fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            h2Fill.transform.SetParent(h2FillArea.transform, false);
+            h2Fill.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+            h2Fill.GetComponent<Image>().color = Color.green;
+
+            Slider h2Slider = hero2SliderObj.GetComponent<Slider>();
+            h2Slider.fillRect = h2Fill.GetComponent<RectTransform>();
+            h2Slider.targetGraphic = h2Fill.GetComponent<Image>();
+            h2Slider.value = 1f;
+
+            // Respawn Overlay
+            GameObject hero2Overlay = new GameObject("RespawnOverlay", typeof(RectTransform), typeof(Image));
+            hero2Overlay.transform.SetParent(hero2Obj.transform, false);
+            hero2Overlay.GetComponent<RectTransform>().anchorMin = Vector2.zero;
+            hero2Overlay.GetComponent<RectTransform>().anchorMax = Vector2.one;
+            hero2Overlay.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+            Image h2OverlayImg = hero2Overlay.GetComponent<Image>();
+            h2OverlayImg.color = new Color(0, 0, 0, 0.7f);
+            h2OverlayImg.type = Image.Type.Filled;
+            h2OverlayImg.fillMethod = Image.FillMethod.Radial360;
+
+            // Timer Text
+            TextMeshProUGUI hero2Timer = CreateTMP(hero2Obj.transform, "TimerText", "30s", 20, 100, 30);
+            hero2Timer.rectTransform.anchoredPosition = Vector2.zero;
+
+            Image hero2SelectionFrame = CreateImage(hero2Obj.transform, "SelectionFrame", new Vector2(100, 100));
+            hero2SelectionFrame.color = new Color(0.2f, 1f, 0.3f, 0.7f);
+            hero2SelectionFrame.gameObject.SetActive(false);
+
+            HeroButtonUI heroUI2 = hero2Obj.GetComponent<HeroButtonUI>();
+            var h2So = new SerializedObject(heroUI2);
+            h2So.FindProperty("iconImage").objectReferenceValue = hero2Icon.GetComponent<Image>();
+            h2So.FindProperty("healthSlider").objectReferenceValue = h2Slider;
+            h2So.FindProperty("respawnOverlay").objectReferenceValue = h2OverlayImg;
+            h2So.FindProperty("timerText").objectReferenceValue = hero2Timer;
+            h2So.FindProperty("selectButton").objectReferenceValue = hero2Obj.GetComponent<Button>();
+            h2So.FindProperty("selectionFrame").objectReferenceValue = hero2SelectionFrame;
+            h2So.ApplyModifiedProperties();
+
+            // HUDController'a Hero butonlarını bağla
+            var hudHeroSo = new SerializedObject(hud);
+            hudHeroSo.FindProperty("heroButton1").objectReferenceValue = heroUI1;
+            hudHeroSo.FindProperty("heroButton2").objectReferenceValue = heroUI2;
+            hudHeroSo.ApplyModifiedProperties();
+
             // 6. Level Result Panel (Phase 4) - BAŞLAĞIÇTA GİZLİ
             GameObject resultObj = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/LevelResultPanel.prefab", false);
             if (resultObj != null)
@@ -947,6 +1362,37 @@ namespace TowerDefence.Editor
             root.AddComponent<TowerPlacementManager>();
             root.AddComponent<UnitPlacementManager>();
             root.AddComponent<GameSpeedManager>(); // x1 / x2 / x3 Oyun hızı yöneticisi
+            root.AddComponent<HeroManager>(); // Hero sistemi
+
+            // --- HeroManager.allHeroes listesini doldur ---
+            HeroManager hm = root.GetComponent<HeroManager>();
+            var hmSo = new SerializedObject(hm);
+            var heroGuids = AssetDatabase.FindAssets("t:HeroData", new[] { "Assets/Data/Heroes" });
+            var heroProp = hmSo.FindProperty("allHeroes");
+            heroProp.ClearArray();
+            int hIndex = 0;
+            foreach (var guid in heroGuids)
+            {
+                var hData = AssetDatabase.LoadAssetAtPath<HeroData>(AssetDatabase.GUIDToAssetPath(guid));
+                if (hData == null) continue;
+                heroProp.InsertArrayElementAtIndex(hIndex);
+                heroProp.GetArrayElementAtIndex(hIndex).objectReferenceValue = hData;
+                hIndex++;
+            }
+            hmSo.ApplyModifiedProperties();
+
+            // --- MetaProgressionManager.allAvailableHeroes ---
+            MetaProgressionManager mp = root.GetComponent<MetaProgressionManager>();
+            var mpSo = new SerializedObject(mp);
+            var mpHeroProp = mpSo.FindProperty("allAvailableHeroes");
+            mpHeroProp.ClearArray();
+            for (int i = 0; i < hIndex; i++)
+            {
+                mpHeroProp.InsertArrayElementAtIndex(i);
+                mpHeroProp.GetArrayElementAtIndex(i).objectReferenceValue =
+                    heroProp.GetArrayElementAtIndex(i).objectReferenceValue;
+            }
+            mpSo.ApplyModifiedProperties();
 
             // --- YENİ: TowerPlacementManager.allTowers Listesini Doldur ---
             TowerPlacementManager tpm = root.GetComponent<TowerPlacementManager>();
@@ -1398,8 +1844,30 @@ namespace TowerDefence.Editor
                 // Spawner (Bu yolun başında)
                 CreateSpawnerAt(root.transform, points[0], pathData.spawnerIndex, false, new List<PathWaypoints> { waypoints });
                 
-                // Kule Slotları (Yol boyunca)
-                CreateTowerSlotsAlongPath(root.transform, points, data.towerSlotCount / levelPaths.Count);
+                // Kule Slotları (Yol boyunca - Sadece özel konumlar yoksa)
+                if (data.customSlotPositions == null || data.customSlotPositions.Count == 0)
+                {
+                    CreateTowerSlotsAlongPath(root.transform, points, data.towerSlotCount / levelPaths.Count);
+                }
+            }
+
+            // Kule Slotları (Özel Konumlar)
+            if (data.customSlotPositions != null && data.customSlotPositions.Count > 0)
+            {
+                string slotPath = "Assets/Prefabs/Gameplay/BaseTowerSlotPrefab.prefab";
+                GameObject slotPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(slotPath);
+                if (slotPrefab == null)
+                {
+                    CreateTowerSlotPrefab();
+                    slotPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(slotPath);
+                }
+                if (slotPrefab != null)
+                {
+                    foreach (Vector3 customPos in data.customSlotPositions)
+                    {
+                        CreateSingleSlotAt(root.transform, slotPrefab, customPos);
+                    }
+                }
             }
 
             // 3. Multi-Base & Manual Spawner
@@ -2026,27 +2494,20 @@ namespace TowerDefence.Editor
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 LevelData data = AssetDatabase.LoadAssetAtPath<LevelData>(path);
-                if (data == null || data.mapPrefab != null) continue;
+                if (data == null) continue;
 
-                // levelID veya name üzerinden harita ara (Gelişmiş)
-                string[] mapGuids = AssetDatabase.FindAssets($"{data.levelID}_Map t:GameObject");
-                
+                string[] mapGuids = new string[0];
+                string safeName = GetSafeFilename(data.levelName);
+                mapGuids = AssetDatabase.FindAssets($"{safeName}_Map t:GameObject");
+
                 if (mapGuids.Length == 0)
                 {
                     string numStr = data.levelID.Replace("Level", "");
                     if (int.TryParse(numStr, out int num))
                     {
-                        mapGuids = AssetDatabase.FindAssets($"{num}._Level_Map t:GameObject");
-                        if (mapGuids.Length == 0 && num > 1)
-                            mapGuids = AssetDatabase.FindAssets($"{num - 1}._Level_Map t:GameObject");
+                        mapGuids = AssetDatabase.FindAssets($"Level_{num}__ t:GameObject");
                     }
                 }
-
-                if (mapGuids.Length == 0 && (data.levelID == "Level1" || data.name.ToLower().Contains("test")))
-                    mapGuids = AssetDatabase.FindAssets("Test_Level_Map t:GameObject");
-
-                if (mapGuids.Length == 0) 
-                    mapGuids = AssetDatabase.FindAssets($"{data.name}_Map t:GameObject");
 
                 if (mapGuids.Length > 0)
                 {

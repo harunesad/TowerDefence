@@ -42,6 +42,14 @@ namespace TowerDefence.Combat
                 var colliders = ghostUnit.GetComponentsInChildren<Collider>();
                 foreach (var col in colliders) col.enabled = false;
 
+                // Unit bileşenini kapat ki sürükleme esnasında saldırmasın/hedef aramasın
+                var unitComp = ghostUnit.GetComponent<Unit>();
+                if (unitComp != null) unitComp.enabled = false;
+
+                // Sağlık barını da gizle
+                var healthBar = ghostUnit.GetComponentInChildren<TowerDefence.UI.HealthBarUI>();
+                if (healthBar != null) healthBar.gameObject.SetActive(false);
+
                 UpdateGhostPosition(); // İlk karede ghost'u mouse'a ışınla
             }
         }

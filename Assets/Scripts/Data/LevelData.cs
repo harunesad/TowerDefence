@@ -41,6 +41,7 @@ namespace TowerDefence.Data
         public LevelTheme theme;
         public List<LevelPath> paths = new List<LevelPath>();
         public List<Vector3> basePoints = new List<Vector3>();
+        public List<Vector3> customSlotPositions = new List<Vector3>();
         public int towerSlotCount = 5;
         public GameObject mapPrefab;
 

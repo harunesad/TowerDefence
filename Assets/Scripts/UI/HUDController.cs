@@ -35,6 +35,10 @@ namespace TowerDefence.UI
         [Header("Game Over Panels")]
         [SerializeField] private LevelResultUI levelResultUI;
 
+        [Header("Hero HUD")]
+        [SerializeField] private HeroButtonUI heroButton1;
+        [SerializeField] private HeroButtonUI heroButton2;
+
         private void Start()
         {
             // Event abonelikleri
@@ -84,6 +88,14 @@ namespace TowerDefence.UI
             
             if (LivesManager.Instance != null)
                 UpdateLivesUI(LivesManager.Instance.GetCurrentLives(), LivesManager.Instance.GetMaxLives());
+
+            SetupHeroButtons();
+        }
+
+        private void SetupHeroButtons()
+        {
+            if (heroButton1 != null) heroButton1.gameObject.SetActive(false);
+            if (heroButton2 != null) heroButton2.gameObject.SetActive(false);
         }
 
         private void OnDestroy()
