@@ -41,49 +41,84 @@ public class DataAssetGenerator : Editor
         CreateTower(towerPath, "Soul Harvester", Side.Dark, 150, 12, 3.0f, 11, 0, true);
         CreateTower(towerPath, "Graveyard", Side.Dark, 300, 0, 0f, 28f, 0, true); 
 
-        // --- UNITS (5 Light, 5 Dark) ---
-        // --- UNITS (5 Light, 5 Dark) ---
-        // Yavaş: 0.5 - 0.7 | Orta: 0.9 - 1.1 | Hızlı: 1.3 - 1.5
-        // Unit Creation (cost, reward, hp, speed, dmg, range, rate)
-        UnitData lightSwordsman = CreateUnit(unitPath, "Light Swordsman", Side.Light, 50, 20, 100, 0.9f, 10, 1.5f, 1f);
-        UnitData ironKnight = CreateUnit(unitPath, "Iron Knight", Side.Light, 150, 60, 400, 0.6f, 25, 1.5f, 0.5f);
-        UnitData holyScout = CreateUnit(unitPath, "Holy Scout", Side.Light, 40, 25, 60, 1.4f, 5, 1.5f, 1.5f);
-        UnitData shieldBearer = CreateUnit(unitPath, "Shield Bearer", Side.Light, 100, 45, 600, 0.5f, 15, 1.2f, 0.6f);
-        UnitData celestialArcher = CreateUnit(unitPath, "Celestial Archer", Side.Light, 80, 35, 90, 1.1f, 20, 5.0f, 1.2f);
-        
-        UnitData shadowStalker = CreateUnit(unitPath, "Shadow Stalker", Side.Dark, 70, 30, 80, 1.3f, 35, 1.2f, 1.2f);
-        UnitData abyssalBehemoth = CreateUnit(unitPath, "Abyssal Behemoth", Side.Dark, 300, 120, 1200, 0.5f, 60, 2f, 0.4f);
-        UnitData plagueRunner = CreateUnit(unitPath, "Plague Runner", Side.Dark, 35, 20, 50, 1.5f, 8, 1.0f, 1.8f);
-        UnitData skeletonWarrior = CreateUnit(unitPath, "Skeleton Warrior", Side.Dark, 60, 25, 150, 0.8f, 18, 1.5f, 0.9f);
-        UnitData wraith = CreateUnit(unitPath, "Wraith", Side.Dark, 90, 40, 70, 1.2f, 25, 6.0f, 1.0f);
+        // --- UNITS (25 Light, 25 Dark) ---
+        string[] lightUnitNames = new string[] {
+            "Light Swordsman", "Novice Archer", "Spearman", "Scout", "Militia Defender", // 0-4
+            "Holy Knight", "Crossbowman", "Cleric of the Dawn", "Cavalry Rider", "Battle Mage", "Griffin Tamer", "Shieldmaiden", // 5-11
+            "Sun Priestess", "Pegasus Knight", "Arcane Sorcerer", "Light Golem", "Celestial Blade", "Dwarven Cannoneer", "Elven Ranger", // 12-18
+            "Archangel", "Holy Colossus", "Grand Paladin", "Phoenix Summoner", "Avatar of Light", "Dragon of the Sun" // 19-24
+        };
 
-        // --- Dinamik Eşleşmeleri Kur (Side-Swapping için) ---
-        lightSwordsman.enemyCounterpart = shadowStalker;
-        shadowStalker.enemyCounterpart = lightSwordsman;
+        string[] darkUnitNames = new string[] {
+            "Goblin Grunt", "Skeleton Warrior", "Orc Marauder", "Cultist Initiate", "Zombie Shambler",
+            "Dark Knight", "Skeleton Archer", "Necromancer", "Gargoyle", "Orc Berserker", "Shadow Assassin", "Spider Rider",
+            "Vampire Lord", "Lich", "Bone Golem", "Succubus", "Wraith", "Troll Brute", "Dark Elf Sniper",
+            "Demon King", "Bone Dragon", "Abyssal Behemoth", "Death Knight Commander", "Blood Mage", "Shadow Leviathan"
+        };
 
-        ironKnight.enemyCounterpart = abyssalBehemoth;
-        abyssalBehemoth.enemyCounterpart = ironKnight;
+        UnitData[] lightUnits = new UnitData[25];
+        UnitData[] darkUnits = new UnitData[25];
 
-        holyScout.enemyCounterpart = plagueRunner;
-        plagueRunner.enemyCounterpart = holyScout;
+        // Local helper for Archetype stats
+        void AssignStats(string name, int tier, out float hp, out float dmg, out float spd, out float range, out float rate)
+        {
+            string lower = name.ToLower();
+            bool isBoss = tier == 4;
+            bool isTank = lower.Contains("defender") || lower.Contains("bearer") || lower.Contains("golem") || lower.Contains("brute") || lower.Contains("behemoth") || lower.Contains("colossus");
+            bool isAssassin = lower.Contains("scout") || lower.Contains("assassin") || lower.Contains("runner") || lower.Contains("spider") || lower.Contains("rider");
+            bool isRanger = lower.Contains("archer") || lower.Contains("crossbow") || lower.Contains("sniper") || lower.Contains("ranger") || lower.Contains("cannoneer");
+            bool isMage = lower.Contains("mage") || lower.Contains("cleric") || lower.Contains("priest") || lower.Contains("sorcerer") || lower.Contains("necromancer") || lower.Contains("lich") || lower.Contains("cultist") || lower.Contains("summoner") || lower.Contains("wraith");
 
-        shieldBearer.enemyCounterpart = skeletonWarrior;
-        skeletonWarrior.enemyCounterpart = shieldBearer;
+            // Base Tier Multipliers
+            float baseHp = tier == 1 ? 100 : tier == 2 ? 220 : tier == 3 ? 500 : 1200;
+            float baseDmg = tier == 1 ? 12 : tier == 2 ? 30 : tier == 3 ? 75 : 150;
 
-        celestialArcher.enemyCounterpart = wraith;
-        wraith.enemyCounterpart = celestialArcher;
+            if (isBoss)
+            {
+                hp = baseHp * 1.5f; dmg = baseDmg * 1.2f; spd = 0.8f; range = 2.0f; rate = 1.2f;
+                if (isMage || lower.Contains("dragon") || lower.Contains("avatar") || lower.Contains("leviathan")) range = 6.0f;
+            }
+            else if (isTank)
+            {
+                hp = baseHp * 1.8f; dmg = baseDmg * 0.7f; spd = 0.6f; range = 1.2f; rate = 1.5f;
+            }
+            else if (isAssassin)
+            {
+                hp = baseHp * 0.7f; dmg = baseDmg * 1.4f; spd = 1.4f; range = 1.2f; rate = 0.6f;
+            }
+            else if (isRanger)
+            {
+                hp = baseHp * 0.8f; dmg = baseDmg * 1.1f; spd = 1.0f; range = 5.0f; rate = 1.0f;
+            }
+            else if (isMage)
+            {
+                hp = baseHp * 0.7f; dmg = baseDmg * 1.3f; spd = 0.8f; range = 5.0f; rate = 1.5f;
+            }
+            else // Fighter
+            {
+                hp = baseHp; dmg = baseDmg; spd = 1.0f; range = 1.5f; rate = 1.0f;
+            }
+        }
 
-        // Değişiklikleri kaydetmek için nesneleri "kirli" (dirty) olarak işaretle
-        EditorUtility.SetDirty(lightSwordsman);
-        EditorUtility.SetDirty(shadowStalker);
-        EditorUtility.SetDirty(ironKnight);
-        EditorUtility.SetDirty(abyssalBehemoth);
-        EditorUtility.SetDirty(holyScout);
-        EditorUtility.SetDirty(plagueRunner);
-        EditorUtility.SetDirty(shieldBearer);
-        EditorUtility.SetDirty(skeletonWarrior);
-        EditorUtility.SetDirty(celestialArcher);
-        EditorUtility.SetDirty(wraith);
+        for (int i = 0; i < 25; i++)
+        {
+            int tier = (i < 5) ? 1 : (i < 12) ? 2 : (i < 19) ? 3 : 4;
+            int cost = tier == 1 ? 50 : tier == 2 ? 120 : tier == 3 ? 250 : 500;
+            int reward = tier == 1 ? 20 : tier == 2 ? 50 : tier == 3 ? 100 : 200;
+            
+            AssignStats(lightUnitNames[i], tier, out float lHp, out float lDmg, out float lSpd, out float lRange, out float lRate);
+            AssignStats(darkUnitNames[i], tier, out float dHp, out float dDmg, out float dSpd, out float dRange, out float dRate);
+
+            lightUnits[i] = CreateUnit(unitPath, lightUnitNames[i], Side.Light, cost, reward, lHp, lSpd, lDmg, lRange, lRate);
+            darkUnits[i] = CreateUnit(unitPath, darkUnitNames[i], Side.Dark, cost, reward, dHp, dSpd, dDmg, dRange, dRate);
+
+            // Counterparts
+            lightUnits[i].enemyCounterpart = darkUnits[i];
+            darkUnits[i].enemyCounterpart = lightUnits[i];
+
+            EditorUtility.SetDirty(lightUnits[i]);
+            EditorUtility.SetDirty(darkUnits[i]);
+        }
 
         // --- TAMİR VE YAPILANDIRMA ZİNCİRİ (Chain Repair) ---
         LinkEliteTowerSpecializations(towerPath);
@@ -1347,7 +1382,7 @@ public class DataAssetGenerator : Editor
         // 2. Health Bar UI Setup
         Transform hbTransform = root.transform.Find("HealthBarCanvas");
         HealthBarUI hbScript = null;
-        float targetY = (root.name.Contains("Behemoth")) ? 7.5f : 5.5f; // Karakterin kafasının üzerine çıkarıldı (Kullanıcı Talebi: Yükseklik 2.5f artırıldı)
+        float targetY = 5f; // HealthBarCanvas Y position sabit 5
 
         if (hbTransform == null)
         {

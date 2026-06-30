@@ -830,44 +830,164 @@ public class EditorPrefabBuilder : Editor
         visuals.transform.SetParent(root.transform);
         visuals.transform.localPosition = Vector3.zero;
 
-        string folderName = "";
-        switch (unitName)
+        // Remove spaces and underscores to match the new folder structure exactly ("Light Swordsman" -> "LightSwordsman")
+        string cleanName = unitName.Replace(" ", "").Replace("_", "");
+
+        // Find ANY FBX model within the specific unit's folder
+        string[] modelGuids = AssetDatabase.FindAssets($"t:GameObject", new[] { "Assets/Models/Characters" });
+        GameObject modelPrefab = null;
+        
+        foreach (string guid in modelGuids)
         {
-            case "Celestial_Archer": folderName = "Erika Archer"; break;
-            case "Shadow_Stalker": folderName = "Vampire A Lusth"; break;
-            case "Holy_Scout": folderName = "Remy"; break;
-            case "Plague_Runner": folderName = "Mutant"; break;
-            case "Iron_Knight": folderName = "Vanguard By T. Choonyung"; break;
-            case "Skeleton_Warrior": folderName = "Warrok W Kurniawan"; break;
-            case "Light_Swordsman": folderName = "Ch10_nonPBR"; break;
-            case "Wraith": folderName = "Exo Gray"; break;
-            case "Shield_Bearer": folderName = "The Boss"; break;
-            case "Abyssal_Behemoth": folderName = "Ely By K.Atienza"; break;
+            string path = AssetDatabase.GUIDToAssetPath(guid).Replace("\\", "/");
+            // Ensure we pick the exact FBX file that sits inside this unit's folder
+            if (path.EndsWith(".fbx", System.StringComparison.OrdinalIgnoreCase) && path.Contains($"/{cleanName}/"))
+            {
+                modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                break;
+            }
         }
 
-        if (!string.IsNullOrEmpty(folderName))
+        if (modelPrefab != null)
         {
-            string modelPath = $"Assets/Models/Characters/{folderName}/{folderName}.fbx";
-            GameObject modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
-            if (modelPrefab != null)
-            {
-                GameObject modelInstance = (GameObject)PrefabUtility.InstantiatePrefab(modelPrefab);
-                modelInstance.transform.SetParent(visuals.transform);
-                modelInstance.transform.localPosition = Vector3.zero;
-                modelInstance.transform.localRotation = Quaternion.identity; 
-                modelInstance.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
+            GameObject modelInstance = (GameObject)PrefabUtility.InstantiatePrefab(modelPrefab);
+            modelInstance.transform.SetParent(visuals.transform);
+            modelInstance.transform.localPosition = Vector3.zero;
+            modelInstance.transform.localRotation = Quaternion.identity; 
+            modelInstance.transform.localScale = Vector3.one; // Scale (1,1,1)
 
-                Animator anim = modelInstance.GetComponent<Animator>();
-                if (anim == null) anim = modelInstance.AddComponent<Animator>();
-                
-                string controllerPath = $"Assets/Models/Characters/{folderName}/{folderName}.controller";
+            Animator anim = modelInstance.GetComponent<Animator>();
+            if (anim == null) anim = modelInstance.AddComponent<Animator>();
+            
+            // Try to find the Animator Controller (e.g. "LightSwordsmanAnim.controller")
+            string modelDir = System.IO.Path.GetDirectoryName(AssetDatabase.GetAssetPath(modelPrefab)).Replace("\\", "/");
+            string[] animGuids = AssetDatabase.FindAssets($"t:RuntimeAnimatorController", new[] { modelDir });
+
+            if (animGuids.Length > 0)
+            {
+                string controllerPath = AssetDatabase.GUIDToAssetPath(animGuids[0]);
                 RuntimeAnimatorController controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(controllerPath);
                 if (controller != null)
                 {
                     anim.runtimeAnimatorController = controller;
                 }
             }
+
+            // --- WEAPON ATTACHMENT ---
+            GetWeaponForUnit(unitName, out string rWeapon, out string lWeapon);
+            AttachWeaponToBone(modelInstance, unitName, "RightHand", rWeapon);
+            AttachWeaponToBone(modelInstance, unitName, "LeftHand", lWeapon);
         }
+        else
+        {
+            Debug.LogWarning($"[EditorPrefabBuilder] Model for unit '{unitName}' ({cleanName}.fbx) could not be found in Assets/Models/Characters!");
+        }
+    }
+
+    private static void GetWeaponForUnit(string unitName, out string rightWeapon, out string leftWeapon)
+    {
+        rightWeapon = ""; leftWeapon = "";
+        string n = unitName.Replace(" ", "").Replace("_", "");
+        
+        switch (n)
+        {
+            case "LightSwordsman": rightWeapon = "BasicBroadsword"; leftWeapon = "HeavyTowerShield"; break;
+            case "NoviceArcher": leftWeapon = "LightBow"; break;
+            case "Spearman": rightWeapon = "IronSpear"; break;
+            case "Scout": rightWeapon = "DualShortDaggers"; leftWeapon = "DualShortDaggers"; break;
+            case "MilitiaDefender": rightWeapon = "OneHandedHammer"; leftWeapon = "HeavyTowerShield"; break;
+            case "HolyKnight": rightWeapon = "HolyGreatsword"; break;
+            case "Crossbowman": rightWeapon = "HeavyMechanicalCrossbow"; break;
+            case "ClericoftheDawn": rightWeapon = "GlowingSunMace"; break;
+            case "CavalryRider": rightWeapon = "KnightsLance"; break;
+            case "BattleMage": rightWeapon = "MageStaff"; break;
+            case "GriffinTamer": rightWeapon = "BeastmasterWhip"; break;
+            case "Shieldmaiden": rightWeapon = "SilverBattleaxe"; leftWeapon = "RoundShield"; break;
+            case "SunPriestess": rightWeapon = "MageStaff"; break;
+            case "PegasusKnight": rightWeapon = "IronSpear"; break;
+            case "CelestialBlade": rightWeapon = "BasicBroadsword"; leftWeapon = "BasicBroadsword"; break;
+            case "DwarvenCannoneer": rightWeapon = "PortableHandCannon"; break;
+            case "ElvenRanger": leftWeapon = "LightBow"; break;
+            case "Archangel": rightWeapon = "FlamingBattleaxe"; break;
+            case "GrandPaladin": rightWeapon = "HolyGreatsword"; leftWeapon = "HeavyTowerShield"; break;
+            case "PhoenixSummoner": rightWeapon = "MageStaff"; break;
+
+            case "GoblinGrunt": rightWeapon = "DualShortDaggers"; leftWeapon = "RoundShield"; break;
+            case "SkeletonWarrior": rightWeapon = "BasicBroadsword"; break;
+            case "OrcMarauder": rightWeapon = "OrcAxe"; break;
+            case "CultistInitiate": rightWeapon = "DualShortDaggers"; break;
+            case "DarkKnight": rightWeapon = "CursedGreatsword"; break;
+            case "SkeletonArcher": leftWeapon = "BoneBow"; break;
+            case "Necromancer": rightWeapon = "NecromancerStaff"; break;
+            case "OrcBerserker": rightWeapon = "OrcAxe"; leftWeapon = "OrcAxe"; break;
+            case "ShadowAssassin": rightWeapon = "DualShortDaggers"; leftWeapon = "DualShortDaggers"; break;
+            case "SpiderRider": rightWeapon = "IronSpear"; break;
+            case "VampireLord": rightWeapon = "BasicBroadsword"; break;
+            case "Succubus": rightWeapon = "BeastmasterWhip"; break;
+            case "Wraith": rightWeapon = "SpectralScythe"; break;
+            case "TrollBrute": rightWeapon = "TreeTrunkClub"; break;
+            case "DarkElfSniper": rightWeapon = "HeavyMechanicalCrossbow"; break;
+            case "DemonKing": rightWeapon = "FlamingBattleaxe"; break;
+            case "DeathKnightCommander": rightWeapon = "KnightsLance"; break;
+            case "BloodMage": rightWeapon = "NecromancerStaff"; break;
+        }
+    }
+
+    private static void AttachWeaponToBone(GameObject modelInstance, string unitName, string boneName, string weaponName)
+    {
+        if (string.IsNullOrEmpty(weaponName)) return;
+
+        Transform bone = GetTransformRecursive(modelInstance.transform, boneName);
+        if (bone == null) 
+        {
+            if (boneName == "LeftHand") bone = GetTransformRecursive(modelInstance.transform, "LeftArm"); // Fallback
+            if (bone == null) bone = modelInstance.transform; // Ultimate fallback
+        }
+
+        string[] weaponGuids = AssetDatabase.FindAssets($"{weaponName} t:GameObject", new[] { "Assets/Models/Weapons" });
+        if (weaponGuids.Length > 0)
+        {
+            string weaponPath = AssetDatabase.GUIDToAssetPath(weaponGuids[0]);
+            GameObject weaponPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(weaponPath);
+            if (weaponPrefab != null)
+            {
+                GameObject weaponInstance = (GameObject)PrefabUtility.InstantiatePrefab(weaponPrefab);
+                weaponInstance.transform.SetParent(bone);
+                
+                // Default position/rotation
+                Vector3 localPos = Vector3.zero;
+                Vector3 localRot = Vector3.zero;
+
+                string n = unitName.Replace(" ", "").Replace("_", "");
+                
+                // Specific offsets requested by user
+                if (n == "Archangel" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
+                else if (n == "DarkKnight" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, -0.8f);
+                else if (n == "CavalryRider" && boneName == "RightHand") localPos = new Vector3(0, 0.2f, 0);
+                else if (n == "DeathKnightCommander" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
+                else if (n == "DwarvenCannoneer" && boneName == "RightHand") localPos = new Vector3(0, 0.9f, 0);
+                else if (n == "ElvenRanger" && boneName == "LeftHand") { localPos = new Vector3(0, 0.1f, 0); localRot = new Vector3(180, 0, 0); }
+                else if (n == "GoblinGrunt" && boneName == "LeftHand") { localPos = new Vector3(0, 0.3f, 0); localRot = new Vector3(180, 0, 0); }
+                else if (n == "GoblinGrunt" && boneName == "RightHand") { localPos = new Vector3(-0.1f, 0.4f, 0f); localRot = new Vector3(0, 180, 0); }
+                else if (n == "LightSwordsman" && boneName == "RightHand") { localPos = new Vector3(0, 0.25f, 0); }
+                else if (n == "MilitiaDefender" && boneName == "RightHand") { localPos = new Vector3(0.07f, 0.6f, 0.2f); }
+
+                weaponInstance.transform.localPosition = localPos;
+                weaponInstance.transform.localRotation = Quaternion.Euler(localRot);
+                weaponInstance.transform.localScale = Vector3.one; // Ensure scale is exactly (1,1,1)
+            }
+        }
+    }
+
+    private static Transform GetTransformRecursive(Transform parent, string nameToFind)
+    {
+        if (parent.name.Contains(nameToFind)) return parent;
+        foreach (Transform child in parent)
+        {
+            Transform result = GetTransformRecursive(child, nameToFind);
+            if (result != null) return result;
+        }
+        return null;
     }
 
     private static void Apply3DVisualsToProjectile(GameObject root, string name, Color color)
