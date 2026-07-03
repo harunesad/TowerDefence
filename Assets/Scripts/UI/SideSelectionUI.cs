@@ -23,6 +23,12 @@ namespace TowerDefence.UI
         [SerializeField] private GameObject heroItemPrefab;
         [SerializeField] private TextMeshProUGUI heroLoadoutHint;
 
+        [Header("Unit Loadout")]
+        public Transform unitItemContainer;
+        public GameObject unitItemPrefab;
+        public TextMeshProUGUI unitLoadoutHint;
+        [SerializeField] private List<UnitData> allPossibleUnits;
+
         [Header("Spell Loadout")]
         [SerializeField] private Transform spellItemContainer;
         [SerializeField] private GameObject spellItemPrefab;
@@ -85,6 +91,8 @@ namespace TowerDefence.UI
         {
             PopulateHeroLoadout(side);
             PopulateSpellLoadout(side);
+            PopulateUnitLoadout(side);
+            RefreshStartMatchButton();
         }
 
         private void PopulateHeroLoadout(Side side)
@@ -129,9 +137,66 @@ namespace TowerDefence.UI
             }
         }
 
+        private void PopulateUnitLoadout(Side side)
+        {
+            if (unitItemContainer == null || unitItemPrefab == null) return;
+
+            foreach (Transform child in unitItemContainer)
+                Destroy(child.gameObject);
+
+            if (MetaProgressionManager.Instance == null) return;
+
+            HashSet<string> addedNames = new HashSet<string>();
+            
+            foreach (UnitData unit in allPossibleUnits)
+            {
+                if (unit == null || unit.side != side) continue;
+                if (string.IsNullOrEmpty(unit.unitName) || addedNames.Contains(unit.unitName)) continue;
+
+                addedNames.Add(unit.unitName);
+                GameObject go = Instantiate(unitItemPrefab, unitItemContainer);
+                UnitLoadoutItemUI itemUI = go.GetComponent<UnitLoadoutItemUI>();
+                if (itemUI != null) itemUI.Setup(unit);
+            }
+            
+            RefreshStartMatchButton();
+        }
+
+        public void RefreshStartMatchButton()
+        {
+            if (MetaProgressionManager.Instance == null) return;
+
+            int equippedUnitCount = MetaProgressionManager.Instance.GetEquippedUnitNames().Count;
+            if (equippedUnitCount != 5)
+            {
+                if (unitLoadoutHint != null)
+                {
+                    unitLoadoutHint.text = $"SELECT EXACTLY 5 UNITS! ({equippedUnitCount}/5)";
+                    unitLoadoutHint.color = Color.red;
+                }
+                if (startMatchButton != null) startMatchButton.interactable = false;
+            }
+            else
+            {
+                if (unitLoadoutHint != null)
+                {
+                    unitLoadoutHint.text = "UNITS SELECTED (5/5)";
+                    unitLoadoutHint.color = Color.green;
+                }
+                if (startMatchButton != null) startMatchButton.interactable = true;
+            }
+        }
+
         private void StartMatch()
         {
             if (MetaProgressionManager.Instance == null) return;
+
+            // Force verification
+            if (MetaProgressionManager.Instance.GetEquippedUnitNames().Count != 5)
+            {
+                RefreshStartMatchButton();
+                return;
+            }
 
             if (MetaProgressionManager.Instance.GetEquippedHeroIDs().Count == 0)
             {

@@ -30,6 +30,7 @@ namespace TowerDefence.Core
         public List<string> equippedSpellIDs = new List<string>(); // Kuşatılan büyüler
         public List<string> unlockedHeroIDs = new List<string>();
         public List<string> equippedHeroIDs = new List<string>(); // Maksimum 2
+        public List<string> equippedUnitNames = new List<string>(); // Maksimum 5
         public List<HeroProgressEntry> heroProgressList = new List<HeroProgressEntry>();
         
         // Geriye dönük uyumluluk için tutuluyor
@@ -136,6 +137,41 @@ namespace TowerDefence.Core
         }
 
         public List<string> GetEquippedSpellIDs() => saveData.equippedSpellIDs;
+
+        // --- UNIT PROGRESSION / LOADOUT ---
+
+        public bool IsUnitEquipped(string unitName) => saveData.equippedUnitNames.Contains(unitName);
+
+        public void EquipUnit(string unitName)
+        {
+            if (!saveData.equippedUnitNames.Contains(unitName))
+            {
+                if (saveData.equippedUnitNames.Count < 5) // Maksimum 5 unit sınırı
+                {
+                    saveData.equippedUnitNames.Add(unitName);
+                    SaveGame();
+                }
+            }
+        }
+
+        public void UnequipUnit(string unitName)
+        {
+            if (saveData.equippedUnitNames.Contains(unitName))
+            {
+                saveData.equippedUnitNames.Remove(unitName);
+                SaveGame();
+            }
+        }
+
+        public List<string> GetEquippedUnitNames() => saveData.equippedUnitNames;
+
+        public void SanitizeEquippedUnitsForSide(Side side)
+        {
+            // Menüde taraf değiştiğinde farklı tarafın ünitelerini temizle
+            // Tamamen sıfırlamak en kolayıdır, oyuncu baştan seçsin.
+            saveData.equippedUnitNames.Clear();
+            SaveGame();
+        }
 
         // --- HERO PROGRESSION ---
 

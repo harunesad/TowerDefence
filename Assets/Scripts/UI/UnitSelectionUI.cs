@@ -92,25 +92,26 @@ namespace TowerDefence.UI
             Debug.Log($"[CORE-UNIT] Refreshing bottom bar. Side: {playerSide}. Units: {unitsPool.Count}");
 
             HashSet<string> addedNames = new HashSet<string>();
+            List<string> equippedUnitNames = MetaProgressionManager.Instance != null ? MetaProgressionManager.Instance.GetEquippedUnitNames() : new List<string>();
+
             foreach (UnitData unit in unitsPool)
             {
                 if (unit == null) continue;
                 UnitData finalUnit = null;
 
-                if (unit.side == playerSide) finalUnit = unit;
-                else if (unit.enemyCounterpart != null && unit.enemyCounterpart.side == playerSide) finalUnit = unit.enemyCounterpart;
+                if (unit.side == playerSide && equippedUnitNames.Contains(unit.unitName)) 
+                    finalUnit = unit;
+                else if (unit.enemyCounterpart != null && unit.enemyCounterpart.side == playerSide && equippedUnitNames.Contains(unit.enemyCounterpart.unitName)) 
+                    finalUnit = unit.enemyCounterpart;
 
                 if (finalUnit != null && !addedNames.Contains(finalUnit.unitName))
                 {
-                    // SADECE SPAWN MALIYETI 0'DAN BÜYÜK OLANLARI GÖSTER (0 OLANLAR YAN BİRİMLER/DÜŞMANLARDIR)
-                    if (finalUnit.spawnCost > 0 && unitButtonPrefab != null && container != null)
-                    {
-                        GameObject buttonGO = Instantiate(unitButtonPrefab, container);
-                        UnitButton unitBtn = buttonGO.GetComponent<UnitButton>();
-                        if (unitBtn == null) unitBtn = buttonGO.AddComponent<UnitButton>();
-                        unitBtn.Setup(finalUnit);
-                        addedNames.Add(finalUnit.unitName);
-                    }
+                    addedNames.Add(finalUnit.unitName);
+                    GameObject btnGO = Object.Instantiate(unitButtonPrefab, container);
+                    UnitButton ub = btnGO.GetComponent<UnitButton>();
+                    if (ub == null) ub = btnGO.AddComponent<UnitButton>();
+                    
+                    ub.Setup(finalUnit);
                 }
             }
 

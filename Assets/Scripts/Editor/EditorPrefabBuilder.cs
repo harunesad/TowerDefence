@@ -30,17 +30,14 @@ public class EditorPrefabBuilder : Editor
         CreateTowerSelectionPrefab(uiFolder);
         CreateUnitSelectionPrefab(uiFolder);
 
-        // Mermi Varyasyonları (10 Adet)
-        CreateProjectileTemplate(projectilesFolder, "Archer_Arrow", Color.white);
-        CreateProjectileTemplate(projectilesFolder, "Ballista_Bolt", Color.gray);
-        CreateProjectileTemplate(projectilesFolder, "Bone_Projectyle", Color.white);
-        CreateProjectileTemplate(projectilesFolder, "Cannon_Ball", Color.black);
-        CreateProjectileTemplate(projectilesFolder, "Dark_Pulse", Color.magenta);
-        CreateProjectileTemplate(projectilesFolder, "Mage_Bolt", Color.blue);
-        CreateProjectileTemplate(projectilesFolder, "Poison_Drip", new Color(0.1f, 0.5f, 0.1f));
-        CreateProjectileTemplate(projectilesFolder, "Solar_Beam", Color.yellow);
-        CreateProjectileTemplate(projectilesFolder, "Soul_Orb", new Color(0.5f, 0, 0));
-        CreateProjectileTemplate(projectilesFolder, "Void_Missile", new Color(0.2f, 0, 0.2f));
+        // Mermi Varyasyonları (7 Adet)
+        CreateProjectileTemplate(projectilesFolder, "Arrow", Color.white);
+        CreateProjectileTemplate(projectilesFolder, "Cannonball", Color.black);
+        CreateProjectileTemplate(projectilesFolder, "CrossbowBolt", Color.gray);
+        CreateProjectileTemplate(projectilesFolder, "DarkOrb", Color.magenta);
+        CreateProjectileTemplate(projectilesFolder, "Fireball", Color.red);
+        CreateProjectileTemplate(projectilesFolder, "Frostbolt", Color.cyan);
+        CreateProjectileTemplate(projectilesFolder, "LightOrb", Color.yellow);
 
         // --- DİNAMİK YAPI: Projedeki tüm TowerData asset'lerini tara ve otomatik olarak Prefab oluştur! ---
         string[] towerDataGuids = AssetDatabase.FindAssets("t:TowerData", new[] { "Assets/Data/Towers" });
@@ -299,16 +296,13 @@ public class EditorPrefabBuilder : Editor
     private static string GetProjectileNameForTower(string towerName)
     {
         string n = towerName.ToLower();
-        if (n.Contains("archer") || n.Contains("ranger") || n.Contains("sniper")) return "Archer_Arrow";
-        if (n.Contains("ballista") || n.Contains("bolt")) return "Ballista_Bolt";
-        if (n.Contains("bone") || n.Contains("catapult") || n.Contains("fossil")) return "Bone_Projectyle";
-        if (n.Contains("cannon") || n.Contains("siege") || n.Contains("mortar") || n.Contains("lobber") || n.Contains("volley")) return "Cannon_Ball";
-        if (n.Contains("dark") || n.Contains("sentry") || n.Contains("reaper")) return "Dark_Pulse";
-        if (n.Contains("mage") || n.Contains("archmage") || n.Contains("summoner") || n.Contains("entropy")) return "Mage_Bolt";
-        if (n.Contains("poison") || n.Contains("spitter") || n.Contains("acid") || n.Contains("venomous")) return "Poison_Drip";
-        if (n.Contains("solar") || n.Contains("prism") || n.Contains("luminous")) return "Solar_Beam";
-        if (n.Contains("soul") || n.Contains("harvester") || n.Contains("life") || n.Contains("emitter")) return "Soul_Orb";
-        if (n.Contains("void") || n.Contains("obelisk") || n.Contains("singularity")) return "Void_Missile";
+        if (n.Contains("archer") || n.Contains("ranger") || n.Contains("sniper") || n.Contains("sentry")) return "Arrow";
+        if (n.Contains("ballista") || n.Contains("bolt")) return "CrossbowBolt";
+        if (n.Contains("cannon") || n.Contains("siege") || n.Contains("mortar") || n.Contains("lobber") || n.Contains("volley")) return "Cannonball";
+        if (n.Contains("bone") || n.Contains("catapult") || n.Contains("fossil")) return "Frostbolt";
+        if (n.Contains("dark") || n.Contains("reaper") || n.Contains("soul") || n.Contains("harvester") || n.Contains("life") || n.Contains("emitter") || n.Contains("void") || n.Contains("obelisk") || n.Contains("singularity")) return "DarkOrb";
+        if (n.Contains("mage") || n.Contains("archmage") || n.Contains("summoner") || n.Contains("entropy") || n.Contains("poison") || n.Contains("spitter") || n.Contains("acid") || n.Contains("venomous")) return "Fireball";
+        if (n.Contains("solar") || n.Contains("prism") || n.Contains("luminous")) return "LightOrb";
         return "";
     }
 
@@ -968,15 +962,143 @@ public class EditorPrefabBuilder : Editor
                 else if (n == "DwarvenCannoneer" && boneName == "RightHand") localPos = new Vector3(0, 0.9f, 0);
                 else if (n == "ElvenRanger" && boneName == "LeftHand") { localPos = new Vector3(0, 0.1f, 0); localRot = new Vector3(180, 0, 0); }
                 else if (n == "GoblinGrunt" && boneName == "LeftHand") { localPos = new Vector3(0, 0.3f, 0); localRot = new Vector3(180, 0, 0); }
-                else if (n == "GoblinGrunt" && boneName == "RightHand") { localPos = new Vector3(-0.1f, 0.4f, 0f); localRot = new Vector3(0, 180, 0); }
+                else if (n == "GoblinGrunt" && boneName == "RightHand") { localPos = new Vector3(-0.133f, 0.457f, 0f); localRot = new Vector3(180, 0, -30f); }
                 else if (n == "LightSwordsman" && boneName == "RightHand") { localPos = new Vector3(0, 0.25f, 0); }
                 else if (n == "MilitiaDefender" && boneName == "RightHand") { localPos = new Vector3(0.07f, 0.6f, 0.2f); }
+                else if (n == "Crossbowman" && boneName == "RightHand") { localPos = new Vector3(-0.055f, 0.166f, 0.003f); localRot = new Vector3(-1.316f, 6.562f, -68.717f); }
+                else if (n == "CultistInitiate" && boneName == "RightHand") { localPos = new Vector3(0.11f, 0.41f, 0f); localRot = new Vector3(180f, 0f, 0f); }
+                else if (n == "DarkElfSniper" && boneName == "RightHand") { localPos = new Vector3(-0.021f, 0.15f, 0f); localRot = new Vector3(0f, 0f, -74.64f); }
+                else if (n == "GrandPaladin" && boneName == "RightHand") { localRot = new Vector3(-21.668f, -87.826f, 31.072f); }
+                else if (n == "GriffinTamer" && boneName == "RightHand") { localRot = new Vector3(-70f, -50f, 0f); }
+                else if (n == "HolyKnight" && boneName == "RightHand") { localRot = new Vector3(0f, -100f, 0f); }
+                else if (n == "Necromancer" && boneName == "RightHand") { localPos = new Vector3(0.002f, -0.258f, 0.598f); localRot = new Vector3(-57.415f, -0.426f, 0.505f); }
+                else if (n == "BloodMage" && boneName == "RightHand") { localPos = new Vector3(0.459f, 0.093f, 0.323f); localRot = new Vector3(-85.171f, 0f, 55.586f); }
+                else if (n == "ClericoftheDawn" && boneName == "RightHand") { localPos = new Vector3(0.314f, -0.017f, 0.167f); localRot = new Vector3(-72.599f, 0f, 62.466f); }
+                else if (n == "NoviceArcher" && boneName == "LeftHand") { localRot = new Vector3(180f, 0f, 0f); }
+                else if (n == "PegasusKnight" && boneName == "RightHand") { localRot = new Vector3(-82.8f, 0f, 0f); }
+                else if (n == "Scout" && boneName == "RightHand") { localPos = new Vector3(0.087f, 0.452f, 0.018f); localRot = new Vector3(177.492f, 0.711f, -11.66f); }
+                else if (n == "Scout" && boneName == "LeftHand") { localPos = new Vector3(-0.134f, 0.37f, 0.01f); localRot = new Vector3(181.759f, 0.27f, -34.403f); }
+                else if (n == "ShadowAssassin" && boneName == "RightHand") { localPos = new Vector3(-0.088f, 0.389f, 0f); localRot = new Vector3(0f, 0f, 180f); }
+                else if (n == "ShadowAssassin" && boneName == "LeftHand") { localPos = new Vector3(0.118f, 0.411f, 0f); localRot = new Vector3(0f, 0f, 142.1f); }
+                else if (n == "Shieldmaiden" && boneName == "LeftHand") { localPos = new Vector3(0f, 0.199f, 0f); localRot = new Vector3(0f, 0f, 180f); }
+                else if (n == "Shieldmaiden" && boneName == "RightHand") { localPos = new Vector3(0.006f, 0.13f, 0.031f); localRot = new Vector3(-136.749f, 0.002f, 1.206f); }
+                else if (n == "SkeletonArcher" && boneName == "LeftHand") { localPos = new Vector3(-0.0015f, -0.0173f, -0.008f); localRot = new Vector3(66.442f, 87.481f, 55.308f); }
+                else if (n == "SkeletonWarrior" && boneName == "RightHand") { localPos = new Vector3(0.006f, 0.231f, -0.003f); }
+                else if (n == "Spearman" && boneName == "RightHand") { localPos = new Vector3(0f, 0.118f, 0f); localRot = new Vector3(-90f, 270f, 1f); }
+                else if (n == "SpiderRider" && boneName == "RightHand") { localPos = new Vector3(0f, 0.275f, 0f); localRot = new Vector3(-90f, 0f, 1f); }
+                else if (n == "Succubus" && boneName == "RightHand") { localPos = new Vector3(-0.007f, 0.157f, 0.002f); localRot = new Vector3(0f, 180f, 0f); }
+                else if (n == "TrollBrute" && boneName == "RightHand") { localPos = new Vector3(0.001f, 0.155f, -0.421f); }
+                else if (n == "Wraith" && boneName == "RightHand") { localPos = new Vector3(0.115f, 0.326f, 0.083f); localRot = new Vector3(0f, -66.934f, 0f); }
 
                 weaponInstance.transform.localPosition = localPos;
                 weaponInstance.transform.localRotation = Quaternion.Euler(localRot);
                 weaponInstance.transform.localScale = Vector3.one; // Ensure scale is exactly (1,1,1)
+
+                if (IsRangedWeapon(weaponName))
+                    EnsureFirePointOnWeapon(weaponInstance.transform);
             }
         }
+    }
+
+    public static bool IsRangedWeapon(string weaponName)
+    {
+        switch (weaponName)
+        {
+            case "LightBow":
+            case "BoneBow":
+            case "MageStaff":
+            case "NecromancerStaff":
+            case "HeavyMechanicalCrossbow":
+            case "PortableHandCannon":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static void EnsureFirePointOnWeapon(Transform weaponTransform)
+    {
+        if (weaponTransform == null) return;
+        if (weaponTransform.Find("FirePoint") != null) return;
+
+        GameObject firePoint = new GameObject("FirePoint");
+        firePoint.transform.SetParent(weaponTransform, false);
+        firePoint.transform.localPosition = CalculateWeaponTipLocal(weaponTransform.gameObject);
+        firePoint.transform.localRotation = Quaternion.identity;
+    }
+
+    public static void EnsureRangedUnitFirePoints(GameObject unitRoot)
+    {
+        if (unitRoot == null) return;
+
+        Transform visuals = unitRoot.transform.Find("Visuals");
+        if (visuals == null) return;
+
+        foreach (Transform child in visuals.GetComponentsInChildren<Transform>(true))
+        {
+            string cleanName = child.name.Replace("(Clone)", "").Trim();
+            if (IsRangedWeapon(cleanName))
+                EnsureFirePointOnWeapon(child);
+        }
+    }
+
+    private static Vector3 CalculateWeaponTipLocal(GameObject weapon)
+    {
+        Renderer[] renderers = weapon.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0)
+            return new Vector3(0f, 0.5f, 0f);
+
+        Matrix4x4 worldToLocal = weapon.transform.worldToLocalMatrix;
+        Vector3 tipLocal = Vector3.zero;
+        float maxDist = 0f;
+
+        foreach (Renderer renderer in renderers)
+        {
+            Bounds bounds = renderer.bounds;
+            Vector3 c = bounds.center;
+            Vector3 e = bounds.extents;
+
+            Vector3[] corners =
+            {
+                c + new Vector3( e.x,  e.y,  e.z),
+                c + new Vector3( e.x,  e.y, -e.z),
+                c + new Vector3( e.x, -e.y,  e.z),
+                c + new Vector3( e.x, -e.y, -e.z),
+                c + new Vector3(-e.x,  e.y,  e.z),
+                c + new Vector3(-e.x,  e.y, -e.z),
+                c + new Vector3(-e.x, -e.y,  e.z),
+                c + new Vector3(-e.x, -e.y, -e.z),
+            };
+
+            foreach (Vector3 corner in corners)
+            {
+                Vector3 local = worldToLocal.MultiplyPoint3x4(corner);
+                float dist = local.sqrMagnitude;
+                if (dist > maxDist)
+                {
+                    maxDist = dist;
+                    tipLocal = local;
+                }
+            }
+        }
+
+        return tipLocal;
+    }
+
+    public static Transform GetFirstFirePointTransform(GameObject unitRoot)
+    {
+        if (unitRoot == null) return null;
+        return FindFirstFirePoint(unitRoot.transform);
+    }
+
+    private static Transform FindFirstFirePoint(Transform root)
+    {
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (child.name == "FirePoint")
+                return child;
+        }
+        return null;
     }
 
     private static Transform GetTransformRecursive(Transform parent, string nameToFind)
@@ -996,18 +1118,20 @@ public class EditorPrefabBuilder : Editor
         visuals.transform.SetParent(root.transform);
         visuals.transform.localPosition = Vector3.zero;
 
-        string fbxFolder = "Assets/kenney_tower-defense-kit/Models/FBX format/";
+        string fbxFolder = "Assets/Models/Projectiles/";
         string modelName = "";
         
         Material projectileMat = GetOrCreateProjectileMaterial(name, color);
 
         switch (name)
         {
-            case "Archer_Arrow": modelName = "weapon-ammo-arrow.fbx"; break;
-            case "Ballista_Bolt": modelName = "weapon-ammo-arrow.fbx"; break;
-            case "Bone_Projectyle": modelName = "weapon-ammo-boulder.fbx"; break;
-            case "Cannon_Ball": modelName = "weapon-ammo-cannonball.fbx"; break;
-            case "Poison_Drip": modelName = "weapon-ammo-bullet.fbx"; break;
+            case "Arrow": modelName = "Arrow/Arrow.fbx"; break;
+            case "Cannonball": modelName = "Cannonball/Cannonball.fbx"; break;
+            case "CrossbowBolt": modelName = "CrossbowBolt/CrossbowBolt.fbx"; break;
+            case "DarkOrb": modelName = "DarkOrb/DarkOrb.fbx"; break;
+            case "Fireball": modelName = "Fireball/Fireball.fbx"; break;
+            case "Frostbolt": modelName = "Frostbolt/Frostbolt.fbx"; break;
+            case "LightOrb": modelName = "LightOrb/LightOrb.fbx"; break;
             default: // Büyü mermileri için sphere kullanacağız
                 GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 sphere.transform.SetParent(visuals.transform);

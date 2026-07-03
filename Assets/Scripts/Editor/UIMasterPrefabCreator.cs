@@ -556,20 +556,6 @@ namespace TowerDefence.Editor
             rootRT.offsetMin = Vector2.zero;
             rootRT.offsetMax = Vector2.zero;
 
-            // Title
-            TextMeshProUGUI titleTMP = CreateTMP(root.transform, "Title", "CHOOSE SIDE", 72, 800, 120);
-            titleTMP.rectTransform.anchoredPosition = new Vector2(0, 280);
-            titleTMP.color = new Color(1f, 0.85f, 0.2f);
-
-            // Subtitle
-            TextMeshProUGUI subTMP = CreateTMP(root.transform, "Subtitle", "LIGHT OR DARK?", 36, 700, 60);
-            subTMP.rectTransform.anchoredPosition = new Vector2(0, 200);
-            subTMP.color = new Color(0.8f, 0.8f, 0.8f);
-
-            // Button Container
-            GameObject btnRow = CreateUINode(root.transform, "SideButtonContainer", new Vector2(900, 100));
-            btnRow.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
-            HorizontalLayoutGroup hlg = btnRow.AddComponent<HorizontalLayoutGroup>();
             // --- Phase 1: Side Selection ---
             GameObject sideGroup = CreateUINode(root.transform, "SideSelectionGroup", new Vector2(800, 400));
             VerticalLayoutGroup sideVlg = sideGroup.AddComponent<VerticalLayoutGroup>();
@@ -599,35 +585,61 @@ namespace TowerDefence.Editor
 
             // Hero section
             TextMeshProUGUI heroTitle = CreateTMP(loadoutGroup.transform, "HeroTitle", "SELECT HEROES (Max 2)", 28, 700, 40);
-            heroTitle.rectTransform.anchoredPosition = new Vector2(0, 230);
+            heroTitle.rectTransform.anchoredPosition = new Vector2(0, 240);
 
             TextMeshProUGUI heroHint = CreateTMP(loadoutGroup.transform, "HeroHint", "SELECT HEROES (Max 2)", 20, 700, 30);
-            heroHint.rectTransform.anchoredPosition = new Vector2(0, 195);
+            heroHint.rectTransform.anchoredPosition = new Vector2(0, 205);
 
             GameObject heroScroll = new GameObject("HeroScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
             heroScroll.transform.SetParent(loadoutGroup.transform, false);
             heroScroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.25f);
             RectTransform heroScrollRT = heroScroll.GetComponent<RectTransform>();
             heroScrollRT.sizeDelta = new Vector2(900, 130);
-            heroScrollRT.anchoredPosition = new Vector2(0, 120);
+            heroScrollRT.anchoredPosition = new Vector2(0, 130);
 
             GameObject heroContent = CreateUINode(heroScroll.transform, "HeroContent", new Vector2(850, 110));
             HorizontalLayoutGroup heroHlg = heroContent.AddComponent<HorizontalLayoutGroup>();
             heroHlg.spacing = 15;
             heroHlg.childAlignment = TextAnchor.MiddleLeft;
+            ContentSizeFitter heroCsf = heroContent.AddComponent<ContentSizeFitter>();
+            heroCsf.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             heroScroll.GetComponent<ScrollRect>().content = heroContent.GetComponent<RectTransform>();
             heroScroll.GetComponent<ScrollRect>().horizontal = true;
 
+            // Unit section
+            TextMeshProUGUI unitTitle = CreateTMP(loadoutGroup.transform, "UnitTitle", "SELECT UNITS (Exactly 5)", 28, 700, 40);
+            unitTitle.rectTransform.anchoredPosition = new Vector2(0, 20);
+
+            TextMeshProUGUI unitHint = CreateTMP(loadoutGroup.transform, "UnitHint", "SELECT EXACTLY 5 UNITS! (0/5)", 20, 700, 30);
+            unitHint.rectTransform.anchoredPosition = new Vector2(0, -15);
+            unitHint.color = Color.red;
+
+            GameObject unitScroll = new GameObject("UnitScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+            unitScroll.transform.SetParent(loadoutGroup.transform, false);
+            unitScroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.25f);
+            RectTransform unitScrollRT = unitScroll.GetComponent<RectTransform>();
+            unitScrollRT.sizeDelta = new Vector2(900, 130);
+            unitScrollRT.anchoredPosition = new Vector2(0, -90);
+
+            GameObject unitContent = CreateUINode(unitScroll.transform, "UnitContent", new Vector2(850, 110));
+            HorizontalLayoutGroup unitHlg = unitContent.AddComponent<HorizontalLayoutGroup>();
+            unitHlg.spacing = 15;
+            unitHlg.childAlignment = TextAnchor.MiddleLeft;
+            ContentSizeFitter unitCsf = unitContent.AddComponent<ContentSizeFitter>();
+            unitCsf.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            unitScroll.GetComponent<ScrollRect>().content = unitContent.GetComponent<RectTransform>();
+            unitScroll.GetComponent<ScrollRect>().horizontal = true;
+
             // Spell section
             TextMeshProUGUI spellTitle = CreateTMP(loadoutGroup.transform, "SpellTitle", "EQUIP SPELLS (Max 3)", 28, 700, 40);
-            spellTitle.rectTransform.anchoredPosition = new Vector2(0, 40);
+            spellTitle.rectTransform.anchoredPosition = new Vector2(0, -190);
 
             GameObject spellScroll = new GameObject("SpellScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
             spellScroll.transform.SetParent(loadoutGroup.transform, false);
             spellScroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.25f);
             RectTransform spellScrollRT = spellScroll.GetComponent<RectTransform>();
             spellScrollRT.sizeDelta = new Vector2(900, 150);
-            spellScrollRT.anchoredPosition = new Vector2(0, -60);
+            spellScrollRT.anchoredPosition = new Vector2(0, -290);
 
             GameObject spellContent = CreateUINode(spellScroll.transform, "SpellContent", new Vector2(850, 140));
             GridLayoutGroup glg = spellContent.AddComponent<GridLayoutGroup>();
@@ -637,7 +649,7 @@ namespace TowerDefence.Editor
             spellScroll.GetComponent<ScrollRect>().content = spellContent.GetComponent<RectTransform>();
 
             Button startMatchBtn = CreateButton(loadoutGroup.transform, "StartMatchButton", "START BATTLE", 350, 90, 32);
-            startMatchBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -250);
+            startMatchBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -420);
             startMatchBtn.GetComponent<Image>().color = new Color(0.2f, 0.8f, 0.2f);
 
             // Back Button
@@ -659,11 +671,16 @@ namespace TowerDefence.Editor
             so.FindProperty("loadoutGroup").objectReferenceValue       = loadoutGroup;
             so.FindProperty("heroItemContainer").objectReferenceValue  = heroContent.transform;
             so.FindProperty("heroLoadoutHint").objectReferenceValue    = heroHint;
+            so.FindProperty("unitItemContainer").objectReferenceValue  = unitContent.transform;
+            so.FindProperty("unitLoadoutHint").objectReferenceValue    = unitHint;
             so.FindProperty("spellItemContainer").objectReferenceValue = spellContent.transform;
             so.FindProperty("startMatchButton").objectReferenceValue   = startMatchBtn;
 
             GameObject heroItemPrefab = CreateHeroLoadoutItemPrefab();
             so.FindProperty("heroItemPrefab").objectReferenceValue = heroItemPrefab;
+
+            GameObject unitLoadoutPrefab = CreateUnitLoadoutItemPrefab();
+            so.FindProperty("unitItemPrefab").objectReferenceValue = unitLoadoutPrefab;
 
             GameObject itemPrefab = CreateSpellLoadoutItemPrefab();
             so.FindProperty("spellItemPrefab").objectReferenceValue = itemPrefab;
@@ -676,6 +693,16 @@ namespace TowerDefence.Editor
             {
                 allSpellsProp.InsertArrayElementAtIndex(i);
                 allSpellsProp.GetArrayElementAtIndex(i).objectReferenceValue = AssetDatabase.LoadAssetAtPath<SpellData>(AssetDatabase.GUIDToAssetPath(spellGuids[i]));
+            }
+
+            // Auto-Populate allPossibleUnits (from Assets/Data/Units only)
+            string[] unitGuids = AssetDatabase.FindAssets("t:UnitData", new[] { "Assets/Data/Units" });
+            var allUnitsProp = so.FindProperty("allPossibleUnits");
+            allUnitsProp.ClearArray();
+            for (int i = 0; i < unitGuids.Length; i++)
+            {
+                allUnitsProp.InsertArrayElementAtIndex(i);
+                allUnitsProp.GetArrayElementAtIndex(i).objectReferenceValue = AssetDatabase.LoadAssetAtPath<UnitData>(AssetDatabase.GUIDToAssetPath(unitGuids[i]));
             }
 
             so.ApplyModifiedProperties();
@@ -745,6 +772,38 @@ namespace TowerDefence.Editor
             so.ApplyModifiedProperties();
 
             string path = PREFAB_PATH + "/HeroLoadoutItem.prefab";
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            GameObject.DestroyImmediate(root);
+            return prefab;
+        }
+
+        private static GameObject CreateUnitLoadoutItemPrefab()
+        {
+            EnsureDirectory();
+            GameObject root = new GameObject("UnitLoadoutItem", typeof(RectTransform), typeof(Image), typeof(Button), typeof(UnitLoadoutItemUI));
+            root.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 110);
+            root.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
+
+            Image icon = CreateImage(root.transform, "Icon", new Vector2(70, 70));
+            icon.rectTransform.anchoredPosition = new Vector2(0, 10);
+
+            Image highlight = CreateImage(root.transform, "Highlight", new Vector2(100, 110));
+            highlight.color = new Color(0.2f, 1f, 0.3f, 0.45f);
+            highlight.gameObject.SetActive(false);
+
+            TextMeshProUGUI nameText = CreateTMP(root.transform, "Name", "Unit", 14, 100, 24);
+            nameText.rectTransform.anchoredPosition = new Vector2(0, -35);
+
+            UnitLoadoutItemUI ui = root.GetComponent<UnitLoadoutItemUI>();
+            var so = new SerializedObject(ui);
+            so.FindProperty("iconImage").objectReferenceValue = icon;
+            so.FindProperty("selectionHighlight").objectReferenceValue = highlight;
+            so.FindProperty("nameText").objectReferenceValue = nameText;
+            so.FindProperty("button").objectReferenceValue = root.GetComponent<Button>();
+            so.ApplyModifiedProperties();
+
+            string path = PREFAB_PATH + "/UnitLoadoutItem.prefab";
             PrefabUtility.SaveAsPrefabAsset(root, path);
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             GameObject.DestroyImmediate(root);
@@ -1985,8 +2044,8 @@ namespace TowerDefence.Editor
             cam.transform.position = new Vector3(center.x, height, center.z + uiOffsetZ);
             cam.transform.rotation = Quaternion.Euler(camAngle, 0, 0); 
             
-            if (cam.orthographic) cam.orthographicSize = maxDim * 0.55f;
-            else cam.fieldOfView = 45;
+            // orthographicSize artık kod tarafından değiştirilmiyor, editördeki değer korunuyor.
+            if (!cam.orthographic) cam.fieldOfView = 45;
 
             // PhysicsRaycaster ekle
             if (cam.GetComponent<UnityEngine.EventSystems.PhysicsRaycaster>() == null)

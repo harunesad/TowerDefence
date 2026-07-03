@@ -244,6 +244,20 @@ public class DataAssetGenerator : Editor
         return data;
     }
 
+    private static Sprite FindIcon(string iconName)
+    {
+        string[] guids = AssetDatabase.FindAssets(iconName + " t:Sprite", new[] { "Assets/Data/Icons" });
+        foreach (string guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (System.IO.Path.GetFileNameWithoutExtension(path).Equals(iconName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            }
+        }
+        return null;
+    }
+
     private static UnitData CreateHeroAsset(string path, string name, Side side, int cost, int reward, float health, float speed, float damage, float range, float rate, string prefabPath)
     {
         string safeName = name.Replace(" ", "_");
@@ -267,12 +281,12 @@ public class DataAssetGenerator : Editor
         data.attackRate = rate;
 
         data.prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
-        data.icon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{safeName}_Icon.png");
+        data.icon = FindIcon($"{safeName}_Icon");
         if (data.icon == null)
         {
             // Fallback to source icons if hero-specific ones don't exist
             string fallbackIconName = (side == Side.Light) ? "Light_Swordsman_Icon" : "Shadow_Stalker_Icon";
-            data.icon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{fallbackIconName}.png");
+            data.icon = FindIcon(fallbackIconName);
         }
 
         EditorUtility.SetDirty(data);
@@ -582,7 +596,7 @@ public class DataAssetGenerator : Editor
         if (req != null) skill.requiredSkills.Add(req);
         
         // Icon bulmaya çalış
-        skill.icon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{id}_Icon.png");
+        skill.icon = FindIcon($"{id}_Icon");
 
         EditorUtility.SetDirty(skill);
         AssetDatabase.SaveAssetIfDirty(skill);
@@ -810,25 +824,35 @@ public class DataAssetGenerator : Editor
 
     private static void LinkUnitProjectiles()
     {
-        string unitPath = "Assets/Data/Units";
         string projPath = "Assets/Prefabs/Gameplay/Projectiles";
+        string[] unitDataGuids = AssetDatabase.FindAssets("t:UnitData", new[] { "Assets/Data/Units" });
 
-        // Celestial Archer -> Archer_Arrow
-        UnitData archer = AssetDatabase.LoadAssetAtPath<UnitData>($"{unitPath}/Celestial_Archer.asset");
-        if (archer != null)
+        foreach (var guid in unitDataGuids)
         {
-            archer.projectilePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{projPath}/Archer_Arrow.prefab");
-            EditorUtility.SetDirty(archer);
-        }
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            UnitData data = AssetDatabase.LoadAssetAtPath<UnitData>(path);
+            
+            if (data != null && data.attackRange > 2f)
+            {
+                string n = data.unitName.ToLower();
+                string projName = "Arrow";
 
-        // Wraith -> Mage_Bolt (Veya Dark_Pulse/Void_Missile)
-        UnitData wraith = AssetDatabase.LoadAssetAtPath<UnitData>($"{unitPath}/Wraith.asset");
-        if (wraith != null)
-        {
-            wraith.projectilePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{projPath}/Mage_Bolt.prefab");
-            EditorUtility.SetDirty(wraith);
-        }
+                if (n.Contains("mage") || n.Contains("necromancer")) projName = "Fireball";
+                else if (n.Contains("lich") || n.Contains("bone") || n.Contains("skeleton")) projName = "Frostbolt";
+                else if (n.Contains("priestess") || n.Contains("cleric") || n.Contains("arcane")) projName = "LightOrb";
+                else if (n.Contains("dark orb") || n.Contains("blood")) projName = "DarkOrb";
+                else if (n.Contains("cannon") || n.Contains("catapult")) projName = "Cannonball";
+                else if (n.Contains("crossbow") || n.Contains("sniper")) projName = "CrossbowBolt";
+                else if (n.Contains("skeleton archer")) projName = "Arrow"; // Or Frostbolt, but Arrow is fine for skeletons
 
+                GameObject foundProj = AssetDatabase.LoadAssetAtPath<GameObject>($"{projPath}/{projName}.prefab");
+                if (foundProj != null)
+                {
+                    data.projectilePrefab = foundProj;
+                    EditorUtility.SetDirty(data);
+                }
+            }
+        }
         AssetDatabase.SaveAssets();
     }
 
@@ -872,7 +896,7 @@ public class DataAssetGenerator : Editor
 
         // Otomatik Varlık Bulma
         data.prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Gameplay/Towers/{safeName}.prefab");
-        data.icon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{safeName}_Icon.png");
+        data.icon = FindIcon($"{safeName}_Icon");
 
         // TERS BAĞLAMA: Prefab -> Data
         if (data.prefab != null)
@@ -915,7 +939,7 @@ public class DataAssetGenerator : Editor
 
         // Otomatik Varlık Bulma
         data.prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Gameplay/Units/{safeName}.prefab");
-        data.icon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{safeName}_Icon.png");
+        data.icon = FindIcon($"{safeName}_Icon");
 
         // TERS BAĞLAMA: Prefab -> Data
         if (data.prefab != null)
@@ -1004,16 +1028,16 @@ public class DataAssetGenerator : Editor
                 {
                     string visualChildName = visuals.GetChild(0).name;
                     
-                    // Önce "{visualChildName}_Icon.png" dene
-                    Sprite foundIcon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{visualChildName}_Icon.png");
-                    // Sonra "{visualChildName}.png" dene
+                    // Önce "{visualChildName}_Icon" dene
+                    Sprite foundIcon = FindIcon($"{visualChildName}_Icon");
+                    // Sonra "{visualChildName}" dene
                     if (foundIcon == null)
-                        foundIcon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{visualChildName}.png");
-                    // Son çare: "{towerName}_Icon.png" (standart format)
+                        foundIcon = FindIcon(visualChildName);
+                    // Son çare: "{towerName}_Icon" (standart format)
                     if (foundIcon == null)
                     {
                         string safeName = data.towerName.Replace(" ", "_");
-                        foundIcon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{safeName}_Icon.png");
+                        foundIcon = FindIcon($"{safeName}_Icon");
                     }
 
                     if (foundIcon != null)
@@ -1187,7 +1211,7 @@ public class DataAssetGenerator : Editor
             // 2. Icon Ataması
             if (data.icon == null)
             {
-                Sprite found = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{safeName}_Icon.png");
+                Sprite found = FindIcon($"{safeName}_Icon");
                 if (found != null) { data.icon = found; changed = true; }
                 else
                 {
@@ -1214,9 +1238,11 @@ public class DataAssetGenerator : Editor
             }
             else if (data.projectilePrefab == null)
             {
-                string projName = "Archer_Arrow";
-                if (n.Contains("mage") || n.Contains("soul") || n.Contains("void") || n.Contains("prism")) projName = "Mage_Bolt";
-                else if (n.Contains("cannon") || n.Contains("catapult") || n.Contains("bone")) projName = "Cannon_Ball";
+                string projName = "Arrow";
+                if (n.Contains("mage") || n.Contains("prism")) projName = "Fireball";
+                else if (n.Contains("soul") || n.Contains("void")) projName = "DarkOrb";
+                else if (n.Contains("bone")) projName = "Frostbolt";
+                else if (n.Contains("cannon") || n.Contains("catapult")) projName = "Cannonball";
                 
                 GameObject foundProj = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Gameplay/Projectiles/{projName}.prefab");
                 if (foundProj == null)
@@ -1228,7 +1254,7 @@ public class DataAssetGenerator : Editor
                     }
                 }
 
-                if (foundProj == null) foundProj = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Gameplay/Projectiles/Archer_Arrow.prefab");
+                if (foundProj == null) foundProj = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Gameplay/Projectiles/Arrow.prefab");
                 if (foundProj != null) { data.projectilePrefab = foundProj; changed = true; }
             }
 
@@ -1293,7 +1319,7 @@ public class DataAssetGenerator : Editor
             // 2. Data -> Icon Ataması
             if (data.icon == null)
             {
-                Sprite found = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/{safeName}_Icon.png");
+                Sprite found = FindIcon($"{safeName}_Icon");
                 if (found != null) { data.icon = found; changed = true; }
             }
 
@@ -1342,6 +1368,13 @@ public class DataAssetGenerator : Editor
 
     public static void ConfigureUnitPrefabs(string unitPath = "Assets/Data/Units")
     {
+        ConfigureUnitPrefabsInFolder(unitPath);
+        ConfigureUnitPrefabsInFolder("Assets/Data/Heroes");
+        AssetDatabase.Refresh();
+    }
+
+    private static void ConfigureUnitPrefabsInFolder(string unitPath)
+    {
         string[] unitGuids = AssetDatabase.FindAssets("t:UnitData", new[] { unitPath });
         foreach (string guid in unitGuids)
         {
@@ -1351,7 +1384,6 @@ public class DataAssetGenerator : Editor
                 ConfigureSingleUnitPrefab(ud.prefab, ud);
             }
         }
-        AssetDatabase.Refresh();
     }
 
     private static void ConfigureSingleUnitPrefab(GameObject prefab, UnitData data)
@@ -1435,6 +1467,15 @@ public class DataAssetGenerator : Editor
         // 3. Unit -> HealthBar Link
         var unitSo = new SerializedObject(unit);
         unitSo.FindProperty("healthBar").objectReferenceValue = hbScript;
+
+        if (data.projectilePrefab != null)
+        {
+            EditorPrefabBuilder.EnsureRangedUnitFirePoints(root);
+            Transform fp = EditorPrefabBuilder.GetFirstFirePointTransform(root);
+            if (fp != null)
+                unitSo.FindProperty("firePoint").objectReferenceValue = fp;
+        }
+
         unitSo.ApplyModifiedProperties();
 
         FixVisualModelGroundOffset(root);
@@ -1916,7 +1957,7 @@ public class DataAssetGenerator : Editor
         data.cooldown = cooldown;
         
         // Icon bulmaya çalış
-        data.icon = AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Data/Icons/Spells/{id}_Icon.png");
+        data.icon = FindIcon($"{id}_Icon");
 
         EditorUtility.SetDirty(data);
         AssetDatabase.SaveAssetIfDirty(data);

@@ -17,6 +17,7 @@ namespace TowerDefence.Combat
         [SerializeField] private float moveSpeed = 3f;
         [SerializeField] private float rotationSpeed = 10f;
         [SerializeField] private HealthBarUI healthBar;
+        [SerializeField] private Transform firePoint;
 
         private float maxHealth;
         private float attackDamage;
@@ -91,6 +92,8 @@ namespace TowerDefence.Combat
 
             if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
 
+            ResolveFirePoint();
+
             InitializeStatusEffects();
             SetLayerRecursive(gameObject, (unitSide == Side.Light) ? 6 : 7);
             targetLayer = (unitSide == Side.Light) ? (1 << 7) : (1 << 6);
@@ -109,6 +112,30 @@ namespace TowerDefence.Combat
         private void InitializeStatusEffects()
         {
             activeEffects = new List<StatusEffect>();
+        }
+
+        private void ResolveFirePoint()
+        {
+            if (firePoint != null) return;
+
+            Transform direct = transform.Find("FirePoint");
+            if (direct != null)
+            {
+                firePoint = direct;
+                return;
+            }
+
+            Transform visuals = transform.Find("Visuals");
+            if (visuals == null) return;
+
+            foreach (Transform child in visuals.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == "FirePoint")
+                {
+                    firePoint = child;
+                    return;
+                }
+            }
         }
 
         private void SetLayerRecursive(GameObject obj, int newLayer)
@@ -605,9 +632,15 @@ namespace TowerDefence.Combat
                 {
                     if (unitData.projectilePrefab != null)
                     {
-                        // Menzilli saldırı: Mermi oluştur ve hedefe yönlendir
-                        Vector3 spawnPos = transform.position + Vector3.up * 1.2f;
-                        GameObject projGO = Instantiate(unitData.projectilePrefab, spawnPos, transform.rotation);
+                        ResolveFirePoint();
+                        Vector3 spawnPos = firePoint != null
+                            ? firePoint.position
+                            : transform.position + Vector3.up * 1.2f;
+                        Quaternion spawnRot = firePoint != null
+                            ? firePoint.rotation
+                            : transform.rotation;
+
+                        GameObject projGO = Instantiate(unitData.projectilePrefab, spawnPos, spawnRot);
                         Projectile proj = projGO.GetComponent<Projectile>();
                         if (proj != null)
                         {

@@ -230,8 +230,8 @@ namespace TowerDefence.Core
             cam.transform.position = new Vector3(center.x, height, center.z + uiOffsetZ + hudCompensation);
             cam.transform.rotation = Quaternion.Euler(camAngle, 0, 0);
             
-            if (cam.orthographic) cam.orthographicSize = maxDim * 0.45f;
-            else cam.fieldOfView = 40;
+            // orthographicSize artık kod tarafından değiştirilmiyor, editördeki değer korunuyor.
+            if (!cam.orthographic) cam.fieldOfView = 40;
 
             Debug.Log($"[CampaignManager] Camera centered on {mapInstance.name}. Center: {center}, Height: {height}");
         }
