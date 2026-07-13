@@ -143,11 +143,10 @@ namespace TowerDefence.Core
             if (anySpawnerBusy) return;
 
             // Sadece DÜŞMAN birimlerini kontrol et (Oyuncunun kendi askerleri dalgayı bloklamasın)
-            Unit[] allUnits = FindObjectsByType<Unit>(FindObjectsSortMode.None);
             Side playerSide = SideController.Instance.GetPlayerSide();
             int enemyCount = 0;
 
-            foreach (var unit in allUnits)
+            foreach (var unit in Unit.AllUnits)
             {
                 if (unit != null && !unit.IsDead && unit.GetSide() != playerSide)
                 {

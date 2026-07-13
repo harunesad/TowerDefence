@@ -91,7 +91,7 @@ namespace TowerDefence.Combat
                 if (activeWaveGroups.Count > 0)
                 {
                     isSpawning = true;
-                    nextSpawnTime = Time.time;
+                    nextSpawnTime = Time.time + activeWaveGroups[0].groupDelay;
                     Debug.Log($"Spawner [{spawnerIndex}]: Wave {waveIndex + 1} started with {activeWaveGroups.Count} groups.");
                 }
                 else
@@ -126,6 +126,12 @@ namespace TowerDefence.Combat
                     // Grubu bitir, sonrakine geç
                     currentGroupIndex++;
                     unitsSpawnedInGroup = 0;
+                    
+                    // Yeni grup varsa onun delay süresini uygula
+                    if (currentGroupIndex < activeWaveGroups.Count)
+                    {
+                        nextSpawnTime = Time.time + activeWaveGroups[currentGroupIndex].groupDelay;
+                    }
                 }
             }
             else

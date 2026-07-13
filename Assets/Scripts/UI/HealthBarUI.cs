@@ -24,13 +24,10 @@ namespace TowerDefence.UI
                 float fillAmount = Mathf.Clamp01(current / max);
                 fillImage.fillAmount = fillAmount;
 
-                // Opsiyonel: Renk değişimi (Yeşil -> Kırmızı)
-                fillImage.color = Color.Lerp(Color.red, Color.green, fillAmount);
+                // Renk değişimi kaldırıldı. 
+                // fillImage her zaman kendi orijinal renginde kalacak (örn: Yeşil).
+                // Altındaki background Image objesi ise kırmızı renkte olarak arka planda görünecek.
             }
-
-            // Can full ise gizle (opsiyonel, user isterse)
-            // if (current >= max) container.SetActive(false);
-            // else container.SetActive(true);
         }
 
         private void LateUpdate()

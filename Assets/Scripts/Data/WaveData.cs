@@ -9,6 +9,7 @@ namespace TowerDefence.Data
         public UnitData unitData;
         public int count;
         public float spawnInterval = 1f;
+        public float groupDelay = 0f; // Gruba başlamadan önceki bekleme süresi
         public int spawnerIndex = 0; // Hangi spawner bu grubu çıkaracak?
     }
 

@@ -130,6 +130,7 @@ public class DataAssetGenerator : Editor
         ConfigureTowerPrefabs(towerPath);
         ConfigureUnitPrefabs(unitPath);
         GenerateHeroes(); // YENİ: Kahramanları üret
+        FixHeroReferences(); // Kahraman ikonları ve karşılıklarını düzelt
         
         GenerateDefaultSpells(); // Büyüleri önce üret (Yetenekler bunlara bağlı)
         LinkMetaSkills("Assets/Data/Skills");
@@ -164,17 +165,17 @@ public class DataAssetGenerator : Editor
         var heroDefs = new (string id, string name, Side side, string sourceUnit, float hp, float spd, float dmg, float rng, float rate, int unlockCost, bool starter, HeroAbilityType ability, string abName, string abDesc, float abCd, float abPow, float abRad)[]
         {
             ("Hero_Light_Arthur",  "Arthur Pendragon",  Side.Light, "Light_Swordsman",   500, 1.0f,  40, 1.8f, 1.0f, 0,   true,  HeroAbilityType.RallyHeal,     "Rally Heal",      "Restores 15% of max health.", 14f, 1f, 0f),
-            ("Hero_Light_Paladin", "Iron Paladin",      Side.Light, "Iron_Knight",       650, 0.85f, 35, 1.6f, 0.9f, 600, false, HeroAbilityType.HolyShield,     "Holy Shield",     "Heals when health drops below 35%.", 16f, 1f, 0f),
-            ("Hero_Light_Archon",  "Celestial Archon",  Side.Light, "Celestial_Archer",  420, 1.1f,  45, 2.2f, 1.1f, 750, false, HeroAbilityType.ArrowRain,      "Arrow Rain",      "Damages all enemies in an area.", 12f, 1f, 4f),
-            ("Hero_Light_Scout",   "Holy Scout",        Side.Light, "Holy_Scout",        380, 1.25f, 32, 1.7f, 1.3f, 550, false, HeroAbilityType.SwiftStrike,    "Swift Strike",    "Deals a burst of bonus damage.", 10f, 1f, 0f),
-            ("Hero_Light_Bulwark", "Shield Bearer",     Side.Light, "Shield_Bearer",     720, 0.8f,  30, 1.5f, 0.85f,650, false, HeroAbilityType.FortifyTaunt,   "Fortify",         "Taunts nearby enemies.", 18f, 1f, 5f),
-            ("Hero_Light_Solar",   "Sun Knight",        Side.Light, "Iron_Knight",       480, 1.0f,  38, 1.9f, 1.0f, 800, false, HeroAbilityType.SolarSmite,     "Solar Smite",     "Holy explosion around the hero.", 13f, 1f, 3.5f),
-            ("Hero_Dark_Vampire",  "Vampire Lord",      Side.Dark,  "Shadow_Stalker",    450, 1.2f,  35, 1.5f, 1.2f, 600, false, HeroAbilityType.LifeDrain,      "Life Drain",      "Steals health from the target.", 11f, 1f, 0f),
+            ("Hero_Light_Paladin", "Iron Paladin",      Side.Light, "Grand_Paladin",       650, 0.85f, 35, 1.6f, 0.9f, 600, false, HeroAbilityType.HolyShield,     "Holy Shield",     "Heals when health drops below 35%.", 16f, 1f, 0f),
+            ("Hero_Light_Archon",  "Celestial Archon",  Side.Light, "Elven_Ranger",  420, 1.1f,  45, 2.2f, 1.1f, 750, false, HeroAbilityType.ArrowRain,      "Arrow Rain",      "Damages all enemies in an area.", 12f, 1f, 4f),
+            ("Hero_Light_Scout",   "Holy Scout",        Side.Light, "Scout",        380, 1.25f, 32, 1.7f, 1.3f, 550, false, HeroAbilityType.SwiftStrike,    "Swift Strike",    "Deals a burst of bonus damage.", 10f, 1f, 0f),
+            ("Hero_Light_Bulwark", "Shield Bearer",     Side.Light, "Shieldmaiden",     720, 0.8f,  30, 1.5f, 0.85f,650, false, HeroAbilityType.FortifyTaunt,   "Fortify",         "Taunts nearby enemies.", 18f, 1f, 5f),
+            ("Hero_Light_Solar",   "Sun Knight",        Side.Light, "Holy_Knight",       480, 1.0f,  38, 1.9f, 1.0f, 800, false, HeroAbilityType.SolarSmite,     "Solar Smite",     "Holy explosion around the hero.", 13f, 1f, 3.5f),
+            ("Hero_Dark_Vampire",  "Crimson Count",     Side.Dark,  "Vampire_Lord",    450, 1.2f,  35, 1.5f, 1.2f, 600, false, HeroAbilityType.LifeDrain,      "Life Drain",      "Steals health from the target.", 11f, 1f, 0f),
             ("Hero_Dark_Reaper",   "Soul Reaper",       Side.Dark,  "Wraith",            380, 1.3f,  42, 1.7f, 1.3f, 750, false, HeroAbilityType.SoulExecute,    "Soul Execute",    "Executes wounded enemies.", 15f, 1f, 0f),
             ("Hero_Dark_Behemoth", "Abyssal Lord",      Side.Dark,  "Abyssal_Behemoth",  700, 0.75f, 50, 1.4f, 0.8f, 900, false, HeroAbilityType.GroundSlam,     "Ground Slam",     "Slams the ground for heavy AoE damage.", 14f, 1f, 4f),
-            ("Hero_Dark_Plague",   "Plague Herald",     Side.Dark,  "Plague_Runner",     400, 1.15f, 36, 1.6f, 1.15f,550, false, HeroAbilityType.PlagueCloud,    "Plague Cloud",    "Poisons enemies in an area.", 12f, 1f, 4f),
+            ("Hero_Dark_Plague",   "Plague Herald",     Side.Dark,  "Zombie_Shambler",     400, 1.15f, 36, 1.6f, 1.15f,550, false, HeroAbilityType.PlagueCloud,    "Plague Cloud",    "Poisons enemies in an area.", 12f, 1f, 4f),
             ("Hero_Dark_Bone",     "Bone Commander",    Side.Dark,  "Skeleton_Warrior",  520, 0.95f, 34, 1.5f, 1.0f, 650, false, HeroAbilityType.BoneArmor,      "Bone Armor",      "Reinforces the hero with bone plating.", 16f, 1f, 0f),
-            ("Hero_Dark_Stalker",  "Night Stalker",     Side.Dark,  "Shadow_Stalker",    430, 1.35f, 40, 1.6f, 1.25f,800, false, HeroAbilityType.ShadowStep,     "Shadow Step",     "Teleports behind the target.", 13f, 1f, 0f),
+            ("Hero_Dark_Stalker",  "Night Stalker",     Side.Dark,  "Shadow_Assassin",    430, 1.35f, 40, 1.6f, 1.25f,800, false, HeroAbilityType.ShadowStep,     "Shadow Step",     "Teleports behind the target.", 13f, 1f, 0f),
         };
 
         foreach (var def in heroDefs)
@@ -197,7 +198,7 @@ public class DataAssetGenerator : Editor
             UnitData unitData = CreateHeroAsset(heroDataPath, def.name, def.side, 0, 0,
                 def.hp, def.spd, def.dmg, def.rng, def.rate, targetPfb);
 
-            ConfigureHeroPrefab(targetPfb, unitData);
+            ConfigureHeroPrefab(targetPfb, unitData, def.name);
 
             CreateHeroDataAsset(heroDataPath, def.id, def.name, def.side, unitData,
                 def.unlockCost, def.starter, def.ability, def.abName, def.abDesc, def.abCd, def.abPow, def.abRad);
@@ -244,15 +245,33 @@ public class DataAssetGenerator : Editor
         return data;
     }
 
-    private static Sprite FindIcon(string iconName)
+    public static Sprite FindIcon(string iconName)
     {
-        string[] guids = AssetDatabase.FindAssets(iconName + " t:Sprite", new[] { "Assets/Data/Icons" });
-        foreach (string guid in guids)
+        string pascalName = iconName.Replace("_Icon", "").Replace("_", "") + "_Icon";
+        string[] searchNames = new string[] { iconName, pascalName };
+
+        foreach (string searchName in searchNames)
         {
-            string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (System.IO.Path.GetFileNameWithoutExtension(path).Equals(iconName, System.StringComparison.OrdinalIgnoreCase))
+            string[] guids = AssetDatabase.FindAssets(searchName, new[] { "Assets/Data/Icons" });
+            foreach (string guid in guids)
             {
-                return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string fileName = System.IO.Path.GetFileNameWithoutExtension(path);
+                
+                if (fileName.Equals(searchName, System.StringComparison.OrdinalIgnoreCase) || 
+                    fileName.Equals(iconName, System.StringComparison.OrdinalIgnoreCase) || 
+                    fileName.Replace("_", "").Equals(iconName.Replace("_", ""), System.StringComparison.OrdinalIgnoreCase))
+                {
+                    // Multiple sprite desteği için
+                    Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+                    foreach (var asset in assets)
+                    {
+                        if (asset is Sprite sprite)
+                        {
+                            return sprite;
+                        }
+                    }
+                }
             }
         }
         return null;
@@ -289,14 +308,89 @@ public class DataAssetGenerator : Editor
             data.icon = FindIcon(fallbackIconName);
         }
 
+        // Heroes don't have enemy counterparts
+        data.enemyCounterpart = null;
+
         EditorUtility.SetDirty(data);
         return data;
     }
 
-    private static void ConfigureHeroPrefab(string prefabPath, UnitData data)
+    private static void ConfigureHeroPrefab(string prefabPath, UnitData data, string heroName)
     {
         GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
         if (root == null) return;
+
+        // --- Custom Model Integration ---
+        string pascalName = heroName.Replace(" ", "");
+        string sideStr = (data.side == Side.Light) ? "Light" : "Dark";
+        string fbxPath = $"Assets/Models/Heroes/{sideStr}/{pascalName}/{pascalName}.fbx";
+        string animPath = $"Assets/Models/Heroes/{sideStr}/{pascalName}/{pascalName}Animator.controller";
+
+        GameObject fbxAsset = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
+        RuntimeAnimatorController animCtrl = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(animPath);
+
+        if (fbxAsset != null)
+        {
+            Transform visuals = root.transform.Find("Visuals");
+            if (visuals != null)
+            {
+                // Visuals altındaki her şeyi (eski modeli) sil
+                for (int i = visuals.childCount - 1; i >= 0; i--)
+                {
+                    DestroyImmediate(visuals.GetChild(i).gameObject, true);
+                }
+            }
+            else
+            {
+                // Eğer Visuals yoksa, yarat (Normalde Unit'lerde Visuals her zaman olur)
+                GameObject visObj = new GameObject("Visuals");
+                visObj.transform.SetParent(root.transform, false);
+                visuals = visObj.transform;
+            }
+
+            // Instantiate new model
+            GameObject newModel = PrefabUtility.InstantiatePrefab(fbxAsset) as GameObject;
+            newModel.transform.SetParent(visuals, false);
+            newModel.transform.localPosition = Vector3.zero;
+            newModel.transform.localRotation = Quaternion.identity;
+
+            // Set Animator Controller (EXACTLY like Apply3DVisualsToUnit does it!)
+            Animator anim = newModel.GetComponent<Animator>();
+            if (anim == null) anim = newModel.AddComponent<Animator>();
+            
+            // Try to find the Animator Controller in the hero's model folder (same way as EditorPrefabBuilder)
+            string modelDir = System.IO.Path.GetDirectoryName(fbxPath).Replace("\\", "/");
+            string[] animGuids = AssetDatabase.FindAssets($"t:RuntimeAnimatorController", new[] { modelDir });
+
+            if (animGuids.Length > 0)
+            {
+                string controllerPath = AssetDatabase.GUIDToAssetPath(animGuids[0]);
+                RuntimeAnimatorController controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(controllerPath);
+                if (controller != null)
+                {
+                    anim.runtimeAnimatorController = controller;
+                }
+            }
+
+            // --- Attach Weapons to Hero Model ---
+            GetWeaponForUnit(heroName, out string rWeapon, out string lWeapon);
+            AttachWeaponToBone(newModel, heroName, "RightHand", rWeapon);
+            AttachWeaponToBone(newModel, heroName, "LeftHand", lWeapon);
+
+            // --- Fire Point Setup ---
+            EditorPrefabBuilder.EnsureRangedUnitFirePoints(root, heroName);
+            
+            // Special case for Cleric of the Dawn - set exact fire point position
+            if (heroName.Contains("Cleric"))
+            {
+                // Find fire point and set exact position
+                Transform firePoint = FindFirstFirePoint(root.transform);
+                if (firePoint != null)
+                {
+                    firePoint.localPosition = new Vector3(-0.108f, 1.118f, 0.005f);
+                }
+            }
+        }
 
         // Set Layer
         int targetLayer = (data.side == Side.Light) ? 6 : 7;
@@ -320,6 +414,7 @@ public class DataAssetGenerator : Editor
         Transform hbTransform = root.transform.Find("HealthBarCanvas");
         HealthBarUI hbScript = null;
         float targetY = 6.0f; // Above unit head
+        Sprite emptySprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Prefabs/UI/Empty.png");
 
         if (hbTransform == null)
         {
@@ -338,7 +433,9 @@ public class DataAssetGenerator : Editor
             bgGo.transform.SetParent(canvasGo.transform);
             bgGo.transform.localPosition = Vector3.zero;
             bgGo.GetComponent<RectTransform>().sizeDelta = new Vector2(1.8f, 0.25f);
-            bgGo.GetComponent<Image>().color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+            Image bgImg = bgGo.GetComponent<Image>();
+            bgImg.sprite = emptySprite;
+            bgImg.color = Color.red; // Background is always red
 
             // Fill
             GameObject fillGo = new GameObject("Fill", typeof(RectTransform), typeof(Image));
@@ -352,6 +449,7 @@ public class DataAssetGenerator : Editor
             fillRect.offsetMax = Vector2.zero;
 
             Image fillImg = fillGo.GetComponent<Image>();
+            fillImg.sprite = emptySprite;
             fillImg.color = Color.yellow; // Yellow color to differentiate Hero health bar
             fillImg.type = Image.Type.Filled;
             fillImg.fillMethod = Image.FillMethod.Horizontal;
@@ -367,6 +465,23 @@ public class DataAssetGenerator : Editor
         {
             hbTransform.localPosition = new Vector3(0, targetY, 0);
             hbScript = hbTransform.GetComponent<HealthBarUI>();
+            
+            // Update existing colors/sprites
+            Transform bg = hbTransform.Find("Background");
+            if (bg != null)
+            {
+                Image bgImg = bg.GetComponent<Image>();
+                bgImg.sprite = emptySprite;
+                bgImg.color = Color.red;
+                
+                Transform fill = bg.Find("Fill");
+                if (fill != null)
+                {
+                    Image fillImg = fill.GetComponent<Image>();
+                    fillImg.sprite = emptySprite;
+                    fillImg.color = Color.yellow;
+                }
+            }
         }
 
         // Link Hero to its HealthBar
@@ -375,6 +490,11 @@ public class DataAssetGenerator : Editor
         heroSo.ApplyModifiedProperties();
 
         FixVisualModelGroundOffset(root);
+
+        // Final Hero Transform Setup (Requirement: Scale 1.5, Y 0.2)
+        root.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+        // We set local position Y to 0.2 in the prefab itself
+        root.transform.localPosition = new Vector3(root.transform.localPosition.x, 0.2f, root.transform.localPosition.z);
 
         PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
         PrefabUtility.UnloadPrefabContents(root);
@@ -390,6 +510,202 @@ public class DataAssetGenerator : Editor
         {
             Vector3 lp = child.localPosition;
             child.localPosition = new Vector3(lp.x, 0f, lp.z);
+        }
+    }
+    
+    // Helper method to find first fire point in hierarchy
+    private static Transform FindFirstFirePoint(Transform parent)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == "FirePoint")
+                return child;
+            Transform found = FindFirstFirePoint(child);
+            if (found != null) return found;
+        }
+        return null;
+    }
+    
+    // Replicate GetWeaponForUnit and AttachWeaponToBone from EditorPrefabBuilder since they're private there
+    private static void GetWeaponForUnit(string unitName, out string rightWeapon, out string leftWeapon)
+    {
+        rightWeapon = ""; leftWeapon = "";
+        string n = unitName.Replace(" ", "").Replace("_", "");
+        
+        switch (n)
+        {
+            case "LightSwordsman": rightWeapon = "BasicBroadsword"; leftWeapon = "HeavyTowerShield"; break;
+            case "NoviceArcher": leftWeapon = "LightBow"; break;
+            case "Spearman": rightWeapon = "IronSpear"; break;
+            case "Scout": rightWeapon = "DualShortDaggers"; leftWeapon = "DualShortDaggers"; break;
+            case "MilitiaDefender": rightWeapon = "OneHandedHammer"; leftWeapon = "HeavyTowerShield"; break;
+            case "HolyKnight": rightWeapon = "HolyGreatsword"; break;
+            case "Crossbowman": rightWeapon = "HeavyMechanicalCrossbow"; break;
+            case "ClericoftheDawn": rightWeapon = "GlowingSunMace"; break;
+            case "CavalryRider": rightWeapon = "KnightsLance"; break;
+            case "BattleMage": rightWeapon = "MageStaff"; break;
+            case "GriffinTamer": rightWeapon = "BeastmasterWhip"; break;
+            case "Shieldmaiden": rightWeapon = "SilverBattleaxe"; leftWeapon = "RoundShield"; break;
+            case "SunPriestess": rightWeapon = "MageStaff"; break;
+            case "PegasusKnight": rightWeapon = "IronSpear"; break;
+            case "CelestialBlade": rightWeapon = "BasicBroadsword"; leftWeapon = "BasicBroadsword"; break;
+            case "DwarvenCannoneer": rightWeapon = "PortableHandCannon"; break;
+            case "ElvenRanger": leftWeapon = "LightBow"; break;
+            case "Archangel": rightWeapon = "FlamingBattleaxe"; break;
+            case "GrandPaladin": rightWeapon = "HolyGreatsword"; leftWeapon = "HeavyTowerShield"; break;
+            case "PhoenixSummoner": rightWeapon = "MageStaff"; break;
+            case "GoblinGrunt": rightWeapon = "DualShortDaggers"; leftWeapon = "RoundShield"; break;
+            case "SkeletonWarrior": rightWeapon = "BasicBroadsword"; break;
+            case "OrcMarauder": rightWeapon = "OrcAxe"; break;
+            case "CultistInitiate": rightWeapon = "DualShortDaggers"; break;
+            case "DarkKnight": rightWeapon = "CursedGreatsword"; break;
+            case "SkeletonArcher": leftWeapon = "BoneBow"; break;
+            case "Necromancer": rightWeapon = "NecromancerStaff"; break;
+            case "OrcBerserker": rightWeapon = "OrcAxe"; leftWeapon = "OrcAxe"; break;
+            case "ShadowAssassin": rightWeapon = "DualShortDaggers"; leftWeapon = "DualShortDaggers"; break;
+            case "SpiderRider": rightWeapon = "IronSpear"; break;
+            case "VampireLord": rightWeapon = "BasicBroadsword"; break;
+            case "Succubus": rightWeapon = "BeastmasterWhip"; break;
+            case "Wraith": rightWeapon = "SpectralScythe"; break;
+            case "TrollBrute": rightWeapon = "TreeTrunkClub"; break;
+            case "DarkElfSniper": rightWeapon = "HeavyMechanicalCrossbow"; break;
+            case "DemonKing": rightWeapon = "FlamingBattleaxe"; break;
+            case "DeathKnightCommander": rightWeapon = "KnightsLance"; break;
+            case "BloodMage": rightWeapon = "NecromancerStaff"; break;
+            // Hero specific weapons
+            case "ArthurPendragon": rightWeapon = "BasicBroadsword"; leftWeapon = "RoundShield"; break;
+            case "IronPaladin": rightWeapon = "OneHandedHammer"; leftWeapon = "HeavyTowerShield"; break;
+            case "CelestialArchon": leftWeapon = "LightBow"; break;
+            case "HolyScout": rightWeapon = "BasicBroadsword"; leftWeapon = "BasicBroadsword"; break;
+            case "ShieldBearer": rightWeapon = "BasicBroadsword"; leftWeapon = "HeavyTowerShield"; break;
+            case "SunKnight": rightWeapon = "HolyGreatsword"; break;
+            case "CrimsonCount": rightWeapon = "BasicBroadsword"; break;
+            case "SoulReaper": rightWeapon = "SpectralScythe"; break;
+            case "AbyssalLord": rightWeapon = "SilverBattleaxe"; break;
+            case "PlagueHerald": rightWeapon = "MageStaff"; break;
+            case "BoneCommander": rightWeapon = "BasicBroadsword"; leftWeapon = "RoundShield"; break;
+            case "NightStalker": rightWeapon = "DualShortDaggers"; leftWeapon = "DualShortDaggers"; break;
+        }
+    }
+    
+    private static Transform GetTransformRecursive(Transform parent, string nameToFind)
+    {
+        if (parent.name.Contains(nameToFind)) return parent;
+        foreach (Transform child in parent)
+        {
+            Transform result = GetTransformRecursive(child, nameToFind);
+            if (result != null) return result;
+        }
+        return null;
+    }
+    
+    private static void AttachWeaponToBone(GameObject modelInstance, string unitName, string boneName, string weaponName)
+    {
+        if (string.IsNullOrEmpty(weaponName)) return;
+
+        Transform bone = GetTransformRecursive(modelInstance.transform, boneName);
+        if (bone == null) 
+        {
+            if (boneName == "LeftHand") bone = GetTransformRecursive(modelInstance.transform, "LeftArm"); // Fallback
+            if (bone == null) bone = modelInstance.transform; // Ultimate fallback
+        }
+
+        string[] weaponGuids = AssetDatabase.FindAssets($"{weaponName} t:GameObject", new[] { "Assets/Models/Weapons" });
+        if (weaponGuids.Length > 0)
+        {
+            string weaponPath = AssetDatabase.GUIDToAssetPath(weaponGuids[0]);
+            GameObject weaponPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(weaponPath);
+            if (weaponPrefab != null)
+            {
+                GameObject weaponInstance = (GameObject)PrefabUtility.InstantiatePrefab(weaponPrefab);
+                weaponInstance.transform.SetParent(bone);
+                
+                // Default position/rotation
+                Vector3 localPos = Vector3.zero;
+                Vector3 localRot = Vector3.zero;
+
+                string n = unitName.Replace(" ", "").Replace("_", "");
+                
+                // Specific offsets requested by user
+                if (n == "Archangel" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
+                else if (n == "DarkKnight" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, -0.8f);
+                else if (n == "CavalryRider" && boneName == "RightHand") localPos = new Vector3(0, 0.2f, 0);
+                else if (n == "DeathKnightCommander" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
+                else if (n == "DwarvenCannoneer" && boneName == "RightHand") localPos = new Vector3(0, 0.9f, 0);
+                else if (n == "ElvenRanger" && boneName == "LeftHand") { localPos = new Vector3(0, 0.1f, 0); localRot = new Vector3(180, 0, 0); }
+                else if (n == "GoblinGrunt" && boneName == "LeftHand") { localPos = new Vector3(0, 0.3f, 0); localRot = new Vector3(180, 0, 0); }
+                else if (n == "GoblinGrunt" && boneName == "RightHand") { localPos = new Vector3(-0.133f, 0.457f, 0f); localRot = new Vector3(180, 0, -30f); }
+                else if (n == "LightSwordsman" && boneName == "RightHand") { localPos = new Vector3(0, 0.25f, 0); }
+                else if (n == "MilitiaDefender" && boneName == "RightHand") { localPos = new Vector3(0.07f, 0.6f, 0.2f); }
+                else if (n == "Crossbowman" && boneName == "RightHand") { localPos = new Vector3(-0.055f, 0.166f, 0.003f); localRot = new Vector3(-1.316f, 6.562f, -68.717f); }
+                else if (n == "CultistInitiate" && boneName == "RightHand") { localPos = new Vector3(0.11f, 0.41f, 0f); localRot = new Vector3(180f, 0f, 0f); }
+                else if (n == "DarkElfSniper" && boneName == "RightHand") { localPos = new Vector3(-0.021f, 0.15f, 0f); localRot = new Vector3(0f, 0f, -74.64f); }
+                else if (n == "GrandPaladin" && boneName == "RightHand") { localRot = new Vector3(-21.668f, -87.826f, 31.072f); }
+                else if (n == "GriffinTamer" && boneName == "RightHand") { localRot = new Vector3(-70f, -50f, 0f); }
+                else if (n == "HolyKnight" && boneName == "RightHand") { localRot = new Vector3(0f, -100f, 0f); }
+                else if (n == "Necromancer" && boneName == "RightHand") { localPos = new Vector3(0.002f, -0.258f, 0.598f); localRot = new Vector3(-57.415f, -0.426f, 0.505f); }
+                else if (n == "BloodMage" && boneName == "RightHand") { localPos = new Vector3(0.459f, 0.093f, 0.323f); localRot = new Vector3(-85.171f, 0f, 55.586f); }
+                else if (n == "ClericoftheDawn" && boneName == "RightHand") { localPos = new Vector3(0.314f, -0.017f, 0.167f); localRot = new Vector3(-72.599f, 0f, 62.466f); }
+                else if (n == "NoviceArcher" && boneName == "LeftHand") { localRot = new Vector3(180f, 0f, 0f); }
+                else if (n == "PegasusKnight" && boneName == "RightHand") { localRot = new Vector3(-82.8f, 0f, 0f); }
+                else if (n == "Scout" && boneName == "RightHand") { localPos = new Vector3(0.087f, 0.457f, 0.018f); localRot = new Vector3(177.492f, 0.711f, -11.66f); }
+                else if (n == "Scout" && boneName == "LeftHand") { localPos = new Vector3(-0.134f, 0.37f, 0.01f); localRot = new Vector3(181.759f, 0.27f, -34.403f); }
+                else if (n == "ShadowAssassin" && boneName == "RightHand") { localPos = new Vector3(-0.088f, 0.389f, 0f); localRot = new Vector3(0f, 0f, 180f); }
+                else if (n == "ShadowAssassin" && boneName == "LeftHand") { localPos = new Vector3(0.118f, 0.411f, 0f); localRot = new Vector3(0f, 0f, 142.1f); }
+                else if (n == "Shieldmaiden" && boneName == "LeftHand") { localPos = new Vector3(0f, 0.199f, 0f); localRot = new Vector3(0f, 0f, 180f); }
+                else if (n == "Shieldmaiden" && boneName == "RightHand") { localPos = new Vector3(0.006f, 0.13f, 0.031f); localRot = new Vector3(-136.749f, 0.002f, 1.206f); }
+                else if (n == "SkeletonArcher" && boneName == "LeftHand") { localPos = new Vector3(-0.0015f, -0.0173f, -0.008f); localRot = new Vector3(66.442f, 87.481f, 55.308f); }
+                else if (n == "SkeletonWarrior" && boneName == "RightHand") { localPos = new Vector3(0.006f, 0.231f, -0.003f); }
+                else if (n == "Spearman" && boneName == "RightHand") { localPos = new Vector3(0f, 0.118f, 0f); localRot = new Vector3(-90f, 270f, 1f); }
+                else if (n == "SpiderRider" && boneName == "RightHand") { localPos = new Vector3(0f, 0.275f, 0f); localRot = new Vector3(-90f, 0f, 1f); }
+                else if (n == "Succubus" && boneName == "RightHand") { localPos = new Vector3(-0.007f, 0.157f, 0.002f); localRot = new Vector3(0f, 180f, 0f); }
+                else if (n == "TrollBrute" && boneName == "RightHand") { localPos = new Vector3(0.001f, 0.155f, -0.421f); }
+                else if (n == "Wraith" && boneName == "RightHand") { localPos = new Vector3(0.115f, 0.326f, 0.083f); localRot = new Vector3(0f, -66.934f, 0f); }
+                // Hero specific offsets
+                else if (n == "AbyssalLord" && boneName == "RightHand" && weaponName == "SilverBattleaxe") { localPos = new Vector3(0.019f, 0.289f, 0.064f); localRot = new Vector3(-53.404f, -4.937f, 52.444f); }
+                else if (n == "CrimsonCount" && boneName == "RightHand" && weaponName == "BasicBroadsword") { localPos = new Vector3(0f, 0.3f, 0f); }
+                else if (n == "HolyScout" && boneName == "RightHand" && weaponName == "BasicBroadsword") { localPos = new Vector3(0f, 0.3f, 0f); }
+                else if (n == "HolyScout" && boneName == "LeftHand" && weaponName == "BasicBroadsword") { localPos = new Vector3(0f, 0.3f, 0f); }
+                else if (n == "ArthurPendragon" && boneName == "LeftHand" && weaponName == "RoundShield") { localPos = new Vector3(0.00536f, 0.1236697f, -0.0156303f); localRot = new Vector3(-14.719f, 0f, 173.366f); }
+                else if (n == "IronPaladin" && boneName == "LeftHand" && weaponName == "HeavyTowerShield") { localPos = new Vector3(-0.045f, -0.006f, 0.021f); localRot = new Vector3(0f, -70.423f, -14.894f); }
+                else if (n == "IronPaladin" && boneName == "RightHand" && weaponName == "OneHandedHammer") { localPos = new Vector3(0.069f, 0.572f, 0.2f); }
+                else if (n == "BoneCommander" && boneName == "LeftHand" && weaponName == "RoundShield") { localPos = new Vector3(0f, 0.198f, 0f); localRot = new Vector3(0f, 0f, 180f); }
+                else if (n == "CelestialArchon" && boneName == "LeftHand" && weaponName == "LightBow") { localPos = new Vector3(0.01344674f, 0.1166808f, 0.00536013f); localRot = new Vector3(1.531f, 40.368f, 175.371f); }
+                else if (n == "ShieldBearer" && boneName == "LeftHand" && weaponName == "HeavyTowerShield") { localPos = new Vector3(-0.076f, 0.145f, -0.096f); localRot = new Vector3(-39.585f, -9.913f, -74.341f); }
+                else if (n == "ShieldBearer" && boneName == "RightHand" && weaponName == "BasicBroadsword") { localPos = new Vector3(0f, 0.3f, 0f); }
+                else if (n == "SoulReaper" && boneName == "RightHand" && weaponName == "SpectralScythe") { localPos = new Vector3(-0.07f, 0.442f, 0.311f); localRot = new Vector3(-4.663f, -117.555f, -8.856f); }
+                else if (n == "SunKnight" && boneName == "RightHand" && weaponName == "HolyGreatsword") { localPos = new Vector3(-0.03000016f, 0.08799966f, 0.01899962f); localRot = new Vector3(0f, -118.736f, 108.258f); }
+                else if (n == "NightStalker" && boneName == "LeftHand" && weaponName == "DualShortDaggers") { localPos = new Vector3(0.024f, 0.424f, -0.089f); localRot = new Vector3(-18.845f, 7.012f, 159.153f); }
+                else if (n == "NightStalker" && boneName == "RightHand" && weaponName == "DualShortDaggers") { localPos = new Vector3(-0.071f, 0.436f, 0f); localRot = new Vector3(0f, 0f, 180f); }
+                else if (n == "ArthurPendragon" && boneName == "RightHand" && weaponName == "HolyGreatsword") { localRot = new Vector3(-21.668f, -87.826f, 31.072f); }
+
+                weaponInstance.transform.localPosition = localPos;
+                weaponInstance.transform.localRotation = Quaternion.Euler(localRot);
+                weaponInstance.transform.localScale = Vector3.one; // Ensure scale is exactly (1,1,1)
+
+                // If it's a ranged weapon, ensure fire point exists and is set up correctly
+                if (IsRangedWeapon(weaponName) || (!string.IsNullOrEmpty(unitName) && unitName.Contains("Cleric")))
+                {
+                    // Use the EditorPrefabBuilder's method to create fire point if needed
+                    EditorPrefabBuilder.EnsureFirePointOnWeapon(weaponInstance.transform, unitName);
+                }
+            }
+        }
+    }
+    
+    private static bool IsRangedWeapon(string weaponName)
+    {
+        switch (weaponName)
+        {
+            case "LightBow":
+            case "BoneBow":
+            case "MageStaff":
+            case "NecromancerStaff":
+            case "HeavyMechanicalCrossbow":
+            case "PortableHandCannon":
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -482,61 +798,80 @@ public class DataAssetGenerator : Editor
     private static void LinkMetaSkills(string path)
     {
         EnsureDirectory(path, true); // TAM TEMİZLİK
-
-
-        // --- PASSIVE SKILLS (5 Total) ---
-        CreateSkill(path, "Skill_Passive_Neutral_Bountiful", "Bountiful Start", "Start every level with +50 Gold", 200, UpgradeType.CurrencyStartBonus, 1.5f, Side.Neutral);
-        
-        SkillNodeData archer1 = CreateSkill(path, "Skill_Passive_Light_Archer_1", "Archer Potency I", "Light Archer damage +10%", 150, UpgradeType.TowerDamageBonus, 1.1f, Side.Light);
-        CreateSkill(path, "Skill_Passive_Light_Archer_2", "Archer Potency II", "Light Archer damage +20%", 300, UpgradeType.TowerDamageBonus, 1.2f, Side.Light, archer1);
-        
-        SkillNodeData haste1 = CreateSkill(path, "Skill_Passive_Dark_Haste_1", "Dark Haste I", "Dark unit speed +10%", 150, UpgradeType.UnitSpeedBonus, 1.1f, Side.Dark);
-        CreateSkill(path, "Skill_Passive_Dark_Haste_2", "Dark Haste II", "Dark unit speed +20%", 300, UpgradeType.UnitSpeedBonus, 1.2f, Side.Dark, haste1);
-
-        // --- ACTIVE SPELLS UNLOCKS (9 Total) ---
         string spellPath = "Assets/Data/Spells";
+
+        // --- ROOT NODES ---
+        // Center Root: Economy
+        SkillNodeData ecoRoot = CreateSkill(path, "Skill_Eco_Root", "Bountiful Start", "Start every level with +50 Gold", 200, UpgradeType.CurrencyStartBonus, 1.1f, Side.Neutral, null, null, new Vector2(0, 0));
         
-        // Light Spells (3)
-        var m1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Meteor_1.asset");
-        if (m1 != null) CreateSkill(path, "Skill_Unlock_Light_Meteor_1", "Meteor Strike", m1.description, 100, UpgradeType.UnlockSpell, 1, Side.Light, null, m1);
+        // Left Root: Light Power
+        SkillNodeData lightRoot = CreateSkill(path, "Skill_Light_Root", "Light Initiation", "Light Tower damage +5%", 150, UpgradeType.TowerDamageBonus, 1.05f, Side.Light, null, null, new Vector2(-400, 0));
+        
+        // Right Root: Dark Power
+        SkillNodeData darkRoot = CreateSkill(path, "Skill_Dark_Root", "Dark Initiation", "Dark Unit speed +5%", 150, UpgradeType.UnitSpeedBonus, 1.05f, Side.Dark, null, null, new Vector2(400, 0));
 
-        var m2 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Meteor_2.asset");
-        if (m2 != null) CreateSkill(path, "Skill_Unlock_Light_Meteor_2", "Elite Meteor", m2.description, 400, UpgradeType.UnlockSpell, 1, Side.Light, null, m2);
+        // --- ECONOMY BRANCH (Center) ---
+        SkillNodeData eco1 = CreateSkill(path, "Skill_Eco_1", "Wealthy Kingdom I", "Starting Gold +100", 400, UpgradeType.CurrencyStartBonus, 1.2f, Side.Neutral, ecoRoot, null, new Vector2(0, 250));
+        SkillNodeData eco2 = CreateSkill(path, "Skill_Eco_2", "Wealthy Kingdom II", "Starting Gold +250", 800, UpgradeType.CurrencyStartBonus, 1.5f, Side.Neutral, eco1, null, new Vector2(0, 500));
+        
+        var goldSpell = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Neutral_Gold.asset");
+        if (goldSpell != null)
+            CreateSkill(path, "Skill_Unlock_GoldRush", "Gold Rush Spell", "Unlock the Gold Rush active spell", 1200, UpgradeType.UnlockSpell, 1, Side.Neutral, eco2, goldSpell, new Vector2(0, 750));
 
-        var s1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Shield.asset");
-        if (s1 != null) CreateSkill(path, "Skill_Unlock_Light_Shield", "Divine Shield", s1.description, 350, UpgradeType.UnlockSpell, 1, Side.Light, null, s1);
+        // --- LIGHT BRANCH (Left) ---
+        // Archer Path
+        SkillNodeData archer1 = CreateSkill(path, "Skill_Archer_1", "Archer Potency I", "Light Archer damage +10%", 200, UpgradeType.TowerDamageBonus, 1.1f, Side.Light, lightRoot, null, new Vector2(-600, 250));
+        SkillNodeData archer2 = CreateSkill(path, "Skill_Archer_2", "Archer Potency II", "Light Archer damage +20%", 450, UpgradeType.TowerDamageBonus, 1.2f, Side.Light, archer1, null, new Vector2(-750, 500));
+        SkillNodeData archer3 = CreateSkill(path, "Skill_Archer_3", "Master Fletching", "Light Archer range +15%", 800, UpgradeType.RangeBonus, 1.15f, Side.Light, archer2, null, new Vector2(-900, 750));
 
-        // Dark Spells (3)
-        var r1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Rift.asset");
-        if (r1 != null) CreateSkill(path, "Skill_Unlock_Dark_Rift", "Abyssal Rift", r1.description, 400, UpgradeType.UnlockSpell, 1, Side.Dark, null, r1);
+        // Paladin/Hero Path
+        SkillNodeData hero1 = CreateSkill(path, "Skill_Hero_1", "Heroic Vitality I", "Hero Health +15%", 300, UpgradeType.HealthBonus, 1.15f, Side.Light, lightRoot, null, new Vector2(-300, 250));
+        SkillNodeData hero2 = CreateSkill(path, "Skill_Hero_2", "Heroic Vitality II", "Hero Health +30%", 600, UpgradeType.HealthBonus, 1.3f, Side.Light, hero1, null, new Vector2(-250, 500));
+        
+        var shieldSpell = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Shield.asset");
+        if (shieldSpell != null)
+            CreateSkill(path, "Skill_Unlock_Shield", "Divine Shield", "Unlock Divine Shield spell", 900, UpgradeType.UnlockSpell, 1, Side.Light, hero2, shieldSpell, new Vector2(-200, 750));
 
-        var b1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Bloodlust.asset");
-        if (b1 != null) CreateSkill(path, "Skill_Unlock_Dark_Bloodlust", "Bloodlust", b1.description, 350, UpgradeType.UnlockSpell, 1, Side.Dark, null, b1);
+        // Meteor Path
+        var met1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Meteor_1.asset");
+        if (met1 != null)
+        {
+            SkillNodeData metNode1 = CreateSkill(path, "Skill_Met_1", "Meteor Strike", met1.description, 250, UpgradeType.UnlockSpell, 1, Side.Light, lightRoot, met1, new Vector2(-450, 400));
+            var met2 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Meteor_2.asset");
+            if (met2 != null)
+                CreateSkill(path, "Skill_Met_2", "Elite Meteor", met2.description, 700, UpgradeType.UnlockSpell, 1, Side.Light, metNode1, met2, new Vector2(-450, 650));
+        }
 
-        var f1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Freeze.asset");
-        if (f1 != null) CreateSkill(path, "Skill_Unlock_Dark_Freeze", "Shadow Freeze", f1.description, 450, UpgradeType.UnlockSpell, 1, Side.Dark, null, f1);
+        // --- DARK BRANCH (Right) ---
+        // Speed Path
+        SkillNodeData darkSpd1 = CreateSkill(path, "Skill_Dark_Spd_1", "Dark Haste I", "Dark unit speed +10%", 200, UpgradeType.UnitSpeedBonus, 1.1f, Side.Dark, darkRoot, null, new Vector2(600, 250));
+        SkillNodeData darkSpd2 = CreateSkill(path, "Skill_Dark_Spd_2", "Dark Haste II", "Dark unit speed +20%", 450, UpgradeType.UnitSpeedBonus, 1.2f, Side.Dark, darkSpd1, null, new Vector2(750, 500));
+        
+        var bloodlust = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Bloodlust.asset");
+        if (bloodlust != null)
+            CreateSkill(path, "Skill_Unlock_Bloodlust", "Bloodlust", "Unlock Bloodlust spell", 850, UpgradeType.UnlockSpell, 1, Side.Dark, darkSpd2, bloodlust, new Vector2(900, 750));
 
-        // Reinforcements (2)
-        var re1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Reinforce_1.asset");
-        if (re1 != null) CreateSkill(path, "Skill_Unlock_Light_Reinforce_1", "Reinforcements", re1.description, 100, UpgradeType.UnlockSpell, 1, Side.Light, null, re1);
+        // Magic/Lich Path
+        SkillNodeData darkDmg1 = CreateSkill(path, "Skill_Dark_Dmg_1", "Void Essence I", "Dark Unit damage +10%", 300, UpgradeType.DamageBonus, 1.1f, Side.Dark, darkRoot, null, new Vector2(300, 250));
+        SkillNodeData darkDmg2 = CreateSkill(path, "Skill_Dark_Dmg_2", "Void Essence II", "Dark Unit damage +25%", 650, UpgradeType.DamageBonus, 1.25f, Side.Dark, darkDmg1, null, new Vector2(250, 500));
 
-        var re2 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Reinforce_2.asset");
-        if (re2 != null) CreateSkill(path, "Skill_Unlock_Light_Reinforce_2", "Royal Guards", re2.description, 450, UpgradeType.UnlockSpell, 1, Side.Light, null, re2);
+        var riftSpell = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Rift.asset");
+        if (riftSpell != null)
+            CreateSkill(path, "Skill_Unlock_Rift", "Abyssal Rift", "Unlock Abyssal Rift spell", 1000, UpgradeType.UnlockSpell, 1, Side.Dark, darkDmg2, riftSpell, new Vector2(200, 750));
 
-        // Neutral Spells (1)
-        var g1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Neutral_Gold.asset");
-        if (g1 != null) CreateSkill(path, "Skill_Unlock_Neutral_Gold", "Gold Rush", g1.description, 500, UpgradeType.UnlockSpell, 1, Side.Neutral, null, g1);
+        // Freeze Path
+        var freeze = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Freeze.asset");
+        if (freeze != null)
+            CreateSkill(path, "Skill_Unlock_Freeze", "Shadow Freeze", "Unlock Shadow Freeze spell", 500, UpgradeType.UnlockSpell, 1, Side.Dark, darkRoot, freeze, new Vector2(450, 400));
 
         AssetDatabase.SaveAssets();
-
-        // MetaProgressionManager'a tüm yetenekleri bağla
         PopulateManagerSkills(path);
     }
 
     private static void PopulateManagerSkills(string skillPath)
     {
         // Manager'ı bul (Genelde _Engine prefabı içindedir veya sahnede)
-        MetaProgressionManager manager = GameObject.FindObjectOfType<MetaProgressionManager>();
+        MetaProgressionManager manager = UnityEngine.Object.FindAnyObjectByType<MetaProgressionManager>();
         if (manager == null)
         {
             // Eğer sahnede yoksa prefablardan ara
@@ -574,7 +909,7 @@ public class DataAssetGenerator : Editor
         }
     }
 
-    private static SkillNodeData CreateSkill(string path, string id, string name, string desc, int cost, UpgradeType type, float mult, Side side, SkillNodeData req = null, SpellData grant = null)
+    private static SkillNodeData CreateSkill(string path, string id, string name, string desc, int cost, UpgradeType type, float mult, Side side, SkillNodeData req = null, SpellData grant = null, Vector2 pos = default)
     {
         string fullPath = $"{path}/{id}.asset";
         SkillNodeData skill = AssetDatabase.LoadAssetAtPath<SkillNodeData>(fullPath);
@@ -592,6 +927,7 @@ public class DataAssetGenerator : Editor
         skill.multiplier = mult;
         skill.side = side;
         skill.grantedSpell = grant;
+        skill.visualPosition = pos;
         skill.requiredSkills = new System.Collections.Generic.List<SkillNodeData>();
         if (req != null) skill.requiredSkills.Add(req);
         
@@ -1088,9 +1424,28 @@ public class DataAssetGenerator : Editor
 
         // 5. Health Bar UI (Düşmanlardaki sistemin aynısı)
         Transform hbTransform = root.transform.Find("HealthBarCanvas");
+        Sprite emptySprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Prefabs/UI/Empty.png");
+
         if (hbTransform != null)
         {
             hbTransform.localPosition = new Vector3(0, 6.0f, 0); // Can barı (+2.5f)
+            
+            // Update existing colors/sprites
+            Transform bg = hbTransform.Find("Background");
+            if (bg != null)
+            {
+                Image bgImg = bg.GetComponent<Image>();
+                bgImg.sprite = emptySprite;
+                bgImg.color = Color.red;
+                
+                Transform fill = bg.Find("Fill");
+                if (fill != null)
+                {
+                    Image fillImg = fill.GetComponent<Image>();
+                    fillImg.sprite = emptySprite;
+                    fillImg.color = Color.green;
+                }
+            }
         }
         else
         {
@@ -1107,13 +1462,16 @@ public class DataAssetGenerator : Editor
             bg.transform.SetParent(canvasGo.transform);
             bg.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             bg.GetComponent<RectTransform>().sizeDelta = new Vector2(1.5f, 0.2f);
-            bg.GetComponent<UnityEngine.UI.Image>().color = new Color(0, 0, 0, 0.5f);
+            Image bgImg = bg.GetComponent<UnityEngine.UI.Image>();
+            bgImg.sprite = emptySprite;
+            bgImg.color = Color.red;
 
             GameObject fill = new GameObject("Fill", typeof(RectTransform), typeof(UnityEngine.UI.Image));
             fill.transform.SetParent(bg.transform);
             fill.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             fill.GetComponent<RectTransform>().sizeDelta = new Vector2(1.5f, 0.2f);
             UnityEngine.UI.Image fillImg = fill.GetComponent<UnityEngine.UI.Image>();
+            fillImg.sprite = emptySprite;
             fillImg.color = Color.green;
             fillImg.type = UnityEngine.UI.Image.Type.Filled;
             fillImg.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
@@ -1366,6 +1724,112 @@ public class DataAssetGenerator : Editor
         }
     }
 
+    public static void FixHeroReferences()
+    {
+        string heroDataPath = "Assets/Data/Heroes";
+        string[] guids = AssetDatabase.FindAssets("t:UnitData", new[] { heroDataPath });
+
+        int fixes = 0;
+        foreach (var guid in guids)
+        {
+            UnitData data = AssetDatabase.LoadAssetAtPath<UnitData>(AssetDatabase.GUIDToAssetPath(guid));
+            if (data == null) continue;
+
+            bool changed = false;
+            string safeName = data.unitName.Replace(" ", "_");
+
+            // 1. Heroes don't have enemy counterparts - ensure it's null
+            if (data.enemyCounterpart != null)
+            {
+                data.enemyCounterpart = null;
+                changed = true;
+            }
+
+            // 2. Data -> Icon Ataması (refresh icon)
+            Sprite foundIcon = FindIcon($"{safeName}_Icon");
+            if (foundIcon != null && data.icon != foundIcon)
+            {
+                data.icon = foundIcon;
+                changed = true;
+            }
+            else if (data.icon == null)
+            {
+                // Fallback to source icons if hero-specific ones don't exist
+                string fallbackIconName = (data.side == Side.Light) ? "Light_Swordsman_Icon" : "Shadow_Stalker_Icon";
+                Sprite fallbackIcon = FindIcon(fallbackIconName);
+                if (fallbackIcon != null)
+                {
+                    data.icon = fallbackIcon;
+                    changed = true;
+                }
+            }
+
+            // 3. Data -> Prefab Ataması
+            GameObject correctPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Gameplay/Heroes/{safeName}.prefab");
+            if (correctPrefab != null && data.prefab != correctPrefab)
+            {
+                data.prefab = correctPrefab;
+                changed = true;
+            }
+
+            // 4. TERS BAĞLAMA: Prefab -> Data
+            if (data.prefab != null)
+            {
+                string pPath = AssetDatabase.GetAssetPath(data.prefab);
+                GameObject root = PrefabUtility.LoadPrefabContents(pPath);
+                HeroUnit heroComp = root.GetComponent<HeroUnit>();
+
+                if (heroComp != null)
+                {
+                    var so = new SerializedObject(heroComp);
+                    var prop = so.FindProperty("unitData");
+                    if (prop != null && prop.objectReferenceValue != data)
+                    {
+                        prop.objectReferenceValue = data;
+                        so.ApplyModifiedProperties();
+                        PrefabUtility.SaveAsPrefabAsset(root, pPath);
+                        Debug.Log($"✔ Linked Hero UnitData to Prefab: {data.unitName}");
+                        fixes++;
+                    }
+                }
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+
+            if (changed)
+            {
+                EditorUtility.SetDirty(data);
+                fixes++;
+            }
+        }
+
+        // Also fix HeroData icons
+        string[] heroDataGuids = AssetDatabase.FindAssets("t:HeroData", new[] { heroDataPath });
+        foreach (var guid in heroDataGuids)
+        {
+            HeroData heroData = AssetDatabase.LoadAssetAtPath<HeroData>(AssetDatabase.GUIDToAssetPath(guid));
+            if (heroData == null) continue;
+
+            // Update HeroData icon to match UnitData icon
+            if (heroData.unitData != null && heroData.icon != heroData.unitData.icon)
+            {
+                heroData.icon = heroData.unitData.icon;
+                EditorUtility.SetDirty(heroData);
+                fixes++;
+            }
+        }
+
+        if (fixes > 0)
+        {
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"✔ {fixes} Hero references repaired successfully!");
+        }
+        else
+        {
+            Debug.Log("✔ No missing references found in Heroes.");
+        }
+    }
+
     public static void ConfigureUnitPrefabs(string unitPath = "Assets/Data/Units")
     {
         ConfigureUnitPrefabsInFolder(unitPath);
@@ -1415,6 +1879,7 @@ public class DataAssetGenerator : Editor
         Transform hbTransform = root.transform.Find("HealthBarCanvas");
         HealthBarUI hbScript = null;
         float targetY = 5f; // HealthBarCanvas Y position sabit 5
+        Sprite emptySprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Prefabs/UI/Empty.png");
 
         if (hbTransform == null)
         {
@@ -1433,7 +1898,9 @@ public class DataAssetGenerator : Editor
             bgGo.transform.SetParent(canvasGo.transform);
             bgGo.transform.localPosition = Vector3.zero;
             bgGo.GetComponent<RectTransform>().sizeDelta = new Vector2(1.5f, 0.2f);
-            bgGo.GetComponent<Image>().color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+            Image bgImg = bgGo.GetComponent<Image>();
+            bgImg.sprite = emptySprite;
+            bgImg.color = Color.red;
 
             // Fill
             GameObject fillGo = new GameObject("Fill", typeof(RectTransform), typeof(Image));
@@ -1447,6 +1914,7 @@ public class DataAssetGenerator : Editor
             fillRect.offsetMax = Vector2.zero;
 
             Image fillImg = fillGo.GetComponent<Image>();
+            fillImg.sprite = emptySprite;
             fillImg.color = Color.green;
             fillImg.type = Image.Type.Filled;
             fillImg.fillMethod = Image.FillMethod.Horizontal;
@@ -1462,6 +1930,23 @@ public class DataAssetGenerator : Editor
         {
             hbTransform.localPosition = new Vector3(0, targetY, 0);
             hbScript = hbTransform.GetComponent<HealthBarUI>();
+            
+            // Update existing colors/sprites
+            Transform bg = hbTransform.Find("Background");
+            if (bg != null)
+            {
+                Image bgImg = bg.GetComponent<Image>();
+                bgImg.sprite = emptySprite;
+                bgImg.color = Color.red;
+                
+                Transform fill = bg.Find("Fill");
+                if (fill != null)
+                {
+                    Image fillImg = fill.GetComponent<Image>();
+                    fillImg.sprite = emptySprite;
+                    fillImg.color = Color.green;
+                }
+            }
         }
 
         // 3. Unit -> HealthBar Link
@@ -1475,6 +1960,26 @@ public class DataAssetGenerator : Editor
             if (fp != null)
                 unitSo.FindProperty("firePoint").objectReferenceValue = fp;
         }
+
+        // Cleric_of_the_Dawn özel durum: fire point yoksa oluştur
+        if (prefab.name == "Cleric_of_the_Dawn")
+        {
+            Transform fp = EditorPrefabBuilder.GetFirstFirePointTransform(root);
+            if (fp == null)
+            {
+                Transform visuals = root.transform.Find("Visuals");
+                Transform parent = visuals != null ? visuals : root.transform;
+                GameObject firePointGO = new GameObject("FirePoint");
+                firePointGO.transform.SetParent(parent, false);
+                firePointGO.transform.localPosition = new Vector3(0, 0.5f, 0.3f);
+                unitSo.FindProperty("firePoint").objectReferenceValue = firePointGO.transform;
+            }
+        }
+
+        // Manuel fire point pozisyon düzeltmeleri
+        ApplyFirePointOverride(root, prefab.name);
+
+        ApplyBossScale(root, prefab.name);
 
         unitSo.ApplyModifiedProperties();
 
@@ -1490,6 +1995,47 @@ public class DataAssetGenerator : Editor
         if (go == null) return;
         go.layer = layer;
         foreach (Transform child in go.transform) SetLayerRecursive(child.gameObject, layer);
+    }
+    // --- MANUAL FIRE POINT OVERRIDES ---
+    private static readonly System.Collections.Generic.Dictionary<string, Vector3> firePointOverrides = new()
+    {
+        { "Crossbowman",          new Vector3(-0.563f, 0.022f, 0.037f) },
+        { "Dark_Elf_Sniper",      new Vector3(-0.527f, 0.034f, 0f) },
+        { "Dwarven_Cannoneer",    new Vector3(0f, 0.441f, 0.136f) },
+        { "Elven_Ranger",         new Vector3(0.016f, -0.11f, -0.008f) },
+        { "Novice_Archer",        new Vector3(0.112f, -0.198f, -0.025f) },
+        { "Phoenix_Summoner",     new Vector3(0.007f, 0.666f, -0.031f) },
+        { "Skeleton_Archer",      new Vector3(-0.176f, -0.064f, -0.383f) },
+        { "Sun_Priestess",        new Vector3(-0.039f, 0.684f, -0.023f) },
+    };
+
+    private static void ApplyFirePointOverride(GameObject root, string unitName)
+    {
+        if (!firePointOverrides.ContainsKey(unitName)) return;
+
+        Transform fp = EditorPrefabBuilder.GetFirstFirePointTransform(root);
+        if (fp != null)
+        {
+            fp.localPosition = firePointOverrides[unitName];
+        }
+    }
+
+    private static readonly System.Collections.Generic.HashSet<string> bossUnits = new()
+    {
+        "Demon_King", "Bone_Dragon", "Abyssal_Behemoth", "Death_Knight_Commander", "Blood_Mage", "Shadow_Leviathan",
+        "Archangel", "Holy_Colossus", "Grand_Paladin", "Phoenix_Summoner", "Avatar_of_Light", "Dragon_of_the_Sun"
+    };
+
+    private static void ApplyBossScale(GameObject root, string unitName)
+    {
+        if (bossUnits.Contains(unitName))
+        {
+            Transform visuals = root.transform.Find("Visuals");
+            if (visuals != null)
+            {
+                visuals.localScale = new Vector3(2.5f, 2.5f, 2.5f);
+            }
+        }
     }
 
     // --- LEVEL & WAVE GENERATION [NEW] ---
@@ -1540,23 +2086,17 @@ public class DataAssetGenerator : Editor
 
     private static int GetWaveCountForLevel(int lvlIdx)
     {
-        int layout = lvlIdx % 10;
-        if (lvlIdx == 50) layout = 0;
+        if (lvlIdx == 50) return 10; // Final Boss
+        
+        int baseWaves = 4;
+        if (lvlIdx > 10) baseWaves = 5;
+        if (lvlIdx > 25) baseWaves = 6;
+        if (lvlIdx > 40) baseWaves = 8;
 
-        switch (layout)
-        {
-            case 0: return 8; // 4 spawner boss maps
-            case 7: 
-            case 8: return 6; // 3 spawner maps
-            case 3: 
-            case 5: 
-            case 6: return 5; // 2 spawner maps
-            case 1: 
-            case 2: 
-            case 4: 
-            case 9: 
-            default: return 4; // 1 spawner maps
-        }
+        int layout = lvlIdx % 10;
+        if (layout == 0 || layout == 7 || layout == 8) baseWaves += 1;
+        
+        return baseWaves;
     }
 
     private static string GetLevelNameSuffix(int lvlIdx)
@@ -1581,73 +2121,52 @@ public class DataAssetGenerator : Editor
 
         switch (layout)
         {
-            case 1: // Diagonal/Zigzag
-                if (lvlIdx < 15)
+            case 1:
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 30), new Vector3(30, 0, -30) } });
+                break;
+            case 2:
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 30), new Vector3(-30, 0, -20), new Vector3(30, 0, -20) } });
+                break;
+            case 3:
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 30), new Vector3(15, 0, 30), new Vector3(15, 0, 0), new Vector3(-15, 0, 0), new Vector3(-15, 0, -30), new Vector3(30, 0, -30) } });
+                break;
+            case 4:
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 30), new Vector3(-15, 0, -10), new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(30, 0, 30), new Vector3(15, 0, -10), new Vector3(0, 0, -30) } });
+                break;
+            case 5:
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 30), new Vector3(-15, 0, 15), new Vector3(-15, 0, -15), new Vector3(15, 0, -15), new Vector3(15, 0, 15), new Vector3(0, 0, 15), new Vector3(0, 0, 0), new Vector3(30, 0, 0), new Vector3(30, 0, -30) } });
+                break;
+            case 6:
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 20), new Vector3(0, 0, 20), new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(30, 0, 20), new Vector3(0, 0, 20), new Vector3(0, 0, -30) } });
+                break;
+            case 7:
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(0, 0, 30), new Vector3(0, 0, 15), new Vector3(20, 0, 15), new Vector3(20, 0, 0), new Vector3(-20, 0, 0), new Vector3(-20, 0, -15), new Vector3(0, 0, -15), new Vector3(0, 0, -30) } });
+                break;
+            case 8:
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 0), new Vector3(-10, 0, 0), new Vector3(15, 0, -15), new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(30, 0, 0), new Vector3(10, 0, 0), new Vector3(-15, 0, -15), new Vector3(0, 0, -30) } });
+                break;
+            case 9:
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 30), new Vector3(-15, 0, 0), new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(0, 0, 30), new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 2, points = new List<Vector3> { new Vector3(30, 0, 30), new Vector3(15, 0, 0), new Vector3(0, 0, -30) } });
+                break;
+            case 0:
+            default:
+                if (lvlIdx == 50)
                 {
-                    paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(40, 0, -40) } });
-                }
-                else if (lvlIdx < 30)
-                {
-                    paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(40, 0, 40), new Vector3(40, 0, -40) } });
+                    paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(-20, 0, 20), new Vector3(0, 0, 0) } });
+                    paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(40, 0, 40), new Vector3(20, 0, 20), new Vector3(0, 0, 0) } });
+                    paths.Add(new LevelPath { spawnerIndex = 2, points = new List<Vector3> { new Vector3(-40, 0, -40), new Vector3(-20, 0, -20), new Vector3(0, 0, 0) } });
+                    paths.Add(new LevelPath { spawnerIndex = 3, points = new List<Vector3> { new Vector3(40, 0, -40), new Vector3(20, 0, -20), new Vector3(0, 0, 0) } });
                 }
                 else
                 {
-                    paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(-40, 0, 10), new Vector3(10, 0, 10), new Vector3(10, 0, -20), new Vector3(40, 0, -20), new Vector3(40, 0, -40) } });
+                    paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 30), new Vector3(-10, 0, 10), new Vector3(-10, 0, -20), new Vector3(20, 0, -20), new Vector3(30, 0, -30) } });
+                    paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 30), new Vector3(-10, 0, 10), new Vector3(20, 0, 10), new Vector3(20, 0, -20), new Vector3(30, 0, -30) } });
                 }
-                break;
-
-            case 2: // Level 2: L-shape
-                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-30, 0, 35), new Vector3(-30, 0, -30), new Vector3(30, 0, -30) } });
-                break;
-
-            case 3: // Level 3: Z-shape / "2"-shape
-                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { 
-                    new Vector3(-30, 0, 35), new Vector3(10, 0, 35), new Vector3(10, 0, 0), 
-                    new Vector3(-15, 0, 0), new Vector3(-15, 0, -35), new Vector3(30, 0, -35) 
-                } });
-                break;
-
-            case 4: // Level 4: Y-shape
-                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-35, 0, 35), new Vector3(-20, 0, 5), new Vector3(0, 0, -15), new Vector3(0, 0, -35) } });
-                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(35, 0, 35), new Vector3(20, 0, 5), new Vector3(0, 0, -15), new Vector3(0, 0, -35) } });
-                break;
-
-            case 5: // Level 5: Spiral G-loop
-                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { 
-                    new Vector3(-35, 0, 35), new Vector3(-25, 0, 15), new Vector3(-25, 0, -25), 
-                    new Vector3(15, 0, -25), new Vector3(15, 0, 15), new Vector3(-10, 0, 15), 
-                    new Vector3(-10, 0, 0), new Vector3(10, 0, 0), new Vector3(25, 0, -10), new Vector3(30, 0, -35) 
-                } });
-                break;
-
-            case 6: // Level 6: T-shape
-                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 25), new Vector3(0, 0, 25), new Vector3(0, 0, -35) } });
-                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(40, 0, 25), new Vector3(0, 0, 25), new Vector3(0, 0, -35) } });
-                break;
-
-            case 7: // Level 7: S-curve S
-                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { 
-                    new Vector3(0, 0, 35), new Vector3(0, 0, 20), new Vector3(30, 0, 15), 
-                    new Vector3(-25, 0, 0), new Vector3(25, 0, -15), new Vector3(0, 0, -20), new Vector3(0, 0, -35) 
-                } });
-                break;
-
-            case 8: // Trident Merge (3 spawners)
-                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(-20, 0, 10), new Vector3(0, 0, -10), new Vector3(0, 0, -40) } });
-                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(0, 0, 40), new Vector3(0, 0, -40) } });
-                paths.Add(new LevelPath { spawnerIndex = 2, points = new List<Vector3> { new Vector3(40, 0, 40), new Vector3(20, 0, 10), new Vector3(0, 0, -10), new Vector3(0, 0, -40) } });
-                break;
-
-            case 9: // Helix or overlap
-                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(40, 0, 40), new Vector3(-40, 0, -40), new Vector3(40, 0, -40) } });
-                break;
-
-            case 0: // 4 Corners to Center
-            default:
-                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> { new Vector3(-40, 0, 40), new Vector3(-20, 0, 20), new Vector3(0, 0, 0) } });
-                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> { new Vector3(40, 0, 40), new Vector3(20, 0, 20), new Vector3(0, 0, 0) } });
-                paths.Add(new LevelPath { spawnerIndex = 2, points = new List<Vector3> { new Vector3(-40, 0, -40), new Vector3(-20, 0, -20), new Vector3(0, 0, 0) } });
-                paths.Add(new LevelPath { spawnerIndex = 3, points = new List<Vector3> { new Vector3(40, 0, -40), new Vector3(20, 0, -20), new Vector3(0, 0, 0) } });
                 break;
         }
         return paths;
@@ -1661,38 +2180,19 @@ public class DataAssetGenerator : Editor
 
         switch (layout)
         {
-            case 1:
-                if (lvlIdx < 41) bases.Add(new Vector3(40, 0, -40));
-                else bases.Add(new Vector3(20, 0, 0));
-                break;
-            case 2:
-                bases.Add(new Vector3(30, 0, -40));
-                break;
-            case 3:
-                bases.Add(new Vector3(0, 0, -40));
-                break;
-            case 4:
-                if (lvlIdx < 20) bases.Add(new Vector3(40, 0, 0));
-                else bases.Add(new Vector3(40, 0, -40));
-                break;
-            case 5:
-                bases.Add(new Vector3(0, 0, -40));
-                break;
-            case 6:
-                bases.Add(new Vector3(0, 0, -40));
-                break;
-            case 7:
-                bases.Add(new Vector3(0, 0, -40));
-                break;
-            case 8:
-                bases.Add(new Vector3(0, 0, -40));
-                break;
-            case 9:
-                bases.Add(new Vector3(40, 0, -40));
-                break;
+            case 1: bases.Add(new Vector3(30, 0, -30)); break;
+            case 2: bases.Add(new Vector3(30, 0, -20)); break;
+            case 3: bases.Add(new Vector3(30, 0, -30)); break;
+            case 4: bases.Add(new Vector3(0, 0, -30)); break;
+            case 5: bases.Add(new Vector3(30, 0, -30)); break;
+            case 6: bases.Add(new Vector3(0, 0, -30)); break;
+            case 7: bases.Add(new Vector3(0, 0, -30)); break;
+            case 8: bases.Add(new Vector3(0, 0, -30)); break;
+            case 9: bases.Add(new Vector3(0, 0, -30)); break;
             case 0:
             default:
-                bases.Add(new Vector3(0, 0, 0));
+                if (lvlIdx == 50) bases.Add(new Vector3(0, 0, 0));
+                else bases.Add(new Vector3(30, 0, -30));
                 break;
         }
         return bases;
@@ -1706,82 +2206,91 @@ public class DataAssetGenerator : Editor
 
         switch (layout)
         {
-            case 1: // Level 1: Diagonal
-                slots.Add(new Vector3(-15, 0, 25));
-                slots.Add(new Vector3(-25, 0, 15));
-                slots.Add(new Vector3(25, 0, -15));
+            case 1: // Level 1
+                slots.Add(new Vector3(-5, 0, 25)); // Top right
+                slots.Add(new Vector3(15, 0, 5));  // Top right
+                slots.Add(new Vector3(-15, 0, -5)); // Bottom left
+                slots.Add(new Vector3(5, 0, -25));  // Bottom left
+                break;
+            case 2: // Level 2
+                slots.Add(new Vector3(-45, 0, 0));   // Far left
+                slots.Add(new Vector3(-15, 0, 10));  // Right of vertical
+                slots.Add(new Vector3(-15, 0, -10)); // Right of vertical corner
+                slots.Add(new Vector3(0, 0, -10));   // Above horizontal
+                slots.Add(new Vector3(0, 0, -35));   // Below horizontal
+                slots.Add(new Vector3(15, 0, -35));  // Below horizontal
+                break;
+            case 3: // Level 3
+                slots.Add(new Vector3(-10, 0, 15));  // Under top horiz
+                slots.Add(new Vector3(30, 0, 15));   // Right of top-mid
+                slots.Add(new Vector3(-30, 0, -15)); // Left of mid-bottom
+                slots.Add(new Vector3(10, 0, -15));  // Above bottom horiz
+                break;
+            case 4: // Level 4
+                slots.Add(new Vector3(-35, 0, 0));
+                slots.Add(new Vector3(-15, 0, -25));
+                slots.Add(new Vector3(-15, 0, 15));
+                slots.Add(new Vector3(35, 0, 0));
                 slots.Add(new Vector3(15, 0, -25));
+                slots.Add(new Vector3(15, 0, 15));
                 break;
-            case 2: // Level 2: L-shape
-                slots.Add(new Vector3(-45, 0, -5)); // Left of vertical
-                slots.Add(new Vector3(-15, 0, 20)); // Right of vertical (upper)
-                slots.Add(new Vector3(-15, 0, -5)); // Right of vertical (lower)
-                slots.Add(new Vector3(-5, 0, -15)); // Above horizontal (left)
-                slots.Add(new Vector3(15, 0, -15)); // Above horizontal (right)
-                slots.Add(new Vector3(-5, 0, -45)); // Below horizontal (left)
-                slots.Add(new Vector3(15, 0, -45)); // Below horizontal (right)
+            case 5: // Level 5
+                slots.Add(new Vector3(-35, 0, 10));
+                slots.Add(new Vector3(-35, 0, -10));
+                slots.Add(new Vector3(-15, 0, 30));
+                slots.Add(new Vector3(-5, 0, -5));
+                slots.Add(new Vector3(5, 0, -25));
+                slots.Add(new Vector3(25, 0, 0));
                 break;
-            case 3: // Level 3: Z-shape
-                slots.Add(new Vector3(-30, 0, -15));
-                slots.Add(new Vector3(-5, 0, 15));
-                slots.Add(new Vector3(25, 0, 20));
-                slots.Add(new Vector3(15, 0, -20));
-                break;
-            case 4: // Level 4: Y-shape
-                slots.Add(new Vector3(-35, 0, 5));
-                slots.Add(new Vector3(-15, 0, 20));
+            case 6: // Level 6
+                slots.Add(new Vector3(-15, 0, 5));
                 slots.Add(new Vector3(-15, 0, -15));
-                slots.Add(new Vector3(35, 0, 5));
-                slots.Add(new Vector3(15, 0, 20));
+                slots.Add(new Vector3(15, 0, 5));
                 slots.Add(new Vector3(15, 0, -15));
                 break;
-            case 5: // Level 5: Loop / spiral
-                slots.Add(new Vector3(-40, 0, 10));
-                slots.Add(new Vector3(-40, 0, -15));
-                slots.Add(new Vector3(-10, 0, 30));
-                slots.Add(new Vector3(-15, 0, -15));
-                slots.Add(new Vector3(0, 0, -35));
-                slots.Add(new Vector3(35, 0, -5));
-                break;
-            case 6: // Level 6: T-shape
-                slots.Add(new Vector3(-15, 0, 10));
-                slots.Add(new Vector3(-15, 0, -15));
-                slots.Add(new Vector3(15, 0, 10));
-                slots.Add(new Vector3(15, 0, -15));
-                break;
-            case 7: // Level 7: S-curve S
+            case 7: // Level 7
                 slots.Add(new Vector3(15, 0, 25));
                 slots.Add(new Vector3(-20, 0, 10));
                 slots.Add(new Vector3(15, 0, -15));
                 slots.Add(new Vector3(-20, 0, -25));
                 slots.Add(new Vector3(15, 0, -25));
+                slots.Add(new Vector3(-20, 0, 25)); // Extrapolated from image
                 break;
-            case 8: // Level 8: Crossover / DNA
-                slots.Add(new Vector3(-15, 0, 25));
-                slots.Add(new Vector3(15, 0, 25));
-                slots.Add(new Vector3(-25, 0, -5));
-                slots.Add(new Vector3(25, 0, -5));
+            case 8: // Level 8
+                slots.Add(new Vector3(-15, 0, 15));
+                slots.Add(new Vector3(15, 0, 15));
                 slots.Add(new Vector3(-15, 0, -35));
                 slots.Add(new Vector3(15, 0, -35));
                 break;
-            case 9: // Level 9: Trident
-                slots.Add(new Vector3(-20, 0, 25));
-                slots.Add(new Vector3(-35, 0, 10));
-                slots.Add(new Vector3(-15, 0, -5));
-                slots.Add(new Vector3(-10, 0, -25));
-                slots.Add(new Vector3(20, 0, 25));
-                slots.Add(new Vector3(35, 0, 10));
-                slots.Add(new Vector3(15, 0, -5));
-                slots.Add(new Vector3(10, 0, -25));
+            case 9: // Level 9
+                slots.Add(new Vector3(-30, 0, 5));
+                slots.Add(new Vector3(-20, 0, -15));
+                slots.Add(new Vector3(-10, 0, 10));
+                slots.Add(new Vector3(0, 0, -5));
+                slots.Add(new Vector3(10, 0, 10));
+                slots.Add(new Vector3(20, 0, -15));
+                slots.Add(new Vector3(30, 0, 5));
                 break;
-            case 0: // Level 10: Loop / arrow split-merge
+            case 0:
             default:
-                slots.Add(new Vector3(-25, 0, 25));
-                slots.Add(new Vector3(15, 0, 25));
-                slots.Add(new Vector3(-30, 0, 0));
-                slots.Add(new Vector3(0, 0, -10));
-                slots.Add(new Vector3(-10, 0, -35));
-                slots.Add(new Vector3(25, 0, -25));
+                if (lvlIdx == 50)
+                {
+                    slots.Add(new Vector3(-25, 0, 25));
+                    slots.Add(new Vector3(15, 0, 25));
+                    slots.Add(new Vector3(-30, 0, 0));
+                    slots.Add(new Vector3(0, 0, -10));
+                    slots.Add(new Vector3(-10, 0, -35));
+                    slots.Add(new Vector3(25, 0, -25));
+                }
+                else
+                {
+                    slots.Add(new Vector3(-15, 0, 0));
+                    slots.Add(new Vector3(10, 0, 20));
+                    slots.Add(new Vector3(-25, 0, -15));
+                    slots.Add(new Vector3(30, 0, -5));
+                    slots.Add(new Vector3(5, 0, -10));
+                    slots.Add(new Vector3(10, 0, -30));
+                }
                 break;
         }
         return slots;
@@ -1800,40 +2309,69 @@ public class DataAssetGenerator : Editor
 
     private static (string unit, int count)[] GetWaveComposition(int lvlIdx, int wave)
     {
-        int multiplier = 1 + (lvlIdx / 10);
-        int basicCount = 3 + wave * 2 * multiplier;
-        int eliteCount = Mathf.Max(0, -2 + wave * multiplier);
+        int maxWaves = GetWaveCountForLevel(lvlIdx);
+        bool isBossWave = (wave == maxWaves); // Her levelin son dalgası boss dalgası
 
+        if (isBossWave)
+        {
+            // Her levelin son dalgasında sadece 1 boss gelir, yanında başka asker yok
+            string[] forestBosses = { "Demon_King", "Bone_Dragon", "Abyssal_Behemoth", "Death_Knight_Commander", "Blood_Mage", "Shadow_Leviathan" };
+            string[] desertBosses = { "Bone_Dragon", "Death_Knight_Commander", "Shadow_Leviathan", "Blood_Mage", "Abyssal_Behemoth", "Demon_King" };
+            string[] snowBosses = { "Shadow_Leviathan", "Blood_Mage", "Demon_King", "Bone_Dragon", "Death_Knight_Commander", "Abyssal_Behemoth" };
+            string[] underworldBosses = { "Demon_King", "Abyssal_Behemoth", "Shadow_Leviathan", "Bone_Dragon", "Blood_Mage", "Death_Knight_Commander" };
+
+            string boss;
+            if (lvlIdx <= 12) boss = forestBosses[(lvlIdx - 1) % forestBosses.Length];
+            else if (lvlIdx <= 25) boss = desertBosses[(lvlIdx - 13) % desertBosses.Length];
+            else if (lvlIdx <= 38) boss = snowBosses[(lvlIdx - 26) % snowBosses.Length];
+            else boss = underworldBosses[(lvlIdx - 39) % underworldBosses.Length];
+
+            return new (string, int)[] { (boss, 1) };
+        }
+
+        int multiplier = 1 + (lvlIdx / 15);
+        int basicCount = 5 + (wave * 3 * multiplier);
+        int eliteCount = Mathf.Max(0, (wave + (lvlIdx / 5)) - 4);
+
+        // Level 1-12: Forest (Starter)
         if (lvlIdx <= 12)
         {
-            return new (string, int)[] {
-                ("Skeleton_Warrior", basicCount),
-                ("Light_Swordsman", basicCount / 2),
-                ("Plague_Runner", basicCount / 3)
-            };
+            if (wave <= 2) return new (string, int)[] { ("Skeleton_Warrior", basicCount), ("Zombie_Shambler", basicCount / 2) };
+            if (wave <= 4) return new (string, int)[] { ("Skeleton_Warrior", basicCount), ("Goblin_Grunt", basicCount / 2), ("Skeleton_Archer", basicCount / 3) };
+            return new (string, int)[] { ("Skeleton_Warrior", basicCount), ("Orc_Marauder", eliteCount + 1), ("Skeleton_Archer", basicCount / 2) };
         }
+        // Level 13-25: Desert (Advanced)
         else if (lvlIdx <= 25)
         {
-            return new (string, int)[] {
-                ("Skeleton_Warrior", basicCount),
-                ("Shadow_Stalker", basicCount / 2),
-                ("Iron_Knight", eliteCount)
-            };
+            if (wave <= 2) return new (string, int)[] { ("Orc_Marauder", basicCount / 2), ("Spider_Rider", basicCount / 3) };
+            if (wave <= 4) return new (string, int)[] { ("Orc_Berserker", basicCount / 2), ("Gargoyle", eliteCount + 2), ("Dark_Knight", eliteCount) };
+            return new (string, int)[] { ("Troll_Brute", eliteCount + 1), ("Orc_Berserker", basicCount / 2), ("Shadow_Assassin", eliteCount + 2) };
         }
+        // Level 26-38: Snow (Elite)
         else if (lvlIdx <= 38)
         {
-            return new (string, int)[] {
-                ("Shield_Bearer", basicCount),
-                ("Celestial_Archer", basicCount / 2),
-                ("Wraith", eliteCount)
-            };
+            if (wave <= 2) return new (string, int)[] { ("Wraith", basicCount / 3), ("Dark_Knight", basicCount / 4), ("Lich", eliteCount + 1) };
+            if (wave <= 4) return new (string, int)[] { ("Bone_Golem", eliteCount + 1), ("Wraith", basicCount / 2), ("Necromancer", eliteCount + 1) };
+            return new (string, int)[] { ("Vampire_Lord", eliteCount), ("Bone_Golem", eliteCount + 2), ("Wraith", basicCount) };
         }
+        // Level 39-50: Underworld (Master)
         else
         {
-            return new (string, int)[] {
-                ("Abyssal_Behemoth", eliteCount + 1),
-                ("Wraith", basicCount / 2),
-                ("Shadow_Stalker", basicCount)
+            if (lvlIdx == 50 && wave < maxWaves) 
+            {
+                // 50. seviyede son dalga dışındaki dalgalar da zor olmalı, ama boss içermemeli
+                return new (string, int)[] { 
+                    ("Vampire_Lord", eliteCount + 2), 
+                    ("Lich", eliteCount + 1),
+                    ("Bone_Golem", 2)
+                };
+            }
+
+            if (wave <= 3) return new (string, int)[] { ("Vampire_Lord", eliteCount + 2), ("Shadow_Assassin", basicCount / 2) };
+            return new (string, int)[] { 
+                ("Bone_Golem", eliteCount + 3), 
+                ("Lich", eliteCount + 1), 
+                ("Wraith", basicCount) 
             };
         }
     }
@@ -1849,20 +2387,38 @@ public class DataAssetGenerator : Editor
         }
 
         wave.unitGroups = new List<WaveUnitGroup>();
+        
+        // Üniteleri parçalara böl ve yollara dağıt (Daha dinamik dalgalar için)
+        int batchSize = 5; // Her grupta max 5 ünite
+
+        // Her ünite tipi için
         for (int i = 0; i < composition.Length; i++)
         {
             var item = composition[i];
             UnitData ud = AssetDatabase.LoadAssetAtPath<UnitData>($"Assets/Data/Units/{item.unit}.asset");
-            if (ud != null)
+            if (ud == null) continue;
+
+            int remaining = item.count;
+            int batchCount = 0;
+
+            while (remaining > 0)
             {
+                int currentBatch = Mathf.Min(remaining, batchSize);
+                int spawnerIdx = (i + batchCount) % pathCount; // Yollar arasında döndür
+
                 wave.unitGroups.Add(new WaveUnitGroup {
                     unitData = ud,
-                    count = item.count,
-                    spawnInterval = 2f,
-                    spawnerIndex = i % pathCount // Düşman gruplarını tüm yollara (spawner'lara) dengeli dağıt
+                    count = currentBatch,
+                    spawnInterval = 1.5f,
+                    groupDelay = batchCount == 0 ? i * 2f : 3f, // Gruplar arası kısa bekleme
+                    spawnerIndex = spawnerIdx
                 });
+
+                remaining -= currentBatch;
+                batchCount++;
             }
         }
+        
         wave.timeBeforeNextWave = 15f;
 
         EditorUtility.SetDirty(wave);
@@ -1884,7 +2440,17 @@ public class DataAssetGenerator : Editor
         level.startingCurrencyLight = startLight;
         level.startingCurrencyDark = startDark;
         level.theme = theme;
-        level.difficulty = 1;
+        
+        // Seviye adına göre dinamik zorluk belirle (Örn: Level 1-10 -> 1 yıldız, 11-20 -> 2 yıldız, 21+ -> 3 yıldız)
+        int diff = 1;
+        var match = System.Text.RegularExpressions.Regex.Match(name, @"\d+");
+        if (match.Success && int.TryParse(match.Value, out int levelNum))
+        {
+            if (levelNum > 20) diff = 3;
+            else if (levelNum > 10) diff = 2;
+        }
+        level.difficulty = diff;
+
         if (level.waves == null) level.waves = new List<WaveData>();
         level.waves.Clear();
         level.waves.AddRange(waves);
@@ -1904,8 +2470,285 @@ public class DataAssetGenerator : Editor
         level.towerSlotCount = 15 + (waves.Count * 2); // Dalga sayısına göre slot artırımı
         level.sceneIndex = 2; // Default Gameplay Scene
 
-        // NOT: mapPrefab ataması elle yapılacak, otomatik arama kaldırıldı.
+        EditorUtility.SetDirty(level);
+        
+        // HARİTA PREFAB'INI DİNAMİK OLARAK OLUŞTUR
+        GenerateMapPrefab(level);
+    }
 
+    private static void GenerateMapPrefab(LevelData level)
+    {
+        string mapFolder = "Assets/Maps";
+        EnsureDirectory(mapFolder);
+
+        string safeName = level.levelName.Replace(" ", "_").Replace("'", "").Replace(":", "");
+        string numStr = level.levelID.Replace("Level", "");
+        string mapPath = $"{mapFolder}/Level_{numStr}__{safeName}_Map.prefab";
+
+        GameObject root = new GameObject($"{level.levelName}_Map");
+
+        // 1. Zemin (Ground)
+        GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        ground.name = "Ground";
+        ground.transform.SetParent(root.transform);
+        ground.transform.localScale = new Vector3(100f, 0.5f, 100f);
+        ground.transform.localPosition = new Vector3(0, -0.25f, 0);
+        ground.layer = LayerMask.NameToLayer("Default");
+        
+        // Zemine temaya göre renk ver (Mevcut çalışan bir materyali klonla)
+        Color groundColor = new Color(0.2f, 0.3f, 0.2f); // Default Forest
+        if (level.theme == LevelTheme.Desert) groundColor = new Color(0.4f, 0.35f, 0.2f);
+        else if (level.theme == LevelTheme.Snow) groundColor = new Color(0.8f, 0.85f, 0.9f);
+        else if (level.theme == LevelTheme.Underworld) groundColor = new Color(0.25f, 0.15f, 0.15f);
+        
+        Material refMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Models/Environment/Desert/colormap.mat");
+        Material groundMat = refMat != null ? new Material(refMat) : new Material(Shader.Find("Standard"));
+        
+        if (groundMat.HasProperty("_BaseColor")) groundMat.SetColor("_BaseColor", groundColor);
+        else groundMat.color = groundColor;
+        
+        ground.GetComponent<Renderer>().sharedMaterial = groundMat;
+
+        // 2. Yollar (Paths)
+        for (int i = 0; i < level.paths.Count; i++)
+        {
+            var pathData = level.paths[i];
+            GameObject pathGo = new GameObject($"Path_{i}");
+            pathGo.transform.SetParent(root.transform);
+            
+            PathWaypoints pw = pathGo.AddComponent<PathWaypoints>();
+            
+            // Visualizer & Waypoints
+            for (int pIdx = 0; pIdx < pathData.points.Count; pIdx++)
+            {
+                Vector3 pt = pathData.points[pIdx];
+                GameObject wp = new GameObject($"WP_{pIdx}");
+                wp.transform.SetParent(pathGo.transform);
+                wp.transform.position = pt;
+
+                if (pIdx > 0)
+                {
+                    Vector3 prevPt = pathData.points[pIdx - 1];
+                    Vector3 prevDir = (pt - prevPt).normalized;
+                    if (pIdx < pathData.points.Count - 1)
+                    {
+                        Vector3 nextDir = (pathData.points[pIdx + 1] - pt).normalized;
+                        if (Vector3.Dot(prevDir, nextDir) < 0.95f) // Köşe var!
+                        {
+                            GameObject cornerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Models/Environment/{level.theme}/PathCurved.fbx");
+                            if (cornerPrefab != null)
+                            {
+                                GameObject corner = (GameObject)PrefabUtility.InstantiatePrefab(cornerPrefab, pathGo.transform);
+                                corner.name = $"Corner_{pIdx}";
+                                corner.transform.position = pt;
+                                
+                                // Dönüş yönünü ayarla: Gelen yön ile Giden yönün açı ortayını kullanıyoruz
+                                // Cross product ile dönüşün sağa mı sola mı olduğunu bul
+                                float sign = Mathf.Sign(Vector3.Cross(prevDir, nextDir).y);
+                                // Yöne göre uygun rotasyonu ver. Standard tile'lar için genelde incoming veya outgoing direction'a göre 90 derece dönüş olur
+                                corner.transform.rotation = Quaternion.LookRotation(prevDir) * Quaternion.Euler(0, sign * 90f > 0 ? 0 : -90f, 0);
+                            }
+                        }
+                    }
+                }
+
+                if (pIdx < pathData.points.Count - 1)
+                {
+                    Vector3 nextPt = pathData.points[pIdx + 1];
+                    Vector3 dir = nextPt - pt;
+                    float dist = dir.magnitude;
+                    Vector3 dirNorm = dir.normalized;
+                    
+                    GameObject pathSegmentPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Models/Environment/{level.theme}/PathStraight.fbx");
+                    
+                    float tileSize = 2f; // Varsayılan boyut
+                    if (pathSegmentPrefab != null)
+                    {
+                        Renderer r = pathSegmentPrefab.GetComponentInChildren<Renderer>();
+                        if (r != null) tileSize = r.bounds.size.z;
+                        if (tileSize <= 0.1f) tileSize = 2f;
+                    }
+
+                    int tileCount = Mathf.Max(1, Mathf.RoundToInt(dist / tileSize));
+                    float actualTileDist = dist / tileCount;
+
+                    for (int t = 0; t < tileCount; t++)
+                    {
+                        GameObject segment;
+                        if (pathSegmentPrefab != null)
+                        {
+                            segment = (GameObject)PrefabUtility.InstantiatePrefab(pathSegmentPrefab, pathGo.transform);
+                            Collider col = segment.GetComponent<Collider>();
+                            if (col == null) col = segment.AddComponent<BoxCollider>();
+                            col.isTrigger = true;
+                            // Tile scale Z tam olarak mesafeyi kapatacak şekilde ayarlanır
+                            segment.transform.localScale = new Vector3(1f, 1f, actualTileDist / tileSize);
+                        }
+                        else
+                        {
+                            segment = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                            segment.GetComponent<Collider>().isTrigger = true;
+                            Material pathMat = refMat != null ? new Material(refMat) : new Material(Shader.Find("Standard"));
+                            if (pathMat.HasProperty("_BaseColor")) pathMat.SetColor("_BaseColor", new Color(0.4f, 0.4f, 0.45f));
+                            else pathMat.color = new Color(0.4f, 0.4f, 0.45f);
+                            segment.GetComponent<Renderer>().sharedMaterial = pathMat;
+                            segment.transform.localScale = new Vector3(3f, 0.1f, actualTileDist);
+                        }
+
+                        segment.name = $"Segment_{pIdx}_{t}";
+                        segment.layer = LayerMask.NameToLayer("Path");
+                        segment.transform.position = pt + dirNorm * (t * actualTileDist + actualTileDist / 2f);
+                        segment.transform.forward = dirNorm;
+                    }
+                }
+            }
+            
+            // Serileştirme (Waypoints)
+            var wpSo = new SerializedObject(pw);
+            var wpProp = wpSo.FindProperty("waypoints");
+            wpProp.ClearArray();
+            for (int p = 0; p < pathGo.transform.childCount; p++)
+            {
+                Transform child = pathGo.transform.GetChild(p);
+                if (child.name.StartsWith("WP_"))
+                {
+                    wpProp.InsertArrayElementAtIndex(wpProp.arraySize);
+                    wpProp.GetArrayElementAtIndex(wpProp.arraySize - 1).objectReferenceValue = child;
+                }
+            }
+            wpSo.ApplyModifiedProperties();
+
+            // Spawner
+            GameObject spawnerGo = new GameObject($"Spawner_{i}");
+            spawnerGo.transform.SetParent(root.transform);
+            if (pathData.points.Count > 0) spawnerGo.transform.position = pathData.points[0];
+            
+            Spawner sp = spawnerGo.AddComponent<Spawner>();
+            sp.spawnerIndex = i;
+            var spSo = new SerializedObject(sp);
+            var assignedProp = spSo.FindProperty("assignedPaths");
+            assignedProp.ClearArray();
+            assignedProp.InsertArrayElementAtIndex(0);
+            assignedProp.GetArrayElementAtIndex(0).objectReferenceValue = pw;
+            spSo.FindProperty("spawnPoint").objectReferenceValue = spawnerGo.transform;
+            spSo.ApplyModifiedProperties();
+        }
+
+        // 3. Base(s)
+        for (int i = 0; i < level.basePoints.Count; i++)
+        {
+            GameObject bse = new GameObject($"Base_{i}");
+            bse.transform.SetParent(root.transform);
+            bse.transform.position = level.basePoints[i];
+            bse.AddComponent<Base>();
+            // Base artık tamamen boş bir obje (görseli yok)
+        }
+
+        // 4. Custom Tower Slots
+        if (level.customSlotPositions != null)
+        {
+            GameObject slotsRoot = new GameObject("TowerSlots");
+            slotsRoot.transform.SetParent(root.transform);
+            
+            // Zaten çalışan prefab'ı kullan (TowerSlot, Collider, Visuals, BaseTowerSelectionPrefab hepsi içinde)
+            GameObject slotPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/BaseTowerSlotPrefab.prefab");
+            GameObject selectModel = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Models/Environment/Select.fbx");
+            
+            for (int i = 0; i < level.customSlotPositions.Count; i++)
+            {
+                GameObject slot;
+                if (slotPrefab != null)
+                {
+                    slot = (GameObject)PrefabUtility.InstantiatePrefab(slotPrefab, slotsRoot.transform);
+                }
+                else
+                {
+                    slot = new GameObject($"Slot_{i}");
+                    slot.transform.SetParent(slotsRoot.transform);
+                }
+                
+                slot.name = $"Slot_{i}";
+                slot.transform.position = level.customSlotPositions[i];
+
+                // Select.fbx görselini ekle
+                if (selectModel != null)
+                {
+                    Transform visuals = slot.transform.Find("Visuals");
+                    Transform parent = visuals != null ? visuals : slot.transform;
+                    GameObject vis = (GameObject)PrefabUtility.InstantiatePrefab(selectModel, parent);
+                    vis.name = "SelectVisual";
+                    vis.transform.localPosition = Vector3.zero;
+
+                    // Yalnızca SelectVisual MeshRenderer'ını kapat
+                    Renderer r = vis.GetComponent<Renderer>();
+                    if (r == null) r = vis.GetComponentInChildren<Renderer>();
+                    if (r != null) r.enabled = false;
+                }
+            }
+        }
+
+        // 5. Dekoratif Çevre Objeleri (Scatter Environment Props)
+        List<string> propNames = new List<string> { "Rock.fbx" };
+        if (level.theme == LevelTheme.Forest) propNames.AddRange(new[] { "Tree.fbx", "Bush.fbx" });
+        else if (level.theme == LevelTheme.Desert) propNames.Add("Cactus.fbx");
+        else if (level.theme == LevelTheme.Snow) propNames.AddRange(new[] { "PineTree.fbx", "IceCrystal.fbx" });
+        else if (level.theme == LevelTheme.Underworld) propNames.AddRange(new[] { "Crystal.fbx", "LavaPool.fbx" });
+
+        List<GameObject> loadedProps = new List<GameObject>();
+        foreach (string pName in propNames)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Models/Environment/{level.theme}/{pName}");
+            if (prefab != null) loadedProps.Add(prefab);
+        }
+
+        if (loadedProps.Count > 0)
+        {
+            GameObject propsRoot = new GameObject("EnvironmentProps");
+            propsRoot.transform.SetParent(root.transform);
+            
+            // Sabit bir seed ile rastgele yerleştirme (her haritanın prop düzeni aynı kalsın diye)
+            Random.InitState(level.levelName.GetHashCode());
+
+            for (int i = 0; i < 40; i++) // 40 adet dekoratif obje serpiştir
+            {
+                // Zemin -40 ile +40 arası rastgele koordinatlar
+                float rx = Random.Range(-40f, 40f);
+                float rz = Random.Range(-40f, 40f);
+                Vector3 pos = new Vector3(rx, 0, rz);
+
+                // Yollara, base'lere veya slotlara çok yakın olmasın
+                bool tooClose = false;
+                foreach (var p in level.paths) {
+                    foreach (var wp in p.points) {
+                        if (Vector3.Distance(pos, wp) < 6f) tooClose = true;
+                    }
+                }
+                foreach (var bp in level.basePoints) {
+                    if (Vector3.Distance(pos, bp) < 8f) tooClose = true;
+                }
+                if (level.customSlotPositions != null) {
+                    foreach (var sp in level.customSlotPositions) {
+                        if (Vector3.Distance(pos, sp) < 4f) tooClose = true;
+                    }
+                }
+
+                if (!tooClose)
+                {
+                    GameObject pPrefab = loadedProps[Random.Range(0, loadedProps.Count)];
+                    GameObject prop = (GameObject)PrefabUtility.InstantiatePrefab(pPrefab, propsRoot.transform);
+                    prop.transform.position = pos;
+                    prop.transform.rotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
+                    float scale = Random.Range(0.8f, 1.5f);
+                    prop.transform.localScale = new Vector3(scale, scale, scale);
+                }
+            }
+        }
+
+        PrefabUtility.SaveAsPrefabAsset(root, mapPath);
+        GameObject.DestroyImmediate(root);
+
+        // Atama
+        level.mapPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(mapPath);
         EditorUtility.SetDirty(level);
     }
 

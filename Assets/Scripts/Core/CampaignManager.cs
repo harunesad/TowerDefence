@@ -41,6 +41,7 @@ namespace TowerDefence.Core
                 // 1. Temizlik: Eski harita varsa yok et
                 if (currentMapInstance != null)
                 {
+                    currentMapInstance.SetActive(false);
                     Destroy(currentMapInstance);
                 }
 
@@ -64,7 +65,11 @@ namespace TowerDefence.Core
             if (currentSelectedLevel != null)
             {
                 // Her şeyi temizle
-                if (currentMapInstance != null) Destroy(currentMapInstance);
+                if (currentMapInstance != null) 
+                {
+                    currentMapInstance.SetActive(false);
+                    Destroy(currentMapInstance);
+                }
                 
                 // Sahne yüklendiğinde haritayı tekrar kurması için abone ol
                 SceneManager.sceneLoaded += OnLevelSceneLoaded;
@@ -133,9 +138,12 @@ namespace TowerDefence.Core
 
             Debug.Log($"Level Completed: {currentSelectedLevel.levelName} on Difficulty {currentDifficultyLevel}");
 
-            // Seviye bitiş ödülü (Karma)
-            int reward = 50 * currentDifficultyLevel; // Zorluğa göre ödül artabilir
-            MetaProgressionManager.Instance.AddKarma(reward);
+            // Seviye bitiş ödülü (Karma ve Kristal)
+            int karmaReward = 50 * currentDifficultyLevel;
+            int crystalReward = 10 * currentDifficultyLevel; // Yeni ikinci para birimi ödülü
+
+            MetaProgressionManager.Instance.AddKarma(karmaReward);
+            MetaProgressionManager.Instance.AddCrystals(crystalReward);
 
             // Bölümü tamamlandı olarak kaydet
             MetaProgressionManager.Instance.SaveLevelProgress(currentSelectedLevel.levelID, 3, currentDifficultyLevel);
@@ -227,13 +235,13 @@ namespace TowerDefence.Core
             float uiOffsetZ = -height / Mathf.Tan(camAngle * Mathf.Deg2Rad); 
             float hudCompensation = 10f; // Haritayı dikeyde tam merkeze (HUD üstüne) taşır
 
-            cam.transform.position = new Vector3(center.x, height, center.z + uiOffsetZ + hudCompensation);
-            cam.transform.rotation = Quaternion.Euler(camAngle, 0, 0);
+            // cam.transform.position = new Vector3(center.x, height, center.z + uiOffsetZ + hudCompensation);
+            // cam.transform.rotation = Quaternion.Euler(camAngle, 0, 0);
             
             // orthographicSize artık kod tarafından değiştirilmiyor, editördeki değer korunuyor.
             if (!cam.orthographic) cam.fieldOfView = 40;
 
-            Debug.Log($"[CampaignManager] Camera centered on {mapInstance.name}. Center: {center}, Height: {height}");
+            Debug.Log($"[CampaignManager] Camera centering logic skipped as per requirement. Target would be: {center}, Height: {height}");
         }
 
         public LevelData GetCurrentLevel() => currentSelectedLevel;

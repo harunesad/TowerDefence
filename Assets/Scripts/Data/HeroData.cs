@@ -41,9 +41,11 @@ namespace TowerDefence.Data
 
         [Header("Meta Progression")]
         public int unlockKarmaCost = 500;
+        public int unlockCrystalCost = 50; // Yeni: Kristal maliyeti
         public bool isStarterHero;
         public int maxUpgradeLevel = 5;
         public int upgradeKarmaCost = 150;
+        public int upgradeCrystalCost = 15; // Yeni: Kristal yükseltme maliyeti
         [Range(0.05f, 0.5f)] public float healthBonusPerLevel = 0.15f;
         [Range(0.05f, 0.5f)] public float damageBonusPerLevel = 0.10f;
 

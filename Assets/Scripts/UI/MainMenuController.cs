@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using TowerDefence.Core;
 
 namespace TowerDefence.UI
 {
@@ -12,11 +13,13 @@ namespace TowerDefence.UI
         [SerializeField] private GameObject skillTreePanel;
         [SerializeField] private GameObject heroShopPanel;
         [SerializeField] private GameObject sideSelectionPanel;
+        [SerializeField] private GameObject compendiumPanel;
 
         [Header("Buttons")]
         [SerializeField] private Button playButton;
         [SerializeField] private Button skillTreeButton;
         [SerializeField] private Button heroesButton;
+        [SerializeField] private Button compendiumButton;
         [SerializeField] private Button quitButton;
 
         [Header("Animation Settings")]
@@ -24,6 +27,80 @@ namespace TowerDefence.UI
         [SerializeField] private Vector3 startScale = new Vector3(0.8f, 0.8f, 0.8f);
 
         private GameObject currentActivePanel;
+
+        [Header("Currency Display")]
+        [SerializeField] private TMPro.TextMeshProUGUI karmaText;
+        [SerializeField] private TMPro.TextMeshProUGUI crystalText;
+
+        [Header("Daily Reward")]
+        [SerializeField] private GameObject dailyRewardPanel;
+        [SerializeField] private Button dailyRewardButton;
+        [SerializeField] private TMPro.TextMeshProUGUI dailyRewardTimerText;
+        [SerializeField] private TMPro.TextMeshProUGUI dailyRewardInfoText;
+        [SerializeField] private Button claimRewardButton;
+
+        private void Update()
+        {
+            UpdateCurrencyUI();
+            UpdateDailyRewardUI();
+        }
+
+        private void UpdateCurrencyUI()
+        {
+            if (karmaText != null) karmaText.text = MetaProgressionManager.Instance.GetTotalKarma().ToString();
+            if (crystalText != null) crystalText.text = MetaProgressionManager.Instance.GetTotalCrystals().ToString();
+        }
+
+        private void UpdateDailyRewardUI()
+        {
+            if (dailyRewardButton == null) return;
+
+            bool available = DailyRewardManager.Instance.IsRewardAvailable();
+            dailyRewardButton.interactable = true; // Buton her zaman tıklanabilir, panelde süre yazar
+
+            if (dailyRewardTimerText != null)
+            {
+                if (available)
+                {
+                    dailyRewardTimerText.text = "CLAIM NOW!";
+                    dailyRewardTimerText.color = Color.green;
+                }
+                else
+                {
+                    dailyRewardTimerText.text = DailyRewardManager.Instance.GetTimeToNextReward();
+                    dailyRewardTimerText.color = Color.white;
+                }
+            }
+        }
+
+        public void ShowDailyRewardPanel()
+        {
+            if (dailyRewardPanel != null)
+            {
+                dailyRewardPanel.SetActive(true);
+                bool available = DailyRewardManager.Instance.IsRewardAvailable();
+                
+                if (claimRewardButton != null) claimRewardButton.interactable = available;
+                if (dailyRewardInfoText != null)
+                {
+                    dailyRewardInfoText.text = available ? "You have a daily reward waiting!" : "Next reward in:";
+                }
+            }
+        }
+
+        public void ClaimDailyReward()
+        {
+            if (DailyRewardManager.Instance.ClaimReward(out int karma, out int crystal))
+            {
+                Debug.Log($"Claimed {karma} Karma and {crystal} Crystals!");
+                if (dailyRewardPanel != null) dailyRewardPanel.SetActive(false);
+            }
+        }
+
+        public void CloseDailyRewardPanel()
+        {
+            if (dailyRewardPanel != null) dailyRewardPanel.SetActive(false);
+        }
 
         private void Start()
         {
@@ -36,17 +113,34 @@ namespace TowerDefence.UI
             if (skillTreeButton == null) skillTreeButton = FindChildButton("SkillTreeButton");
             if (quitButton      == null) quitButton      = FindChildButton("QuitButton");
 
+            // Para birimi metinlerini bul
+            if (karmaText == null) karmaText = transform.Find("TopPanel/CurrencyContainer/Karma/Value")?.GetComponent<TMPro.TextMeshProUGUI>();
+            if (crystalText == null) crystalText = transform.Find("TopPanel/CurrencyContainer/Crystals/Value")?.GetComponent<TMPro.TextMeshProUGUI>();
+
+            // Günlük ödül butonunu bul
+            if (dailyRewardButton == null) dailyRewardButton = transform.Find("MainMenuPanel/DailyRewardButton")?.GetComponent<Button>();
+            if (dailyRewardButton != null) dailyRewardButton.onClick.AddListener(ShowDailyRewardPanel);
+
+            if (claimRewardButton == null) claimRewardButton = transform.Find("DailyRewardPanel/ClaimButton")?.GetComponent<Button>();
+            if (claimRewardButton != null) claimRewardButton.onClick.AddListener(ClaimDailyReward);
+
+            Button drCloseBtn = transform.Find("DailyRewardPanel/CloseButton")?.GetComponent<Button>();
+            if (drCloseBtn != null) drCloseBtn.onClick.AddListener(CloseDailyRewardPanel);
+
             // Tüm panelleri kapat
             InitPanel(mainMenuPanel);
             InitPanel(levelSelectPanel);
             InitPanel(skillTreePanel);
             InitPanel(heroShopPanel);
             InitPanel(sideSelectionPanel);
+            InitPanel(compendiumPanel);
+            if (dailyRewardPanel != null) dailyRewardPanel.SetActive(false);
 
             // Buton olaylarını bağla
             if (playButton      != null) playButton.onClick.AddListener(ShowLevelSelect);
             if (skillTreeButton != null) skillTreeButton.onClick.AddListener(ShowSkillTree);
             if (heroesButton    != null) heroesButton.onClick.AddListener(ShowHeroShop);
+            if (compendiumButton != null) compendiumButton.onClick.AddListener(ShowCompendium);
             if (quitButton      != null) quitButton.onClick.AddListener(QuitGame);
 
             // Ana menüyü hemen görünür olarak aç (fade yok, anında)
@@ -87,6 +181,7 @@ namespace TowerDefence.UI
         public void ShowSkillTree() => TransitionToPanel(skillTreePanel);
         public void ShowHeroShop() => TransitionToPanel(heroShopPanel);
         public void ShowSideSelection() => TransitionToPanel(sideSelectionPanel);
+        public void ShowCompendium() => TransitionToPanel(compendiumPanel);
 
         private void TransitionToPanel(GameObject targetPanel)
         {

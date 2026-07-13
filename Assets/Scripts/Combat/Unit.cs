@@ -16,7 +16,7 @@ namespace TowerDefence.Combat
         [Header("Movement")]
         [SerializeField] private float moveSpeed = 3f;
         [SerializeField] private float rotationSpeed = 10f;
-        [SerializeField] private HealthBarUI healthBar;
+        [SerializeField] protected HealthBarUI healthBar;
         [SerializeField] private Transform firePoint;
 
         private float maxHealth;
@@ -30,7 +30,7 @@ namespace TowerDefence.Combat
         protected float currentHealth;
         protected Animator animator;
         private float nextAttackTime;
-        private bool isDead;
+        protected bool isDead;
         private LayerMask targetLayer;
         private IDamageable targetCombatant;
 
@@ -51,17 +51,25 @@ namespace TowerDefence.Combat
         public IDamageable GetTarget() => targetCombatant;
 
         // --- BLOCKING SYSTEM ---
-        private bool isBlocked;
-        private Unit currentBlocker;
-        private List<Unit> blockedEnemies = new List<Unit>(); // Bizim engellediğimiz düşmanlar
+        protected bool isBlocked;
+        protected Unit currentBlocker;
+        protected List<Unit> blockedEnemies = new List<Unit>(); // Bizim engellediğimiz düşmanlar
         public bool IsBlocked => isBlocked;
         public void Block(Unit blocker) { isBlocked = true; currentBlocker = blocker; }
         public void Unblock() { isBlocked = false; currentBlocker = null; }
 
+        public static List<Unit> AllUnits = new List<Unit>();
+
         private void Awake()
         {
+            AllUnits.Add(this);
             animator = GetComponentInChildren<Animator>();
             if (unitData != null) Initialize(unitData);
+        }
+
+        protected virtual void OnDestroy()
+        {
+            AllUnits.Remove(this);
         }
 
         public void Initialize(UnitData data, float statMultiplier = 1f)
@@ -273,11 +281,23 @@ namespace TowerDefence.Combat
                         
                         if (Vector3.Distance(flatPos, flatTarget) < 0.2f)
                         {
-                            currentWaypointIndex++;
-                            if (currentWaypointIndex >= currentPath.GetWaypoints().Count)
+                            if (this.GetSide() == Side.Light)
                             {
-                                OnReachPathEnd();
-                                return;
+                                currentWaypointIndex--;
+                                if (currentWaypointIndex < 0)
+                                {
+                                    OnReachPathEnd();
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                currentWaypointIndex++;
+                                if (currentWaypointIndex >= currentPath.GetWaypoints().Count)
+                                {
+                                    OnReachPathEnd();
+                                    return;
+                                }
                             }
                             UpdateMoveTarget();
                         }
@@ -322,7 +342,7 @@ namespace TowerDefence.Combat
 
         private void UpdateMoveTarget()
         {
-            if (currentPath == null || currentWaypointIndex >= currentPath.GetWaypoints().Count) return;
+            if (currentPath == null || currentWaypointIndex < 0 || currentWaypointIndex >= currentPath.GetWaypoints().Count) return;
 
             Vector3 baseTarget = currentPath.GetWaypoints()[currentWaypointIndex].position;
             Vector3 targetWithMyY = new Vector3(baseTarget.x, transform.position.y, baseTarget.z);
@@ -452,15 +472,15 @@ namespace TowerDefence.Combat
 
         private PathWaypoints currentPath;
         private int currentWaypointIndex = 0;
-        private bool isAttacking = false;
+        protected bool isAttacking = false;
 
         public void SetPath(PathWaypoints path)
         {
             currentPath = path;
-            currentWaypointIndex = 0;
             
             if (currentPath != null && currentPath.GetWaypoints().Count > 0)
             {
+                currentWaypointIndex = (this.GetSide() == Side.Light) ? currentPath.GetWaypoints().Count - 1 : 0;
                 UpdateMoveTarget();
                 SnapRotationToTarget(currentMoveTarget);
             }
@@ -486,9 +506,9 @@ namespace TowerDefence.Combat
             }
 
             // En yakın noktaya ulaştı sayıp bir sonrakine yönlendiriyoruz
-            currentWaypointIndex = Mathf.Min(nearestIdx + 1, wps.Count - 1);
+            currentWaypointIndex = (this.GetSide() == Side.Light) ? Mathf.Max(nearestIdx - 1, 0) : Mathf.Min(nearestIdx + 1, wps.Count - 1);
             
-            if (currentWaypointIndex < wps.Count)
+            if (currentWaypointIndex >= 0 && currentWaypointIndex < wps.Count)
             {
                 UpdateMoveTarget();
                 SnapRotationToTarget(wps[currentWaypointIndex].position);
@@ -503,7 +523,16 @@ namespace TowerDefence.Combat
             var wps = path.GetWaypoints();
             if (wps.Count == 0) return;
 
-            currentWaypointIndex = Mathf.Clamp(targetIdx, 0, wps.Count - 1);
+            // UnitPlacementManager targetIdx'i 'nearestIdx + 1' olarak gönderir.
+            // Eğer Side.Light isek, aslında 'nearestIdx'e doğru (geriye) gitmek isteriz, yani targetIdx - 1.
+            if (this.GetSide() == Side.Light)
+            {
+                currentWaypointIndex = Mathf.Clamp(targetIdx - 1, 0, wps.Count - 1);
+            }
+            else
+            {
+                currentWaypointIndex = Mathf.Clamp(targetIdx, 0, wps.Count - 1);
+            }
             
             UpdateMoveTarget();
             SnapRotationToTarget(currentMoveTarget);
@@ -605,7 +634,7 @@ namespace TowerDefence.Combat
             Destroy(gameObject, 0.5f);
         }
 
-        private System.Collections.IEnumerator PerformAttack(MonoBehaviour targetMB)
+        protected System.Collections.IEnumerator PerformAttack(MonoBehaviour targetMB)
         {
             if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} PerformAttack started.");
             isAttacking = true;
@@ -626,6 +655,14 @@ namespace TowerDefence.Combat
                 float hitTime = attackDuration * 0.5f;
 
                 yield return new WaitForSeconds(hitTime);
+
+                // Kahraman bu bekleme süresinde hareket emri aldıysa vurmayı iptal et
+                if (this is HeroUnit && ((HeroUnit)this).IsMovingToManualTarget)
+                {
+                    isAttacking = false;
+                    if (animator != null) animator.speed = 1f;
+                    yield break;
+                }
 
                 // Phantom Hit Fix (Ölüye vurmayı engelle)
                 if (targetMB != null && targetC != null && !targetC.IsDead)
@@ -679,7 +716,11 @@ namespace TowerDefence.Combat
             Shield shield = GetComponent<Shield>();
             if (shield != null && shield.GetCurrentShield() > 0)
             {
-                shield.TakeDamage(amount);
+                float remainingDamage = shield.AbsorbDamage(amount);
+                if (remainingDamage > 0)
+                {
+                    TakeHealthDamage(remainingDamage);
+                }
             }
             else
             {

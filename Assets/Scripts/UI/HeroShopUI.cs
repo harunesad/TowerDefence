@@ -12,6 +12,7 @@ namespace TowerDefence.UI
         [SerializeField] private Transform itemContainer;
         [SerializeField] private GameObject itemPrefab;
         [SerializeField] private TextMeshProUGUI karmaText;
+        [SerializeField] private TextMeshProUGUI crystalText; // Yeni: Kristal göstergesi
         [SerializeField] private Button backButton;
         [SerializeField] private HeroDetailPanelUI detailPanel;
 
@@ -77,8 +78,11 @@ namespace TowerDefence.UI
 
         private void RefreshKarma()
         {
-            if (karmaText != null && MetaProgressionManager.Instance != null)
+            if (MetaProgressionManager.Instance == null) return;
+            if (karmaText != null)
                 karmaText.text = $"Karma: {MetaProgressionManager.Instance.GetTotalKarma()}";
+            if (crystalText != null)
+                crystalText.text = $"Crystals: {MetaProgressionManager.Instance.GetTotalCrystals()}";
         }
 
         public void Populate()

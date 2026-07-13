@@ -93,12 +93,13 @@ namespace TowerDefence.UI
                 abilityDescText.text = $"{currentHero.abilityDescription}\nCooldown: {currentHero.abilityCooldown:0}s";
 
             int karma = MetaProgressionManager.Instance.GetTotalKarma();
+            int crystals = MetaProgressionManager.Instance.GetTotalCrystals();
 
             if (!unlocked)
             {
-                if (costText != null) costText.text = $"Unlock Cost: {currentHero.unlockKarmaCost} Karma";
+                if (costText != null) costText.text = $"Cost: {currentHero.unlockKarmaCost} Karma & {currentHero.unlockCrystalCost} Crystals";
                 if (actionLabel != null) actionLabel.text = "UNLOCK HERO";
-                if (actionButton != null) actionButton.interactable = karma >= currentHero.unlockKarmaCost;
+                if (actionButton != null) actionButton.interactable = karma >= currentHero.unlockKarmaCost && crystals >= currentHero.unlockCrystalCost;
             }
             else if (level >= currentHero.maxUpgradeLevel)
             {
@@ -108,9 +109,9 @@ namespace TowerDefence.UI
             }
             else
             {
-                if (costText != null) costText.text = $"Upgrade Cost: {currentHero.upgradeKarmaCost} Karma";
+                if (costText != null) costText.text = $"Upgrade: {currentHero.upgradeKarmaCost} Karma & {currentHero.upgradeCrystalCost} Crystals";
                 if (actionLabel != null) actionLabel.text = "UPGRADE";
-                if (actionButton != null) actionButton.interactable = karma >= currentHero.upgradeKarmaCost;
+                if (actionButton != null) actionButton.interactable = karma >= currentHero.upgradeKarmaCost && crystals >= currentHero.upgradeCrystalCost;
             }
 
             shopUI?.RefreshListHighlights();

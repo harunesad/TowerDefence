@@ -105,100 +105,206 @@ namespace TowerDefence.Editor
             rootRT.anchorMax = Vector2.one;
             rootRT.offsetMin = Vector2.zero;
             rootRT.offsetMax = Vector2.zero;
-            root.GetComponent<Image>().color = new Color(0.07f, 0.07f, 0.12f, 0.97f);
+            root.GetComponent<Image>().color = new Color(0.05f, 0.05f, 0.1f, 0.98f);
 
-            // --- Header ---
-            GameObject header = CreateUINode(root.transform, "Header", new Vector2(0, 80));
-            RectTransform hRT = header.GetComponent<RectTransform>();
-            hRT.anchorMin = new Vector2(0, 1); hRT.anchorMax = new Vector2(1, 1);
-            hRT.pivot     = new Vector2(0.5f, 1);
-            hRT.anchoredPosition = Vector2.zero;
-            hRT.sizeDelta = new Vector2(0, 80);
-            HorizontalLayoutGroup hHlg = header.AddComponent<HorizontalLayoutGroup>();
-            hHlg.childAlignment = TextAnchor.MiddleCenter;
-            hHlg.padding = new RectOffset(20, 20, 10, 10);
-            hHlg.spacing = 40;
-            hHlg.childControlWidth = false;
-            hHlg.childForceExpandWidth = false;
-
-            TextMeshProUGUI titleTmp = CreateTMP(header.transform, "Title", "SKILL TREE", 42, 460, 60);
-            titleTmp.color = new Color(1f, 0.85f, 0.2f);
-
-            TextMeshProUGUI karmaTmp = CreateTMP(header.transform, "KarmaText", "Karma: 0", 32, 280, 60);
-            karmaTmp.color = new Color(0.6f, 1f, 0.6f);
-
-            // --- Tabs: Side Selection ---
-            GameObject sideTabs = CreateUINode(root.transform, "SideTabs", new Vector2(800, 60));
-            RectTransform sideRT = sideTabs.GetComponent<RectTransform>();
-            sideRT.anchorMin = new Vector2(0.5f, 1f);
-            sideRT.anchorMax = new Vector2(0.5f, 1f);
-            sideRT.pivot = new Vector2(0.5f, 1f);
-            sideRT.anchoredPosition = new Vector2(0, -100); // Header'ın (400->-50) altında
-
-            HorizontalLayoutGroup sHlg = sideTabs.AddComponent<HorizontalLayoutGroup>();
-            sHlg.childAlignment = TextAnchor.MiddleCenter;
-            sHlg.spacing = 20;
-
-            Button btnLight = CreateButton(sideTabs.transform, "LightTab", "LIGHT", 180, 50, 18);
-            Button btnDark  = CreateButton(sideTabs.transform, "DarkTab", "DARK", 180, 50, 18);
-            Button btnNeut  = CreateButton(sideTabs.transform, "NeutralTab", "GENERAL", 180, 50, 18);
-
-            // --- Tabs: Category Selection ---
-            GameObject catTabs = CreateUINode(root.transform, "CategoryTabs", new Vector2(600, 50));
-            RectTransform catRT = catTabs.GetComponent<RectTransform>();
-            catRT.anchorMin = new Vector2(0.5f, 1f);
-            catRT.anchorMax = new Vector2(0.5f, 1f);
-            catRT.pivot = new Vector2(0.5f, 1f);
-            catRT.anchoredPosition = new Vector2(0, -170); // SideTabs'ın altında
-
-            HorizontalLayoutGroup cHlg = catTabs.AddComponent<HorizontalLayoutGroup>();
-            cHlg.childAlignment = TextAnchor.MiddleCenter;
-            cHlg.spacing = 15;
-
-            Button btnPassives = CreateButton(catTabs.transform, "PassivesTab", "PASSIVES", 200, 45, 16);
-            Button btnSpells   = CreateButton(catTabs.transform, "SpellsTab", "ACTIVE SPELLS", 200, 45, 16);
-
-            SkillTreeUI uiScript = root.GetComponent<SkillTreeUI>();
-
-            // Geri Butonu (sol üst)
-            Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 160, 55, 22);
-            RectTransform backRT = backBtn.GetComponent<RectTransform>();
-            backRT.anchorMin = new Vector2(0, 1); backRT.anchorMax = new Vector2(0, 1);
-            backRT.pivot = new Vector2(0, 1);
-            backRT.anchoredPosition = new Vector2(20, -12);
-
-            // Feedback Text
-            TextMeshProUGUI feedbackTmp = CreateTMP(root.transform, "FeedbackText", "", 24, 600, 40);
-            feedbackTmp.rectTransform.anchoredPosition = new Vector2(0, -320);
-            feedbackTmp.alignment = TMPro.TextAlignmentOptions.Center;
-
-            // Link master references
-            var so = new UnityEditor.SerializedObject(uiScript);
-            so.FindProperty("totalKarmaText").objectReferenceValue = karmaTmp;
-            so.FindProperty("feedbackText").objectReferenceValue   = feedbackTmp;
-            so.FindProperty("backButton").objectReferenceValue     = backBtn;
-            
-            so.FindProperty("btnLight").objectReferenceValue       = btnLight;
-            so.FindProperty("btnDark").objectReferenceValue        = btnDark;
-            so.FindProperty("btnNeutral").objectReferenceValue     = btnNeut;
-            so.FindProperty("btnPassives").objectReferenceValue    = btnPassives;
-            so.FindProperty("btnSpells").objectReferenceValue      = btnSpells;
-            
-            so.ApplyModifiedProperties();
-
-            // --- Scroll View ---
-            GameObject scroll = new GameObject("NodesScrollView", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+            // --- 2D Scroll View (Massive Area) ---
+            GameObject scroll = new GameObject("TreeScrollView", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
             scroll.transform.SetParent(root.transform, false);
             scroll.GetComponent<Image>().color = new Color(0, 0, 0, 0);
             RectTransform scrollRT = scroll.GetComponent<RectTransform>();
-            scrollRT.anchorMin = new Vector2(0, 0);
-            scrollRT.anchorMax = new Vector2(1, 1);
-            scrollRT.offsetMin = new Vector2(10, 10);
-            scrollRT.offsetMax = new Vector2(-10, -230); // Sekmelerin altında başlasın
+            SetStretch(scrollRT);
+            scrollRT.offsetMax = new Vector2(0, -100); // Header'ın altı
 
-            // Content (grid içindeki node'lar burada)
-            GameObject content = new GameObject("Content", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
+            // Content (The large canvas)
+            GameObject content = new GameObject("Content", typeof(RectTransform));
             content.transform.SetParent(scroll.transform, false);
+            RectTransform contentRT = content.GetComponent<RectTransform>();
+            contentRT.sizeDelta = new Vector2(3000, 3000); // 3Kx3K alan
+            contentRT.anchoredPosition = Vector2.zero;
+
+            ScrollRect sr = scroll.GetComponent<ScrollRect>();
+            sr.content = contentRT;
+            sr.horizontal = true;
+            sr.vertical = true;
+            sr.movementType = ScrollRect.MovementType.Elastic;
+            sr.scrollSensitivity = 50;
+
+            // --- Header (Fixed at top, created AFTER scroll to stay on top) ---
+            GameObject header = CreateUINode(root.transform, "Header", new Vector2(0, 100));
+            RectTransform hRT = header.GetComponent<RectTransform>();
+            hRT.anchorMin = new Vector2(0, 1); hRT.anchorMax = new Vector2(1, 1);
+            hRT.pivot = new Vector2(0.5f, 1);
+            hRT.anchoredPosition = Vector2.zero;
+            header.AddComponent<Image>().color = new Color(0, 0, 0, 0.8f);
+
+            TextMeshProUGUI titleTmp = CreateTMP(header.transform, "Title", "LEGENDARY SKILL TREE", 48, 600, 80);
+            titleTmp.color = new Color(1f, 0.85f, 0.2f);
+            titleTmp.alignment = TextAlignmentOptions.Center;
+
+            // Geri Butonu
+            Button backBtn = CreateButton(header.transform, "BackButton", "← BACK", 180, 60, 24);
+            RectTransform backRT = backBtn.GetComponent<RectTransform>();
+            backRT.anchorMin = new Vector2(0, 0.5f); backRT.anchorMax = new Vector2(0, 0.5f);
+            backRT.anchoredPosition = new Vector2(110, 0);
+
+            SkillTreeUI uiScript = root.GetComponent<SkillTreeUI>();
+
+            // --- Detail Panel (Fixed at center, created AFTER scroll) ---
+            GameObject detail = CreateUINode(root.transform, "DetailPanel", new Vector2(500, 600));
+            detail.AddComponent<Image>().color = new Color(0.1f, 0.1f, 0.15f, 0.95f);
+            
+            Image detailIcon = CreateImage(detail.transform, "Icon", new Vector2(150, 150));
+            detailIcon.rectTransform.anchoredPosition = new Vector2(0, 180);
+            
+            TextMeshProUGUI detailName = CreateTMP(detail.transform, "Name", "Skill Name", 32, 450, 50);
+            detailName.rectTransform.anchoredPosition = new Vector2(0, 80);
+            detailName.alignment = TextAlignmentOptions.Center;
+            detailName.color = Color.yellow;
+
+            TextMeshProUGUI detailDesc = CreateTMP(detail.transform, "Desc", "Skill description goes here...", 20, 450, 150);
+            detailDesc.rectTransform.anchoredPosition = new Vector2(0, -30);
+            detailDesc.alignment = TextAlignmentOptions.Center;
+
+            TextMeshProUGUI detailCost = CreateTMP(detail.transform, "Cost", "Cost: 500 Karma & 50 Crystals", 22, 450, 40);
+            detailCost.rectTransform.anchoredPosition = new Vector2(0, -140);
+            detailCost.alignment = TextAlignmentOptions.Center;
+            detailCost.color = Color.green;
+
+            Button buyBtn = CreateButton(detail.transform, "BuyButton", "BUY SKILL", 300, 60, 24);
+            buyBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -220);
+
+            // Close button for detail panel
+            Button closeBtn = CreateButton(detail.transform, "CloseButton", "X", 50, 50, 20);
+            closeBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(220, 270);
+
+            // Feedback Text
+            TextMeshProUGUI feedbackTmp = CreateTMP(root.transform, "FeedbackText", "", 24, 600, 40);
+            feedbackTmp.rectTransform.anchoredPosition = new Vector2(0, -150);
+            feedbackTmp.alignment = TextAlignmentOptions.Center;
+
+            // Link master references
+            var so = new SerializedObject(uiScript);
+            so.FindProperty("totalKarmaText").objectReferenceValue = null; // Use global TopPanel instead
+            so.FindProperty("totalCrystalsText").objectReferenceValue = null;
+            so.FindProperty("feedbackText").objectReferenceValue = feedbackTmp;
+            so.FindProperty("backButton").objectReferenceValue = backBtn;
+            so.FindProperty("contentRect").objectReferenceValue = contentRT;
+            
+            so.FindProperty("detailPanel").objectReferenceValue = detail;
+            so.FindProperty("detailIcon").objectReferenceValue = detailIcon;
+            so.FindProperty("detailName").objectReferenceValue = detailName;
+            so.FindProperty("detailDesc").objectReferenceValue = detailDesc;
+            so.FindProperty("detailCost").objectReferenceValue = detailCost;
+            so.FindProperty("detailBuyButton").objectReferenceValue = buyBtn;
+            so.FindProperty("detailCloseButton").objectReferenceValue = closeBtn;
+            so.ApplyModifiedProperties();
+
+            // --- Generate Nodes ---
+            string[] guids = AssetDatabase.FindAssets("t:SkillNodeData", new[] { "Assets/Data/Skills" });
+            var nodeUIList = new System.Collections.Generic.List<SkillNodeUI>();
+
+            foreach (string guid in guids)
+            {
+                SkillNodeData data = AssetDatabase.LoadAssetAtPath<SkillNodeData>(AssetDatabase.GUIDToAssetPath(guid));
+                if (data == null) continue;
+
+                GameObject node = new GameObject(data.skillName, typeof(RectTransform), typeof(Image), typeof(Button), typeof(SkillNodeUI));
+                node.transform.SetParent(contentRT.transform, false);
+                RectTransform nRT = node.GetComponent<RectTransform>();
+                nRT.sizeDelta = new Vector2(140, 140);
+                nRT.anchoredPosition = data.visualPosition;
+
+                node.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.3f, 1f);
+
+                // Icon
+                Image icon = CreateImage(node.transform, "Icon", new Vector2(80, 80));
+                icon.rectTransform.anchoredPosition = new Vector2(0, 15);
+                icon.color = data.side == Side.Light ? new Color(1, 0.9f, 0.5f) : new Color(0.6f, 0.4f, 0.8f);
+
+                // Name
+                TextMeshProUGUI nameTmp = CreateTMP(node.transform, "Name", data.skillName, 14, 130, 40);
+                nameTmp.rectTransform.anchoredPosition = new Vector2(0, -45);
+                nameTmp.alignment = TextAlignmentOptions.Center;
+
+                // Cost
+                TextMeshProUGUI costTmp = CreateTMP(node.transform, "Cost", $"{data.karmaCost} K", 12, 100, 20);
+                costTmp.rectTransform.anchoredPosition = new Vector2(0, -60);
+                costTmp.color = Color.green;
+                costTmp.alignment = TextAlignmentOptions.Center;
+
+                // Type Label
+                TextMeshProUGUI typeTmp = CreateTMP(node.transform, "TypeText", "PASSIVE", 10, 100, 20);
+                typeTmp.rectTransform.anchoredPosition = new Vector2(0, 60);
+                typeTmp.alignment = TextAlignmentOptions.Center;
+
+                // Overlays
+                Image locked = CreateImage(node.transform, "LockedOverlay", new Vector2(140, 140));
+                locked.color = new Color(0, 0, 0, 0.7f);
+                locked.gameObject.SetActive(false);
+
+                Image purchased = CreateImage(node.transform, "PurchasedOverlay", new Vector2(140, 140));
+                purchased.color = new Color(0, 1, 0, 0.3f);
+                purchased.gameObject.SetActive(false);
+
+                // Link SkillNodeUI
+                SkillNodeUI snUI = node.GetComponent<SkillNodeUI>();
+                var snSo = new SerializedObject(snUI);
+                snSo.FindProperty("skillData").objectReferenceValue = data;
+                snSo.FindProperty("iconImage").objectReferenceValue = icon;
+                snSo.FindProperty("buyButton").objectReferenceValue = node.GetComponent<Button>();
+                snSo.FindProperty("costText").objectReferenceValue = costTmp;
+                snSo.FindProperty("typeText").objectReferenceValue = typeTmp;
+                snSo.FindProperty("lockedOverlay").objectReferenceValue = locked;
+                snSo.FindProperty("purchasedOverlay").objectReferenceValue = purchased;
+                snSo.ApplyModifiedProperties();
+
+                nodeUIList.Add(snUI);
+            }
+
+            // Listeyi SkillTreeUI'ya bağla
+            var uiSo = new SerializedObject(uiScript);
+            var nodesProp = uiSo.FindProperty("allNodes");
+            nodesProp.arraySize = nodeUIList.Count;
+            for (int i = 0; i < nodeUIList.Count; i++)
+                nodesProp.GetArrayElementAtIndex(i).objectReferenceValue = nodeUIList[i];
+            uiSo.ApplyModifiedProperties();
+
+            SaveAndCleanup(root, "SkillTreePanel");
+        }
+
+        public static void CreateCompendiumPanelPrefab()
+        {
+            EnsureDirectory();
+            GameObject root = new GameObject("CompendiumPanel", typeof(RectTransform), typeof(Image), typeof(CompendiumUI));
+            SetStretch(root.GetComponent<RectTransform>());
+            root.GetComponent<Image>().color = new Color(0.05f, 0.05f, 0.08f, 1f);
+
+            // Title
+            TextMeshProUGUI title = CreateTMP(root.transform, "Title", "CHARACTER COMPENDIUM", 42, 600, 80);
+            title.rectTransform.anchorMin = new Vector2(0.5f, 1);
+            title.rectTransform.anchorMax = new Vector2(0.5f, 1);
+            title.rectTransform.anchoredPosition = new Vector2(0, -60);
+
+            // --- Left Side: Vertical Scroll List ---
+            GameObject listRoot = CreateUINode(root.transform, "ListRoot", new Vector2(800, 0));
+            RectTransform listRT = listRoot.GetComponent<RectTransform>();
+            listRT.anchorMin = new Vector2(0, 0);
+            listRT.anchorMax = new Vector2(0, 1);
+            listRT.pivot = new Vector2(0, 0.5f);
+            listRT.offsetMin = new Vector2(50, 50);
+            listRT.offsetMax = new Vector2(850, -120); 
+
+            GameObject scroll = new GameObject("VerticalScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+            scroll.transform.SetParent(listRoot.transform, false);
+            SetStretch(scroll.GetComponent<RectTransform>());
+            scroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.3f);
+
+            GameObject viewport = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
+            viewport.transform.SetParent(scroll.transform, false);
+            SetStretch(viewport.GetComponent<RectTransform>());
+
+            GameObject content = new GameObject("Content", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
+            content.transform.SetParent(viewport.transform, false);
             RectTransform contentRT = content.GetComponent<RectTransform>();
             contentRT.anchorMin = new Vector2(0, 1);
             contentRT.anchorMax = new Vector2(1, 1);
@@ -207,115 +313,70 @@ namespace TowerDefence.Editor
             contentRT.offsetMax = Vector2.zero;
 
             GridLayoutGroup glg = content.GetComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(160, 200);
-            glg.spacing  = new Vector2(20, 20);
-            glg.padding  = new RectOffset(20, 20, 20, 20);
-            glg.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            glg.cellSize = new Vector2(280, 240);
+            glg.spacing = new Vector2(15, 15);
+            glg.padding = new RectOffset(10, 10, 10, 10);
             glg.childAlignment = TextAnchor.UpperCenter;
             glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            glg.constraintCount = 5;
-
-            ContentSizeFitter csf = content.GetComponent<ContentSizeFitter>();
-            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            glg.constraintCount = 2; // Width is 800 now, so 2 columns of 280 (560) + spacing will fit nicely
+            
+            content.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             ScrollRect sr = scroll.GetComponent<ScrollRect>();
-            sr.content   = contentRT;
+            sr.content = contentRT;
+            sr.viewport = viewport.GetComponent<RectTransform>();
             sr.horizontal = false;
-            sr.vertical   = true;
-            sr.scrollSensitivity = 30;
+            sr.vertical = true;
+            sr.scrollSensitivity = 35;
 
-            // --- Tüm SkillNodeData'ları otomatik bul ve node oluştur ---
-            string[] guids = AssetDatabase.FindAssets("t:SkillNodeData", new[] { "Assets/Data/Skills" });
-            var nodeUIList = new System.Collections.Generic.List<SkillNodeUI>();
+            // --- Right Side: Detail Panel ---
+            GameObject detail = CreateUINode(root.transform, "DetailPanel", new Vector2(0, 0));
+            RectTransform detailRT = detail.GetComponent<RectTransform>();
+            detailRT.anchorMin = new Vector2(0, 0);
+            detailRT.anchorMax = new Vector2(1, 1);
+            detailRT.offsetMin = new Vector2(900, 50);
+            detailRT.offsetMax = new Vector2(-50, -120);
+            detail.AddComponent<Image>().color = new Color(0, 0, 0, 0.5f);
 
-            foreach (string guid in guids)
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                SkillNodeData data = AssetDatabase.LoadAssetAtPath<SkillNodeData>(path);
-                if (data == null) continue;
+            Image detailIcon = CreateImage(detail.transform, "Icon", new Vector2(150, 200));
+            detailIcon.rectTransform.anchoredPosition = new Vector2(0, 250);
+            detailIcon.rectTransform.localScale = new Vector3(2, 2, 2);
+            
+            TextMeshProUGUI detailName = CreateTMP(detail.transform, "Name", "Select a character", 36, 500, 60);
+            detailName.rectTransform.anchoredPosition = new Vector2(0, 50);
+            detailName.rectTransform.localScale = new Vector3(2, 2, 2);
+            detailName.alignment = TextAlignmentOptions.Center;
 
-                // Her SkillNodeData için bir node UI nesnesi oluştur
-                GameObject node = new GameObject(data.skillName, typeof(RectTransform), typeof(Image), typeof(Button), typeof(SkillNodeUI));
-                node.transform.SetParent(content.transform, false);
-                node.GetComponent<Image>().color = new Color(0.18f, 0.18f, 0.28f, 1f);
+            TextMeshProUGUI detailStats = CreateTMP(detail.transform, "Stats", "", 24, 500, 120);
+            detailStats.rectTransform.anchoredPosition = new Vector2(0, -100);
+            detailStats.rectTransform.localScale = new Vector3(2, 2, 2);
+            detailStats.alignment = TextAlignmentOptions.Center;
 
-                // Icon
-                GameObject iconGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                iconGO.transform.SetParent(node.transform, false);
-                RectTransform iconRT = iconGO.GetComponent<RectTransform>();
-                iconRT.anchorMin = new Vector2(0.1f, 0.35f);
-                iconRT.anchorMax = new Vector2(0.9f, 0.9f);
-                iconRT.offsetMin = Vector2.zero; iconRT.offsetMax = Vector2.zero;
-                iconGO.GetComponent<Image>().color = new Color(0.4f, 0.4f, 0.6f);
+            TextMeshProUGUI detailLore = CreateTMP(detail.transform, "Lore", "", 20, 550, 200);
+            detailLore.rectTransform.anchoredPosition = new Vector2(0, -350);
+            detailLore.rectTransform.localScale = new Vector3(2, 2, 2);
+            detailLore.alignment = TextAlignmentOptions.Center;
 
-                // Skill Adı
-                TextMeshProUGUI nameTmp = CreateTMP(node.transform, "SkillName", data.skillName, 18, 140, 30);
-                nameTmp.rectTransform.anchorMin = new Vector2(0, 0.22f);
-                nameTmp.rectTransform.anchorMax = new Vector2(1, 0.35f);
-                nameTmp.rectTransform.offsetMin = Vector2.zero;
-                nameTmp.rectTransform.offsetMax = Vector2.zero;
-                nameTmp.alignment = TMPro.TextAlignmentOptions.Center;
+            // Back Button
+            Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 180, 60, 24);
+            backBtn.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
+            backBtn.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
+            backBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(100, -50);
 
-                // Karma Maliyet
-                TextMeshProUGUI costTmp = CreateTMP(node.transform, "CostText", $"{data.karmaCost} K", 16, 100, 24);
-                costTmp.rectTransform.anchorMin = new Vector2(0, 0);
-                costTmp.rectTransform.anchorMax = new Vector2(1, 0.22f);
-                costTmp.rectTransform.offsetMin = Vector2.zero;
-                costTmp.rectTransform.offsetMax = Vector2.zero;
-                costTmp.color = new Color(0.6f, 1f, 0.6f);
-                costTmp.alignment = TMPro.TextAlignmentOptions.Center;
+            // Link UI
+            CompendiumUI ui = root.GetComponent<CompendiumUI>();
+            var so = new SerializedObject(ui);
+            so.FindProperty("heroContent").objectReferenceValue = content.transform; // Artık tek bir content var
+            so.FindProperty("unitContent").objectReferenceValue = null;
+            so.FindProperty("detailPanel").objectReferenceValue = detail;
+            so.FindProperty("detailIcon").objectReferenceValue = detailIcon;
+            so.FindProperty("detailName").objectReferenceValue = detailName;
+            so.FindProperty("detailStats").objectReferenceValue = detailStats;
+            so.FindProperty("detailLore").objectReferenceValue = detailLore;
+            so.FindProperty("backButton").objectReferenceValue = backBtn;
+            so.ApplyModifiedProperties();
 
-                // Locked Overlay
-                GameObject lockedGO = new GameObject("LockedOverlay", typeof(RectTransform), typeof(Image));
-                lockedGO.transform.SetParent(node.transform, false);
-                SetStretch(lockedGO.GetComponent<RectTransform>());
-                lockedGO.GetComponent<Image>().color = new Color(0, 0, 0, 0.7f);
-                lockedGO.SetActive(false);
-
-                // Purchased Overlay
-                GameObject purchasedGO = new GameObject("PurchasedOverlay", typeof(RectTransform), typeof(Image));
-                purchasedGO.transform.SetParent(node.transform, false);
-                SetStretch(purchasedGO.GetComponent<RectTransform>());
-                purchasedGO.GetComponent<Image>().color = new Color(0.1f, 0.8f, 0.1f, 0.55f);
-                purchasedGO.SetActive(false);
-
-                // Type Label (Passive/Active)
-                TextMeshProUGUI typeTmp = CreateTMP(node.transform, "TypeText", "PASSIVE", 12, 100, 20);
-                typeTmp.rectTransform.anchorMin = new Vector2(0, 0.9f);
-                typeTmp.rectTransform.anchorMax = new Vector2(1, 1);
-                typeTmp.rectTransform.offsetMin = new Vector2(5, 0);
-                typeTmp.rectTransform.offsetMax = new Vector2(-5, -2);
-                typeTmp.alignment = TMPro.TextAlignmentOptions.Left;
-                typeTmp.fontStyle = TMPro.FontStyles.Bold | TMPro.FontStyles.Italic;
-
-                // SkillNodeUI referanslarını bağla
-                SkillNodeUI nodeUI = node.GetComponent<SkillNodeUI>();
-                var nodeSO = new UnityEditor.SerializedObject(nodeUI);
-                nodeSO.FindProperty("skillData").objectReferenceValue        = data;
-                nodeSO.FindProperty("iconImage").objectReferenceValue        = iconGO.GetComponent<Image>();
-                nodeSO.FindProperty("buyButton").objectReferenceValue        = node.GetComponent<Button>();
-                nodeSO.FindProperty("costText").objectReferenceValue         = costTmp;
-                nodeSO.FindProperty("lockedOverlay").objectReferenceValue    = lockedGO.GetComponent<Image>();
-                nodeSO.FindProperty("purchasedOverlay").objectReferenceValue = purchasedGO.GetComponent<Image>();
-                nodeSO.FindProperty("typeText").objectReferenceValue         = typeTmp;
-                nodeSO.ApplyModifiedProperties();
-                nodeUIList.Add(nodeUI);
-            }
-
-            // SkillTreeUI referanslarını bağla
-            SkillTreeUI treeUI = root.GetComponent<SkillTreeUI>();
-            var treeSO = new UnityEditor.SerializedObject(treeUI);
-            treeSO.FindProperty("totalKarmaText").objectReferenceValue = karmaTmp;
-            treeSO.FindProperty("feedbackText").objectReferenceValue   = feedbackTmp;
-            treeSO.FindProperty("backButton").objectReferenceValue     = backBtn;
-            var nodesProp = treeSO.FindProperty("allNodes");
-            nodesProp.arraySize = nodeUIList.Count;
-            for (int i = 0; i < nodeUIList.Count; i++)
-                nodesProp.GetArrayElementAtIndex(i).objectReferenceValue = nodeUIList[i];
-            treeSO.ApplyModifiedProperties();
-
-            Debug.Log($"✔ SkillTreePanel: {nodeUIList.Count} skill node oluşturuldu.");
-            SaveAndCleanup(root, "SkillTreePanel");
+            SaveAndCleanup(root, "CompendiumPanel");
         }
 
         private static void SetStretch(RectTransform rt)
@@ -356,10 +417,12 @@ namespace TowerDefence.Editor
             title.color = new Color(1f, 0.8f, 0.2f);
 
             // 3b. Button Container
-            GameObject btnContainer = CreateUINode(mainMenuPanel.transform, "ButtonContainer", new Vector2(400, 500));
+            GameObject btnContainer = CreateUINode(mainMenuPanel.transform, "ButtonContainer", new Vector2(450, 550));
+            btnContainer.AddComponent<Image>().color = new Color(0, 0, 0, 0.3f); // Subtle dark box
             VerticalLayoutGroup vlg = btnContainer.AddComponent<VerticalLayoutGroup>();
+            vlg.padding = new RectOffset(20, 20, 20, 20);
             vlg.childAlignment = TextAnchor.MiddleCenter;
-            vlg.spacing = 20;
+            vlg.spacing = 15;
             vlg.childControlHeight = false;
             vlg.childForceExpandHeight = false;
 
@@ -367,17 +430,102 @@ namespace TowerDefence.Editor
             Button playBtn  = CreateButton(btnContainer.transform, "PlayButton",      "PLAY",  400, 80, 36);
             Button skillBtn = CreateButton(btnContainer.transform, "SkillTreeButton", "SKILL TREE",400, 80, 36);
             Button heroBtn  = CreateButton(btnContainer.transform, "HeroesButton",    "HEROES",    400, 80, 36);
-            CreateButton(btnContainer.transform, "OptionsButton", "SETTINGS", 400, 80, 36);
+            Button compBtn  = CreateButton(btnContainer.transform, "CompendiumButton", "COMPENDIUM", 400, 80, 36);
             Button quitBtn  = CreateButton(btnContainer.transform, "QuitButton",      "QUIT",        400, 80, 36);
 
-            // 4. Sub-Panels — başlangıçta kapalı
-            CreateHeroShopPanelPrefab();
-            GameObject skillPanel = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/SkillTreePanel.prefab",      false);
-            GameObject heroPanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/HeroShopPanel.prefab",     false);
-            GameObject levelPanel = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/LevelSelectionPanel.prefab", false);
-            GameObject sidePanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/SideSelectionPanel.prefab",  false);
+            // 3d. Daily Reward Button (On Main Menu)
+            Button dailyBtn = CreateButton(mainMenuPanel.transform, "DailyRewardButton", "DAILY REWARD", 250, 80, 20);
+            RectTransform dailyRT = dailyBtn.GetComponent<RectTransform>();
+            dailyRT.anchorMin = new Vector2(1, 0);
+            dailyRT.anchorMax = new Vector2(1, 0);
+            dailyRT.anchoredPosition = new Vector2(-160, 100);
+            dailyBtn.GetComponent<Image>().color = new Color(0.15f, 0.4f, 0.15f); // Darker green
+            
+            TextMeshProUGUI timerText = CreateTMP(dailyBtn.transform, "Timer", "Available!", 16, 250, 30);
+            timerText.rectTransform.anchorMin = new Vector2(0.5f, 0);
+            timerText.rectTransform.anchorMax = new Vector2(0.5f, 0);
+            timerText.rectTransform.anchoredPosition = new Vector2(0, -25); // Slightly below the button text, inside button area
+            timerText.color = Color.green;
 
-            // 5. MainMenuController bağlantıları
+            // 4. Panels
+            GameObject levelPanel = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/LevelSelectionPanel.prefab", false);
+            GameObject skillPanel = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/SkillTreePanel.prefab",   false);
+            GameObject heroPanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/HeroShopPanel.prefab",    false);
+            GameObject sidePanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/SideSelectionPanel.prefab", false);
+            GameObject compPanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/CompendiumPanel.prefab",   false);
+
+            // 4b. Daily Reward Panel (Popup)
+            GameObject drPanel = CreateUINode(root.transform, "DailyRewardPanel", new Vector2(600, 450));
+            drPanel.SetActive(false);
+            drPanel.AddComponent<Image>().color = new Color(0.1f, 0.1f, 0.15f, 0.95f);
+            
+            CreateTMP(drPanel.transform, "Title", "DAILY REWARD", 32, 500, 50).rectTransform.anchoredPosition = new Vector2(0, 160);
+            TextMeshProUGUI drInfo = CreateTMP(drPanel.transform, "Info", "You have a reward waiting!", 20, 500, 100);
+            drInfo.rectTransform.anchoredPosition = new Vector2(0, 60);
+            
+            GameObject rewardDisplay = CreateUINode(drPanel.transform, "Rewards", new Vector2(500, 100));
+            rewardDisplay.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -30);
+            HorizontalLayoutGroup drHlg = rewardDisplay.AddComponent<HorizontalLayoutGroup>();
+            drHlg.childAlignment = TextAnchor.MiddleCenter;
+            drHlg.spacing = 50;
+            
+            CreateTMP(rewardDisplay.transform, "KarmaReward", "100 Karma", 24, 200, 50).color = Color.yellow;
+            CreateTMP(rewardDisplay.transform, "CrystalReward", "20 Crystals", 24, 200, 50).color = Color.cyan;
+            
+            Button claimBtn = CreateButton(drPanel.transform, "ClaimButton", "CLAIM", 200, 60, 24);
+            claimBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -140);
+            claimBtn.GetComponent<Image>().color = new Color(0.2f, 0.6f, 0.2f);
+            
+            Button drCloseBtn = CreateButton(drPanel.transform, "CloseButton", "X", 50, 50, 20);
+            drCloseBtn.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
+            drCloseBtn.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
+            drCloseBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
+
+            // 5. Top Currency Panel
+            GameObject topPanel = CreateUINode(root.transform, "TopPanel", new Vector2(0, 100));
+            RectTransform topRT = topPanel.GetComponent<RectTransform>();
+            topRT.anchorMin = new Vector2(0, 1); topRT.anchorMax = new Vector2(1, 1);
+            topRT.offsetMin = Vector2.zero; topRT.offsetMax = Vector2.zero;
+            topRT.anchoredPosition = new Vector2(0, -60);
+
+            // Semi-transparent background for currency
+            GameObject curBg = CreateUINode(topPanel.transform, "CurrencyBG", new Vector2(500, 70));
+            curBg.AddComponent<Image>().color = new Color(0, 0, 0, 0.6f);
+            RectTransform curBgRT = curBg.GetComponent<RectTransform>();
+            curBgRT.anchorMin = new Vector2(1, 0.5f); curBgRT.anchorMax = new Vector2(1, 0.5f);
+            curBgRT.anchoredPosition = new Vector2(-280, 0);
+
+            GameObject currencyCont = CreateUINode(curBg.transform, "CurrencyContainer", new Vector2(480, 60));
+            HorizontalLayoutGroup curHlg = currencyCont.AddComponent<HorizontalLayoutGroup>();
+            curHlg.childAlignment = TextAnchor.MiddleCenter;
+            curHlg.spacing = 30;
+            curHlg.childControlWidth = true; curHlg.childControlHeight = true;
+            curHlg.childForceExpandWidth = false;
+            SetStretch(currencyCont.GetComponent<RectTransform>());
+
+            // Karma Box
+            GameObject karmaBox = CreateUINode(currencyCont.transform, "Karma", new Vector2(200, 50));
+            HorizontalLayoutGroup kHlg = karmaBox.AddComponent<HorizontalLayoutGroup>();
+            kHlg.spacing = 5; kHlg.childAlignment = TextAnchor.MiddleRight;
+            
+            TextMeshProUGUI kLabel = CreateTMP(karmaBox.transform, "Label", "KARMA:", 18, 80, 40);
+            kLabel.color = Color.gray;
+            TextMeshProUGUI karmaVal = CreateTMP(karmaBox.transform, "Value", "0", 24, 100, 40);
+            karmaVal.alignment = TextAlignmentOptions.Left;
+            karmaVal.color = Color.yellow;
+
+            // Crystal Box
+            GameObject crystalBox = CreateUINode(currencyCont.transform, "Crystals", new Vector2(220, 50));
+            HorizontalLayoutGroup cHlg = crystalBox.AddComponent<HorizontalLayoutGroup>();
+            cHlg.spacing = 5; cHlg.childAlignment = TextAnchor.MiddleLeft;
+            
+            TextMeshProUGUI cLabel = CreateTMP(crystalBox.transform, "Label", "CRYSTALS:", 18, 100, 40);
+            cLabel.color = Color.gray;
+            TextMeshProUGUI crystalVal = CreateTMP(crystalBox.transform, "Value", "0", 24, 100, 40);
+            crystalVal.alignment = TextAlignmentOptions.Left;
+            crystalVal.color = Color.cyan;
+
+            // 6. MainMenuController bağlantıları
             MainMenuController mc = root.AddComponent<MainMenuController>();
             var so = new UnityEditor.SerializedObject(mc);
             so.FindProperty("mainMenuPanel").objectReferenceValue    = mainMenuPanel;
@@ -385,9 +533,20 @@ namespace TowerDefence.Editor
             so.FindProperty("skillTreePanel").objectReferenceValue   = skillPanel;
             so.FindProperty("heroShopPanel").objectReferenceValue    = heroPanel;
             so.FindProperty("sideSelectionPanel").objectReferenceValue = sidePanel;
+            so.FindProperty("compendiumPanel").objectReferenceValue  = compPanel;
+            
+            so.FindProperty("karmaText").objectReferenceValue = karmaVal;
+            so.FindProperty("crystalText").objectReferenceValue = crystalVal;
+            so.FindProperty("dailyRewardPanel").objectReferenceValue = drPanel;
+            so.FindProperty("dailyRewardButton").objectReferenceValue = dailyBtn;
+            so.FindProperty("dailyRewardTimerText").objectReferenceValue = timerText;
+            so.FindProperty("dailyRewardInfoText").objectReferenceValue = drInfo;
+            so.FindProperty("claimRewardButton").objectReferenceValue = claimBtn;
+
             so.FindProperty("playButton").objectReferenceValue       = playBtn;
             so.FindProperty("skillTreeButton").objectReferenceValue  = skillBtn;
             so.FindProperty("heroesButton").objectReferenceValue     = heroBtn;
+            so.FindProperty("compendiumButton").objectReferenceValue = compBtn;
             so.FindProperty("quitButton").objectReferenceValue       = quitBtn;
             so.ApplyModifiedProperties();
 
@@ -416,9 +575,27 @@ namespace TowerDefence.Editor
             titleTMP.rectTransform.anchorMax = new Vector2(0.5f, 1f);
             titleTMP.rectTransform.anchoredPosition = new Vector2(0, -80);
 
-            // Level Container (Grid)
-            GameObject container = CreateUINode(root.transform, "LevelContainer", new Vector2(1200, 650));
-            container.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -50);
+            // Scroll View Root
+            GameObject scrollView = CreateUINode(root.transform, "Scroll View", new Vector2(1200, 650));
+            scrollView.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -50);
+            ScrollRect scrollRect = scrollView.AddComponent<ScrollRect>();
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Elastic;
+            
+            // Viewport
+            GameObject viewport = CreateUINode(scrollView.transform, "Viewport", new Vector2(1200, 650));
+            SetStretch(viewport.GetComponent<RectTransform>());
+            viewport.AddComponent<RectMask2D>();
+            
+            // Level Container (Grid) - Now inside Viewport
+            GameObject container = CreateUINode(viewport.transform, "LevelContainer", new Vector2(1200, 650));
+            SetStretch(container.GetComponent<RectTransform>());
+            
+            // Set ScrollRect references
+            scrollRect.viewport = viewport.GetComponent<RectTransform>();
+            scrollRect.content = container.GetComponent<RectTransform>();
+            
             GridLayoutGroup glg = container.AddComponent<GridLayoutGroup>();
             glg.cellSize = new Vector2(240, 320);
             glg.spacing = new Vector2(40, 40);
@@ -427,6 +604,18 @@ namespace TowerDefence.Editor
             glg.childAlignment = TextAnchor.UpperCenter;
             glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             glg.constraintCount = 4;
+
+            // Make the container expand based on its children so scrolling works
+            ContentSizeFitter csf = container.AddComponent<ContentSizeFitter>();
+            csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            csf.verticalFit = ContentSizeFitter.FitMode.MinSize;
+
+            // Ensure the content starts at the top
+            RectTransform containerRT = container.GetComponent<RectTransform>();
+            containerRT.pivot = new Vector2(0.5f, 1f); // Set pivot to top center
+            containerRT.anchorMin = new Vector2(0f, 1f); // Anchor to top left
+            containerRT.anchorMax = new Vector2(1f, 1f); // Anchor to top right
+            containerRT.anchoredPosition = Vector2.zero; // Reset position to top
 
             // Back Button
             Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 180, 60, 22);
@@ -466,23 +655,60 @@ namespace TowerDefence.Editor
 
             // Tüm LevelData ScriptableObject'leri otomatik bul ve listeye ekle
             string[] guids = AssetDatabase.FindAssets("t:LevelData");
-            var levelsProp = so.FindProperty("levels");
-            levelsProp.arraySize = guids.Length;
+            
+            // Level'ları topla ve isme göre (doğal sayısal sıralama ile) sırala
+            System.Collections.Generic.List<LevelData> allLevels = new System.Collections.Generic.List<LevelData>();
             for (int i = 0; i < guids.Length; i++)
             {
                 string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
                 var levelData = AssetDatabase.LoadAssetAtPath<LevelData>(assetPath);
-                
-                // OTOMASYON: Harita yoksa bul veya placeholder oluştur
                 AutoAssignOrPlaceholder(levelData);
-
-                levelsProp.GetArrayElementAtIndex(i).objectReferenceValue = levelData;
+                allLevels.Add(levelData);
             }
-            Debug.Log($"✔ LevelSelectionPanel: {guids.Length} LevelData otomatik yüklendi ve haritaları kontrol edildi.");
+
+            // Doğal sıralama için gelişmiş sayısal ayrıştırma (Regex ile)
+            allLevels.Sort((a, b) => {
+                string nameA = a.levelName != null ? a.levelName : a.name;
+                string nameB = b.levelName != null ? b.levelName : b.name;
+                
+                // İsimlerin içinden sadece sayıları çek
+                int numA = ExtractLevelNumber(nameA);
+                int numB = ExtractLevelNumber(nameB);
+                
+                // Eğer ikisinde de sayı bulunduysa sayısal karşılaştır
+                if (numA != -1 && numB != -1)
+                {
+                    return numA.CompareTo(numB);
+                }
+                
+                // Sayı yoksa normal string karşılaştırmasına dön
+                return string.Compare(nameA, nameB);
+            });
+
+            var levelsProp = so.FindProperty("levels");
+            levelsProp.arraySize = allLevels.Count;
+            for (int i = 0; i < allLevels.Count; i++)
+            {
+                levelsProp.GetArrayElementAtIndex(i).objectReferenceValue = allLevels[i];
+            }
+            Debug.Log($"✔ LevelSelectionPanel: {allLevels.Count} LevelData otomatik yüklendi ve sıralandı.");
             so.ApplyModifiedProperties();
 
             PrefabUtility.SaveAsPrefabAsset(root, PREFAB_PATH + "/LevelSelectionPanel.prefab");
             GameObject.DestroyImmediate(root);
+        }
+
+        // Metnin içindeki ilk sayıyı bulur ve döndürür. (Örn: "Level 10" -> 10)
+        private static int ExtractLevelNumber(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return -1;
+            
+            var match = System.Text.RegularExpressions.Regex.Match(text, @"\d+");
+            if (match.Success && int.TryParse(match.Value, out int result))
+            {
+                return result;
+            }
+            return -1;
         }
 
         // Level butonunu ayrı asset olarak kaydet ve döndür
@@ -828,9 +1054,6 @@ namespace TowerDefence.Editor
             title.rectTransform.anchoredPosition = new Vector2(0, 320);
             title.color = new Color(1f, 0.85f, 0.2f);
 
-            TextMeshProUGUI karmaText = CreateTMP(root.transform, "KarmaText", "Karma: 0", 28, 400, 40);
-            karmaText.rectTransform.anchoredPosition = new Vector2(0, 250);
-
             // Left: hero list
             GameObject scroll = new GameObject("HeroScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
             scroll.transform.SetParent(root.transform, false);
@@ -921,7 +1144,8 @@ namespace TowerDefence.Editor
             var so = new SerializedObject(shopUI);
             so.FindProperty("itemContainer").objectReferenceValue = content.transform;
             so.FindProperty("itemPrefab").objectReferenceValue = itemPrefab;
-            so.FindProperty("karmaText").objectReferenceValue = karmaText;
+            so.FindProperty("karmaText").objectReferenceValue = null;
+            so.FindProperty("crystalText").objectReferenceValue = null;
             so.FindProperty("backButton").objectReferenceValue = backBtn;
             so.FindProperty("detailPanel").objectReferenceValue = detailUI;
             so.ApplyModifiedProperties();
@@ -1411,6 +1635,7 @@ namespace TowerDefence.Editor
             root.AddComponent<CurrencyManager>();
             root.AddComponent<SpellManager>();
             root.AddComponent<MetaProgressionManager>();
+            root.AddComponent<DailyRewardManager>();
             root.AddComponent<VFXManager>();
             root.AddComponent<AudioManager>();
             root.AddComponent<SideController>();
@@ -1500,7 +1725,18 @@ namespace TowerDefence.Editor
                 string assetPath = AssetDatabase.GUIDToAssetPath(guid);
                 levelDataList.Add(AssetDatabase.LoadAssetAtPath<LevelData>(assetPath));
             }
-            levelDataList.Sort((a, b) => string.Compare(a.name, b.name, System.StringComparison.OrdinalIgnoreCase));
+            
+            // Doğal sıralama için gelişmiş sayısal ayrıştırma (Regex ile)
+            levelDataList.Sort((a, b) => {
+                string nameA = a.levelName != null ? a.levelName : a.name;
+                string nameB = b.levelName != null ? b.levelName : b.name;
+                
+                int numA = ExtractLevelNumber(nameA);
+                int numB = ExtractLevelNumber(nameB);
+                
+                if (numA != -1 && numB != -1) return numA.CompareTo(numB);
+                return string.Compare(nameA, nameB);
+            });
 
             levelsProp.arraySize = levelDataList.Count;
             for (int i = 0; i < levelDataList.Count; i++)
@@ -2503,44 +2739,22 @@ namespace TowerDefence.Editor
             if (data == null) return;
             if (data.mapPrefab != null) return; // Zaten atanmış
 
-            // 1. Mevcut haritayı ara (Gelişmiş Filtreleme)
-            string[] mapGuids = AssetDatabase.FindAssets($"{data.levelID}_Map t:GameObject");
+            string numStr = data.levelID.Replace("Level", "");
+            string safeName = data.levelName.Replace(" ", "_").Replace("'", "").Replace(":", "");
             
-            // Fallback: Sayısal önek (1._Level_Map vb. + Offset desteği)
-            if (mapGuids.Length == 0)
+            // Daha güvenilir bir arama yöntemi: Doğrudan klasördeki tüm haritaları alıp string kontrolü yapmak
+            string[] mapGuids = AssetDatabase.FindAssets("t:GameObject", new[] { "Assets/Maps" });
+            foreach (string guid in mapGuids)
             {
-                string numStr = data.levelID.Replace("Level", "");
-                if (int.TryParse(numStr, out int num))
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (path.Contains($"Level_{numStr}__") || path.Contains($"{safeName}_Map"))
                 {
-                    mapGuids = AssetDatabase.FindAssets($"{num}._Level_Map t:GameObject");
-                    if (mapGuids.Length == 0 && num > 1)
-                        mapGuids = AssetDatabase.FindAssets($"{num - 1}._Level_Map t:GameObject");
+                    data.mapPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                    break;
                 }
             }
-
-            // Fallback: Test Level veya Bölüm Adı
-            if (mapGuids.Length == 0)
-            {
-                if (data.levelID == "Level1" || data.name.ToLower().Contains("test"))
-                    mapGuids = AssetDatabase.FindAssets("Test_Level_Map t:GameObject");
-                
-                if (mapGuids.Length == 0)
-                    mapGuids = AssetDatabase.FindAssets($"{data.name}_Map t:GameObject");
-            }
-
-            if (mapGuids.Length > 0)
-            {
-                string mapPath = AssetDatabase.GUIDToAssetPath(mapGuids[0]);
-                data.mapPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(mapPath);
-            }
-            else
-            {
-                // 2. Bulunamadıysa Placeholder oluştur
-                CreatePlaceholderMap(data.levelID);
-                string mapPath = $"Assets/Maps/{data.levelID}_Map.prefab";
-                data.mapPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(mapPath);
-            }
             
+            // Eğer hala bulunamadıysa bile ARTIK PLACEHOLDER (Pembe Küre) OLUŞTURMA!
             EditorUtility.SetDirty(data);
             AssetDatabase.SaveAssets();
         }
@@ -2583,128 +2797,6 @@ namespace TowerDefence.Editor
             }
         }
 
-        public static void CreatePlaceholderMap(string levelID)
-        {
-            string mapPath = $"Assets/Maps/{levelID}_Map.prefab";
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(mapPath) != null) return;
-
-            GameObject root = new GameObject(levelID + "_Map");
-            
-            // Ground (Large)
-            GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            ground.name = "Ground";
-            ground.transform.SetParent(root.transform);
-            ground.transform.localScale = new Vector3(200, 0.1f, 200); // Sonsuzluk hissi için büyük
-            ground.GetComponent<Renderer>().material.color = new Color(0.15f, 0.15f, 0.18f);
-            ground.layer = LayerMask.NameToLayer("Default");
-
-            // Decorative Horizon (Optional)
-            GameObject horizon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            horizon.name = "HorizonSphere";
-            horizon.transform.SetParent(root.transform);
-            horizon.transform.localScale = new Vector3(1000, 1000, 1000);
-            horizon.transform.position = new Vector3(0, -500, 0);
-            horizon.GetComponent<Renderer>().material.color = new Color(0.1f, 0.1f, 0.12f);
-            var sphereCol = horizon.GetComponent<Collider>();
-            if (sphereCol != null) Object.DestroyImmediate(sphereCol);
-
-            // Visual Path (Simplified)
-            GameObject pathVisual = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            pathVisual.name = "Path_Visual";
-            pathVisual.transform.SetParent(root.transform);
-            pathVisual.transform.localScale = new Vector3(8, 0.11f, 18); // Görsel olarak daha geniş
-            pathVisual.GetComponent<Renderer>().material.color = new Color(0.4f, 0.4f, 0.45f);
-            pathVisual.layer = LayerMask.NameToLayer("Path");
-            pathVisual.GetComponent<Collider>().isTrigger = true;
-
-            // Multiple Lanes (Paths)
-            List<PathWaypoints> lanePaths = new List<PathWaypoints>();
-            string[] laneNames = { "Path_Left", "Path_Center", "Path_Right" };
-            float[] laneOffsets = { -2.5f, 0f, 2.5f };
-
-            for (int i = 0; i < laneNames.Length; i++)
-            {
-                GameObject laneGo = new GameObject(laneNames[i]);
-                laneGo.transform.SetParent(root.transform);
-                PathWaypoints laneComp = laneGo.AddComponent<PathWaypoints>();
-                lanePaths.Add(laneComp);
-
-                // Add Waypoints for this lane
-                List<Transform> wps = new List<Transform>();
-                Vector3[] points = {
-                    new Vector3(laneOffsets[i], 0.1f, -8),
-                    new Vector3(laneOffsets[i] + 4, 0.1f, -3),
-                    new Vector3(laneOffsets[i] - 4, 0.1f, 3),
-                    new Vector3(laneOffsets[i], 0.1f, 8)
-                };
-
-                for (int pIdx = 0; pIdx < points.Length; pIdx++)
-                {
-                    GameObject wp = new GameObject($"WP_{pIdx}");
-                    wp.transform.SetParent(laneGo.transform);
-                    wp.transform.position = points[pIdx];
-                    wps.Add(wp.transform);
-                }
-
-                var wpSo = new SerializedObject(laneComp);
-                var wpProp = wpSo.FindProperty("waypoints");
-                wpProp.ClearArray();
-                for (int p = 0; p < wps.Count; p++)
-                {
-                    wpProp.InsertArrayElementAtIndex(p);
-                    wpProp.GetArrayElementAtIndex(p).objectReferenceValue = wps[p];
-                }
-                wpSo.ApplyModifiedProperties();
-            }
-
-            // Kulvar Spawnerları (Start end)
-            for (int l = 0; l < 3; l++)
-            {
-                GameObject spGo = new GameObject("Spawner_Lane_" + l);
-                spGo.transform.SetParent(root.transform);
-                spGo.transform.position = new Vector3(laneOffsets[l], 0.5f, -8);
-                var sc = spGo.AddComponent<Spawner>();
-                sc.spawnerIndex = l;
-                
-                var so = new SerializedObject(sc);
-                var pProp = so.FindProperty("assignedPaths");
-                pProp.ClearArray();
-                pProp.InsertArrayElementAtIndex(0);
-                pProp.GetArrayElementAtIndex(0).objectReferenceValue = lanePaths[l];
-                so.ApplyModifiedProperties();
-                
-                so.FindProperty("spawnPoint").objectReferenceValue = spGo.transform;
-                so.ApplyModifiedProperties();
-            }
-
-            // Player Spawner (Fallback)
-            GameObject pSpawner = new GameObject("PlayerSpawner");
-            pSpawner.transform.SetParent(root.transform);
-            pSpawner.transform.position = new Vector3(-5, 0.5f, 0);
-            var pSpawnComp = pSpawner.AddComponent<Spawner>();
-            pSpawnComp.isPlayerSpawner = true;
-            
-            var pSpawnSo = new UnityEditor.SerializedObject(pSpawnComp);
-            pSpawnSo.FindProperty("spawnPoint").objectReferenceValue = pSpawner.transform;
-            pSpawnSo.ApplyModifiedProperties();
-
-            // Base
-            GameObject bse = new GameObject("Base");
-            bse.transform.SetParent(root.transform);
-            bse.transform.position = new Vector3(0, 0.5f, 8);
-            bse.AddComponent<Base>();
-            // Görsel
-            GameObject bseVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            bseVisual.transform.SetParent(bse.transform);
-            bseVisual.transform.localPosition = Vector3.zero;
-            bseVisual.transform.localScale = new Vector3(1, 0.5f, 1);
-
-            if (!AssetDatabase.IsValidFolder("Assets/Maps")) System.IO.Directory.CreateDirectory("Assets/Maps");
-            PrefabUtility.SaveAsPrefabAsset(root, mapPath);
-            GameObject.DestroyImmediate(root);
-            Debug.Log($"✔ Placeholder Map created: {mapPath}");
-            AssetDatabase.Refresh();
-        }
 
         private static void SaveAndCleanup(GameObject root, string fileName)
         {

@@ -652,10 +652,10 @@ public class EditorPrefabBuilder : Editor
             TowerData data = AssetDatabase.LoadAssetAtPath<TowerData>(AssetDatabase.GUIDToAssetPath(guid));
             if (data == null) continue;
 
-            string iconPath = $"Assets/Data/Icons/{data.name}_Icon.png";
-            Sprite iconSprite = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
+            string safeName = data.name.Replace(" ", "_");
+            Sprite iconSprite = DataAssetGenerator.FindIcon($"{safeName}_Icon");
             
-            if (iconSprite != null)
+            if (iconSprite != null && data.icon != iconSprite)
             {
                 data.icon = iconSprite;
                 EditorUtility.SetDirty(data);
@@ -670,10 +670,10 @@ public class EditorPrefabBuilder : Editor
             UnitData data = AssetDatabase.LoadAssetAtPath<UnitData>(AssetDatabase.GUIDToAssetPath(guid));
             if (data == null) continue;
 
-            string iconPath = $"Assets/Data/Icons/{data.name}_Icon.png";
-            Sprite iconSprite = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
+            string safeName = data.name.Replace(" ", "_");
+            Sprite iconSprite = DataAssetGenerator.FindIcon($"{safeName}_Icon");
             
-            if (iconSprite != null)
+            if (iconSprite != null && data.icon != iconSprite)
             {
                 data.icon = iconSprite;
                 EditorUtility.SetDirty(data);
@@ -850,6 +850,7 @@ public class EditorPrefabBuilder : Editor
             modelInstance.transform.localRotation = Quaternion.identity; 
             modelInstance.transform.localScale = Vector3.one; // Scale (1,1,1)
 
+            // --- Add Animator Component to Model Instance ---
             Animator anim = modelInstance.GetComponent<Animator>();
             if (anim == null) anim = modelInstance.AddComponent<Animator>();
             
@@ -871,6 +872,9 @@ public class EditorPrefabBuilder : Editor
             GetWeaponForUnit(unitName, out string rWeapon, out string lWeapon);
             AttachWeaponToBone(modelInstance, unitName, "RightHand", rWeapon);
             AttachWeaponToBone(modelInstance, unitName, "LeftHand", lWeapon);
+            
+            // --- Set up Fire Points for Ranged Units ---
+            EnsureRangedUnitFirePoints(root, unitName);
         }
         else
         {
@@ -994,8 +998,8 @@ public class EditorPrefabBuilder : Editor
                 weaponInstance.transform.localRotation = Quaternion.Euler(localRot);
                 weaponInstance.transform.localScale = Vector3.one; // Ensure scale is exactly (1,1,1)
 
-                if (IsRangedWeapon(weaponName))
-                    EnsureFirePointOnWeapon(weaponInstance.transform);
+                if (IsRangedWeapon(weaponName) || (!string.IsNullOrEmpty(unitName) && unitName.Contains("Cleric")))
+                    EnsureFirePointOnWeapon(weaponInstance.transform, unitName);
             }
         }
     }
@@ -1016,18 +1020,44 @@ public class EditorPrefabBuilder : Editor
         }
     }
 
-    public static void EnsureFirePointOnWeapon(Transform weaponTransform)
+    public static void EnsureFirePointOnWeapon(Transform weaponTransform, string unitName = "")
     {
         if (weaponTransform == null) return;
-        if (weaponTransform.Find("FirePoint") != null) return;
+        Transform firePoint = null;
+        foreach (Transform t in weaponTransform.GetComponentsInChildren<Transform>(true))
+        {
+            if (t.name == "FirePoint")
+            {
+                firePoint = t;
+                break;
+            }
+        }
 
-        GameObject firePoint = new GameObject("FirePoint");
-        firePoint.transform.SetParent(weaponTransform, false);
-        firePoint.transform.localPosition = CalculateWeaponTipLocal(weaponTransform.gameObject);
-        firePoint.transform.localRotation = Quaternion.identity;
+        Transform targetParent = weaponTransform;
+        Vector3 targetLocalPos = CalculateWeaponTipLocal(weaponTransform.gameObject);
+
+        if (!string.IsNullOrEmpty(unitName))
+        {
+            if (unitName.Contains("Cleric"))
+                targetLocalPos = new Vector3(-0.108f, 1.118f, 0.005f);
+            else if (unitName.Contains("Archon"))
+                targetLocalPos = new Vector3(0f, -0.1f, 0f);
+            else if (unitName.Contains("Herald"))
+                targetLocalPos = new Vector3(-0.058f, 0.666f, 0f);
+        }
+
+        if (firePoint == null)
+        {
+            GameObject firePointGo = new GameObject("FirePoint");
+            firePoint = firePointGo.transform;
+        }
+
+        firePoint.SetParent(targetParent, false);
+        firePoint.localPosition = targetLocalPos;
+        firePoint.localRotation = Quaternion.identity;
     }
 
-    public static void EnsureRangedUnitFirePoints(GameObject unitRoot)
+    public static void EnsureRangedUnitFirePoints(GameObject unitRoot, string unitName = "")
     {
         if (unitRoot == null) return;
 
@@ -1038,7 +1068,7 @@ public class EditorPrefabBuilder : Editor
         {
             string cleanName = child.name.Replace("(Clone)", "").Trim();
             if (IsRangedWeapon(cleanName))
-                EnsureFirePointOnWeapon(child);
+                EnsureFirePointOnWeapon(child, unitName);
         }
     }
 

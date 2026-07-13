@@ -77,15 +77,18 @@ namespace TowerDefence.Combat
             if (target == null) return;
 
             // Hedefin tarafını (Side) alalım ki sadece hedefle aynı taraftaki birimlere hasar verelim.
-            Unit targetUnit = target.GetComponent<Unit>();
-            Side targetSide = targetUnit != null ? targetUnit.GetSide() : Side.Dark; // Varsayılan Dark (Düşman)
+            IDamageable targetDamageable = target.GetComponentInParent<IDamageable>();
+            Side targetSide = targetDamageable != null ? targetDamageable.GetSide() : Side.Dark;
 
             Collider[] colliders = Physics.OverlapSphere(transform.position, explosionRadius);
+            System.Collections.Generic.HashSet<IDamageable> damagedEntities = new System.Collections.Generic.HashSet<IDamageable>();
+
             foreach (Collider collider in colliders)
             {
-                Unit unit = collider.GetComponent<Unit>();
-                if (unit != null && unit.GetSide() == targetSide)
+                IDamageable dmg = collider.GetComponentInParent<IDamageable>();
+                if (dmg != null && dmg.GetSide() == targetSide && !damagedEntities.Contains(dmg))
                 {
+                    damagedEntities.Add(dmg);
                     Damage(collider.transform);
                 }
             }

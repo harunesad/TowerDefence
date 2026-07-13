@@ -334,11 +334,7 @@ namespace TowerDefence.Combat
                         Unit unit = col.GetComponent<Unit>();
                         if (unit == null) continue;
 
-                        // Unit sınıfında currentHealth private, ama UnitData'dan veya başka yoldan çekebiliriz
-                        // Şimdilik Unit scriptine bir getter eklediğimizi varsayalım veya can barından alalım
-                        // Ama UnitData'dan çekmek yerine Unit instance'ından çekmek daha mantıklı.
-                        // Unit scriptine GetHealth() eklemem gerekecek.
-                        float h = unit.GetComponent<Unit>().GetHealth(); 
+                        float h = unit.GetHealth(); 
                         if (h > maxHealth)
                         {
                             maxHealth = h;

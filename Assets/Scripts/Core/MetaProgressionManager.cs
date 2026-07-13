@@ -25,6 +25,8 @@ namespace TowerDefence.Core
     public class SaveData
     {
         public int totalKarma;
+        public int totalCrystals; // Yeni ikinci para birimi
+        public long lastDailyRewardTime; // Son günlük ödül zamanı (Ticks)
         public List<string> unlockedSkillIDs = new List<string>();
         public List<string> unlockedSpellIDs = new List<string>(); // Açılan aktif büyüler
         public List<string> equippedSpellIDs = new List<string>(); // Kuşatılan büyüler
@@ -85,9 +87,25 @@ namespace TowerDefence.Core
             SaveGame();
         }
 
+        public void AddCrystals(int amount)
+        {
+            saveData.totalCrystals += amount;
+            SaveGame();
+        }
+
+        public int GetTotalCrystals() => saveData.totalCrystals;
+
+        public long GetLastDailyRewardTime() => saveData.lastDailyRewardTime;
+
+        public void SetLastDailyRewardTime(long ticks)
+        {
+            saveData.lastDailyRewardTime = ticks;
+            SaveGame();
+        }
+
         public bool TryUnlockSkill(SkillNodeData skill)
         {
-            if (saveData.totalKarma >= skill.karmaCost && !IsSkillUnlocked(skill.skillID))
+            if (saveData.totalKarma >= skill.karmaCost && saveData.totalCrystals >= skill.crystalCost && !IsSkillUnlocked(skill.skillID))
             {
                 // Önkoşul kontrolü
                 foreach (var req in skill.requiredSkills)
@@ -96,6 +114,7 @@ namespace TowerDefence.Core
                 }
 
                 saveData.totalKarma -= skill.karmaCost;
+                saveData.totalCrystals -= skill.crystalCost;
                 saveData.unlockedSkillIDs.Add(skill.skillID);
 
                 // Eğer bu yetenek bir büyü açıyorsa, büyüyü de ekle
@@ -194,9 +213,10 @@ namespace TowerDefence.Core
         public bool TryUnlockHero(HeroData hero)
         {
             if (hero == null || IsHeroUnlocked(hero.heroID)) return false;
-            if (saveData.totalKarma < hero.unlockKarmaCost) return false;
+            if (saveData.totalKarma < hero.unlockKarmaCost || saveData.totalCrystals < hero.unlockCrystalCost) return false;
 
             saveData.totalKarma -= hero.unlockKarmaCost;
+            saveData.totalCrystals -= hero.unlockCrystalCost;
             saveData.unlockedHeroIDs.Add(hero.heroID);
             saveData.heroProgressList.Add(new HeroProgressEntry { heroID = hero.heroID, level = 1 });
             SaveGame();
@@ -210,9 +230,10 @@ namespace TowerDefence.Core
 
             int currentLevel = GetHeroLevel(hero.heroID);
             if (currentLevel >= hero.maxUpgradeLevel) return false;
-            if (saveData.totalKarma < hero.upgradeKarmaCost) return false;
+            if (saveData.totalKarma < hero.upgradeKarmaCost || saveData.totalCrystals < hero.upgradeCrystalCost) return false;
 
             saveData.totalKarma -= hero.upgradeKarmaCost;
+            saveData.totalCrystals -= hero.upgradeCrystalCost;
             HeroProgressEntry entry = saveData.heroProgressList.Find(p => p.heroID == hero.heroID);
             if (entry == null)
             {

@@ -37,21 +37,44 @@ namespace TowerDefence.Combat
             
             if (currentShieldAmount > 0)
             {
-                currentShieldAmount -= amount;
-                Debug.Log($"Shield absorbed damage! Current Shield: {currentShieldAmount}");
-                
-                if (currentShieldAmount <= 0)
+                if (currentShieldAmount >= amount)
                 {
+                    currentShieldAmount -= amount;
+                    Debug.Log($"Shield absorbed damage! Current Shield: {currentShieldAmount}");
+                }
+                else
+                {
+                    float remainingDamage = amount - currentShieldAmount;
                     currentShieldAmount = 0;
                     isBroken = true;
                     Debug.Log("Shield Broken!");
+                    
+                    // Taşan hasarı ana birime ilet
+                    SendMessageUpwards("TakeHealthDamage", remainingDamage, SendMessageOptions.DontRequireReceiver);
                 }
             }
             else
             {
                 // Kalkan yoksa hasar ana birime geçer
-                // Bu bileşen Unit bileşeniyle aynı objede olmalı ve Unit.TakeDamage çağrılmalı
                 SendMessageUpwards("TakeHealthDamage", amount, SendMessageOptions.DontRequireReceiver);
+            }
+        }
+
+        public float AbsorbDamage(float amount)
+        {
+            lastDamageTime = Time.time;
+            
+            if (currentShieldAmount >= amount)
+            {
+                currentShieldAmount -= amount;
+                return 0f;
+            }
+            else
+            {
+                float remaining = amount - currentShieldAmount;
+                currentShieldAmount = 0;
+                isBroken = true;
+                return remaining;
             }
         }
 

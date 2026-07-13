@@ -243,8 +243,18 @@ namespace TowerDefence.Core
                 ? lastMovePoints[slot]
                 : GetDefaultSpawnPoint() + GetSpawnOffset(slot);
 
+            // Eğer kahraman zaten sahnedeyse yeniden oluşturma, respawn et
+            if (activeHeroes[slot] != null)
+            {
+                activeHeroes[slot].Respawn(spawnPos);
+                activeHeroes[slot].SetMoveDestination(spawnPos);
+                OnHeroSpawned?.Invoke(slot, activeHeroes[slot]);
+                return;
+            }
+
             GameObject heroGO = Instantiate(data.unitData.prefab, spawnPos, Quaternion.identity);
-            heroGO.transform.localScale = new Vector3(6f, 6f, 6f);
+            heroGO.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+            heroGO.transform.position = new Vector3(spawnPos.x, 0.2f, spawnPos.z);
             
             HeroUnit hero = heroGO.GetComponent<HeroUnit>();
             if (hero == null)
@@ -267,7 +277,7 @@ namespace TowerDefence.Core
             if (selectedHero == activeHeroes[slot])
                 DeselectHero();
 
-            activeHeroes[slot] = null;
+            // activeHeroes[slot] = null; // Nesneyi koruyoruz, null yapma!
             respawnTimers[slot] = globalRespawnCooldown;
             OnHeroDied?.Invoke(slot);
         }
@@ -279,11 +289,52 @@ namespace TowerDefence.Core
 
         private Vector3 GetDefaultSpawnPoint()
         {
+            // Tüm yolları bul ve en uzun (en çok waypoint'e sahip) olanı seç
+            PathWaypoints[] allPaths = Object.FindObjectsByType<PathWaypoints>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            
+            PathWaypoints mainPath = null;
+            int maxWps = 0;
+
+            foreach (var path in allPaths)
+            {
+                var wps = path.GetWaypoints();
+                if (wps != null && wps.Count > maxWps)
+                {
+                    maxWps = wps.Count;
+                    mainPath = path;
+                }
+            }
+
+            if (mainPath != null)
+            {
+                var waypoints = mainPath.GetWaypoints();
+                if (waypoints != null && waypoints.Count > 0)
+                {
+                    // Özel Durum: Sadece 2 waypoint varsa, ikisinin tam ortasını hesapla
+                    if (waypoints.Count == 2 && waypoints[0] != null && waypoints[1] != null)
+                    {
+                        Debug.Log($"[HeroManager] Spawning heroes at mathematical middle of 2-point path '{mainPath.name}'");
+                        return (waypoints[0].position + waypoints[1].position) * 0.5f;
+                    }
+
+                    // Genel Durum: 2'den fazla waypoint varsa, orta noktadaki waypoint'i seç
+                    int midIndex = waypoints.Count / 2;
+                    if (waypoints[midIndex] != null)
+                    {
+                        Debug.Log($"[HeroManager] Spawning heroes at middle waypoint {midIndex} of path '{mainPath.name}'");
+                        return waypoints[midIndex].position;
+                    }
+                }
+            }
+
+            // Yedek: Eğer yol bulunamazsa player spawner'ı kullan
             foreach (var spawner in Spawner.AllSpawners)
             {
-                if (spawner.isPlayerSpawner)
+                if (spawner != null && spawner.isPlayerSpawner)
                     return spawner.transform.position;
             }
+
+            // Son çare: Sahne merkezi veya sıfır noktası
             return Vector3.zero;
         }
 

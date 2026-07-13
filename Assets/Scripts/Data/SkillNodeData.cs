@@ -27,6 +27,7 @@ namespace TowerDefence.Data
 
         [Header("Unlock Settings")]
         public int karmaCost;
+        public int crystalCost; // Yeni: Kristal maliyeti
         public List<SkillNodeData> requiredSkills;
 
         [Header("Effect Settings")]
@@ -34,6 +35,9 @@ namespace TowerDefence.Data
         public float multiplier = 1.1f; // %10 artış için 1.1
         public SpellData grantedSpell; // Eğer upgradeType == UnlockSpell ise bu büyü açılır
         public Side side; // Hangi tarafa ait olduğunu belirtir (Aydınlık/Karanlık/Genel)
+
+        [Header("Visual Layout")]
+        public Vector2 visualPosition; // Skill Tree üzerindeki konumu
 
         public bool IsUnlocked()
         {

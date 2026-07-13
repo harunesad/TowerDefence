@@ -21,6 +21,7 @@ namespace TowerDefence.Combat
         private HeroSelectionIndicator selectionIndicator;
         private float abilityCooldownTimer;
         private bool isMovingToManualTarget;
+        public bool IsMovingToManualTarget => isMovingToManualTarget;
 
         public bool IsSelected => selectionIndicator != null &&
             selectionIndicator.CurrentState == HeroSelectionState.Active;
@@ -46,8 +47,63 @@ namespace TowerDefence.Combat
                 col.isTrigger = false;
             }
 
+            // Ölçeği ayarla (Gereksinim: Herolar scale (1.5, 1.5, 1.5))
+            transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+            transform.position = new Vector3(transform.position.x, 0.2f, transform.position.z);
+
             SetSelectionState(HeroSelectionState.Passive);
             abilityCooldownTimer = 0f;
+        }
+
+        private void OnEnable()
+        {
+            if (PhaseManager.Instance != null)
+                PhaseManager.Instance.OnPhaseChanged += HandlePhaseChanged;
+        }
+
+        private void OnDisable()
+        {
+            if (PhaseManager.Instance != null)
+                PhaseManager.Instance.OnPhaseChanged -= HandlePhaseChanged;
+        }
+
+        private void HandlePhaseChanged(GamePhase phase)
+        {
+            // Dalga bittiğinde (Hazırlık fazına geçildiğinde) animasyonu sıfırla
+            if (phase == GamePhase.Preparation)
+            {
+                ResetHeroAnimationState();
+            }
+        }
+
+        private void ResetHeroAnimationState()
+        {
+            if (IsDead) return;
+
+            // 1. Animasyonları Idle'a çek
+            if (animator != null)
+            {
+                animator.SetBool("IsMoving", false);
+                animator.speed = 1f;
+                // Triggers temizliği
+                animator.ResetTrigger("Attack");
+                animator.ResetTrigger("Ability");
+                // Sert sıfırlama: Idle animasyonuna anında geç
+                animator.Play("Idle", 0, 0f);
+            }
+
+            // 2. Saldırı ve Hareket durumlarını temizle
+            isAttacking = false;
+            isMovingToManualTarget = false;
+            hasMoveDestination = false;
+            StopAllCoroutines(); // PerformAttack korutinini durdurur
+            ClearTarget();       // Hedefi ve engellemeyi temizler
+
+            // 3. Ölçeği tekrar garanti et
+            transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+            transform.position = new Vector3(transform.position.x, 0.2f, transform.position.z);
+
+            Debug.Log($"[HeroReset] {gameObject.name} FORCED to Idle and state cleared.");
         }
 
         public void SetMoveDestination(Vector3 point)
@@ -55,6 +111,18 @@ namespace TowerDefence.Combat
             moveDestination = point;
             hasMoveDestination = true;
             isMovingToManualTarget = true;
+            
+            // Mevcut saldırı ve hedef eylemlerini anında iptal et
+            StopAllCoroutines();
+            isAttacking = false;
+            
+            if (animator != null)
+            {
+                animator.speed = 1f;
+                animator.ResetTrigger("Attack");
+                animator.SetBool("IsMoving", true);
+            }
+            
             ClearTarget();
         }
 
@@ -92,14 +160,37 @@ namespace TowerDefence.Combat
         {
             if (IsDead) return;
 
-            if (PhaseManager.Instance != null &&
-                PhaseManager.Instance.GetCurrentPhase() == GamePhase.Combat)
+            GamePhase currentPhase = PhaseManager.Instance != null ? PhaseManager.Instance.GetCurrentPhase() : GamePhase.Preparation;
+
+            if (currentPhase == GamePhase.Combat)
             {
                 base.Update();
                 TickAbility();
+
+                // KRİTİK DÜZELTME: Hedef yoksa veya öldüyse, saldırı animasyonunda takılı kalma!
+                IDamageable currentTarget = GetTarget();
+                if (currentTarget == null || currentTarget.IsDead)
+                {
+                    if (isAttacking || (animator != null && animator.GetCurrentAnimatorStateInfo(0).IsName("Attack")))
+                    {
+                        ResetHeroAnimationState();
+                    }
+                }
+
+                // Saldırı bittiyse ve hareket etmiyorsak animasyonu Idle'a zorla
+                if (!isAttacking && !isMovingToManualTarget && !IsBlocked && animator != null)
+                {
+                    if (animator.GetBool("IsMoving")) animator.SetBool("IsMoving", false);
+                    animator.ResetTrigger("Attack");
+                }
             }
-            else if (!IsAttacking() && GetTarget() == null)
+            else 
             {
+                // Combat fazı dışındayken saldırı veya hedef varsa temizle
+                if (isAttacking || GetTarget() != null)
+                {
+                    ResetHeroAnimationState();
+                }
                 TryMoveToManualDestination();
             }
         }
@@ -115,7 +206,38 @@ namespace TowerDefence.Combat
             }
 
             if (TryUseAbility())
+            {
                 abilityCooldownTimer = heroConfig.abilityCooldown;
+                CheckAndPlayAbilityAnimation();
+            }
+        }
+
+        private void CheckAndPlayAbilityAnimation()
+        {
+            if (animator == null || heroConfig == null) return;
+
+            // Sadece vuruş/hasar odaklı yeteneklerde "Ability" animasyonunu tetikle
+            switch (heroConfig.abilityType)
+            {
+                case HeroAbilityType.ArrowRain:
+                case HeroAbilityType.SwiftStrike:
+                case HeroAbilityType.SolarSmite:
+                case HeroAbilityType.LifeDrain:
+                case HeroAbilityType.SoulExecute:
+                case HeroAbilityType.GroundSlam:
+                case HeroAbilityType.PlagueCloud:
+                    animator.SetTrigger("Ability");
+                    break;
+                
+                // Pasif veya iyileştirme gibi destek yetenekleri animasyon oynatmaz
+                case HeroAbilityType.RallyHeal:
+                case HeroAbilityType.HolyShield:
+                case HeroAbilityType.FortifyTaunt:
+                case HeroAbilityType.BoneArmor:
+                case HeroAbilityType.ShadowStep:
+                default:
+                    break;
+            }
         }
 
         private bool TryUseAbility()
@@ -126,12 +248,14 @@ namespace TowerDefence.Combat
             {
                 case HeroAbilityType.RallyHeal:
                     Heal(GetMaxHealth() * 0.15f * heroConfig.abilityPower);
+                    if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(VFXType.HealingAura, transform.position, Quaternion.identity);
                     return true;
 
                 case HeroAbilityType.HolyShield:
                     if (GetHealth() / GetMaxHealth() <= 0.35f)
                     {
                         Heal(GetMaxHealth() * 0.2f * heroConfig.abilityPower);
+                        if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(VFXType.HealingAura, transform.position, Quaternion.identity);
                         return true;
                     }
                     return false;
@@ -159,6 +283,7 @@ namespace TowerDefence.Combat
                         float dmg = heroConfig.abilityPower * 20f;
                         target.TakeDamage(dmg);
                         Heal(dmg * 0.5f);
+                        if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(VFXType.HealingAura, transform.position, Quaternion.identity);
                         return true;
                     }
                     return false;
@@ -180,6 +305,7 @@ namespace TowerDefence.Combat
 
                 case HeroAbilityType.BoneArmor:
                     Heal(GetMaxHealth() * 0.12f * heroConfig.abilityPower);
+                    if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(VFXType.HealingAura, transform.position, Quaternion.identity);
                     return true;
 
                 case HeroAbilityType.ShadowStep:
@@ -253,7 +379,86 @@ namespace TowerDefence.Combat
         {
             SetSelectionState(HeroSelectionState.Hidden);
             onDeathCallback?.Invoke(this);
-            base.Die();
+            
+            // Bizi engelleyen varsa onu boşa çıkar
+            if (currentBlocker != null)
+            {
+                currentBlocker.OnBlockedEnemyDied(this);
+                currentBlocker = null;
+            }
+            isBlocked = false;
+
+            // Bizim engellediğimiz düşmanlar varsa onları serbest bırak
+            foreach (var enemy in blockedEnemies)
+            {
+                if (enemy != null) enemy.Unblock();
+            }
+            blockedEnemies.Clear();
+
+            // Unit.Die()'daki Destroy'u engellemek için base.Die() çağırmıyoruz
+            isDead = true;
+            isMovingToManualTarget = false;
+            hasMoveDestination = false;
+            
+            Collider col = GetComponent<Collider>();
+            if (col != null) col.enabled = false;
+            
+            if (animator != null) 
+            {
+                animator.speed = 1f;
+                animator.SetBool("IsMoving", false);
+                animator.SetTrigger("Die");
+            }
+            if (healthBar != null) healthBar.SetVisible(false);
+
+            Debug.Log($"[HeroUnit] {gameObject.name} is down. Released units and cleared move state.");
+
+            // Ölüm efekti
+            if (VFXManager.Instance != null)
+                VFXManager.Instance.SpawnVFX(VFXType.UnitDeath, transform.position, Quaternion.identity);
+
+            if (AudioManager.Instance != null && unitData.deathSFX != null)
+                AudioManager.Instance.PlaySFX(unitData.deathSFX);
+
+            // Ekonomi ödülü
+            Side opponentSide = GetSide() == Side.Light ? Side.Dark : Side.Light;
+            CurrencyManager.Instance.AddCurrency(opponentSide, unitData.killReward);
+        }
+
+        public void Respawn(Vector3 position)
+        {
+            isDead = false;
+            isBlocked = false;
+            currentBlocker = null;
+            blockedEnemies.Clear();
+            isMovingToManualTarget = false;
+            hasMoveDestination = false;
+
+            currentHealth = GetMaxHealth();
+            transform.position = new Vector3(position.x, 0.2f, position.z);
+            transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+            
+            Collider col = GetComponent<Collider>();
+            if (col != null) col.enabled = true;
+            
+            if (healthBar != null)
+            {
+                healthBar.UpdateHealth(currentHealth, GetMaxHealth());
+                healthBar.SetVisible(true);
+            }
+
+            if (animator != null)
+            {
+                animator.Rebind();
+                animator.Update(0f);
+                animator.SetBool("IsMoving", false);
+            }
+
+            // Respawn efekti
+            if (VFXManager.Instance != null)
+                VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, transform.position, Quaternion.identity);
+
+            Debug.Log($"[HeroUnit] {gameObject.name} respawned and state fully reset.");
         }
     }
 }

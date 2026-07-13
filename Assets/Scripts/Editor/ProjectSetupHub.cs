@@ -45,6 +45,8 @@ namespace TowerDefence.Editor
                     UIMasterPrefabCreator.CreateLevelResultUIPrefab();
                     UIMasterPrefabCreator.CreateSpellSlotPrefabs();
                     UIMasterPrefabCreator.CreateUnitButtonPrefab();
+                    UIMasterPrefabCreator.CreateTowerSlotPrefab();
+                    UIMasterPrefabCreator.CreateCompendiumPanelPrefab();
 
                     // 4. Configurations
                     DataAssetGenerator.ConfigureTowerPrefabs();
