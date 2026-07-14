@@ -2115,9 +2115,101 @@ public class DataAssetGenerator : Editor
     private static List<LevelPath> GetPathsForLevel(int lvlIdx)
     {
         List<LevelPath> paths = new List<LevelPath>();
+
+        // --- Level 11-19: Özel Harita Tasarımları ---
+        switch (lvlIdx)
+        {
+            case 11: // Z-Shape
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(-30, 0, 30), new Vector3(20, 0, 30), new Vector3(20, 0, 10),
+                    new Vector3(-15, 0, 10), new Vector3(-15, 0, -10), new Vector3(20, 0, -10),
+                    new Vector3(20, 0, -30), new Vector3(30, 0, -30) } });
+                return paths;
+            case 12: // S-Curve (Dual Path)
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(10, 0, 30), new Vector3(10, 0, 15), new Vector3(-20, 0, 5),
+                    new Vector3(-20, 0, -10), new Vector3(0, 0, -25), new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(10, 0, 30), new Vector3(10, 0, 15), new Vector3(25, 0, 5),
+                    new Vector3(25, 0, -10), new Vector3(0, 0, -25), new Vector3(0, 0, -30) } });
+                return paths;
+            case 13: // Y-Merge
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(-20, 0, 30), new Vector3(-12, 0, 15), new Vector3(0, 0, 0),
+                    new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> {
+                    new Vector3(20, 0, 30), new Vector3(12, 0, 15), new Vector3(0, 0, 0),
+                    new Vector3(0, 0, -30) } });
+                return paths;
+            case 14: // Loop/Spiral
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(-30, 0, -10), new Vector3(-30, 0, 30), new Vector3(20, 0, 30),
+                    new Vector3(20, 0, 10), new Vector3(-10, 0, 10), new Vector3(-10, 0, -10),
+                    new Vector3(20, 0, -10), new Vector3(20, 0, -30), new Vector3(30, 0, -30) } });
+                return paths;
+            case 15: // Y with extra branches (2 spawners)
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(-15, 0, 30), new Vector3(-10, 0, 15), new Vector3(0, 0, 0),
+                    new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> {
+                    new Vector3(15, 0, 30), new Vector3(10, 0, 15), new Vector3(0, 0, 0),
+                    new Vector3(0, 0, -30) } });
+                // Sağa sapan dal
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(-15, 0, 30), new Vector3(-10, 0, 15), new Vector3(0, 0, 0),
+                    new Vector3(15, 0, -10), new Vector3(15, 0, -25), new Vector3(0, 0, -30) } });
+                return paths;
+            case 16: // 3-Way Merge (3 spawners zigzag)
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(-25, 0, 30), new Vector3(-20, 0, 10), new Vector3(-10, 0, -5),
+                    new Vector3(0, 0, -20), new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> {
+                    new Vector3(0, 0, 30), new Vector3(0, 0, 10), new Vector3(0, 0, -5),
+                    new Vector3(0, 0, -20), new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 2, points = new List<Vector3> {
+                    new Vector3(25, 0, 30), new Vector3(20, 0, 10), new Vector3(10, 0, -5),
+                    new Vector3(0, 0, -20), new Vector3(0, 0, -30) } });
+                return paths;
+            case 17: // O-Shape (Split & Merge)
+                // Sol kol
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(0, 0, 30), new Vector3(0, 0, 15), new Vector3(-20, 0, 15),
+                    new Vector3(-20, 0, -15), new Vector3(0, 0, -15), new Vector3(0, 0, -30) } });
+                // Sağ kol
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(0, 0, 30), new Vector3(0, 0, 15), new Vector3(20, 0, 15),
+                    new Vector3(20, 0, -15), new Vector3(0, 0, -15), new Vector3(0, 0, -30) } });
+                return paths;
+            case 18: // Inverted Y (Base üstte, spawnerlar altta)
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(-25, 0, -30), new Vector3(-12, 0, -10), new Vector3(0, 0, 0),
+                    new Vector3(0, 0, 30) } });
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> {
+                    new Vector3(25, 0, -30), new Vector3(12, 0, -10), new Vector3(0, 0, 0),
+                    new Vector3(0, 0, 30) } });
+                return paths;
+            case 19: // Diamond/X (3 spawner + karmaşık çapraz)
+                // Üstten düz aşağı
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(0, 0, 30), new Vector3(0, 0, 15), new Vector3(-15, 0, 0),
+                    new Vector3(0, 0, -15), new Vector3(0, 0, -30) } });
+                paths.Add(new LevelPath { spawnerIndex = 0, points = new List<Vector3> {
+                    new Vector3(0, 0, 30), new Vector3(0, 0, 15), new Vector3(15, 0, 0),
+                    new Vector3(0, 0, -15), new Vector3(0, 0, -30) } });
+                // Soldan
+                paths.Add(new LevelPath { spawnerIndex = 1, points = new List<Vector3> {
+                    new Vector3(-30, 0, 0), new Vector3(-15, 0, 0), new Vector3(0, 0, -15),
+                    new Vector3(0, 0, -30) } });
+                // Sağdan
+                paths.Add(new LevelPath { spawnerIndex = 2, points = new List<Vector3> {
+                    new Vector3(30, 0, 0), new Vector3(15, 0, 0), new Vector3(0, 0, -15),
+                    new Vector3(0, 0, -30) } });
+                return paths;
+        }
+
+        // --- Level 1-10 ve 20+ için mevcut layout sistemi ---
         int layout = lvlIdx % 10;
-        
-        if (lvlIdx == 50) layout = 0; // Level 50 is the ultimate 4-corner layout
+        if (lvlIdx == 50) layout = 0;
 
         switch (layout)
         {
@@ -2175,6 +2267,21 @@ public class DataAssetGenerator : Editor
     private static List<Vector3> GetBasesForLevel(int lvlIdx)
     {
         List<Vector3> bases = new List<Vector3>();
+
+        // --- Level 11-19 özel base noktaları ---
+        switch (lvlIdx)
+        {
+            case 11: bases.Add(new Vector3(30, 0, -30)); return bases;
+            case 12: bases.Add(new Vector3(0, 0, -30)); return bases;
+            case 13: bases.Add(new Vector3(0, 0, -30)); return bases;
+            case 14: bases.Add(new Vector3(30, 0, -30)); return bases;
+            case 15: bases.Add(new Vector3(0, 0, -30)); return bases;
+            case 16: bases.Add(new Vector3(0, 0, -30)); return bases;
+            case 17: bases.Add(new Vector3(0, 0, -30)); return bases;
+            case 18: bases.Add(new Vector3(0, 0, 30)); return bases;  // Base ÜSTTE!
+            case 19: bases.Add(new Vector3(0, 0, -30)); return bases;
+        }
+
         int layout = lvlIdx % 10;
         if (lvlIdx == 50) layout = 0;
 
@@ -2201,6 +2308,101 @@ public class DataAssetGenerator : Editor
     private static List<Vector3> GetCustomSlotsForLevel(int lvlIdx)
     {
         List<Vector3> slots = new List<Vector3>();
+
+        // --- Level 11-19 özel tower slot konumları ---
+        switch (lvlIdx)
+        {
+            case 11: // Z-Shape: yol boyunca dağılmış 7 slot
+                slots.Add(new Vector3(-5, 0, 20));   // Z'nin üst kenarı
+                slots.Add(new Vector3(10, 0, 20));   // Z'nin üst kenarı
+                slots.Add(new Vector3(30, 0, 15));   // Sağ üst köşe
+                slots.Add(new Vector3(5, 0, 5));     // Orta çapraz
+                slots.Add(new Vector3(-25, 0, 0));   // Sol orta
+                slots.Add(new Vector3(-5, 0, -5));   // Orta
+                slots.Add(new Vector3(10, 0, -20));  // Alt sağ
+                slots.Add(new Vector3(-25, 0, -20)); // Alt sol
+                slots.Add(new Vector3(5, 0, -25));   // Sağ alt köşe
+                return slots;
+            case 12: // S-Curve: sol ve sağ tarafa 7 slot
+                slots.Add(new Vector3(-15, 0, 20));  // Sol üst
+                slots.Add(new Vector3(-10, 0, 10));  // Sol orta üst
+                slots.Add(new Vector3(-25, 0, -5));  // Sol kıvrım
+                slots.Add(new Vector3(-10, 0, -15)); // Sol alt
+                slots.Add(new Vector3(20, 0, 15));   // Sağ üst
+                slots.Add(new Vector3(15, 0, -5));   // Sağ orta
+                slots.Add(new Vector3(10, 0, -20));  // Sağ alt
+                return slots;
+            case 13: // Y-Merge: 9 diamond slot
+                slots.Add(new Vector3(-20, 0, 15));  // Sol kol üst
+                slots.Add(new Vector3(-10, 0, 5));   // Sol kol alt
+                slots.Add(new Vector3(20, 0, 15));   // Sağ kol üst
+                slots.Add(new Vector3(10, 0, 5));    // Sağ kol alt
+                slots.Add(new Vector3(-8, 0, -8));   // Birleşim sol
+                slots.Add(new Vector3(8, 0, -8));    // Birleşim sağ
+                slots.Add(new Vector3(-5, 0, -18));  // Gövde sol
+                slots.Add(new Vector3(5, 0, -18));   // Gövde sağ
+                slots.Add(new Vector3(0, 0, -25));   // Alt orta
+                return slots;
+            case 14: // Loop: 9 slot
+                slots.Add(new Vector3(-20, 0, 20));  // Üst sol iç
+                slots.Add(new Vector3(5, 0, 20));    // Üst orta
+                slots.Add(new Vector3(10, 0, 20));   // Üst sağ
+                slots.Add(new Vector3(-20, 0, 5));   // Sol orta
+                slots.Add(new Vector3(5, 0, 0));     // Merkez
+                slots.Add(new Vector3(-20, 0, -20)); // Sol alt
+                slots.Add(new Vector3(5, 0, -20));   // Alt orta
+                slots.Add(new Vector3(10, 0, -20));  // Alt sağ
+                slots.Add(new Vector3(30, 0, 0));    // Sağ kenar
+                return slots;
+            case 15: // Y branches: 8 diamond slot
+                slots.Add(new Vector3(-15, 0, 15));  // Sol üst
+                slots.Add(new Vector3(-8, 0, 5));    // Sol orta
+                slots.Add(new Vector3(15, 0, 15));   // Sağ üst
+                slots.Add(new Vector3(8, 0, 5));     // Sağ orta
+                slots.Add(new Vector3(20, 0, -5));   // Sağ dal
+                slots.Add(new Vector3(20, 0, -20));  // Sağ dal alt
+                slots.Add(new Vector3(-8, 0, -15));  // Orta sol
+                slots.Add(new Vector3(8, 0, -15));   // Orta sağ
+                return slots;
+            case 16: // 3-Way Merge: 6 slot (diamond + kare)
+                slots.Add(new Vector3(-20, 0, 20));  // Sol üst
+                slots.Add(new Vector3(-12, 0, 0));   // Sol orta
+                slots.Add(new Vector3(12, 0, 0));    // Sağ orta
+                slots.Add(new Vector3(20, 0, 20));   // Sağ üst
+                slots.Add(new Vector3(-8, 0, -15));  // Alt sol
+                slots.Add(new Vector3(8, 0, -15));   // Alt sağ
+                return slots;
+            case 17: // O-Shape: 8 kare slot dikdörtgenin etrafında
+                slots.Add(new Vector3(-10, 0, 25));  // Üst sol
+                slots.Add(new Vector3(10, 0, 25));   // Üst sağ
+                slots.Add(new Vector3(-30, 0, 5));   // Sol üst
+                slots.Add(new Vector3(-30, 0, -5));  // Sol alt
+                slots.Add(new Vector3(30, 0, 5));    // Sağ üst
+                slots.Add(new Vector3(30, 0, -5));   // Sağ alt
+                slots.Add(new Vector3(-10, 0, -25)); // Alt sol
+                slots.Add(new Vector3(10, 0, -25));  // Alt sağ
+                return slots;
+            case 18: // Inverted Y: 6 kare slot
+                slots.Add(new Vector3(-8, 0, 15));   // Üst sol
+                slots.Add(new Vector3(8, 0, 15));    // Üst sağ
+                slots.Add(new Vector3(-8, 0, 5));    // Orta sol
+                slots.Add(new Vector3(8, 0, 5));     // Orta sağ
+                slots.Add(new Vector3(-15, 0, -15)); // Alt sol
+                slots.Add(new Vector3(15, 0, -15));  // Alt sağ
+                return slots;
+            case 19: // Diamond/X: 8 diamond slot
+                slots.Add(new Vector3(0, 0, 10));    // Üst
+                slots.Add(new Vector3(-10, 0, 10));  // Üst sol
+                slots.Add(new Vector3(10, 0, 10));   // Üst sağ
+                slots.Add(new Vector3(-10, 0, -10)); // Alt sol
+                slots.Add(new Vector3(10, 0, -10));  // Alt sağ
+                slots.Add(new Vector3(-20, 0, -10)); // Sol kenar
+                slots.Add(new Vector3(20, 0, -10));  // Sağ kenar
+                slots.Add(new Vector3(0, 0, -20));   // Alt
+                return slots;
+        }
+
+        // --- Level 1-10 ve 20+ için mevcut layout sistemi ---
         int layout = lvlIdx % 10;
         if (lvlIdx == 50) layout = 0;
 
@@ -2298,6 +2500,20 @@ public class DataAssetGenerator : Editor
 
     private static int GetSpawnerCountForLevel(int lvlIdx)
     {
+        // --- Level 11-19 özel spawner sayıları ---
+        switch (lvlIdx)
+        {
+            case 11: return 1;  // Z-Shape: 1 spawner
+            case 12: return 1;  // S-Curve: 1 spawner (çift yol ama aynı noktadan)
+            case 13: return 2;  // Y-Merge: 2 spawner
+            case 14: return 1;  // Loop: 1 spawner
+            case 15: return 2;  // Y branches: 2 spawner
+            case 16: return 3;  // 3-Way: 3 spawner
+            case 17: return 1;  // O-Shape: 1 spawner (üstten bölünme)
+            case 18: return 2;  // Inverted Y: 2 spawner (alttan)
+            case 19: return 3;  // Diamond: 3 spawner (üst + sol + sağ)
+        }
+
         int layout = lvlIdx % 10;
         if (lvlIdx == 50) layout = 0;
 
@@ -2473,7 +2689,15 @@ public class DataAssetGenerator : Editor
         EditorUtility.SetDirty(level);
         
         // HARİTA PREFAB'INI DİNAMİK OLARAK OLUŞTUR
-        GenerateMapPrefab(level);
+        // Level 1-10 zaten kullanıcı tarafından düzenlendi, yeniden oluşturma!
+        int lvlNum = 0;
+        var lvlMatch = System.Text.RegularExpressions.Regex.Match(id, @"\d+");
+        if (lvlMatch.Success) int.TryParse(lvlMatch.Value, out lvlNum);
+        
+        if (lvlNum > 10)
+        {
+            GenerateMapPrefab(level);
+        }
     }
 
     private static void GenerateMapPrefab(LevelData level)
