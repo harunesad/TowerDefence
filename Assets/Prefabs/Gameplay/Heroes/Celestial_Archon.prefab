@@ -86,7 +86,7 @@ GameObject:
   - component: {fileID: 9069496709650642130}
   - component: {fileID: 5434795008457682392}
   - component: {fileID: 3249503071257404613}
-  - component: {fileID: 8886157831311040096}
+  - component: {fileID: 2936868637336049137}
   m_Layer: 6
   m_Name: Celestial_Archon
   m_TagString: Untagged
@@ -156,7 +156,7 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
---- !u!114 &8886157831311040096
+--- !u!114 &2936868637336049137
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -204,8 +204,39 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8200969500350508756}
+  - {fileID: 8559142459054644225}
   m_Father: {fileID: 9069496709650642130}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4080430808990833099
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4150322003741143745}
+  m_Layer: 6
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4150322003741143745
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4080430808990833099}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5576590013994292310}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4934191336533711301
 GameObject:
@@ -283,37 +314,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!1 &8108707763478646865
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8190343682042727567}
-  m_Layer: 6
-  m_Name: FirePoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8190343682042727567
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8108707763478646865}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.1, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 591054375851644867}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8456421106785840536
 GameObject:
   m_ObjectHideFlags: 0
@@ -413,13 +413,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.UI.HealthBarUI
   fillImage: {fileID: 5056015232220326846}
   container: {fileID: 8456421106785840536}
---- !u!1001 &1133044188681515048
+--- !u!1001 &5399462387829158845
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 3204715641616178428}
+    m_TransformParent: {fileID: 3134209696969633321}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: b743cd767271661418f9a963c147e69d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -514,15 +514,15 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: b743cd767271661418f9a963c147e69d, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8190343682042727567}
+      addedObject: {fileID: 4150322003741143745}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b743cd767271661418f9a963c147e69d, type: 3}
---- !u!4 &591054375851644867 stripped
+--- !u!4 &5576590013994292310 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b743cd767271661418f9a963c147e69d, type: 3}
-  m_PrefabInstance: {fileID: 1133044188681515048}
+  m_PrefabInstance: {fileID: 5399462387829158845}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &8522230179857762623
+--- !u!1001 &8161252371328351210
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -751,35 +751,35 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 6502182839619065283, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 591054375851644867}
+      addedObject: {fileID: 5576590013994292310}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7024120024984527124}
+      addedObject: {fileID: 838472449561782756}
   m_SourcePrefab: {fileID: 100100000, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
---- !u!4 &3204715641616178428 stripped
+--- !u!4 &3134209696969633321 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6502182839619065283, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
-  m_PrefabInstance: {fileID: 8522230179857762623}
+  m_PrefabInstance: {fileID: 8161252371328351210}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &8200969500350508756 stripped
+--- !u!4 &8559142459054644225 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
-  m_PrefabInstance: {fileID: 8522230179857762623}
+  m_PrefabInstance: {fileID: 8161252371328351210}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &8828289899880002670 stripped
+--- !u!1 &9044351869804742331 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
-  m_PrefabInstance: {fileID: 8522230179857762623}
+  m_PrefabInstance: {fileID: 8161252371328351210}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &7024120024984527124
+--- !u!95 &838472449561782756
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8828289899880002670}
+  m_GameObject: {fileID: 9044351869804742331}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 3bdd5b7d5c79f314ebd6cef01493f116, type: 2}
