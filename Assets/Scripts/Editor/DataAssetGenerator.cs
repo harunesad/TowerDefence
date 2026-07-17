@@ -3114,12 +3114,12 @@ public class DataAssetGenerator : Editor
         EditorUtility.SetDirty(level);
         
         // HARİTA PREFAB'INI DİNAMİK OLARAK OLUŞTUR
-        // Level 1-44 zaten kullanıcı tarafından düzenlendi, yeniden oluşturma!
+        // Level 1-50 zaten kullanıcı tarafından düzenlendi, yeniden oluşturma!
         int lvlNum = 0;
         var lvlMatch = System.Text.RegularExpressions.Regex.Match(id, @"\d+");
         if (lvlMatch.Success) int.TryParse(lvlMatch.Value, out lvlNum);
         
-        if (lvlNum > 44)
+        if (lvlNum > 50)
         {
             GenerateMapPrefab(level);
         }
