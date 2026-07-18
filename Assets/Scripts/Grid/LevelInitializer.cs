@@ -27,7 +27,7 @@ namespace TowerDefence.Grid
             if (currentLevel.mapPrefab != null)
             {
                 // Haritayı oluştur
-                GameObject mapInstance = Instantiate(currentLevel.mapPrefab, Vector3.zero, Quaternion.identity);
+                GameObject mapInstance = Instantiate(currentLevel.mapPrefab, currentLevel.mapPrefab.transform.position, currentLevel.mapPrefab.transform.rotation);
                 Debug.Log($"LevelInitializer: Map '{currentLevel.levelName}' spawned.");
 
                 // Haritadaki kuleleri tara ve oyuncunun seçtiği tarafa göre rakip karşılıklarına dönüştür

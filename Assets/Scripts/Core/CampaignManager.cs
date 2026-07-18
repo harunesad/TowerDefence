@@ -95,7 +95,7 @@ namespace TowerDefence.Core
             // 3. Spawning: Haritayı oluştur
             if (currentSelectedLevel.mapPrefab != null)
             {
-                currentMapInstance = Instantiate(currentSelectedLevel.mapPrefab, Vector3.zero, Quaternion.identity);
+                currentMapInstance = Instantiate(currentSelectedLevel.mapPrefab, currentSelectedLevel.mapPrefab.transform.position, currentSelectedLevel.mapPrefab.transform.rotation);
                 currentMapInstance.name = "[MAP] " + currentSelectedLevel.levelName;
                 Debug.Log($"CampaignManager: Map spawned: {currentMapInstance.name}");
             }

@@ -204,6 +204,25 @@ namespace TowerDefence.Combat
 
             if (firePoint == null) firePoint = transform;
 
+            // Attack Range Indicator Initialization
+            if (attackRangeLine == null)
+            {
+                GameObject go = new GameObject("AttackRangeIndicator");
+                go.transform.SetParent(transform);
+                go.transform.localPosition = Vector3.zero;
+                attackRangeLine = go.AddComponent<LineRenderer>();
+                attackRangeLine.startWidth = 0.4f;
+                attackRangeLine.endWidth = 0.4f;
+                attackRangeLine.positionCount = 51;
+                attackRangeLine.useWorldSpace = true;
+                attackRangeLine.loop = true;
+                attackRangeLine.alignment = LineAlignment.TransformZ;
+                attackRangeLine.material = new Material(Shader.Find("Sprites/Default"));
+                attackRangeLine.startColor = Color.white;
+                attackRangeLine.endColor = Color.white;
+                attackRangeLine.gameObject.SetActive(false);
+            }
+
             // Dinamik Hedefleme (Light kuleler Dark layer'ı (7), Dark kuleler Light layer'ı (6) hedefler)
             targetLayer = (towerSide == Side.Light) ? (1 << 7) : (1 << 6);
         }
@@ -449,6 +468,34 @@ namespace TowerDefence.Combat
         {
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, range);
+        }
+
+        protected LineRenderer attackRangeLine;
+
+        protected virtual void DrawRangeCircle()
+        {
+            if (attackRangeLine == null) return;
+
+            float angle = 0f;
+            Vector3 center = transform.position;
+            center.y = 0.2f;
+
+            for (int i = 0; i < 51; i++)
+            {
+                float x = Mathf.Sin(Mathf.Deg2Rad * angle) * range;
+                float z = Mathf.Cos(Mathf.Deg2Rad * angle) * range;
+                attackRangeLine.SetPosition(i, center + new Vector3(x, 0, z));
+                angle += (360f / 50);
+            }
+        }
+
+        public virtual void SetRangeVisible(bool visible)
+        {
+            if (attackRangeLine != null)
+            {
+                if (visible) DrawRangeCircle();
+                attackRangeLine.gameObject.SetActive(visible);
+            }
         }
     }
 }

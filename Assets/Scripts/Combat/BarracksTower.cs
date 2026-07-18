@@ -89,7 +89,7 @@ namespace TowerDefence.Combat
             }
         }
 
-        public void SetRangeVisible(bool visible)
+        public override void SetRangeVisible(bool visible)
         {
             if (rangeLine != null)
             {

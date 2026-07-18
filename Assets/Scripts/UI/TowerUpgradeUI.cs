@@ -102,8 +102,8 @@ namespace TowerDefence.UI
             currentTower = tower;
             mainPanel.SetActive(true);
 
-            // Eğer kışla ise menzil halkasını göster
-            if (currentTower is BarracksTower bt) bt.SetRangeVisible(true);
+            // Seçilen kulenin menzil halkasını göster (Range veya Kışla menzili)
+            currentTower.SetRangeVisible(true);
 
             // World Space modunda olduğumuz için billboarding yapıyoruz
             transform.rotation = Camera.main.transform.rotation;
@@ -230,7 +230,7 @@ namespace TowerDefence.UI
 
         public void Hide()
         {
-            if (currentTower is BarracksTower bt) bt.SetRangeVisible(false);
+            if (currentTower != null) currentTower.SetRangeVisible(false);
             
             mainPanel.SetActive(false);
             currentSlot = null;

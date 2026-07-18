@@ -60,10 +60,24 @@ namespace TowerDefence.Combat
 
         public static List<Unit> AllUnits = new List<Unit>();
 
+        // Hit Flash
+        private Dictionary<Renderer, Color> originalColors = new Dictionary<Renderer, Color>();
+        private Coroutine flashCoroutine;
+
         private void Awake()
         {
             AllUnits.Add(this);
             animator = GetComponentInChildren<Animator>();
+            
+            Renderer[] renderers = GetComponentsInChildren<Renderer>();
+            foreach (var r in renderers)
+            {
+                if (r.material != null && r.material.HasProperty("_Color"))
+                {
+                    originalColors[r] = r.material.color;
+                }
+            }
+
             if (unitData != null) Initialize(unitData);
         }
 
@@ -735,9 +749,30 @@ namespace TowerDefence.Combat
             currentHealth -= amount;
             if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
 
+            if (gameObject.activeInHierarchy)
+            {
+                if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+                flashCoroutine = StartCoroutine(FlashRoutine());
+            }
+
             if (currentHealth <= 0)
             {
                 Die();
+            }
+        }
+
+        private IEnumerator FlashRoutine()
+        {
+            foreach (var kvp in originalColors)
+            {
+                if (kvp.Key != null && kvp.Key.material != null && kvp.Key.material.HasProperty("_Color"))
+                    kvp.Key.material.color = Color.white; // Vurulunca beyaz veya kırmızı (Color.red de olabilir) parlama
+            }
+            yield return new WaitForSeconds(0.1f);
+            foreach (var kvp in originalColors)
+            {
+                if (kvp.Key != null && kvp.Key.material != null && kvp.Key.material.HasProperty("_Color"))
+                    kvp.Key.material.color = kvp.Value;
             }
         }
 
