@@ -187,14 +187,14 @@ namespace TowerDefence.Combat
             
             if (firePoint == null) firePoint = transform.Find("FirePoint");
             
-            // 3D Kuleler için Weapon nesnesini bul ve ona kilitlen
+            // 3D Kuleler için Weapon nesnesini kaldırdık, kule modelinin kendisi dönecek
             if (partToRotate == null)
             {
                 Transform visuals = transform.Find("Visuals");
-                if (visuals != null)
+                if (visuals != null && visuals.childCount > 0)
                 {
-                    partToRotate = visuals.Find("Weapon");
-                    // Eğer dursa firePoint'i de bunun altında ara
+                    // Visuals altındaki ilk obje kule modelidir
+                    partToRotate = visuals.GetChild(0);
                     if (partToRotate != null)
                     {
                         firePoint = partToRotate.Find("FirePoint");
@@ -293,11 +293,16 @@ namespace TowerDefence.Combat
             if (partToRotate == null) return;
 
             Vector3 dir = target.position - transform.position;
+            dir.y = 0; // Sadece yatay eksende dönmesini sağla
             if (dir == Vector3.zero) return;
 
             Quaternion lookRotation = Quaternion.LookRotation(dir);
-            Vector3 rotation = Quaternion.Lerp(partToRotate.rotation, lookRotation, Time.deltaTime * rotationSpeed).eulerAngles;
-            partToRotate.rotation = Quaternion.Euler(0f, rotation.y, 0f); // Sadece Y ekseninde döner
+            float targetY = lookRotation.eulerAngles.y + 180f; // Düşmana göre +180 derece ters
+
+            // Euler açılarını okumak Gimbal Lock yüzünden saçma değerler (zıplamalar) verir.
+            // Bu yüzden hedef dönüşü (Quaternion) oluşturup doğrudan Quaternion.Lerp kullanıyoruz.
+            Quaternion targetRotation = Quaternion.Euler(-90f, targetY, 90f);
+            partToRotate.rotation = Quaternion.Lerp(partToRotate.rotation, targetRotation, Time.deltaTime * rotationSpeed);
         }
 
         private void UpdateTarget()

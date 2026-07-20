@@ -797,20 +797,61 @@ public class EditorPrefabBuilder : Editor
             modelInstance.name = cleanName;
             modelInstance.transform.SetParent(visuals.transform);
             modelInstance.transform.localPosition = new Vector3(0f, 2.5f, 0f);
-            modelInstance.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            modelInstance.transform.localRotation = Quaternion.Euler(-90f, 180f, 0f);
             modelInstance.transform.localScale = Vector3.one;
 
-            // Kulelerin hedef alıp dönmesi (partToRotate) ve mermi fırlatması (FirePoint) için
-            // Meshy modelinin tepesinde konumlanacak bir "Weapon" (Silah) taşıyıcısı oluşturalım.
-            GameObject weapon = new GameObject("Weapon");
-            weapon.transform.SetParent(visuals.transform);
-            
-            // Ortalama kule yüksekliği 1.8f olarak baz alınmıştır (Tepesinde konumlandırma)
-            weapon.transform.localPosition = new Vector3(0, 1.8f, 0); 
+            // Unity'nin Gimbal Lock yüzünden rotasyonu (-90, 0, -180) göstermesini engellemek için
+            // Inspector'da tam olarak (-90, 180, 0) görünmesini zorluyoruz.
+            SerializedObject so = new SerializedObject(modelInstance.transform);
+            SerializedProperty eulerHint = so.FindProperty("m_LocalEulerAnglesHint");
+            if (eulerHint != null)
+            {
+                eulerHint.vector3Value = new Vector3(-90f, 180f, 0f);
+                so.ApplyModifiedProperties();
+            }
 
+            // Kulelerin hedef alıp dönmesi (partToRotate) ve mermi fırlatması (FirePoint) için
+            // Weapon nesnesini SİLDİK. Artık kule modelinin kendisi dönecek.
+            // FirePoint doğrudan kule modelinin (partToRotate olacak olan obje) altında yer alacak.
             GameObject firePoint = new GameObject("FirePoint");
-            firePoint.transform.SetParent(weapon.transform);
-            firePoint.transform.localPosition = new Vector3(0, 0, 1f); // Silahın biraz önünde
+            firePoint.transform.SetParent(modelInstance.transform);
+            
+            // Kullanıcının ayarladığı mevcut FirePoint konumunu korumak için kontrol ediyoruz:
+            bool userSettingsRestored = false;
+            string existingPrefabPath = $"Assets/Prefabs/Gameplay/Towers/{towerName}.prefab";
+            GameObject existingPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(existingPrefabPath);
+            if (existingPrefab != null)
+            {
+                Transform existingVisuals = existingPrefab.transform.Find("Visuals");
+                if (existingVisuals != null && existingVisuals.childCount > 0)
+                {
+                    Transform existingFirePoint = existingVisuals.GetChild(0).Find("FirePoint");
+                    if (existingFirePoint != null)
+                    {
+                        firePoint.transform.localPosition = existingFirePoint.localPosition;
+                        firePoint.transform.localRotation = existingFirePoint.localRotation;
+                        userSettingsRestored = true;
+                    }
+                }
+            }
+
+            // Eğer daha önceden ayarlanmış bir FirePoint yoksa varsayılanları ata
+            if (!userSettingsRestored)
+            {
+                firePoint.transform.localEulerAngles = Vector3.zero;
+                // Model -90 X ile durduğu için:
+                // Bone Catapult için Fire Point pozisyonu kullanıcı tarafından (3, 2, 0) olarak belirtildi.
+                if (cleanName == "BoneCatapult")
+                {
+                    firePoint.transform.localPosition = new Vector3(3f, 2f, 0f);
+                }
+                else
+                {
+                    // Diğer kuleler için varsayılan FirePoint konumu (eskiden Weapon altında (0,0,1) idi)
+                    // -90 X dönüşü yüzünden, yerel Y ekseni ileriye bakar.
+                    firePoint.transform.localPosition = new Vector3(0f, 1f, 0f);
+                }
+            }
         }
         else
         {
@@ -909,6 +950,8 @@ public class EditorPrefabBuilder : Editor
             case "Archangel": rightWeapon = "FlamingBattleaxe"; break;
             case "GrandPaladin": rightWeapon = "HolyGreatsword"; leftWeapon = "HeavyTowerShield"; break;
             case "PhoenixSummoner": rightWeapon = "MageStaff"; break;
+            case "ArcaneSorcerer": rightWeapon = "MageStaff"; break;
+            case "Lich": rightWeapon = "NecromancerStaff"; break;
 
             case "GoblinGrunt": rightWeapon = "DualShortDaggers"; leftWeapon = "RoundShield"; break;
             case "SkeletonWarrior": rightWeapon = "BasicBroadsword"; break;
@@ -976,6 +1019,7 @@ public class EditorPrefabBuilder : Editor
                 else if (n == "GriffinTamer" && boneName == "RightHand") { localRot = new Vector3(-70f, -50f, 0f); }
                 else if (n == "HolyKnight" && boneName == "RightHand") { localRot = new Vector3(0f, -100f, 0f); }
                 else if (n == "Necromancer" && boneName == "RightHand") { localPos = new Vector3(0.002f, -0.258f, 0.598f); localRot = new Vector3(-57.415f, -0.426f, 0.505f); }
+                else if (n == "Lich" && boneName == "RightHand") { localPos = new Vector3(-0.156f, 0.226f, 0.46f); localRot = new Vector3(0f, 40f, -90f); }
                 else if (n == "BloodMage" && boneName == "RightHand") { localPos = new Vector3(0.459f, 0.093f, 0.323f); localRot = new Vector3(-85.171f, 0f, 55.586f); }
                 else if (n == "ClericoftheDawn" && boneName == "RightHand") { localPos = new Vector3(0.314f, -0.017f, 0.167f); localRot = new Vector3(-72.599f, 0f, 62.466f); }
                 else if (n == "NoviceArcher" && boneName == "LeftHand") { localRot = new Vector3(180f, 0f, 0f); }
@@ -1038,12 +1082,29 @@ public class EditorPrefabBuilder : Editor
 
         if (!string.IsNullOrEmpty(unitName))
         {
-            if (unitName.Contains("Cleric"))
+            string cleanUnitName = unitName.Replace(" ", "").Replace("_", "");
+            if (cleanUnitName.Contains("Cleric"))
                 targetLocalPos = new Vector3(-0.108f, 1.118f, 0.005f);
-            else if (unitName.Contains("Archon"))
-                targetLocalPos = new Vector3(0f, -0.1f, 0f);
-            else if (unitName.Contains("Herald"))
+            else if (cleanUnitName.Contains("Herald"))
                 targetLocalPos = new Vector3(-0.058f, 0.666f, 0f);
+            else if (cleanUnitName.Contains("Archon"))
+                targetLocalPos = new Vector3(0f, -0.1f, 0f); // Celestial Archon Bow Offset
+            else if (cleanUnitName.Contains("ArcaneSorcerer"))
+                targetLocalPos = new Vector3(-0.018f, 0.682f, -0.071f); // Arcane Sorcerer FirePoint Offset
+            else if (cleanUnitName.Contains("Lich"))
+                targetLocalPos = new Vector3(0f, 1f, 0f); // Lich staff tip
+        }
+        else
+        {
+            string cleanWeaponName = weaponTransform.name.Replace("(Clone)", "").Trim();
+            if (cleanWeaponName == "MageStaff" || cleanWeaponName == "NecromancerStaff")
+            {
+                targetLocalPos = new Vector3(0f, 1.8f, 0f); // Asaların ucu Y yönündedir
+            }
+            else if (cleanWeaponName == "LightBow" || cleanWeaponName == "BoneBow")
+            {
+                targetLocalPos = new Vector3(0f, 0.7f, 0f); // Yayların ucu/fırlatma noktası
+            }
         }
 
         if (firePoint == null)

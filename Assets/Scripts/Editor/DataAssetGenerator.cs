@@ -311,6 +311,19 @@ public class DataAssetGenerator : Editor
         // Heroes don't have enemy counterparts
         data.enemyCounterpart = null;
 
+        if (name == "Celestial Archon")
+        {
+            data.projectilePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Projectiles/Arrow.prefab");
+        }
+        else if (name == "Plague Herald")
+        {
+            data.projectilePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Projectiles/DarkOrb.prefab");
+        }
+        else
+        {
+            data.projectilePrefab = null;
+        }
+
         EditorUtility.SetDirty(data);
         return data;
     }
@@ -408,6 +421,13 @@ public class DataAssetGenerator : Editor
         // Wire UnitData reference
         SerializedObject so = new SerializedObject(heroComp);
         so.FindProperty("unitData").objectReferenceValue = data;
+        
+        Transform fp = FindFirstFirePoint(root.transform);
+        if (fp != null)
+        {
+            so.FindProperty("firePoint").objectReferenceValue = fp;
+        }
+        
         so.ApplyModifiedProperties();
 
         // 2. Health Bar UI Setup (Same as normal unit setup but offset for hero visual distinction if desired)
@@ -554,6 +574,8 @@ public class DataAssetGenerator : Editor
             case "Archangel": rightWeapon = "FlamingBattleaxe"; break;
             case "GrandPaladin": rightWeapon = "HolyGreatsword"; leftWeapon = "HeavyTowerShield"; break;
             case "PhoenixSummoner": rightWeapon = "MageStaff"; break;
+            case "ArcaneSorcerer": rightWeapon = "MageStaff"; break;
+            case "Lich": rightWeapon = "NecromancerStaff"; break;
             case "GoblinGrunt": rightWeapon = "DualShortDaggers"; leftWeapon = "RoundShield"; break;
             case "SkeletonWarrior": rightWeapon = "BasicBroadsword"; break;
             case "OrcMarauder": rightWeapon = "OrcAxe"; break;
@@ -644,6 +666,7 @@ public class DataAssetGenerator : Editor
                 else if (n == "GriffinTamer" && boneName == "RightHand") { localRot = new Vector3(-70f, -50f, 0f); }
                 else if (n == "HolyKnight" && boneName == "RightHand") { localRot = new Vector3(0f, -100f, 0f); }
                 else if (n == "Necromancer" && boneName == "RightHand") { localPos = new Vector3(0.002f, -0.258f, 0.598f); localRot = new Vector3(-57.415f, -0.426f, 0.505f); }
+                else if (n == "Lich" && boneName == "RightHand") { localPos = new Vector3(-0.156f, 0.226f, 0.46f); localRot = new Vector3(0f, 40f, -90f); }
                 else if (n == "BloodMage" && boneName == "RightHand") { localPos = new Vector3(0.459f, 0.093f, 0.323f); localRot = new Vector3(-85.171f, 0f, 55.586f); }
                 else if (n == "ClericoftheDawn" && boneName == "RightHand") { localPos = new Vector3(0.314f, -0.017f, 0.167f); localRot = new Vector3(-72.599f, 0f, 62.466f); }
                 else if (n == "NoviceArcher" && boneName == "LeftHand") { localRot = new Vector3(180f, 0f, 0f); }
@@ -1955,7 +1978,7 @@ public class DataAssetGenerator : Editor
 
         if (data.projectilePrefab != null)
         {
-            EditorPrefabBuilder.EnsureRangedUnitFirePoints(root);
+            EditorPrefabBuilder.EnsureRangedUnitFirePoints(root, prefab.name);
             Transform fp = EditorPrefabBuilder.GetFirstFirePointTransform(root);
             if (fp != null)
                 unitSo.FindProperty("firePoint").objectReferenceValue = fp;
@@ -3110,6 +3133,20 @@ public class DataAssetGenerator : Editor
 
         level.towerSlotCount = 15 + (waves.Count * 2); // Dalga sayısına göre slot artırımı
         level.sceneIndex = 2; // Default Gameplay Scene
+
+        // Otomatik Icon (Level Preview) ataması
+        string safeNameForIcon = level.levelName.Replace(" ", "_").Replace("'", "").Replace(":", "");
+        string numStrForIcon = level.levelID.Replace("Level", "");
+        string iconPath = $"Assets/Data/Icons/Levels/Level_{numStrForIcon}__{safeNameForIcon}_Map_Icon.png";
+        Sprite iconSprite = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
+        if (iconSprite != null)
+        {
+            level.levelPreview = iconSprite;
+        }
+        else
+        {
+            Debug.LogWarning($"Level Preview Icon not found at path: {iconPath}");
+        }
 
         EditorUtility.SetDirty(level);
         

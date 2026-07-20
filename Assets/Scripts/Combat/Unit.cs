@@ -295,23 +295,11 @@ namespace TowerDefence.Combat
                         
                         if (Vector3.Distance(flatPos, flatTarget) < 0.2f)
                         {
-                            if (this.GetSide() == Side.Light)
+                            currentWaypointIndex++;
+                            if (currentWaypointIndex >= currentPath.GetWaypoints().Count)
                             {
-                                currentWaypointIndex--;
-                                if (currentWaypointIndex < 0)
-                                {
-                                    OnReachPathEnd();
-                                    return;
-                                }
-                            }
-                            else
-                            {
-                                currentWaypointIndex++;
-                                if (currentWaypointIndex >= currentPath.GetWaypoints().Count)
-                                {
-                                    OnReachPathEnd();
-                                    return;
-                                }
+                                OnReachPathEnd();
+                                return;
                             }
                             UpdateMoveTarget();
                         }
@@ -421,67 +409,41 @@ namespace TowerDefence.Combat
                 return;
             }
 
-            // 2. Yeni Hedef Arama (Sadece boştaki birimleri seç)
+            // 2. Yeni Hedef Arama (Unit + Tower)
             float aggroRange = Mathf.Max(attackRange, 8f);
             Collider[] colliders = Physics.OverlapSphere(transform.position, aggroRange, targetLayer);
             float shortestDist = aggroRange;
-            IDamageable nearestUnit = null;
-
-            if (this is HeroUnit && colliders.Length > 0)
-            {
-                Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} searching targets. Found {colliders.Length} colliders in aggroRange {aggroRange}.");
-            }
+            IDamageable nearestTarget = null;
 
             foreach (var col in colliders)
             {
-                Unit otherUnit = col.GetComponent<Unit>();
-                if (otherUnit != null && !otherUnit.IsDead && otherUnit.GetSide() != unitSide)
+                IDamageable damageable = col.GetComponentInParent<IDamageable>();
+                if (damageable == null || damageable.IsDead || damageable.GetSide() == unitSide)
+                    continue;
+
+                // Tower hedefleme kontrolü: Sadece ranged birimler kulelere saldırabilir
+                if (damageable is Tower && unitData.projectilePrefab == null)
+                    continue;
+
+                // 1'E 1 KURALI: Unit vs Unit, kahramanlar muaftır
+                Unit otherUnit = damageable as Unit;
+                if (otherUnit != null && !(this is HeroUnit) && !(otherUnit is HeroUnit))
                 {
-                    if (this is HeroUnit)
-                    {
-                        Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} evaluating enemy {otherUnit.name}. IsBlockingSomeone: {otherUnit.IsBlockingSomeone()}, IsBlocked: {otherUnit.IsBlocked}");
-                    }
-
-                    // 1'E 1 KURALI: Sadece Asker vs Asker durumlarında geçerlidir.
-                    // Kahramanlar bu kısıtlamadan muaftır ve takım savaşına her zaman katılırlar.
-                    if (!(this is HeroUnit) && !(otherUnit is HeroUnit))
-                    {
-                        // Eğer bu düşman birini engelliyorsa VE engellediği kişi BİZ DEĞİLSEK, ona dokunma!
-                        if (otherUnit.IsBlockingSomeone() && otherUnit.blockedEnemies[0] != this)
-                        {
-                            continue;
-                        }
-                        
-                        // Eğer bu düşman başkası tarafından engellenmişse, ona dokunma!
-                        if (otherUnit.IsBlocked && otherUnit.currentBlocker != this)
-                        {
-                            continue;
-                        }
-                    }
-
-                    // Yakın dövüş birimleri kuleleri hedef alamaz
-                    if (unitData.projectilePrefab == null && otherUnit is Tower)
+                    if (otherUnit.IsBlockingSomeone() && otherUnit.blockedEnemies[0] != this)
                         continue;
+                    if (otherUnit.IsBlocked && otherUnit.currentBlocker != this)
+                        continue;
+                }
 
-                    float dist = GetFlatDistance(transform.position, col.transform.position);
-                    if (dist < shortestDist)
-                    {
-                        shortestDist = dist;
-                        nearestUnit = otherUnit;
-                    }
+                float dist = GetFlatDistance(transform.position, col.transform.position);
+                if (dist < shortestDist)
+                {
+                    shortestDist = dist;
+                    nearestTarget = damageable;
                 }
             }
 
-            if (this is HeroUnit && nearestUnit != null)
-            {
-                Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} selected nearest target: {((MonoBehaviour)nearestUnit).name}");
-            }
-            else if (this is HeroUnit && targetCombatant != nearestUnit)
-            {
-                Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} found no valid targets in range.");
-            }
-
-            targetCombatant = nearestUnit;
+            targetCombatant = nearestTarget;
         }
 
         private PathWaypoints currentPath;
@@ -494,7 +456,7 @@ namespace TowerDefence.Combat
             
             if (currentPath != null && currentPath.GetWaypoints().Count > 0)
             {
-                currentWaypointIndex = (this.GetSide() == Side.Light) ? currentPath.GetWaypoints().Count - 1 : 0;
+                currentWaypointIndex = 0;
                 UpdateMoveTarget();
                 SnapRotationToTarget(currentMoveTarget);
             }
@@ -520,7 +482,7 @@ namespace TowerDefence.Combat
             }
 
             // En yakın noktaya ulaştı sayıp bir sonrakine yönlendiriyoruz
-            currentWaypointIndex = (this.GetSide() == Side.Light) ? Mathf.Max(nearestIdx - 1, 0) : Mathf.Min(nearestIdx + 1, wps.Count - 1);
+            currentWaypointIndex = Mathf.Min(nearestIdx + 1, wps.Count - 1);
             
             if (currentWaypointIndex >= 0 && currentWaypointIndex < wps.Count)
             {
@@ -537,16 +499,7 @@ namespace TowerDefence.Combat
             var wps = path.GetWaypoints();
             if (wps.Count == 0) return;
 
-            // UnitPlacementManager targetIdx'i 'nearestIdx + 1' olarak gönderir.
-            // Eğer Side.Light isek, aslında 'nearestIdx'e doğru (geriye) gitmek isteriz, yani targetIdx - 1.
-            if (this.GetSide() == Side.Light)
-            {
-                currentWaypointIndex = Mathf.Clamp(targetIdx - 1, 0, wps.Count - 1);
-            }
-            else
-            {
-                currentWaypointIndex = Mathf.Clamp(targetIdx, 0, wps.Count - 1);
-            }
+            currentWaypointIndex = Mathf.Clamp(targetIdx, 0, wps.Count - 1);
             
             UpdateMoveTarget();
             SnapRotationToTarget(currentMoveTarget);

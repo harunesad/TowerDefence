@@ -93,12 +93,25 @@ namespace TowerDefence.Grid
             
             // İnşa sonrası kendi menüsünü kapat
             if (localUI != null) localUI.Hide();
+
+            // Slot görselini gizle (kule inşa edildi)
+            SetSlotVisualsActive(false);
         }
 
         public void ClearSlot()
         {
             if (currentTower != null) Destroy(currentTower);
+            currentTower = null;
             isOccupied = false;
+
+            // Slot görselini tekrar göster (kule yok edildi, yeniden inşa edilebilir)
+            SetSlotVisualsActive(true);
+        }
+
+        private void SetSlotVisualsActive(bool active)
+        {
+            Transform visuals = transform.Find("Visuals");
+            if (visuals != null) visuals.gameObject.SetActive(active);
         }
 
         public void SpecializeTower(TowerData newData)

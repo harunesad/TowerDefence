@@ -597,7 +597,7 @@ namespace TowerDefence.Editor
             scrollRect.content = container.GetComponent<RectTransform>();
             
             GridLayoutGroup glg = container.AddComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(240, 320);
+            glg.cellSize = new Vector2(240, 280);
             glg.spacing = new Vector2(40, 40);
             glg.startCorner = GridLayoutGroup.Corner.UpperLeft;
             glg.startAxis = GridLayoutGroup.Axis.Horizontal;
@@ -724,6 +724,9 @@ namespace TowerDefence.Editor
             nameTxt.rectTransform.offsetMin = new Vector2(10, -50);
             nameTxt.rectTransform.offsetMax = new Vector2(-10, -10);
             nameTxt.alignment = TMPro.TextAlignmentOptions.Center;
+            nameTxt.enableAutoSizing = true;
+            nameTxt.fontSizeMin = 12;
+            nameTxt.fontSizeMax = 28;
 
             // Preview Image alanı
             GameObject preview = new GameObject("PreviewImage", typeof(RectTransform), typeof(Image));
@@ -731,8 +734,9 @@ namespace TowerDefence.Editor
             RectTransform previewRT = preview.GetComponent<RectTransform>();
             previewRT.anchorMin = new Vector2(0.1f, 0.2f);
             previewRT.anchorMax = new Vector2(0.9f, 0.85f);
-            previewRT.offsetMin = Vector2.zero;
-            previewRT.offsetMax = Vector2.zero;
+            previewRT.offsetMin = new Vector2(0, -20); // bottom = -20
+            previewRT.offsetMax = new Vector2(0, 10);   // top = 10
+            previewRT.localScale = new Vector3(1f, 0.5f, 1f); // scale Y = 0.5
             preview.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.4f, 1f);
 
             // Zorluk Container (3 yıldız)
@@ -742,7 +746,7 @@ namespace TowerDefence.Editor
             diffRT.anchorMin = new Vector2(0.5f, 0);
             diffRT.anchorMax = new Vector2(0.5f, 0);
             diffRT.sizeDelta = new Vector2(120, 30);
-            diffRT.anchoredPosition = new Vector2(0, 15);
+            diffRT.anchoredPosition = new Vector2(0, 30);
             HorizontalLayoutGroup dhlg = diffContainer.GetComponent<HorizontalLayoutGroup>();
             dhlg.childAlignment = TextAnchor.MiddleCenter;
             dhlg.spacing = 5;

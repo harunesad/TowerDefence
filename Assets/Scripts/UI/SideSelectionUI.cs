@@ -73,7 +73,31 @@ namespace TowerDefence.UI
             SideController.Instance.SetPlayerSide(side);
 
             if (MetaProgressionManager.Instance != null)
+            {
                 MetaProgressionManager.Instance.SanitizeEquippedHeroesForSide(side);
+
+                // Taraf dışındaki üniteleri loadout'tan çıkar (yanlışlıkla kalmasın)
+                var equippedUnits = new List<string>(MetaProgressionManager.Instance.GetEquippedUnitNames());
+                foreach (string uName in equippedUnits)
+                {
+                    UnitData ud = allPossibleUnits.Find(u => u != null && u.unitName == uName);
+                    if (ud != null && ud.side != side)
+                    {
+                        MetaProgressionManager.Instance.UnequipUnit(uName);
+                    }
+                }
+
+                // Taraf dışındaki büyüleri de çıkar
+                var equippedSpells = new List<string>(MetaProgressionManager.Instance.GetEquippedSpellIDs());
+                foreach (string sID in equippedSpells)
+                {
+                    SpellData sd = allPossibleSpells.Find(s => s != null && s.spellID == sID);
+                    if (sd != null && sd.side != side && sd.side != Side.Neutral)
+                    {
+                        MetaProgressionManager.Instance.UnequipSpell(sID);
+                    }
+                }
+            }
 
             if (sideSelectionGroup != null) sideSelectionGroup.SetActive(false);
             if (loadoutGroup != null)
@@ -198,23 +222,8 @@ namespace TowerDefence.UI
                 return;
             }
 
-            if (MetaProgressionManager.Instance.GetEquippedHeroIDs().Count == 0)
-            {
-                foreach (HeroData hero in MetaProgressionManager.Instance.GetAllHeroes())
-                {
-                    if (hero == null || hero.side != currentSelectedSide) continue;
-                    if (!MetaProgressionManager.Instance.IsHeroUnlocked(hero.heroID)) continue;
-                    MetaProgressionManager.Instance.EquipHero(hero.heroID);
-                    break;
-                }
-            }
-
-            if (MetaProgressionManager.Instance.GetEquippedHeroIDs().Count == 0)
-            {
-                if (heroLoadoutHint != null)
-                    heroLoadoutHint.text = "UNLOCK A HERO IN THE HEROES MENU FIRST!";
-                return;
-            }
+            // Kahraman seçilmemişse bile savaşa girilebilir, auto-equip yapmıyoruz.
+            // Bu sayede oyuncu istemezse kahraman olmadan oynayabilir.
 
             Debug.Log("Starting match with side: " + currentSelectedSide);
             CampaignManager.Instance.LoadSelectedLevel();
