@@ -33,6 +33,12 @@ namespace TowerDefence.Combat
         protected bool isDead;
         private LayerMask targetLayer;
         private IDamageable targetCombatant;
+        private bool walkPathBackward;
+
+        [Header("Indicator")]
+        [SerializeField] private float indicatorHeight = 3f;
+        [SerializeField] private float indicatorRadius = 0.6f;
+        private GameObject unitIndicator;
 
         // Status effects
         private List<StatusEffect> activeEffects = new List<StatusEffect>();
@@ -84,6 +90,10 @@ namespace TowerDefence.Combat
         protected virtual void OnDestroy()
         {
             AllUnits.Remove(this);
+            if (PhaseManager.Instance != null)
+                PhaseManager.Instance.OnPhaseChanged -= HandlePhaseChanged;
+            if (GameManager.Instance != null)
+                GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
         }
 
         public void Initialize(UnitData data, float statMultiplier = 1f)
@@ -119,6 +129,8 @@ namespace TowerDefence.Combat
             InitializeStatusEffects();
             SetLayerRecursive(gameObject, (unitSide == Side.Light) ? 6 : 7);
             targetLayer = (unitSide == Side.Light) ? (1 << 7) : (1 << 6);
+            if (unitSide == SideController.Instance.GetPlayerSide())
+                CreateUnitIndicator();
         }
 
         /// <summary>Animator hızını verilen hareket hızına göre ayarlar.</summary>
@@ -171,12 +183,92 @@ namespace TowerDefence.Combat
             }
         }
 
+        private static Sprite cachedIndicatorSprite;
+
+        private void CreateUnitIndicator()
+        {
+            if (unitIndicator != null) return;
+
+            unitIndicator = new GameObject("UnitIndicator");
+            unitIndicator.transform.SetParent(transform, false);
+            unitIndicator.transform.localPosition = new Vector3(0f, indicatorHeight, 0f);
+
+            if (cachedIndicatorSprite == null)
+                cachedIndicatorSprite = CreateBlueCircleSprite();
+
+            var sr = unitIndicator.AddComponent<SpriteRenderer>();
+            sr.sprite = cachedIndicatorSprite;
+            sr.color = new Color(0.05f, 0.05f, 0.3f, 1f);
+            sr.sortingOrder = 10;
+
+            unitIndicator.transform.localScale = Vector3.one;
+            unitIndicator.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        }
+
+        private static Sprite CreateBlueCircleSprite()
+        {
+            int size = 64;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+
+            Vector2 center = new Vector2(size / 2f, size / 2f);
+            float radius = size / 2f - 2f;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), center);
+                    float alpha = dist <= radius ? 1f : 0f;
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+        }
+
         private Base targetBase;
 
         private void Start()
         {
             if (ShouldSeekEnemyBase())
                 FindTargetBase();
+
+            if (PhaseManager.Instance != null)
+                PhaseManager.Instance.OnPhaseChanged += HandlePhaseChanged;
+            if (GameManager.Instance != null)
+                GameManager.Instance.OnGameStateChanged += HandleGameStateChanged;
+        }
+
+        private void HandlePhaseChanged(GamePhase phase)
+        {
+            if (phase == GamePhase.Preparation)
+                ResetAttackState();
+        }
+
+        private void HandleGameStateChanged(GameState state)
+        {
+            if (state == GameState.Victory || state == GameState.Defeat)
+                ResetAttackState();
+        }
+
+        protected void ResetAttackState()
+        {
+            if (isDead) return;
+
+            StopAllCoroutines();
+            isAttacking = false;
+
+            if (animator != null)
+            {
+                animator.SetBool("IsMoving", false);
+                animator.speed = 1f;
+                animator.ResetTrigger("Attack");
+                animator.Play("Idle", 0, 0f);
+            }
+
+            ClearTarget();
         }
 
         protected virtual bool ShouldFollowPath() => true;
@@ -287,7 +379,8 @@ namespace TowerDefence.Combat
                     // 2. Düşman yoksa ve engellenmemişsek Waypoint Takibi yap
                     Vector3 targetPos = Vector3.zero;
 
-                    if (currentPath != null && currentWaypointIndex < currentPath.GetWaypoints().Count)
+                    if (currentPath != null && 
+                        (walkPathBackward ? currentWaypointIndex >= 0 : currentWaypointIndex < currentPath.GetWaypoints().Count))
                     {
                         targetPos = currentPath.GetWaypoints()[currentWaypointIndex].position;
                         Vector3 flatPos = new Vector3(transform.position.x, 0, transform.position.z);
@@ -295,8 +388,16 @@ namespace TowerDefence.Combat
                         
                         if (Vector3.Distance(flatPos, flatTarget) < 0.2f)
                         {
-                            currentWaypointIndex++;
-                            if (currentWaypointIndex >= currentPath.GetWaypoints().Count)
+                            if (walkPathBackward)
+                                currentWaypointIndex--;
+                            else
+                                currentWaypointIndex++;
+
+                            bool reachedEnd = walkPathBackward 
+                                ? currentWaypointIndex < 0 
+                                : currentWaypointIndex >= currentPath.GetWaypoints().Count;
+
+                            if (reachedEnd)
                             {
                                 OnReachPathEnd();
                                 return;
@@ -491,9 +592,10 @@ namespace TowerDefence.Combat
             }
         }
 
-        public void SetPathWithExactTarget(PathWaypoints path, int targetIdx)
+        public void SetPathWithExactTarget(PathWaypoints path, int targetIdx, bool walkBackward = false)
         {
             currentPath = path;
+            walkPathBackward = walkBackward;
             if (path == null) return;
 
             var wps = path.GetWaypoints();

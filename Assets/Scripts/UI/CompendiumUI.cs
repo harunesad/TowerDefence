@@ -148,7 +148,7 @@ namespace TowerDefence.UI
             detailPanel.SetActive(true);
             detailIcon.sprite = data.icon;
             detailName.text = data.unitName;
-            detailStats.text = $"HP: {data.maxHealth}\nSPD: {data.moveSpeed}";
+            detailStats.text = $"HP: {data.maxHealth}\nDMG: {data.attackDamage}\nSPD: {data.moveSpeed}\nATK Rate: {data.attackRate:F2}/s";
             detailLore.text = data.side == Side.Light ? "A brave defender of the light." : "A corrupted creature of the dark.";
         }
     }

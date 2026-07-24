@@ -14,6 +14,7 @@ namespace TowerDefence.UI
         [SerializeField] private Button button;
 
         private UnitData unitData;
+        private UnitInfoPanelUI activePanel;
 
         public void Setup(UnitData data)
         {
@@ -23,9 +24,39 @@ namespace TowerDefence.UI
             if (button != null)
             {
                 button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(ToggleSelection);
+                button.onClick.AddListener(OnClick);
             }
             RefreshUI();
+        }
+
+        private void OnClick()
+        {
+            ToggleSelection();
+
+            if (activePanel != null)
+            {
+                Destroy(activePanel.gameObject);
+                activePanel = null;
+                return;
+            }
+
+            var existing = FindObjectOfType<UnitInfoPanelUI>();
+            if (existing != null) Destroy(existing.gameObject);
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            GameObject go = new GameObject("UnitInfoPanelUI", typeof(RectTransform), typeof(UnitInfoPanelUI));
+            go.transform.SetParent(canvas.transform, false);
+
+            UnitInfoPanelUI panel = go.GetComponent<UnitInfoPanelUI>();
+            panel.Setup(unitData, GetComponent<RectTransform>());
+            activePanel = panel;
+
+            RectTransform panelRT = go.GetComponent<RectTransform>();
+            Vector3 btnPos = GetComponent<RectTransform>().position;
+            panelRT.position = new Vector3(btnPos.x, btnPos.y + panelRT.sizeDelta.y * 0.5f + 10f, btnPos.z);
         }
 
         private void ToggleSelection()

@@ -27,7 +27,7 @@ namespace TowerDefence.Combat
         private float range;
         private float fireRate;
         private GameObject projectilePrefab;
-        private Transform firePoint;
+        protected Transform firePoint;
         private Side towerSide;
         private LayerMask targetLayer;
 
@@ -44,6 +44,10 @@ namespace TowerDefence.Combat
         [Header("Rotation")]
         [SerializeField] private Transform partToRotate;
         [SerializeField] private float rotationSpeed = 10f;
+        [Tooltip("Düşmana dönerken uygulanacak Euler açısı offseti. Varsayılan: X=-90, Y=180, Z=90")]
+        [SerializeField] private Vector3 rotationOffset = new Vector3(-90f, 180f, 90f);
+        [Tooltip("Spawn'da en yakın path'e dönerken uygulanacak ek Euler açısı offseti")]
+        [SerializeField] private Vector3 spawnRotationOffset = Vector3.zero;
 
         private float fireCountdown = 0f;
         private Transform target;
@@ -225,6 +229,8 @@ namespace TowerDefence.Combat
 
             // Dinamik Hedefleme (Light kuleler Dark layer'ı (7), Dark kuleler Light layer'ı (6) hedefler)
             targetLayer = (towerSide == Side.Light) ? (1 << 7) : (1 << 6);
+
+            FaceNearestPathOnSpawn();
         }
 
         private void Update()
@@ -293,16 +299,66 @@ namespace TowerDefence.Combat
             if (partToRotate == null) return;
 
             Vector3 dir = target.position - transform.position;
-            dir.y = 0; // Sadece yatay eksende dönmesini sağla
+            dir.y = 0;
             if (dir == Vector3.zero) return;
 
             Quaternion lookRotation = Quaternion.LookRotation(dir);
-            float targetY = lookRotation.eulerAngles.y + 180f; // Düşmana göre +180 derece ters
+            float targetY = lookRotation.eulerAngles.y + rotationOffset.y;
 
-            // Euler açılarını okumak Gimbal Lock yüzünden saçma değerler (zıplamalar) verir.
-            // Bu yüzden hedef dönüşü (Quaternion) oluşturup doğrudan Quaternion.Lerp kullanıyoruz.
-            Quaternion targetRotation = Quaternion.Euler(-90f, targetY, 90f);
+            Quaternion targetRotation = Quaternion.Euler(rotationOffset.x, targetY, rotationOffset.z);
             partToRotate.rotation = Quaternion.Lerp(partToRotate.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+        }
+
+        private void FaceNearestPathOnSpawn()
+        {
+            if (partToRotate == null) return;
+
+            PathWaypoints[] paths = FindObjectsByType<PathWaypoints>(FindObjectsSortMode.None);
+            if (paths.Length == 0) return;
+
+            Vector3 nearestPoint = Vector3.zero;
+            float minDist = float.MaxValue;
+
+            foreach (var path in paths)
+            {
+                var wps = path.GetWaypoints();
+                if (wps.Count < 2) continue;
+
+                for (int i = 0; i < wps.Count - 1; i++)
+                {
+                    Vector3 pA = wps[i].position; pA.y = 0;
+                    Vector3 pB = wps[i + 1].position; pB.y = 0;
+                    Vector3 towerPos = transform.position; towerPos.y = 0;
+
+                    Vector3 closest = GetClosestPointOnSegment(towerPos, pA, pB);
+                    float dist = Vector3.Distance(towerPos, closest);
+                    if (dist < minDist)
+                    {
+                        minDist = dist;
+                        nearestPoint = closest;
+                    }
+                }
+            }
+
+            if (nearestPoint == Vector3.zero) return;
+
+            Vector3 dir = nearestPoint - transform.position;
+            dir.y = 0;
+            if (dir.sqrMagnitude <= 0.001f) return;
+
+            Quaternion lookRotation = Quaternion.LookRotation(dir);
+            float targetY = lookRotation.eulerAngles.y + spawnRotationOffset.y;
+            Quaternion targetRotation = Quaternion.Euler(spawnRotationOffset.x, targetY, spawnRotationOffset.z);
+
+            partToRotate.rotation = targetRotation;
+        }
+
+        private static Vector3 GetClosestPointOnSegment(Vector3 p, Vector3 a, Vector3 b)
+        {
+            Vector3 ab = b - a;
+            Vector3 ap = p - a;
+            float t = Mathf.Clamp01(Vector3.Dot(ap, ab) / Vector3.Dot(ab, ab));
+            return a + t * ab;
         }
 
         private void UpdateTarget()
@@ -496,7 +552,7 @@ namespace TowerDefence.Combat
 
         public virtual void SetRangeVisible(bool visible)
         {
-            if (attackRangeLine != null)
+            if (attackRangeLine != null && !towerData.isAuraTower)
             {
                 if (visible) DrawRangeCircle();
                 attackRangeLine.gameObject.SetActive(visible);

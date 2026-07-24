@@ -155,20 +155,13 @@ public class EditorPrefabBuilder : Editor
 
     private static void CreateUnitTemplate(string folder, string name, Color color)
     {
-        GameObject root = new GameObject(name, typeof(NavMeshAgent), typeof(Unit), typeof(CapsuleCollider));
-        root.GetComponent<CapsuleCollider>().center = new Vector3(0, 1, 0);
-        root.GetComponent<CapsuleCollider>().radius = 0.5f;
-        root.GetComponent<CapsuleCollider>().height = 2f;
-        root.GetComponent<NavMeshAgent>().enabled = false; // Devre dışı bırak (Instantiate hatasını önlemek için)
-        
-        Unit unitScript = root.GetComponent<Unit>();
-
-        // Karşılık gelen UnitData'yı bul (Akıllı Bulma)
         string safeName = name.Replace(" ", "_");
+        string prefabPath = folder + "/" + name + ".prefab";
+
         string dataPath = "Assets/Data/Units/" + safeName + ".asset";
         UnitData data = AssetDatabase.LoadAssetAtPath<UnitData>(dataPath);
-        
-        if (data == null) // Fallback: Arama yap
+
+        if (data == null)
         {
             string[] guids = AssetDatabase.FindAssets(safeName + " t:UnitData");
             if (guids.Length > 0)
@@ -177,13 +170,39 @@ public class EditorPrefabBuilder : Editor
             }
         }
 
-        // Görselleştirme (2D Sprite yerine 3D Model Animasyonlu)
+        // Eğer prefab zaten varsa, sadece UnitData referansını güncelle ve çık
+        GameObject existingPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (existingPrefab != null)
+        {
+            Unit unitComp = existingPrefab.GetComponent<Unit>();
+            if (unitComp != null && data != null)
+            {
+                SerializedObject so = new SerializedObject(unitComp);
+                so.FindProperty("unitData").objectReferenceValue = data;
+                so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(existingPrefab);
+            }
+            if (data != null)
+            {
+                data.prefab = existingPrefab;
+                data.unitName = name.Replace("_", " ");
+                data.side = GetSideByName(name);
+                EditorUtility.SetDirty(data);
+            }
+            Debug.Log($"✔ Unit prefab already exists, preserved: {name}");
+            return;
+        }
+
+        GameObject root = new GameObject(name, typeof(NavMeshAgent), typeof(Unit), typeof(CapsuleCollider));
+        root.GetComponent<CapsuleCollider>().center = new Vector3(0, 1, 0);
+        root.GetComponent<CapsuleCollider>().radius = 0.5f;
+        root.GetComponent<CapsuleCollider>().height = 2f;
+        root.GetComponent<NavMeshAgent>().enabled = false;
+
         Apply3DVisualsToUnit(root, name);
 
-        string prefabPath = folder + "/" + name + ".prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
 
-        // TERS BAĞLAMA (Prefab -> Data): Prefab kaydedildikten sonra bağlıyoruz ki kalıcı olsun
         if (data != null && prefab != null)
         {
             Unit unitComp = prefab.GetComponent<Unit>();
@@ -194,11 +213,7 @@ public class EditorPrefabBuilder : Editor
                 so.ApplyModifiedProperties();
                 EditorUtility.SetDirty(prefab);
             }
-        }
 
-        // UnitData'yı güncelle (Data -> Prefab)
-        if (data != null)
-        {
             data.prefab = prefab;
             data.unitName = name.Replace("_", " ");
             data.side = GetSideByName(name);
@@ -211,15 +226,14 @@ public class EditorPrefabBuilder : Editor
 
     private static void CreateTowerTemplate(string folder, string projectileFolder, string name, Color color)
     {
-        GameObject root = new GameObject(name, typeof(Tower));
-        Tower towerScript = root.GetComponent<Tower>();
+        string safeName = name.Replace(" ", "_");
+        string prefabPath = folder + "/" + name + ".prefab";
         
         // Karşılık gelen TowerData'yı bul (Akıllı Bulma)
-        string safeName = name.Replace(" ", "_");
         string dataPath = "Assets/Data/Towers/" + safeName + ".asset";
         TowerData data = AssetDatabase.LoadAssetAtPath<TowerData>(dataPath);
         
-        if (data == null) // Fallback: Arama yap
+        if (data == null)
         {
             string[] guids = AssetDatabase.FindAssets(safeName + " t:TowerData");
             if (guids.Length > 0)
@@ -228,24 +242,50 @@ public class EditorPrefabBuilder : Editor
             }
         }
 
-        // Görselleştirme (2D Sprite yerine 3D Model Kenney Kit)
+        // Eğer prefab zaten varsa, sadece TowerData referansını güncelle ve çık
+        GameObject existingPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (existingPrefab != null)
+        {
+            Tower towerComp = existingPrefab.GetComponent<Tower>();
+            if (towerComp != null && data != null)
+            {
+                SerializedObject so = new SerializedObject(towerComp);
+                so.FindProperty("towerData").objectReferenceValue = data;
+                so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(existingPrefab);
+            }
+            if (data != null)
+            {
+                data.prefab = existingPrefab;
+                data.towerName = name.Replace("_", " ");
+                data.side = GetSideByName(name);
+                string projName = GetProjectileNameForTower(name);
+                if (!string.IsNullOrEmpty(projName))
+                {
+                    GameObject projPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(projectileFolder + "/" + projName + ".prefab");
+                    if (projPrefab != null) data.projectilePrefab = projPrefab;
+                }
+                EditorUtility.SetDirty(data);
+            }
+            Debug.Log($"✔ Tower prefab already exists, preserved with user settings: {name}");
+            return;
+        }
+
+        GameObject root = new GameObject(name, typeof(Tower));
+        Tower towerScript = root.GetComponent<Tower>();
+
         Apply3DVisualsToTower(root, name);
 
-        // --- YENİ: partToRotate alanını geçici olarak scene objesinde ata ---
         Transform weapon = root.transform.Find("Visuals/Weapon");
         if (weapon != null)
         {
-            towerScript.transform.Find("Visuals/Weapon"); // Debug için
-            // SerializedObject ile bağlamak için root üzerindeki componenti kullanıyoruz
             var soRoot = new SerializedObject(towerScript);
             soRoot.FindProperty("partToRotate").objectReferenceValue = weapon;
             soRoot.ApplyModifiedProperties();
         }
 
-        string prefabPath = folder + "/" + name + ".prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
         
-        // TERS BAĞLAMA (Prefab -> Data): Prefab kaydedildikten sonra bağlıyoruz ki kalıcı olsun
         if (data != null && prefab != null)
         {
             Tower towerComp = prefab.GetComponent<Tower>();
@@ -254,7 +294,6 @@ public class EditorPrefabBuilder : Editor
                 SerializedObject so = new SerializedObject(towerComp);
                 so.FindProperty("towerData").objectReferenceValue = data;
                 
-                // Rotasyon parçasını da prefab üzerinden tekrar kontrol et/bağla
                 Transform prefabWeapon = prefab.transform.Find("Visuals/Weapon");
                 if (prefabWeapon != null)
                 {
@@ -264,16 +303,11 @@ public class EditorPrefabBuilder : Editor
                 so.ApplyModifiedProperties();
                 EditorUtility.SetDirty(prefab);
             }
-        }
 
-        // TowerData'yı güncelle (Data -> Prefab)
-        if (data != null)
-        {
             data.prefab = prefab;
             data.towerName = name.Replace("_", " ");
             data.side = GetSideByName(name);
             
-            // İlgili mermi prefabını bul ve bağla
             string projName = GetProjectileNameForTower(name);
             if (!string.IsNullOrEmpty(projName))
             {

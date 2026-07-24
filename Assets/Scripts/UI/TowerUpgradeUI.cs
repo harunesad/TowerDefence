@@ -41,6 +41,7 @@ namespace TowerDefence.UI
 
         private TowerSlot currentSlot;
         private Tower currentTower;
+        private TextMeshProUGUI priorityButtonLabel;
 
         private void OnEnable()
         {
@@ -64,6 +65,10 @@ namespace TowerDefence.UI
 
         private void Start()
         {
+            // MainPanel'in RaycastTarget'ını kapat ki buton tıklamaları bloklanmasın
+            Graphic panelGraphic = mainPanel.GetComponent<Graphic>();
+            if (panelGraphic != null) panelGraphic.raycastTarget = false;
+
             // Buton dinleyicilerini temizleyip yeniden bağlayarak prefab bağımsızlığını sağla
             upgradeButton.onClick.RemoveAllListeners();
             upgradeButton.onClick.AddListener(OnUpgradeClicked);
@@ -81,6 +86,7 @@ namespace TowerDefence.UI
             {
                 priorityButton.onClick.RemoveAllListeners();
                 priorityButton.onClick.AddListener(OnPriorityClicked);
+                priorityButtonLabel = priorityButton.GetComponentInChildren<TextMeshProUGUI>(true);
             }
         }
 
@@ -157,11 +163,13 @@ namespace TowerDefence.UI
             {
                 if (currentTower is BarracksTower)
                 {
-                    priorityText.text = "Rally Point";
+                    priorityText.text = "";
+                    if (priorityButtonLabel != null) priorityButtonLabel.text = "MOVE";
                 }
                 else
                 {
                     priorityText.text = $"Target: {currentTower.GetTargetingPriority()}";
+                    if (priorityButtonLabel != null) priorityButtonLabel.text = "CYCLE";
                 }
             }
         }

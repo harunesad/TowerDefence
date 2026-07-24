@@ -142,7 +142,7 @@ namespace TowerDefence.Combat
             }
         }
 
-        public void ManualSpawnAtPosition(UnitData unitData, Vector3 position, PathWaypoints path, int targetWpIdx = -1)
+        public void ManualSpawnAtPosition(UnitData unitData, Vector3 position, PathWaypoints path, int targetWpIdx = -1, bool walkBackward = false)
         {
             if (unitData == null || unitData.prefab == null) return;
 
@@ -163,7 +163,7 @@ namespace TowerDefence.Combat
                 unit.Initialize(unitData, diffMultiplier);
                 if (targetWpIdx >= 0)
                 {
-                    unit.SetPathWithExactTarget(path, targetWpIdx);
+                    unit.SetPathWithExactTarget(path, targetWpIdx, walkBackward);
                 }
                 else
                 {

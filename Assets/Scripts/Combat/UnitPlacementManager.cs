@@ -77,61 +77,56 @@ namespace TowerDefence.Combat
             {
                 ghostUnit.SetActive(true);
                 
-                // 1. Spawner bul (oyuncu tarafında olanı)
-                bool isPlayer = (currentDraggingUnit.side == Side.Light);
-                Spawner correctSpawner = null;
-                foreach (var s in Spawner.AllSpawners)
-                {
-                    if (s.isPlayerSpawner == isPlayer)
-                    {
-                        correctSpawner = s;
-                        break;
-                    }
-                }
-
-                if (correctSpawner == null && Spawner.AllSpawners.Count > 0)
-                    correctSpawner = Spawner.AllSpawners[0];
+                // Tüm PathWaypoints'leri tara (spawner bağımsız)
+                bool isPlayer = (currentDraggingUnit.side == SideController.Instance.GetPlayerSide());
+                PathWaypoints[] allPaths = FindObjectsByType<PathWaypoints>(FindObjectsSortMode.None);
 
                 nearestPath = null;
                 float minPathDist = maxPathDetectionDistance;
                 int nearestWpIdx = 0;
                 Vector3 snappedPos = hit.point;
 
-                if (correctSpawner != null && correctSpawner.assignedPaths != null)
+                foreach (var path in allPaths)
                 {
-                    foreach (var path in correctSpawner.assignedPaths)
+                    if (path == null) continue;
+                    var wps = path.GetWaypoints();
+                    if (wps.Count < 2) continue;
+
+                    for (int i = 0; i < wps.Count - 1; i++)
                     {
-                        if (path == null) continue;
-                        var wps = path.GetWaypoints();
-                        if (wps.Count < 2) continue;
+                        Vector3 pA = wps[i].position; pA.y = 0;
+                        Vector3 pB = wps[i+1].position; pB.y = 0;
+                        Vector3 pHit = hit.point; pHit.y = 0;
 
-                        for (int i = 0; i < wps.Count - 1; i++)
+                        Vector3 closestPointOnSegment = GetClosestPointOnSegment(pHit, pA, pB);
+                        float d = Vector3.Distance(pHit, closestPointOnSegment);
+
+                        if (d < minPathDist)
                         {
-                            Vector3 pA = wps[i].position; pA.y = 0;
-                            Vector3 pB = wps[i+1].position; pB.y = 0;
-                            Vector3 pHit = hit.point; pHit.y = 0;
-
-                            Vector3 closestPointOnSegment = GetClosestPointOnSegment(pHit, pA, pB);
-                            float d = Vector3.Distance(pHit, closestPointOnSegment);
-
-                            if (d < minPathDist)
-                            {
-                                minPathDist = d;
-                                nearestPath = path;
-                                nearestWpIdx = i;
-                                
-                                // Orijinal Y eksenini (hit.point.y) koruyarak snap noktasını ayarla
-                                snappedPos = new Vector3(closestPointOnSegment.x, hit.point.y, closestPointOnSegment.z);
-                            }
+                            minPathDist = d;
+                            nearestPath = path;
+                            nearestWpIdx = i;
+                            snappedPos = new Vector3(closestPointOnSegment.x, hit.point.y, closestPointOnSegment.z);
                         }
                     }
                 }
 
                 if (nearestPath != null)
                 {
-                    ghostUnit.transform.position = snappedPos;
                     var wps = nearestPath.GetWaypoints();
-                    targetWaypointIndex = Mathf.Min(nearestWpIdx + 1, wps.Count - 1);
+                    if (isPlayer)
+                    {
+                        // Player unitleri path'te geriye doğru yürüsün (wp[son] → wp[0] = düşmana doğru)
+                        targetWaypointIndex = Mathf.Max(nearestWpIdx - 1, 0);
+                    }
+                    else
+                    {
+                        targetWaypointIndex = Mathf.Min(nearestWpIdx + 1, wps.Count - 1);
+                    }
+                    Debug.Log($"[DROP-DEBUG] nearestPath={nearestPath.name}, nearestWpIdx={nearestWpIdx}, targetWpIdx={targetWaypointIndex}, wpCount={wps.Count}");
+                    Debug.Log($"[DROP-DEBUG] wp[0]={wps[0].position}, wp[{wps.Count-1}]={wps[wps.Count-1].position}, snappedPos={snappedPos}");
+
+                    ghostUnit.transform.position = snappedPos;
                     Vector3 lookPos = wps[targetWaypointIndex].position;
                     lookPos.y = snappedPos.y;
                     
@@ -167,10 +162,9 @@ namespace TowerDefence.Combat
             Debug.Log($"[UnitPlacementManager] StopDragging called. CurrentUnit: {currentDraggingUnit?.unitName}, NearestPath: {nearestPath != null}");
             if (currentDraggingUnit != null && nearestPath != null)
             {
-                // Ödeme Yap ve Yerleştir
                 if (CurrencyManager.Instance.TrySpendCurrency(currentDraggingUnit.side, currentDraggingUnit.spawnCost))
                 {
-                    bool isPlayer = (currentDraggingUnit.side == Side.Light);
+                    bool isPlayer = (currentDraggingUnit.side == SideController.Instance.GetPlayerSide());
                     Spawner correctSpawner = null;
                     foreach (var s in Spawner.AllSpawners)
                     {
@@ -186,8 +180,11 @@ namespace TowerDefence.Combat
 
                     if (correctSpawner != null)
                     {
-                        Debug.Log($"[UnitPlacementManager] Spawning unit at {ghostUnit.transform.position} via {correctSpawner.gameObject.name} targeting wp {targetWaypointIndex}");
-                        correctSpawner.ManualSpawnAtPosition(currentDraggingUnit, ghostUnit.transform.position, nearestPath, targetWaypointIndex);
+                        var wps = nearestPath.GetWaypoints();
+                        Debug.Log($"[DROP-DEBUG] SPAWNING: spawner={correctSpawner.gameObject.name}, isPlayerSpawner={correctSpawner.isPlayerSpawner}");
+                        Debug.Log($"[DROP-DEBUG] path={nearestPath.name}, wpCount={wps.Count}, wp[0]={wps[0].position}, wp[{wps.Count-1}]={wps[wps.Count-1].position}");
+                        Debug.Log($"[DROP-DEBUG] targetWpIdx={targetWaypointIndex}, ghostPos={ghostUnit.transform.position}, walkBackward={isPlayer}");
+                        correctSpawner.ManualSpawnAtPosition(currentDraggingUnit, ghostUnit.transform.position, nearestPath, targetWaypointIndex, isPlayer);
                     }
                     else
                     {

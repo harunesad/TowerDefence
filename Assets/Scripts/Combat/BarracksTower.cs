@@ -93,20 +93,31 @@ namespace TowerDefence.Combat
         {
             if (rangeLine != null)
             {
-                if (visible) DrawCircle(); // Veri değişmişse çizgiyi güncelle
+                if (visible) DrawCircle();
                 rangeLine.gameObject.SetActive(visible);
+            }
+            if (currentIndicator != null)
+            {
+                currentIndicator.SetActive(visible);
             }
         }
 
         private void Start()
         {
-            // İlk toplanma noktasını kulenin biraz önünde belirle
-            currentRallyPoint = transform.position + transform.forward * 3f;
-            
-            // Eğer zemin üzerinde değilse yere oturt
-            if (Physics.Raycast(currentRallyPoint + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f))
+            if (!TryLoadRallyPoint())
             {
-                currentRallyPoint = hit.point;
+                currentRallyPoint = FindNearestPathInRange();
+            }
+
+            // İşaretçiyi oluştur ama gizli başlat (SetRangeVisible ile menü açılınca görünecek)
+            if (currentIndicator == null && rallyIndicatorPrefab != null)
+            {
+                currentIndicator = Instantiate(rallyIndicatorPrefab, currentRallyPoint, Quaternion.Euler(90, 0, 0), transform);
+            }
+            if (currentIndicator != null)
+            {
+                currentIndicator.transform.position = currentRallyPoint;
+                currentIndicator.SetActive(false);
             }
 
             SpawnInitialSoldiers();
@@ -197,22 +208,101 @@ namespace TowerDefence.Combat
             activeSoldiers.Add(soldier);
         }
 
+        private Vector3 FindNearestPathInRange()
+        {
+            float searchRange = rallyRadius > 0.1f ? rallyRadius : 30f;
+            int pathLayerId = LayerMask.NameToLayer("Path");
+
+            PathWaypoints[] paths = FindObjectsByType<PathWaypoints>(FindObjectsSortMode.None);
+            if (paths.Length > 0)
+            {
+                Vector3 nearestWp = transform.position;
+                float minDistWp = float.MaxValue;
+                foreach (var path in paths)
+                {
+                    var wps = path.GetWaypoints();
+                    for (int i = 0; i < wps.Count; i++)
+                    {
+                        float d = Vector3.Distance(transform.position, wps[i].position);
+                        if (d < minDistWp && d <= searchRange)
+                        {
+                            minDistWp = d;
+                            nearestWp = wps[i].position;
+                        }
+                    }
+                }
+                if (minDistWp < float.MaxValue)
+                    return nearestWp;
+            }
+
+            int pathLayerMask = pathLayerId >= 0 ? 1 << pathLayerId : 0;
+            Collider[] hits = Physics.OverlapSphere(transform.position, searchRange, pathLayerMask, QueryTriggerInteraction.Collide);
+            if (hits.Length == 0)
+                return firePoint != null ? firePoint.position : transform.position;
+
+            Vector3 nearest = hits[0].ClosestPoint(transform.position);
+            float minDist = Vector3.Distance(transform.position, nearest);
+            for (int i = 1; i < hits.Length; i++)
+            {
+                Vector3 cp = hits[i].ClosestPoint(transform.position);
+                float d = Vector3.Distance(transform.position, cp);
+                if (d < minDist)
+                {
+                    minDist = d;
+                    nearest = cp;
+                }
+            }
+            return nearest;
+        }
+
+        private string GetRallySaveKey()
+        {
+            Vector3 pos = transform.position;
+            return $"BarracksRally_{pos.x:F1}_{pos.y:F1}_{pos.z:F1}";
+        }
+
+        private bool TryLoadRallyPoint()
+        {
+            string key = GetRallySaveKey();
+            if (!PlayerPrefs.HasKey(key)) return false;
+
+            string val = PlayerPrefs.GetString(key);
+            string[] parts = val.Split(',');
+            if (parts.Length != 3) return false;
+
+            if (float.TryParse(parts[0], out float x) &&
+                float.TryParse(parts[1], out float y) &&
+                float.TryParse(parts[2], out float z))
+            {
+                currentRallyPoint = new Vector3(x, y, z);
+                return true;
+            }
+            return false;
+        }
+
+        private void SaveRallyPoint()
+        {
+            string key = GetRallySaveKey();
+            string val = $"{currentRallyPoint.x},{currentRallyPoint.y},{currentRallyPoint.z}";
+            PlayerPrefs.SetString(key, val);
+            PlayerPrefs.Save();
+        }
+
         public void SetRallyPoint(Vector3 newPoint)
         {
             currentRallyPoint = newPoint;
+            SaveRallyPoint();
 
             // Görsel İşaretçiyi Güncelle
             if (currentIndicator == null && rallyIndicatorPrefab != null)
             {
-                // Yere paralel durması için X ekseninde 90 derece döndür
-                currentIndicator = Instantiate(rallyIndicatorPrefab, currentRallyPoint, Quaternion.Euler(90, 0, 0));
+                currentIndicator = Instantiate(rallyIndicatorPrefab, currentRallyPoint, Quaternion.Euler(90, 0, 0), transform);
             }
             
             if (currentIndicator != null)
             {
                 currentIndicator.transform.position = currentRallyPoint;
                 currentIndicator.transform.rotation = Quaternion.Euler(90, 0, 0);
-                currentIndicator.SetActive(true);
             }
 
             foreach (var soldier in activeSoldiers)

@@ -7,23 +7,22 @@ using TowerDefence.Core;
 
 namespace TowerDefence.UI
 {
-    public class UnitButton : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+    public class UnitButton : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerDownHandler
     {
         [SerializeField] private Image iconImage;
         [SerializeField] private TMPro.TextMeshProUGUI costText;
         
         private UnitData unitData;
+        private UnitInfoPanelUI activePanel;
 
         private void OnEnable()
         {
-            // Filtreleme artık UnitSelectionUI tarafından yapıldığı için burası serbest bırakıldı.
         }
 
         public void Setup(UnitData data)
         {
             unitData = data;
             
-            // Bileşenler Inspector'dan atanmamışsa otomatik bulmayı dene
             if (iconImage == null) iconImage = transform.Find("Icon")?.GetComponent<Image>();
             if (costText == null) costText = GetComponentInChildren<TMPro.TextMeshProUGUI>();
 
@@ -31,10 +30,40 @@ namespace TowerDefence.UI
             if (costText != null) costText.text = data.spawnCost.ToString();
         }
 
-        public void OnPointerClick(PointerEventData eventData)
+        public void OnPointerDown(PointerEventData eventData)
         {
-            // Tıklayarak (Base noktasında) spawn olmayı kullanıcının isteği üzerine iptal ettik.
-            // Sadece sürükle-bırak (Drag & Drop) ile spawn edilecek.
+            if (eventData.button != PointerEventData.InputButton.Left) return;
+            if (unitData == null) return;
+
+            if (activePanel != null)
+            {
+                Destroy(activePanel.gameObject);
+                activePanel = null;
+                return;
+            }
+
+            var existing = FindObjectOfType<UnitInfoPanelUI>();
+            if (existing != null) Destroy(existing.gameObject);
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            GameObject go = new GameObject("UnitInfoPanelUI", typeof(RectTransform), typeof(UnitInfoPanelUI));
+            go.transform.SetParent(canvas.transform, false);
+
+            UnitInfoPanelUI panel = go.GetComponent<UnitInfoPanelUI>();
+            panel.Setup(unitData, GetComponent<RectTransform>(), false);
+            activePanel = panel;
+
+            PositionAboveButton(go.GetComponent<RectTransform>());
+        }
+
+        private void PositionAboveButton(RectTransform panelRT)
+        {
+            Vector3 btnPos = GetComponent<RectTransform>().position;
+            float panelH = panelRT.sizeDelta.y;
+            panelRT.position = new Vector3(btnPos.x, btnPos.y + panelH * 0.5f + 10f, btnPos.z);
         }
 
         public void OnBeginDrag(PointerEventData eventData)
@@ -47,8 +76,6 @@ namespace TowerDefence.UI
 
         public void OnDrag(PointerEventData eventData)
         {
-            // Sürükleme işlemi UnitPlacementManager.Update() tarafından mouse takibiyle yapılıyor.
-            // Burası event'in tüketilmemesi için boş bırakıldı.
         }
 
         public void OnEndDrag(PointerEventData eventData)
@@ -56,6 +83,11 @@ namespace TowerDefence.UI
             if (UnitPlacementManager.Instance != null)
             {
                 UnitPlacementManager.Instance.StopDragging();
+            }
+            if (activePanel != null)
+            {
+                Destroy(activePanel.gameObject);
+                activePanel = null;
             }
         }
     }

@@ -40,6 +40,14 @@ namespace TowerDefence.Grid
             // Yeni Input Sistemi'nde hem fare hem dokunmatik için en iyi yöntem: Pointer.current
             if (Pointer.current != null && Pointer.current.press.wasPressedThisFrame)
             {
+                // Rally modunda UI check'ini bypass et, doğrudan HandleMouseClick'e git
+                if (isInRallyMode && currentRallyBarracks != null)
+                {
+                    Debug.Log($"[RALLY] Bypassing UI check in rally mode, calling HandleMouseClick");
+                    HandleMouseClick();
+                    return;
+                }
+
                 bool isOverUI = false;
                 string uiName = "None";
                 bool isRealUIElement = false;
@@ -67,13 +75,11 @@ namespace TowerDefence.Grid
                 
                 if (isOverUI && isRealUIElement) 
                 {
-                    // Tıklanan eleman veya onun parent'ları arasında etkileşimli bir UI elemanı (Button, Slider vb.) var mı?
                     bool isInteractive = results.Count > 0 && results[0].gameObject.GetComponentInParent<UnityEngine.UI.Selectable>() != null;
                     bool isIgnorable = false;
 
                     if (!isInteractive)
                     {
-                        // Şeffaf ama Raycast Target'ı açık kalmış GameplayHUD_MasterPrefab gibi kapsayıcıları veya metinleri görmezden gel
                         isIgnorable = uiName.Contains("MasterPrefab") || 
                                      uiName.Contains("MainPanel") ||
                                      (uiName.Contains("Panel") && !uiName.Contains("Selection") && !uiName.Contains("Upgrade")) ||
@@ -85,7 +91,16 @@ namespace TowerDefence.Grid
                     {
                         Debug.Log($"[TowerPlacementManager] Ignoring UI catch from {uiName} and proceeding to game click.");
                     }
-                    else return; 
+                    else
+                    {
+                        Debug.Log($"[RALLY] Click blocked by UI: {uiName}, interactive={isInteractive}. Rally mode active: {isInRallyMode}");
+                        return; 
+                    }
+                }
+
+                if (isInRallyMode)
+                {
+                    Debug.Log($"[RALLY] Click passed UI check, calling HandleMouseClick. isOverUI={isOverUI}, isRealUIElement={isRealUIElement}");
                 }
 
                 HandleMouseClick();
@@ -99,8 +114,9 @@ namespace TowerDefence.Grid
         {
             isInRallyMode = true;
             currentRallyBarracks = barracks;
-            barracks.SetRangeVisible(true); // Rally modunda menzili göster
-            Debug.Log("[Rally] Entered Rally Mode for " + barracks.gameObject.name);
+            barracks.SetRangeVisible(true);
+            Debug.Log($"[RALLY] Entered Rally Mode for {barracks.gameObject.name} at pos {barracks.transform.position}");
+            Debug.Log($"[RALLY] isInRallyMode={isInRallyMode}, currentRallyBarracks={currentRallyBarracks?.gameObject.name}");
         }
 
         private void HandleMouseClick()
@@ -112,26 +128,26 @@ namespace TowerDefence.Grid
             Ray ray = Camera.main.ScreenPointToRay(mousePos);
             RaycastHit hit;
 
-            int pathLayerMask = 1 << LayerMask.NameToLayer("Path");
+            int pathLayerId = LayerMask.NameToLayer("Path");
+            int pathLayerMask = pathLayerId >= 0 ? 1 << pathLayerId : 0;
             bool hitSomething = false;
 
             if (isInRallyMode)
             {
-                // Rally modunda sadece yolu gör (Kuleleri ve üniteleri delip geç)
+                Debug.Log($"[RALLY] Raycasting with pathLayerMask=0x{pathLayerMask:X8}, pathLayerId={pathLayerId}");
                 hitSomething = Physics.Raycast(ray, out hit, 150f, pathLayerMask, QueryTriggerInteraction.Collide);
+                Debug.Log($"[RALLY] Raycast result: hitSomething={hitSomething}, point={(hitSomething ? hit.point.ToString() : "N/A")}");
             }
             else
             {
-                // Normal modda her şeyi gör
                 hitSomething = Physics.Raycast(ray, out hit, 150f, Physics.AllLayers, QueryTriggerInteraction.Collide);
             }
             
             // --- RALLY MODE HANDLING ---
             if (isInRallyMode && currentRallyBarracks != null)
             {
-                int pathLayer = LayerMask.NameToLayer("Path");
-                Debug.Log($"<color=cyan>[RALLY-DEBUG]</color> Click Attempt! Hit Something: {hitSomething}");
-                
+                Debug.Log($"[RALLY-DEBUG] Click! hitSomething={hitSomething}, pathLayerId={pathLayerId}");
+
                 if (hitSomething)
                 {
                     GameObject hitGO = hit.collider.gameObject;
@@ -140,7 +156,7 @@ namespace TowerDefence.Grid
                     Vector3 targetPoint = hit.point;
                     float dist = Vector3.Distance(currentRallyBarracks.transform.position, targetPoint);
 
-                    bool layerMatch = (pathLayer != -1 && hitLayer == pathLayer);
+                    bool layerMatch = (pathLayerId != -1 && hitLayer == pathLayerId);
                     bool nameMatch = (hitName.Contains("tile") || hitName.Contains("path"));
 
                     // HER DURUMDA LOGLA: Neyin üzerine tıkladık ve ne kadar uzaktayız?

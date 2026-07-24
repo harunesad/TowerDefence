@@ -15,6 +15,7 @@ namespace TowerDefence.UI
         [SerializeField] private Button button;
 
         private HeroData heroData;
+        private GameObject activePanel;
 
         public void Setup(HeroData data)
         {
@@ -24,9 +25,31 @@ namespace TowerDefence.UI
             if (button != null)
             {
                 button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(ToggleSelection);
+                button.onClick.AddListener(OnClick);
             }
             RefreshUI();
+        }
+
+        private void OnClick()
+        {
+            ToggleSelection();
+
+            var existing = FindObjectOfType<HeroInfoPanelUI>();
+            if (existing != null)
+            {
+                Destroy(existing.gameObject);
+                activePanel = null;
+                return;
+            }
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            GameObject go = new GameObject("HeroInfoPanelUI", typeof(RectTransform), typeof(HeroInfoPanelUI));
+            go.transform.SetParent(canvas.transform, false);
+            go.GetComponent<HeroInfoPanelUI>().Setup(heroData, GetComponent<RectTransform>());
+            activePanel = go;
         }
 
         private void ToggleSelection()
