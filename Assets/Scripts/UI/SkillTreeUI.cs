@@ -73,7 +73,15 @@ namespace TowerDefence.UI
             if (detailIcon != null) detailIcon.sprite = data.icon;
             if (detailName != null) detailName.text = data.skillName;
             if (detailDesc != null) detailDesc.text = data.description;
-            if (detailCost != null) detailCost.text = $"Cost: {data.karmaCost} Karma & {data.crystalCost} Crystals";
+            if (detailCost != null)
+            {
+                if (data.crystalCost > 0 && data.karmaCost == 0)
+                    detailCost.text = $"Cost: {data.crystalCost} Crystals";
+                else if (data.crystalCost > 0)
+                    detailCost.text = $"Cost: {data.karmaCost} Karma + {data.crystalCost} Crystals";
+                else
+                    detailCost.text = $"Cost: {data.karmaCost} Karma";
+            }
 
             UpdateBuyButtonState();
         }
@@ -97,7 +105,25 @@ namespace TowerDefence.UI
                 string msg = "";
                 if (!canAffordKarma) msg = "Not enough Karma!";
                 else if (!canAffordCrystals) msg = "Not enough Crystals!";
-                else msg = "Prerequisites not met!";
+                else
+                {
+                    System.Collections.Generic.List<string> missing = new System.Collections.Generic.List<string>();
+                    if (selectedSkill.requiredSkills != null)
+                    {
+                        foreach (var req in selectedSkill.requiredSkills)
+                        {
+                            if (!MetaProgressionManager.Instance.IsSkillUnlocked(req.skillID))
+                            {
+                                missing.Add(req.skillName);
+                            }
+                        }
+                    }
+                    
+                    if (missing.Count > 0)
+                        msg = "Requires: " + string.Join(", ", missing);
+                    else
+                        msg = "Prerequisites not met!";
+                }
                 
                 ShowFeedback(msg, Color.red);
             }
@@ -119,14 +145,25 @@ namespace TowerDefence.UI
 
         private void SetupTreeVisuals()
         {
-            // Tüm düğümleri pozisyonlarına göre yerleştir
+            float columnSpacing = 280f;
+            float rowSpacing = 240f;
+            
+            // Merkezden hizalamak veya en soldan başlatmak için ofset (örneğin 8 kategori var)
+            float startX = -((8 - 1) * columnSpacing) / 2f; 
+            float startY = -300f; // Aşağıdan (Tier 0) başlar
+
+            // Tüm düğümleri tier ve category'ye göre otomatik yerleştir
             foreach (var node in allNodes)
             {
                 if (node == null) continue;
                 var data = node.GetSkillData();
                 if (data != null)
                 {
-                    node.GetComponent<RectTransform>().anchoredPosition = data.visualPosition;
+                    int colIndex = (int)data.category;
+                    int rowIndex = data.tier;
+
+                    Vector2 autoPosition = new Vector2(startX + (colIndex * columnSpacing), startY + (rowIndex * rowSpacing));
+                    node.GetComponent<RectTransform>().anchoredPosition = autoPosition;
                 }
             }
         }

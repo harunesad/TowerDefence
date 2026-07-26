@@ -134,7 +134,7 @@ namespace TowerDefence.UI
         private void ShowHeroDetail(HeroData data)
         {
             detailPanel.SetActive(true);
-            detailIcon.sprite = data.icon;
+            if (detailIcon != null) detailIcon.sprite = data.icon;
             detailName.text = data.displayName;
             if (data.unitData != null)
             {
@@ -146,7 +146,7 @@ namespace TowerDefence.UI
         private void ShowUnitDetail(UnitData data)
         {
             detailPanel.SetActive(true);
-            detailIcon.sprite = data.icon;
+            if (detailIcon != null) detailIcon.sprite = data.icon;
             detailName.text = data.unitName;
             detailStats.text = $"HP: {data.maxHealth}\nDMG: {data.attackDamage}\nSPD: {data.moveSpeed}\nATK Rate: {data.attackRate:F2}/s";
             detailLore.text = data.side == Side.Light ? "A brave defender of the light." : "A corrupted creature of the dark.";

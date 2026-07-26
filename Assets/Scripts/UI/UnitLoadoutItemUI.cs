@@ -1,12 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using TowerDefence.Data;
 using TowerDefence.Core;
 
 namespace TowerDefence.UI
 {
-    public class UnitLoadoutItemUI : MonoBehaviour
+    public class UnitLoadoutItemUI : MonoBehaviour, IPointerClickHandler
     {
         [SerializeField] private Image iconImage;
         [SerializeField] private Image selectionHighlight;
@@ -15,6 +16,8 @@ namespace TowerDefence.UI
 
         private UnitData unitData;
         private UnitInfoPanelUI activePanel;
+        private float lastClickTime;
+        private const float DoubleClickThreshold = 0.3f;
 
         public void Setup(UnitData data)
         {
@@ -24,15 +27,35 @@ namespace TowerDefence.UI
             if (button != null)
             {
                 button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(OnClick);
             }
             RefreshUI();
         }
 
-        private void OnClick()
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button != PointerEventData.InputButton.Left) return;
+
+            float timeSinceLastClick = Time.unscaledTime - lastClickTime;
+            lastClickTime = Time.unscaledTime;
+
+            if (timeSinceLastClick < DoubleClickThreshold)
+            {
+                CancelInvoke(nameof(ExecuteSingleClick));
+                ShowInfoPanel();
+            }
+            else
+            {
+                Invoke(nameof(ExecuteSingleClick), DoubleClickThreshold);
+            }
+        }
+
+        private void ExecuteSingleClick()
         {
             ToggleSelection();
+        }
 
+        private void ShowInfoPanel()
+        {
             if (activePanel != null)
             {
                 Destroy(activePanel.gameObject);
@@ -69,8 +92,7 @@ namespace TowerDefence.UI
                 MetaProgressionManager.Instance.EquipUnit(unitData.unitName);
 
             RefreshAllLoadoutItems();
-            
-            // Invoke an action if needed to refresh the Start Match button
+
             SideSelectionUI parentUI = GetComponentInParent<SideSelectionUI>();
             if (parentUI != null) parentUI.RefreshStartMatchButton();
         }
@@ -89,6 +111,11 @@ namespace TowerDefence.UI
             var items = transform.parent.GetComponentsInChildren<UnitLoadoutItemUI>(true);
             foreach (var item in items)
                 item.RefreshUI();
+        }
+
+        private void OnDisable()
+        {
+            CancelInvoke(nameof(ExecuteSingleClick));
         }
     }
 }

@@ -247,34 +247,74 @@ public class DataAssetGenerator : Editor
 
     public static Sprite FindIcon(string iconName)
     {
-        string pascalName = iconName.Replace("_Icon", "").Replace("_", "") + "_Icon";
-        string[] searchNames = new string[] { iconName, pascalName };
-
-        foreach (string searchName in searchNames)
+        string trimmedIconName = iconName.Trim();
+        string cleanIconName = trimmedIconName.Replace("_Icon", "").Replace("_", "").ToLower();
+        string iconsFolder = "Assets/Data/Icons";
+        
+        if (!System.IO.Directory.Exists(iconsFolder))
         {
-            string[] guids = AssetDatabase.FindAssets(searchName, new[] { "Assets/Data/Icons" });
-            foreach (string guid in guids)
+            Debug.LogError($"[FindIcon] Icons folder not found: {iconsFolder}");
+            return null;
+        }
+
+        string[] files = System.IO.Directory.GetFiles(iconsFolder, "*.*", System.IO.SearchOption.AllDirectories);
+        foreach (string file in files)
+        {
+            string ext = System.IO.Path.GetExtension(file).ToLower();
+            if (ext == ".meta") continue;
+
+            string nameWithoutExt = System.IO.Path.GetFileNameWithoutExtension(file);
+            string nameWithoutExtTrimmed = nameWithoutExt.Trim();
+            string cleanFileName = nameWithoutExtTrimmed.Replace("_Icon", "").Replace("_", "").ToLower();
+
+            if (nameWithoutExtTrimmed.Equals(trimmedIconName, System.StringComparison.OrdinalIgnoreCase) ||
+                cleanFileName.Equals(cleanIconName, System.StringComparison.OrdinalIgnoreCase))
             {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                string fileName = System.IO.Path.GetFileNameWithoutExtension(path);
-                
-                if (fileName.Equals(searchName, System.StringComparison.OrdinalIgnoreCase) || 
-                    fileName.Equals(iconName, System.StringComparison.OrdinalIgnoreCase) || 
-                    fileName.Replace("_", "").Equals(iconName.Replace("_", ""), System.StringComparison.OrdinalIgnoreCase))
+                string relativePath = file.Replace("\\", "/");
+                Object[] assets = AssetDatabase.LoadAllAssetsAtPath(relativePath);
+                Sprite firstSprite = null;
+
+                foreach (var asset in assets)
                 {
-                    // Multiple sprite desteği için
-                    Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+                    if (asset is Sprite s)
+                    {
+                        firstSprite = s;
+                        break;
+                    }
+                }
+
+                if (firstSprite != null)
+                {
+                    return firstSprite;
+                }
+
+                // Sprite bulunamadıysa (Multiple ama dilimlenmemiş veya Unity bug'ı) zorla reimport edelim.
+                Debug.LogWarning($"[FindIcon] Found file {relativePath} for {iconName} but NO Sprite sub-asset exists. Forcing reimport...");
+                TextureImporter importer = AssetImporter.GetAtPath(relativePath) as TextureImporter;
+                if (importer != null)
+                {
+                    importer.textureType = TextureImporterType.Sprite;
+                    if (importer.spriteImportMode == SpriteImportMode.Multiple)
+                    {
+                        importer.spriteImportMode = SpriteImportMode.Single;
+                    }
+                    importer.SaveAndReimport();
+                    
+                    // Reimport sonrası tekrar yüklemeyi dene
+                    assets = AssetDatabase.LoadAllAssetsAtPath(relativePath);
                     foreach (var asset in assets)
                     {
-                        if (asset is Sprite sprite)
+                        if (asset is Sprite s)
                         {
-                            return sprite;
+                            Debug.Log($"[FindIcon] Successfully generated Sprite for {iconName} after forcing reimport!");
+                            return s;
                         }
                     }
                 }
+                Debug.LogError($"[FindIcon] Failed to get Sprite from {relativePath} even after reimport!");
             }
         }
-        return null;
+        return null; // Gereksiz log kirliliğini önlemek için buradaki uyarı logunu kaldırdık.
     }
 
     private static UnitData CreateHeroAsset(string path, string name, Side side, int cost, int reward, float health, float speed, float damage, float range, float rate, string prefabPath)
@@ -823,69 +863,99 @@ public class DataAssetGenerator : Editor
         EnsureDirectory(path, true); // TAM TEMİZLİK
         string spellPath = "Assets/Data/Spells";
 
-        // --- ROOT NODES ---
-        // Center Root: Economy
-        SkillNodeData ecoRoot = CreateSkill(path, "Skill_Eco_Root", "Bountiful Start", "Start every level with +50 Gold", 200, UpgradeType.CurrencyStartBonus, 1.1f, Side.Neutral, null, null, new Vector2(0, 0));
-        
-        // Left Root: Light Power
-        SkillNodeData lightRoot = CreateSkill(path, "Skill_Light_Root", "Light Initiation", "Light Tower damage +5%", 150, UpgradeType.TowerDamageBonus, 1.05f, Side.Light, null, null, new Vector2(-400, 0));
-        
-        // Right Root: Dark Power
-        SkillNodeData darkRoot = CreateSkill(path, "Skill_Dark_Root", "Dark Initiation", "Dark Unit speed +5%", 150, UpgradeType.UnitSpeedBonus, 1.05f, Side.Dark, null, null, new Vector2(400, 0));
+        // Eco Branch
+        SkillNodeData ecoRoot = CreateSkill(path, "Skill_Eco_Root", "Bountiful Start", "Start every level with +50 Gold", 200, UpgradeType.CurrencyStartBonus, 1.1f, Side.Neutral, null, null, SkillCategory.General_Economy, 0);
 
-        // --- ECONOMY BRANCH (Center) ---
-        SkillNodeData eco1 = CreateSkill(path, "Skill_Eco_1", "Wealthy Kingdom I", "Starting Gold +100", 400, UpgradeType.CurrencyStartBonus, 1.2f, Side.Neutral, ecoRoot, null, new Vector2(0, 250));
-        SkillNodeData eco2 = CreateSkill(path, "Skill_Eco_2", "Wealthy Kingdom II", "Starting Gold +250", 800, UpgradeType.CurrencyStartBonus, 1.5f, Side.Neutral, eco1, null, new Vector2(0, 500));
+        // Light & Dark Root
+        SkillNodeData lightRoot = CreateSkill(path, "Skill_Light_Root", "Light Initiation", "Light Tower damage +5%", 150, UpgradeType.TowerDamageBonus, 1.05f, Side.Light, null, null, SkillCategory.Light_Towers, 0);
+
+        SkillNodeData darkRoot = CreateSkill(path, "Skill_Dark_Root", "Dark Initiation", "Dark Unit speed +5%", 150, UpgradeType.UnitSpeedBonus, 1.05f, Side.Dark, null, null, SkillCategory.Dark_Units, 0);
+
+        // --- ECO UPGRADES ---
+        SkillNodeData eco1 = CreateSkill(path, "Skill_Eco_1", "Wealthy Kingdom I", "Starting Gold +100", 400, UpgradeType.CurrencyStartBonus, 1.2f, Side.Neutral, ecoRoot, null, SkillCategory.General_Economy, 1);
+        SkillNodeData eco2 = CreateSkill(path, "Skill_Eco_2", "Wealthy Kingdom II", "Starting Gold +250", 800, UpgradeType.CurrencyStartBonus, 1.5f, Side.Neutral, eco1, null, SkillCategory.General_Economy, 2);
         
         var goldSpell = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Neutral_Gold.asset");
         if (goldSpell != null)
-            CreateSkill(path, "Skill_Unlock_GoldRush", "Gold Rush Spell", "Unlock the Gold Rush active spell", 1200, UpgradeType.UnlockSpell, 1, Side.Neutral, eco2, goldSpell, new Vector2(0, 750));
+            CreateSkill(path, "Skill_Unlock_GoldRush", "Gold Rush Spell", "Unlock the Gold Rush active spell", 1200, UpgradeType.UnlockSpell, 1, Side.Neutral, eco2, goldSpell, SkillCategory.General_Economy, 3);
+            
+        var eqSpell = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Neutral_Earthquake.asset");
+        if (eqSpell != null)
+            CreateSkill(path, "Skill_Unlock_Earthquake", "Earthquake Spell", "Unlock the Earthquake active spell", 1500, UpgradeType.UnlockSpell, 1, Side.Neutral, eco2, eqSpell, SkillCategory.General_Economy, 4);
 
-        // --- LIGHT BRANCH (Left) ---
-        // Archer Path
-        SkillNodeData archer1 = CreateSkill(path, "Skill_Archer_1", "Archer Potency I", "Light Archer damage +10%", 200, UpgradeType.TowerDamageBonus, 1.1f, Side.Light, lightRoot, null, new Vector2(-600, 250));
-        SkillNodeData archer2 = CreateSkill(path, "Skill_Archer_2", "Archer Potency II", "Light Archer damage +20%", 450, UpgradeType.TowerDamageBonus, 1.2f, Side.Light, archer1, null, new Vector2(-750, 500));
-        SkillNodeData archer3 = CreateSkill(path, "Skill_Archer_3", "Master Fletching", "Light Archer range +15%", 800, UpgradeType.RangeBonus, 1.15f, Side.Light, archer2, null, new Vector2(-900, 750));
+        // --- LIGHT UPGRADES ---
+        SkillNodeData archer1 = CreateSkill(path, "Skill_Archer_1", "Archer Potency I", "Light Archer damage +10%", 200, UpgradeType.TowerDamageBonus, 1.1f, Side.Light, lightRoot, null, SkillCategory.Light_Towers, 1);
+        SkillNodeData archer2 = CreateSkill(path, "Skill_Archer_2", "Archer Potency II", "Light Archer damage +20%", 450, UpgradeType.TowerDamageBonus, 1.2f, Side.Light, archer1, null, SkillCategory.Light_Towers, 2);
+        SkillNodeData archer3 = CreateSkill(path, "Skill_Archer_3", "Master Fletching", "Light Archer range +15%", 800, UpgradeType.RangeBonus, 1.15f, Side.Light, archer2, null, SkillCategory.Light_Towers, 4);
 
-        // Paladin/Hero Path
-        SkillNodeData hero1 = CreateSkill(path, "Skill_Hero_1", "Heroic Vitality I", "Hero Health +15%", 300, UpgradeType.HealthBonus, 1.15f, Side.Light, lightRoot, null, new Vector2(-300, 250));
-        SkillNodeData hero2 = CreateSkill(path, "Skill_Hero_2", "Heroic Vitality II", "Hero Health +30%", 600, UpgradeType.HealthBonus, 1.3f, Side.Light, hero1, null, new Vector2(-250, 500));
+        // Hero Vitality
+        SkillNodeData hero1 = CreateSkill(path, "Skill_Hero_1", "Heroic Vitality I", "Hero Health +15%", 300, UpgradeType.HealthBonus, 1.15f, Side.Light, lightRoot, null, SkillCategory.Light_Units, 1);
+        SkillNodeData hero2 = CreateSkill(path, "Skill_Hero_2", "Heroic Vitality II", "Hero Health +30%", 600, UpgradeType.HealthBonus, 1.3f, Side.Light, hero1, null, SkillCategory.Light_Units, 2);
         
         var shieldSpell = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Shield.asset");
         if (shieldSpell != null)
-            CreateSkill(path, "Skill_Unlock_Shield", "Divine Shield", "Unlock Divine Shield spell", 900, UpgradeType.UnlockSpell, 1, Side.Light, hero2, shieldSpell, new Vector2(-200, 750));
+            CreateSkill(path, "Skill_Unlock_Shield", "Divine Shield", "Unlock Divine Shield spell", 900, UpgradeType.UnlockSpell, 1, Side.Light, hero2, shieldSpell, SkillCategory.Light_Spells, 3);
+
+        var blessSpell = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Blessing.asset");
+        if (blessSpell != null)
+            CreateSkill(path, "Skill_Unlock_Blessing", "Holy Blessing", "Unlock Holy Blessing spell", 1100, UpgradeType.UnlockSpell, 1, Side.Light, hero2, blessSpell, SkillCategory.Light_Spells, 4);
 
         // Meteor Path
         var met1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Meteor_1.asset");
         if (met1 != null)
         {
-            SkillNodeData metNode1 = CreateSkill(path, "Skill_Met_1", "Meteor Strike", met1.description, 250, UpgradeType.UnlockSpell, 1, Side.Light, lightRoot, met1, new Vector2(-450, 400));
+            SkillNodeData metNode1 = CreateSkill(path, "Skill_Met_1", "Meteor Strike", met1.description, 250, UpgradeType.UnlockSpell, 1, Side.Light, lightRoot, met1, SkillCategory.Light_Spells, 1);
             var met2 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Meteor_2.asset");
             if (met2 != null)
-                CreateSkill(path, "Skill_Met_2", "Elite Meteor", met2.description, 700, UpgradeType.UnlockSpell, 1, Side.Light, metNode1, met2, new Vector2(-450, 650));
+            {
+                CreateSkill(path, "Skill_Met_2", "Elite Meteor", met2.description, 700, UpgradeType.UnlockSpell, 1, Side.Light, metNode1, met2, SkillCategory.Light_Spells, 2);
+            }
         }
 
-        // --- DARK BRANCH (Right) ---
-        // Speed Path
-        SkillNodeData darkSpd1 = CreateSkill(path, "Skill_Dark_Spd_1", "Dark Haste I", "Dark unit speed +10%", 200, UpgradeType.UnitSpeedBonus, 1.1f, Side.Dark, darkRoot, null, new Vector2(600, 250));
-        SkillNodeData darkSpd2 = CreateSkill(path, "Skill_Dark_Spd_2", "Dark Haste II", "Dark unit speed +20%", 450, UpgradeType.UnitSpeedBonus, 1.2f, Side.Dark, darkSpd1, null, new Vector2(750, 500));
+        // --- DARK UPGRADES ---
+        SkillNodeData darkSpd1 = CreateSkill(path, "Skill_Dark_Spd_1", "Dark Haste I", "Dark unit speed +10%", 200, UpgradeType.UnitSpeedBonus, 1.1f, Side.Dark, darkRoot, null, SkillCategory.Dark_Units, 1);
+        SkillNodeData darkSpd2 = CreateSkill(path, "Skill_Dark_Spd_2", "Dark Haste II", "Dark unit speed +20%", 450, UpgradeType.UnitSpeedBonus, 1.2f, Side.Dark, darkSpd1, null, SkillCategory.Dark_Units, 2);
         
         var bloodlust = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Bloodlust.asset");
         if (bloodlust != null)
-            CreateSkill(path, "Skill_Unlock_Bloodlust", "Bloodlust", "Unlock Bloodlust spell", 850, UpgradeType.UnlockSpell, 1, Side.Dark, darkSpd2, bloodlust, new Vector2(900, 750));
+            CreateSkill(path, "Skill_Unlock_Bloodlust", "Bloodlust", "Unlock Bloodlust spell", 850, UpgradeType.UnlockSpell, 1, Side.Dark, darkSpd2, bloodlust, SkillCategory.Dark_Spells, 4);
+            
+        var plagueRain = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_PlagueRain.asset");
+        if (plagueRain != null)
+            CreateSkill(path, "Skill_Unlock_PlagueRain", "Plague Rain", "Unlock Plague Rain spell", 1100, UpgradeType.UnlockSpell, 1, Side.Dark, darkSpd2, plagueRain, SkillCategory.Dark_Spells, 5);
 
         // Magic/Lich Path
-        SkillNodeData darkDmg1 = CreateSkill(path, "Skill_Dark_Dmg_1", "Void Essence I", "Dark Unit damage +10%", 300, UpgradeType.DamageBonus, 1.1f, Side.Dark, darkRoot, null, new Vector2(300, 250));
-        SkillNodeData darkDmg2 = CreateSkill(path, "Skill_Dark_Dmg_2", "Void Essence II", "Dark Unit damage +25%", 650, UpgradeType.DamageBonus, 1.25f, Side.Dark, darkDmg1, null, new Vector2(250, 500));
+        SkillNodeData darkDmg1 = CreateSkill(path, "Skill_Dark_Dmg_1", "Void Essence I", "Dark Unit damage +10%", 300, UpgradeType.DamageBonus, 1.1f, Side.Dark, darkRoot, null, SkillCategory.Dark_Towers, 1);
+        SkillNodeData darkDmg2 = CreateSkill(path, "Skill_Dark_Dmg_2", "Void Essence II", "Dark Unit damage +25%", 650, UpgradeType.DamageBonus, 1.25f, Side.Dark, darkDmg1, null, SkillCategory.Dark_Towers, 2);
 
         var riftSpell = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Rift.asset");
         if (riftSpell != null)
-            CreateSkill(path, "Skill_Unlock_Rift", "Abyssal Rift", "Unlock Abyssal Rift spell", 1000, UpgradeType.UnlockSpell, 1, Side.Dark, darkDmg2, riftSpell, new Vector2(200, 750));
+            CreateSkill(path, "Skill_Unlock_Rift", "Abyssal Rift", "Unlock Abyssal Rift spell", 1000, UpgradeType.UnlockSpell, 1, Side.Dark, darkDmg2, riftSpell, SkillCategory.Dark_Spells, 3);
 
         // Freeze Path
         var freeze = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Dark_Freeze.asset");
         if (freeze != null)
-            CreateSkill(path, "Skill_Unlock_Freeze", "Shadow Freeze", "Unlock Shadow Freeze spell", 500, UpgradeType.UnlockSpell, 1, Side.Dark, darkRoot, freeze, new Vector2(450, 400));
+            CreateSkill(path, "Skill_Unlock_Freeze", "Shadow Freeze", "Unlock Shadow Freeze spell", 500, UpgradeType.UnlockSpell, 1, Side.Dark, darkRoot, freeze, SkillCategory.Dark_Spells, 1);
+
+        // Extra Crystals / Modifiers
+        SkillNodeData manaWell = CreateSkill(path, "Skill_Light_ManaWell", "Mana Well", "Starting Gold +30%", 350, UpgradeType.CurrencyStartBonus, 1.3f, Side.Light, hero1, null, SkillCategory.Light_Units, 3);
+        SkillNodeData rapidFire = CreateSkill(path, "Skill_Light_RapidFire", "Rapid Fire", "Light Tower attack rate +15%", 400, UpgradeType.SpeedBonus, 1.15f, Side.Light, archer2, null, SkillCategory.Light_Towers, 3);
+
+        CreateSkill(path, "Skill_Light_HolyBlessing", "Holy Blessing", "All Light units gain +15% to Health and Damage", 0, UpgradeType.HealthBonus, 1.15f, Side.Light, hero2, null, SkillCategory.Light_Units, 4, 50);
+        CreateSkill(path, "Skill_Light_DivineProtection", "Divine Protection", "Light Tower Health +20%", 0, UpgradeType.HealthBonus, 1.2f, Side.Light, archer3, null, SkillCategory.Light_Towers, 5, 40);
+
+        // Dark Modifiers
+        SkillNodeData shadowArmor = CreateSkill(path, "Skill_Dark_ShadowArmor", "Shadow Armor", "Dark Unit Health +15%", 350, UpgradeType.HealthBonus, 1.15f, Side.Dark, darkSpd1, null, SkillCategory.Dark_Units, 3);
+        SkillNodeData plague = CreateSkill(path, "Skill_Dark_Plague", "Plague", "Dark Tower damage +15%", 400, UpgradeType.TowerDamageBonus, 1.15f, Side.Dark, darkDmg1, null, SkillCategory.Dark_Towers, 3);
+
+        CreateSkill(path, "Skill_Dark_DarkPact", "Dark Pact", "All Dark unit damage +20%", 0, UpgradeType.DamageBonus, 1.2f, Side.Dark, darkDmg2, null, SkillCategory.Dark_Towers, 4, 50);
+        CreateSkill(path, "Skill_Dark_SoulHarvest", "Soul Harvest", "Dark Unit speed +25% and damage +10%", 0, UpgradeType.UnitSpeedBonus, 1.25f, Side.Dark, darkSpd2, null, SkillCategory.Dark_Units, 4, 40);
+
+        // Extra Neutral
+        SkillNodeData tradeRoutes = CreateSkill(path, "Skill_Neutral_TradeRoutes", "Trade Routes", "Starting Gold +200", 500, UpgradeType.CurrencyStartBonus, 1.7f, Side.Neutral, eco1, null, SkillCategory.General_Base, 2);
+        
+        CreateSkill(path, "Skill_Neutral_CrystalVault", "Crystal Vault", "Start every level with +15 Crystals", 0, UpgradeType.CurrencyStartBonus, 1f, Side.Neutral, eco2, null, SkillCategory.General_Base, 3, 30);
+        CreateSkill(path, "Skill_Neutral_AncientWisdom", "Ancient Wisdom", "All units gain +10% to all stats", 0, UpgradeType.DamageBonus, 1.1f, Side.Neutral, ecoRoot, null, SkillCategory.General_Base, 1, 60);
 
         AssetDatabase.SaveAssets();
         PopulateManagerSkills(path);
@@ -932,7 +1002,7 @@ public class DataAssetGenerator : Editor
         }
     }
 
-    private static SkillNodeData CreateSkill(string path, string id, string name, string desc, int cost, UpgradeType type, float mult, Side side, SkillNodeData req = null, SpellData grant = null, Vector2 pos = default)
+    private static SkillNodeData CreateSkill(string path, string id, string name, string desc, int karmaCost, UpgradeType type, float mult, Side side, SkillNodeData req = null, SpellData grant = null, SkillCategory category = SkillCategory.General_Economy, int tier = 0, int crystalCost = 0)
     {
         string fullPath = $"{path}/{id}.asset";
         SkillNodeData skill = AssetDatabase.LoadAssetAtPath<SkillNodeData>(fullPath);
@@ -945,17 +1015,81 @@ public class DataAssetGenerator : Editor
         skill.skillID = id;
         skill.skillName = name;
         skill.description = desc;
-        skill.karmaCost = cost;
+        skill.karmaCost = karmaCost;
+        skill.crystalCost = crystalCost;
         skill.upgradeType = type;
         skill.multiplier = mult;
         skill.side = side;
         skill.grantedSpell = grant;
-        skill.visualPosition = pos;
+        skill.category = category;
+        skill.tier = tier;
         skill.requiredSkills = new System.Collections.Generic.List<SkillNodeData>();
         if (req != null) skill.requiredSkills.Add(req);
         
-        // Icon bulmaya çalış
-        skill.icon = FindIcon($"{id}_Icon");
+        // Skill ID -> İkon dosya adı eşleştirmesi (Assets/Data/Icons/Skills/ altındaki dosya isimleri)
+        // skill_prompts.md belgesine göre aynı konsepti paylaşan yetenekler aynı ikonu kullanır.
+        var iconMap = new System.Collections.Generic.Dictionary<string, string>
+        {
+            // === GENEL / NEUTRAL ===
+            { "Skill_Eco_Root", "BountifulStart" },
+            { "Skill_Eco_1", "BountifulStart" },          // Wealthy Kingdom I - aynı altın konsepti
+            { "Skill_Eco_2", "BountifulStart" },          // Wealthy Kingdom II - aynı altın konsepti
+            { "Skill_Unlock_GoldRush", "BountifulStart" },// Gold Rush - altın konsepti
+            { "Skill_Unlock_Earthquake", "Earthquake" },
+            { "Skill_Neutral_TradeRoutes", "TradeRoutes" },
+            { "Skill_Neutral_CrystalVault", "CrystalVault" },
+            { "Skill_Neutral_AncientWisdom", "AncientWisdom" },
+
+            // === LIGHT FACTION ===
+            { "Skill_Light_Root", "LightInitiation" },
+            { "Skill_Archer_1", "ArcherPotency" },        // Archer Potency I
+            { "Skill_Archer_2", "ArcherPotency" },        // Archer Potency II - aynı ikon
+            { "Skill_Archer_3", "MasterFletching" },
+            { "Skill_Light_RapidFire", "RapidFire" },
+            { "Skill_Light_DivineProtection", "DivineProtection" },
+            { "Skill_Hero_1", "HeroicVitality" },         // Heroic Vitality I
+            { "Skill_Hero_2", "HeroicVitality" },         // Heroic Vitality II - aynı ikon
+            { "Skill_Light_ManaWell", "ManaWell" },
+            { "Skill_Light_HolyBlessing", "LightInitiation" }, // Holy Blessing passive - aynı konsept
+            { "Skill_Unlock_Shield", "DivineShield" },
+            { "Skill_Unlock_Blessing", "LightInitiation" }, // Holy Blessing spell
+            { "Skill_Met_1", "MeteorStrike" },
+            { "Skill_Met_2", "MeteorStrike" },             // Elite Meteor - aynı ikon
+
+            // === DARK FACTION ===
+            { "Skill_Dark_Root", "DarkInitiation" },
+            { "Skill_Dark_Spd_1", "DarkHaste" },          // Dark Haste I
+            { "Skill_Dark_Spd_2", "DarkHaste" },          // Dark Haste II - aynı ikon
+            { "Skill_Dark_SoulHarvest", "SoulHarvest" },
+            { "Skill_Dark_Dmg_1", "DarkInitiation" },     // Void Essence I - karanlık konsepti
+            { "Skill_Dark_Dmg_2", "DarkInitiation" },     // Void Essence II - aynı ikon
+            { "Skill_Dark_DarkPact", "DarkInitiation" },   // Dark Pact - karanlık konsepti
+            { "Skill_Dark_Plague", "Plague" },
+            { "Skill_Dark_ShadowArmor", "ShadowArmor" },
+            { "Skill_Unlock_Bloodlust", "Bloodlust" },
+            { "Skill_Unlock_PlagueRain", "PlagueRain" },
+            { "Skill_Unlock_Rift", "AbyssalRift" },
+            { "Skill_Unlock_Freeze", "ShadowFreeze" },
+        };
+
+        // Önce haritadan bul
+        if (iconMap.TryGetValue(id, out string iconFileName))
+        {
+            skill.icon = FindIcon(iconFileName);
+            if (skill.icon == null) skill.icon = FindIcon($"{iconFileName}_Icon");
+        }
+
+        // Haritada yoksa veya bulunamadıysa eski fallback yöntemini dene
+        if (skill.icon == null)
+        {
+            string cleanName = name.Replace(" ", "").Replace("I", "").Replace("II", "").TrimEnd();
+            skill.icon = FindIcon(cleanName);
+        }
+        if (skill.icon == null)
+        {
+            string cleanName = name.Replace(" ", "");
+            skill.icon = FindIcon(cleanName);
+        }
 
         EditorUtility.SetDirty(skill);
         AssetDatabase.SaveAssetIfDirty(skill);
@@ -3458,12 +3592,19 @@ public class DataAssetGenerator : Editor
         CreateSpell(path, "Spell_Dark_Bloodlust", "Bloodlust", Side.Dark, 80, SpellType.Buff, 1.5f, 4f, 10f);
         CreateSpell(path, "Spell_Dark_Freeze", "Shadow Freeze", Side.Dark, 110, SpellType.Freeze, 4f, 6f, 18f);
 
-        // NEUTRAL SPELLS (1)
+        // NEUTRAL SPELLS (2)
         CreateSpell(path, "Spell_Neutral_Gold", "Gold Rush", Side.Neutral, 0, SpellType.GoldBoost, 100f, 0f, 60f);
+        CreateSpell(path, "Spell_Neutral_Earthquake", "Earthquake", Side.Neutral, 150, SpellType.Meteor, 50f, 12f, 45f);
+
+        // EXTRA LIGHT SPELL (1)
+        CreateSpell(path, "Spell_Light_Blessing", "Holy Blessing", Side.Light, 60, SpellType.Buff, 2.0f, 5f, 25f);
+
+        // EXTRA DARK SPELL (1)
+        CreateSpell(path, "Spell_Dark_PlagueRain", "Plague Rain", Side.Dark, 140, SpellType.Meteor, 80f, 6f, 15f);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("✔ 9 Unique Spells Generated Successfully with New Naming!");
+        Debug.Log("✔ 12 Unique Spells Generated Successfully!");
     }
 
     private static void CreateSpell(string path, string id, string name, Side side, int cost, SpellType type, float power, float radius, float cooldown)
@@ -3485,8 +3626,35 @@ public class DataAssetGenerator : Editor
         data.radius = radius;
         data.cooldown = cooldown;
         
-        // Icon bulmaya çalış
-        data.icon = FindIcon($"{id}_Icon");
+        // Spell ID -> İkon dosya adı eşleştirmesi
+        var spellIconMap = new System.Collections.Generic.Dictionary<string, string>
+        {
+            { "Spell_Light_Meteor_1", "MeteorStrike" },
+            { "Spell_Light_Meteor_2", "MeteorStrike" },
+            { "Spell_Light_Shield", "DivineShield" },
+            { "Spell_Light_Reinforce_1", "LightInitiation" },
+            { "Spell_Light_Reinforce_2", "LightInitiation" },
+            { "Spell_Light_Blessing", "LightInitiation" },
+            { "Spell_Dark_Rift", "AbyssalRift" },
+            { "Spell_Dark_Bloodlust", "Bloodlust" },
+            { "Spell_Dark_Freeze", "ShadowFreeze" },
+            { "Spell_Dark_PlagueRain", "PlagueRain" },
+            { "Spell_Neutral_Gold", "BountifulStart" },
+            { "Spell_Neutral_Earthquake", "Earthquake" },
+        };
+
+        // Önce haritadan bul
+        if (spellIconMap.TryGetValue(id, out string spellIconName))
+        {
+            data.icon = FindIcon(spellIconName);
+        }
+        
+        // Haritada yoksa veya bulunamadıysa isim bazlı dene
+        if (data.icon == null)
+        {
+            string cleanName = name.Replace(" ", "");
+            data.icon = FindIcon(cleanName);
+        }
 
         EditorUtility.SetDirty(data);
         AssetDatabase.SaveAssetIfDirty(data);

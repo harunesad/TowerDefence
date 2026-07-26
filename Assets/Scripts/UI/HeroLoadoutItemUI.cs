@@ -1,12 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using TowerDefence.Data;
 using TowerDefence.Core;
 
 namespace TowerDefence.UI
 {
-    public class HeroLoadoutItemUI : MonoBehaviour
+    public class HeroLoadoutItemUI : MonoBehaviour, IPointerClickHandler
     {
         [SerializeField] private Image iconImage;
         [SerializeField] private Image selectionHighlight;
@@ -16,6 +17,8 @@ namespace TowerDefence.UI
 
         private HeroData heroData;
         private GameObject activePanel;
+        private float lastClickTime;
+        private const float DoubleClickThreshold = 0.3f;
 
         public void Setup(HeroData data)
         {
@@ -25,14 +28,41 @@ namespace TowerDefence.UI
             if (button != null)
             {
                 button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(OnClick);
             }
             RefreshUI();
         }
 
-        private void OnClick()
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button != PointerEventData.InputButton.Left) return;
+
+            float timeSinceLastClick = Time.unscaledTime - lastClickTime;
+            lastClickTime = Time.unscaledTime;
+
+            if (timeSinceLastClick < DoubleClickThreshold)
+            {
+                CancelInvoke(nameof(ExecuteSingleClick));
+                ShowInfoPanel();
+            }
+            else
+            {
+                Invoke(nameof(ExecuteSingleClick), DoubleClickThreshold);
+            }
+        }
+
+        private void ExecuteSingleClick()
         {
             ToggleSelection();
+        }
+
+        private void ShowInfoPanel()
+        {
+            if (activePanel != null)
+            {
+                Destroy(activePanel);
+                activePanel = null;
+                return;
+            }
 
             var existing = FindObjectOfType<HeroInfoPanelUI>();
             if (existing != null)
@@ -84,6 +114,11 @@ namespace TowerDefence.UI
             var items = transform.parent.GetComponentsInChildren<HeroLoadoutItemUI>(true);
             foreach (var item in items)
                 item.RefreshUI();
+        }
+
+        private void OnDisable()
+        {
+            CancelInvoke(nameof(ExecuteSingleClick));
         }
     }
 }

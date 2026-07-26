@@ -211,8 +211,8 @@ namespace TowerDefence.Editor
                 GameObject node = new GameObject(data.skillName, typeof(RectTransform), typeof(Image), typeof(Button), typeof(SkillNodeUI));
                 node.transform.SetParent(contentRT.transform, false);
                 RectTransform nRT = node.GetComponent<RectTransform>();
-                nRT.sizeDelta = new Vector2(140, 140);
-                nRT.anchoredPosition = data.visualPosition;
+                nRT.sizeDelta = new Vector2(160, 160);
+                nRT.anchoredPosition = Vector2.zero; // Auto layout will handle this at runtime
 
                 node.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.3f, 1f);
 
@@ -222,7 +222,7 @@ namespace TowerDefence.Editor
                 icon.color = data.side == Side.Light ? new Color(1, 0.9f, 0.5f) : new Color(0.6f, 0.4f, 0.8f);
 
                 // Name
-                TextMeshProUGUI nameTmp = CreateTMP(node.transform, "Name", data.skillName, 14, 130, 40);
+                TextMeshProUGUI nameTmp = CreateTMP(node.transform, "Name", data.skillName, 14, 150, 40);
                 nameTmp.rectTransform.anchoredPosition = new Vector2(0, -45);
                 nameTmp.alignment = TextAlignmentOptions.Center;
 
@@ -338,9 +338,7 @@ namespace TowerDefence.Editor
             detailRT.offsetMax = new Vector2(-50, -120);
             detail.AddComponent<Image>().color = new Color(0, 0, 0, 0.5f);
 
-            Image detailIcon = CreateImage(detail.transform, "Icon", new Vector2(150, 200));
-            detailIcon.rectTransform.anchoredPosition = new Vector2(0, 250);
-            detailIcon.rectTransform.localScale = new Vector3(2, 2, 2);
+            Image detailIcon = null;
             
             TextMeshProUGUI detailName = CreateTMP(detail.transform, "Name", "Select a character", 36, 500, 60);
             detailName.rectTransform.anchoredPosition = new Vector2(0, 50);
@@ -454,32 +452,60 @@ namespace TowerDefence.Editor
             GameObject sidePanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/SideSelectionPanel.prefab", false);
             GameObject compPanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/CompendiumPanel.prefab",   false);
 
-            // 4b. Daily Reward Panel (Popup)
-            GameObject drPanel = CreateUINode(root.transform, "DailyRewardPanel", new Vector2(600, 450));
+            // 4b. Daily Reward Panel (30-Day Calendar)
+            GameObject drBackdrop = CreateUINode(root.transform, "DailyRewardBackdrop", new Vector2(4000, 4000));
+            drBackdrop.SetActive(false);
+            drBackdrop.AddComponent<Image>().color = new Color(0, 0, 0, 1f);
+            drBackdrop.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+
+            GameObject drPanel = CreateUINode(root.transform, "DailyRewardPanel", new Vector2(1400, 850));
             drPanel.SetActive(false);
-            drPanel.AddComponent<Image>().color = new Color(0.1f, 0.1f, 0.15f, 0.95f);
+            drPanel.AddComponent<Image>().color = new Color(0.1f, 0.1f, 0.15f, 1f);
             
-            CreateTMP(drPanel.transform, "Title", "DAILY REWARD", 32, 500, 50).rectTransform.anchoredPosition = new Vector2(0, 160);
-            TextMeshProUGUI drInfo = CreateTMP(drPanel.transform, "Info", "You have a reward waiting!", 20, 500, 100);
-            drInfo.rectTransform.anchoredPosition = new Vector2(0, 60);
+            TextMeshProUGUI drTitle = CreateTMP(drPanel.transform, "Title", "DAILY REWARD", 48, 600, 60);
+            drTitle.rectTransform.anchorMin = new Vector2(0.5f, 1);
+            drTitle.rectTransform.anchorMax = new Vector2(0.5f, 1);
+            drTitle.rectTransform.anchoredPosition = new Vector2(0, -60);
+
+            // 30-Day Grid
+            GameObject gridGO = CreateUINode(drPanel.transform, "Grid", new Vector2(1300, 550));
+            gridGO.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+            GridLayoutGroup glg = gridGO.AddComponent<GridLayoutGroup>();
+            glg.cellSize = new Vector2(160, 100);
+            glg.spacing = new Vector2(15, 15);
+            glg.padding = new RectOffset(10, 10, 10, 10);
+            glg.childAlignment = TextAnchor.UpperCenter;
+            glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            glg.constraintCount = 7;
+
+            // Info texts
+            TextMeshProUGUI drTimer = CreateTMP(drPanel.transform, "TimerText", "CLAIM NOW!", 22, 400, 40);
+            drTimer.rectTransform.anchoredPosition = new Vector2(0, -260);
+            drTimer.alignment = TextAlignmentOptions.Center;
+
+            TextMeshProUGUI drInfo = CreateTMP(drPanel.transform, "Info", "Day 1 reward is ready!", 18, 500, 30);
+            drInfo.rectTransform.anchoredPosition = new Vector2(0, -290);
+            drInfo.alignment = TextAlignmentOptions.Center;
             
-            GameObject rewardDisplay = CreateUINode(drPanel.transform, "Rewards", new Vector2(500, 100));
-            rewardDisplay.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -30);
-            HorizontalLayoutGroup drHlg = rewardDisplay.AddComponent<HorizontalLayoutGroup>();
-            drHlg.childAlignment = TextAnchor.MiddleCenter;
-            drHlg.spacing = 50;
-            
-            CreateTMP(rewardDisplay.transform, "KarmaReward", "100 Karma", 24, 200, 50).color = Color.yellow;
-            CreateTMP(rewardDisplay.transform, "CrystalReward", "20 Crystals", 24, 200, 50).color = Color.cyan;
-            
-            Button claimBtn = CreateButton(drPanel.transform, "ClaimButton", "CLAIM", 200, 60, 24);
-            claimBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -140);
+            Button claimBtn = CreateButton(drPanel.transform, "ClaimButton", "CLAIM", 200, 55, 24);
+            claimBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -320);
             claimBtn.GetComponent<Image>().color = new Color(0.2f, 0.6f, 0.2f);
             
             Button drCloseBtn = CreateButton(drPanel.transform, "CloseButton", "X", 50, 50, 20);
             drCloseBtn.GetComponent<RectTransform>().anchorMin = new Vector2(1, 1);
             drCloseBtn.GetComponent<RectTransform>().anchorMax = new Vector2(1, 1);
             drCloseBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(-30, -30);
+
+            // DailyRewardUI component
+            DailyRewardUI drUI = drPanel.AddComponent<DailyRewardUI>();
+            var drSO = new UnityEditor.SerializedObject(drUI);
+            drSO.FindProperty("gridContainer").objectReferenceValue = gridGO.transform;
+            drSO.FindProperty("backdrop").objectReferenceValue = drBackdrop;
+            drSO.FindProperty("timerText").objectReferenceValue = drTimer;
+            drSO.FindProperty("infoText").objectReferenceValue = drInfo;
+            drSO.FindProperty("claimButton").objectReferenceValue = claimBtn;
+            drSO.FindProperty("closeButton").objectReferenceValue = drCloseBtn;
+            drSO.ApplyModifiedProperties();
 
             // 5. Top Currency Panel
             GameObject topPanel = CreateUINode(root.transform, "TopPanel", new Vector2(0, 100));
@@ -538,10 +564,9 @@ namespace TowerDefence.Editor
             so.FindProperty("karmaText").objectReferenceValue = karmaVal;
             so.FindProperty("crystalText").objectReferenceValue = crystalVal;
             so.FindProperty("dailyRewardPanel").objectReferenceValue = drPanel;
+            so.FindProperty("dailyRewardBackdrop").objectReferenceValue = drBackdrop;
             so.FindProperty("dailyRewardButton").objectReferenceValue = dailyBtn;
             so.FindProperty("dailyRewardTimerText").objectReferenceValue = timerText;
-            so.FindProperty("dailyRewardInfoText").objectReferenceValue = drInfo;
-            so.FindProperty("claimRewardButton").objectReferenceValue = claimBtn;
 
             so.FindProperty("playButton").objectReferenceValue       = playBtn;
             so.FindProperty("skillTreeButton").objectReferenceValue  = skillBtn;
@@ -1054,72 +1079,81 @@ namespace TowerDefence.Editor
             rootRT.offsetMin = Vector2.zero;
             rootRT.offsetMax = Vector2.zero;
 
-            TextMeshProUGUI title = CreateTMP(root.transform, "Title", "HERO ROSTER", 64, 900, 100);
-            title.rectTransform.anchoredPosition = new Vector2(0, 320);
+            TextMeshProUGUI title = CreateTMP(root.transform, "Title", "HERO ROSTER", 56, 900, 80);
+            title.rectTransform.anchorMin = new Vector2(0.5f, 1f);
+            title.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            title.rectTransform.pivot = new Vector2(0.5f, 1f);
+            title.rectTransform.anchoredPosition = new Vector2(0, -40);
             title.color = new Color(1f, 0.85f, 0.2f);
 
             // Left: hero list
-            GameObject scroll = new GameObject("HeroScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+            GameObject scroll = new GameObject("HeroScroll", typeof(RectTransform), typeof(ScrollRect), typeof(Image), typeof(Mask));
             scroll.transform.SetParent(root.transform, false);
             scroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.3f);
             RectTransform scrollRT = scroll.GetComponent<RectTransform>();
-            scrollRT.sizeDelta = new Vector2(520, 480);
-            scrollRT.anchoredPosition = new Vector2(-280, -30);
+            scrollRT.anchorMin = new Vector2(0, 0);
+            scrollRT.anchorMax = new Vector2(0.5f, 1);
+            scrollRT.pivot = new Vector2(0, 1);
+            scrollRT.offsetMin = new Vector2(40, 50);
+            scrollRT.offsetMax = new Vector2(-20, -130);
+            scroll.GetComponent<Image>().type = Image.Type.Sliced;
+            scroll.AddComponent<Mask>();
 
-            GameObject content = CreateUINode(scroll.transform, "Content", new Vector2(480, 460));
+            GameObject content = CreateUINode(scroll.transform, "Content", new Vector2(500, 1000));
+            content.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            
             GridLayoutGroup glg = content.AddComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(150, 110);
-            glg.spacing = new Vector2(12, 12);
+            glg.cellSize = new Vector2(250, 210);
+            glg.spacing = new Vector2(20, 20);
+            glg.padding = new RectOffset(20, 20, 20, 20);
             glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            glg.constraintCount = 3;
-            scroll.GetComponent<ScrollRect>().content = content.GetComponent<RectTransform>();
+            glg.constraintCount = 2;
+            glg.childAlignment = TextAnchor.UpperCenter;
+
+            ScrollRect sr = scroll.GetComponent<ScrollRect>();
+            sr.content = content.GetComponent<RectTransform>();
+            sr.vertical = true;
+            sr.horizontal = false;
 
             // Right: detail panel
-            GameObject detailRoot = CreateUINode(root.transform, "DetailPanel", new Vector2(520, 480));
-            detailRoot.GetComponent<RectTransform>().anchoredPosition = new Vector2(280, -30);
+            GameObject detailRoot = CreateUINode(root.transform, "DetailPanel", new Vector2(480, 560));
+            RectTransform detailRT = detailRoot.GetComponent<RectTransform>();
+            detailRT.anchorMin = new Vector2(0.5f, 0);
+            detailRT.anchorMax = new Vector2(1, 1);
+            detailRT.pivot = new Vector2(0, 1);
+            detailRT.offsetMin = new Vector2(20, 50);
+            detailRT.offsetMax = new Vector2(-40, -130);
             Image detailBg = detailRoot.AddComponent<Image>();
             detailBg.color = new Color(0.12f, 0.12f, 0.18f, 0.95f);
             detailRoot.AddComponent<HeroDetailPanelUI>();
+            
+            // Vertical Layout Group - Pozisyonu artık bu component yönetir
+            VerticalLayoutGroup vlg = detailRoot.AddComponent<VerticalLayoutGroup>();
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            vlg.spacing = 8;
+            vlg.padding = new RectOffset(20, 20, 30, 20);
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = false;
 
-            Image detailIcon = CreateImage(detailRoot.transform, "HeroIcon", new Vector2(120, 120));
-            detailIcon.rectTransform.anchoredPosition = new Vector2(-150, 150);
+            TextMeshProUGUI detailName = CreateTMP(detailRoot.transform, "HeroName", "Hero Name", 60, 400, 60);
+            TextMeshProUGUI detailSide = CreateTMP(detailRoot.transform, "Side", "LIGHT", 28, 300, 40);
+            TextMeshProUGUI detailLevel = CreateTMP(detailRoot.transform, "Level", "Level 1/5", 28, 300, 40);
+            TextMeshProUGUI healthText = CreateTMP(detailRoot.transform, "Health", "Health: 500", 24, 400, 40);
+            TextMeshProUGUI damageText = CreateTMP(detailRoot.transform, "Damage", "Damage: 40", 24, 400, 40);
+            TextMeshProUGUI speedText = CreateTMP(detailRoot.transform, "Speed", "Speed: 1.0", 24, 400, 40);
+            TextMeshProUGUI rangeText = CreateTMP(detailRoot.transform, "Range", "Range: 1.8", 24, 400, 40);
+            TextMeshProUGUI attackRateText = CreateTMP(detailRoot.transform, "AttackRate", "Attack Rate: 1.0/s", 24, 400, 40);
+            TextMeshProUGUI abilityName = CreateTMP(detailRoot.transform, "AbilityName", "Ability", 32, 450, 50);
+            TextMeshProUGUI abilityDesc = CreateTMP(detailRoot.transform, "AbilityDesc", "Description", 24, 450, 120);
+            TextMeshProUGUI costText = CreateTMP(detailRoot.transform, "Cost", "500 Karma", 28, 300, 40);
 
-            TextMeshProUGUI detailName = CreateTMP(detailRoot.transform, "HeroName", "Hero Name", 30, 300, 40);
-            detailName.rectTransform.anchoredPosition = new Vector2(40, 170);
-            TextMeshProUGUI detailSide = CreateTMP(detailRoot.transform, "Side", "LIGHT", 18, 200, 24);
-            detailSide.rectTransform.anchoredPosition = new Vector2(40, 130);
-            TextMeshProUGUI detailLevel = CreateTMP(detailRoot.transform, "Level", "Level 1/5", 20, 250, 28);
-            detailLevel.rectTransform.anchoredPosition = new Vector2(40, 95);
-
-            TextMeshProUGUI healthText = CreateTMP(detailRoot.transform, "Health", "Health: 500", 18, 220, 24);
-            healthText.rectTransform.anchoredPosition = new Vector2(-150, 40);
-            TextMeshProUGUI damageText = CreateTMP(detailRoot.transform, "Damage", "Damage: 40", 18, 220, 24);
-            damageText.rectTransform.anchoredPosition = new Vector2(80, 40);
-            TextMeshProUGUI speedText = CreateTMP(detailRoot.transform, "Speed", "Speed: 1.0", 18, 220, 24);
-            speedText.rectTransform.anchoredPosition = new Vector2(-150, 10);
-            TextMeshProUGUI rangeText = CreateTMP(detailRoot.transform, "Range", "Range: 1.8", 18, 220, 24);
-            rangeText.rectTransform.anchoredPosition = new Vector2(80, 10);
-            TextMeshProUGUI rateText = CreateTMP(detailRoot.transform, "AttackRate", "Attack Rate: 1.0/s", 18, 220, 24);
-            rateText.rectTransform.anchoredPosition = new Vector2(-150, -20);
-
-            TextMeshProUGUI abilityName = CreateTMP(detailRoot.transform, "AbilityName", "Ability", 22, 420, 30);
-            abilityName.rectTransform.anchoredPosition = new Vector2(0, -70);
-            TextMeshProUGUI abilityDesc = CreateTMP(detailRoot.transform, "AbilityDesc", "Description", 16, 460, 80);
-            abilityDesc.rectTransform.anchoredPosition = new Vector2(0, -130);
-            abilityDesc.alignment = TextAlignmentOptions.TopLeft;
-
-            TextMeshProUGUI costText = CreateTMP(detailRoot.transform, "Cost", "500 Karma", 20, 300, 28);
-            costText.rectTransform.anchoredPosition = new Vector2(0, -190);
-
-            Button actionBtn = CreateButton(detailRoot.transform, "ActionButton", "UNLOCK HERO", 220, 50, 20);
-            actionBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -235);
-            Button closeBtn = CreateButton(detailRoot.transform, "CloseButton", "CLOSE", 120, 40, 18);
-            closeBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(170, -235);
+            Button actionBtn = CreateButton(detailRoot.transform, "ActionButton", "UNLOCK HERO", 280, 60, 26);
+            Button closeBtn = CreateButton(detailRoot.transform, "CloseButton", "CLOSE", 140, 50, 22);
 
             HeroDetailPanelUI detailUI = detailRoot.GetComponent<HeroDetailPanelUI>();
             var detailSo = new SerializedObject(detailUI);
             detailSo.FindProperty("panelRoot").objectReferenceValue = detailRoot;
-            detailSo.FindProperty("heroIcon").objectReferenceValue = detailIcon;
+            detailSo.FindProperty("heroIcon").objectReferenceValue = null;
             detailSo.FindProperty("heroNameText").objectReferenceValue = detailName;
             detailSo.FindProperty("sideText").objectReferenceValue = detailSide;
             detailSo.FindProperty("levelText").objectReferenceValue = detailLevel;
@@ -1127,7 +1161,7 @@ namespace TowerDefence.Editor
             detailSo.FindProperty("damageText").objectReferenceValue = damageText;
             detailSo.FindProperty("speedText").objectReferenceValue = speedText;
             detailSo.FindProperty("rangeText").objectReferenceValue = rangeText;
-            detailSo.FindProperty("attackRateText").objectReferenceValue = rateText;
+            detailSo.FindProperty("attackRateText").objectReferenceValue = attackRateText;
             detailSo.FindProperty("abilityNameText").objectReferenceValue = abilityName;
             detailSo.FindProperty("abilityDescText").objectReferenceValue = abilityDesc;
             detailSo.FindProperty("costText").objectReferenceValue = costText;
@@ -1162,22 +1196,43 @@ namespace TowerDefence.Editor
         {
             EnsureDirectory();
             GameObject root = new GameObject("HeroShopItem", typeof(RectTransform), typeof(Image), typeof(Button), typeof(HeroShopItemUI));
-            root.GetComponent<RectTransform>().sizeDelta = new Vector2(150, 110);
+            RectTransform rootRT = root.GetComponent<RectTransform>();
+            rootRT.sizeDelta = new Vector2(260, 220);
+            rootRT.anchorMin = new Vector2(0.5f, 0.5f);
+            rootRT.anchorMax = new Vector2(0.5f, 0.5f);
+            rootRT.pivot = new Vector2(0.5f, 0.5f);
             root.GetComponent<Image>().color = new Color(0.15f, 0.15f, 0.2f, 0.95f);
 
-            Image icon = CreateImage(root.transform, "Icon", new Vector2(60, 60));
-            icon.rectTransform.anchoredPosition = new Vector2(0, 15);
+            Image iconBg = CreateImage(root.transform, "IconBg", new Vector2(140, 140));
+            iconBg.rectTransform.anchoredPosition = new Vector2(0, 10);
+            iconBg.color = new Color(0.1f, 0.1f, 0.15f, 1f);
 
-            TextMeshProUGUI nameText = CreateTMP(root.transform, "Name", "Hero", 14, 130, 36);
-            nameText.rectTransform.anchoredPosition = new Vector2(0, -25);
+            Image icon = CreateImage(iconBg.transform, "Icon", new Vector2(130, 130));
+            icon.rectTransform.anchorMin = Vector2.zero;
+            icon.rectTransform.anchorMax = Vector2.one;
+            icon.rectTransform.offsetMin = Vector2.zero;
+            icon.rectTransform.offsetMax = Vector2.zero;
+            icon.preserveAspect = true;
 
-            TextMeshProUGUI levelText = CreateTMP(root.transform, "Level", "Lv.1", 12, 130, 20);
-            levelText.rectTransform.anchoredPosition = new Vector2(0, -45);
+            TextMeshProUGUI nameText = CreateTMP(root.transform, "Name", "Hero", 22, 240, 30);
+            nameText.rectTransform.anchorMin = new Vector2(0.5f, 1f);
+            nameText.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            nameText.rectTransform.pivot = new Vector2(0.5f, 1f);
+            nameText.rectTransform.anchoredPosition = new Vector2(0, -150);
+            nameText.alignment = TextAlignmentOptions.Center;
+            nameText.color = new Color(1f, 0.85f, 0.4f);
 
-            Image lockedOverlay = CreateImage(root.transform, "LockedOverlay", new Vector2(150, 110));
+            TextMeshProUGUI levelText = CreateTMP(root.transform, "Level", "Lv.1", 18, 240, 24);
+            levelText.rectTransform.anchorMin = new Vector2(0.5f, 1f);
+            levelText.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            levelText.rectTransform.pivot = new Vector2(0.5f, 1f);
+            levelText.rectTransform.anchoredPosition = new Vector2(0, -180);
+            levelText.alignment = TextAlignmentOptions.Center;
+
+            Image lockedOverlay = CreateImage(root.transform, "LockedOverlay", new Vector2(260, 220));
             lockedOverlay.color = new Color(0, 0, 0, 0.55f);
 
-            Image highlightFrame = CreateImage(root.transform, "Highlight", new Vector2(150, 110));
+            Image highlightFrame = CreateImage(root.transform, "Highlight", new Vector2(260, 220));
             highlightFrame.color = new Color(1f, 0.85f, 0.2f, 0.35f);
             highlightFrame.gameObject.SetActive(false);
 

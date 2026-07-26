@@ -34,10 +34,9 @@ namespace TowerDefence.UI
 
         [Header("Daily Reward")]
         [SerializeField] private GameObject dailyRewardPanel;
+        [SerializeField] private GameObject dailyRewardBackdrop;
         [SerializeField] private Button dailyRewardButton;
         [SerializeField] private TMPro.TextMeshProUGUI dailyRewardTimerText;
-        [SerializeField] private TMPro.TextMeshProUGUI dailyRewardInfoText;
-        [SerializeField] private Button claimRewardButton;
 
         private void Update()
         {
@@ -78,28 +77,14 @@ namespace TowerDefence.UI
             if (dailyRewardPanel != null)
             {
                 dailyRewardPanel.SetActive(true);
-                bool available = DailyRewardManager.Instance.IsRewardAvailable();
-                
-                if (claimRewardButton != null) claimRewardButton.interactable = available;
-                if (dailyRewardInfoText != null)
-                {
-                    dailyRewardInfoText.text = available ? "You have a daily reward waiting!" : "Next reward in:";
-                }
-            }
-        }
-
-        public void ClaimDailyReward()
-        {
-            if (DailyRewardManager.Instance.ClaimReward(out int karma, out int crystal))
-            {
-                Debug.Log($"Claimed {karma} Karma and {crystal} Crystals!");
-                if (dailyRewardPanel != null) dailyRewardPanel.SetActive(false);
+                if (dailyRewardBackdrop != null) dailyRewardBackdrop.SetActive(true);
             }
         }
 
         public void CloseDailyRewardPanel()
         {
             if (dailyRewardPanel != null) dailyRewardPanel.SetActive(false);
+            if (dailyRewardBackdrop != null) dailyRewardBackdrop.SetActive(false);
         }
 
         private void Start()
@@ -121,12 +106,6 @@ namespace TowerDefence.UI
             if (dailyRewardButton == null) dailyRewardButton = transform.Find("MainMenuPanel/DailyRewardButton")?.GetComponent<Button>();
             if (dailyRewardButton != null) dailyRewardButton.onClick.AddListener(ShowDailyRewardPanel);
 
-            if (claimRewardButton == null) claimRewardButton = transform.Find("DailyRewardPanel/ClaimButton")?.GetComponent<Button>();
-            if (claimRewardButton != null) claimRewardButton.onClick.AddListener(ClaimDailyReward);
-
-            Button drCloseBtn = transform.Find("DailyRewardPanel/CloseButton")?.GetComponent<Button>();
-            if (drCloseBtn != null) drCloseBtn.onClick.AddListener(CloseDailyRewardPanel);
-
             // Tüm panelleri kapat
             InitPanel(mainMenuPanel);
             InitPanel(levelSelectPanel);
@@ -135,6 +114,7 @@ namespace TowerDefence.UI
             InitPanel(sideSelectionPanel);
             InitPanel(compendiumPanel);
             if (dailyRewardPanel != null) dailyRewardPanel.SetActive(false);
+            if (dailyRewardBackdrop != null) dailyRewardBackdrop.SetActive(false);
 
             // Buton olaylarını bağla
             if (playButton      != null) playButton.onClick.AddListener(ShowLevelSelect);

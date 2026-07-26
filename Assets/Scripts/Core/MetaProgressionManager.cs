@@ -27,6 +27,7 @@ namespace TowerDefence.Core
         public int totalKarma;
         public int totalCrystals; // Yeni ikinci para birimi
         public long lastDailyRewardTime; // Son günlük ödül zamanı (Ticks)
+        public int dailyRewardDayIndex; // 0-30 arası, kaçıncı günde olduğu (0=henüz başlamamış, 30=tamamlandı)
         public List<string> unlockedSkillIDs = new List<string>();
         public List<string> unlockedSpellIDs = new List<string>(); // Açılan aktif büyüler
         public List<string> equippedSpellIDs = new List<string>(); // Kuşatılan büyüler
@@ -100,6 +101,14 @@ namespace TowerDefence.Core
         public void SetLastDailyRewardTime(long ticks)
         {
             saveData.lastDailyRewardTime = ticks;
+            SaveGame();
+        }
+
+        public int GetDailyRewardDayIndex() => saveData.dailyRewardDayIndex;
+
+        public void SetDailyRewardDayIndex(int index)
+        {
+            saveData.dailyRewardDayIndex = index;
             SaveGame();
         }
 
@@ -499,21 +508,22 @@ namespace TowerDefence.Core
                 if (progress.difficultyLevel == 0) progress.difficultyLevel = 1;
             }
 
-            // Başlangıç büyülerini ve yeteneklerini otomatik aç (Eğer hiç büyü yoksa)
-            if (saveData.unlockedSpellIDs.Count == 0)
+            // Migration: Eski günlük ödül kullananlar için dailyRewardDayIndex başlat
+            if (saveData.lastDailyRewardTime != 0 && saveData.dailyRewardDayIndex == 0)
             {
-                // 1 Light, 1 Dark Başlangıç Büyüsü
-                saveData.unlockedSpellIDs.Add("Spell_Light_Meteor_1");
-                saveData.unlockedSpellIDs.Add("Spell_Dark_Bloodlust");
-
-                // İlgili yetenekleri de satın alınmış işaretle
-                if (!saveData.unlockedSkillIDs.Contains("Skill_Unlock_Light_Meteor_1"))
-                    saveData.unlockedSkillIDs.Add("Skill_Unlock_Light_Meteor_1");
-                if (!saveData.unlockedSkillIDs.Contains("Skill_Unlock_Dark_Bloodlust"))
-                    saveData.unlockedSkillIDs.Add("Skill_Unlock_Dark_Bloodlust");
-
-                SaveGame();
+                saveData.dailyRewardDayIndex = 1;
             }
+
+            // Migration: Büyü listesini skill tree ile senkronize et
+            // Sadece unlock edilmiş skill'lerin grant ettiği büyüler kalsın
+            List<string> validSpells = new List<string>();
+            foreach (string skillID in saveData.unlockedSkillIDs)
+            {
+                SkillNodeData skill = allAvailableSkills.Find(s => s != null && s.skillID == skillID);
+                if (skill != null && skill.grantedSpell != null && !validSpells.Contains(skill.grantedSpell.spellID))
+                    validSpells.Add(skill.grantedSpell.spellID);
+            }
+            saveData.unlockedSpellIDs = validSpells;
 
             EnsureStarterHeroUnlocked();
         }
