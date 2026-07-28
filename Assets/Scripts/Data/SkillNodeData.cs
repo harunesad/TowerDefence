@@ -14,7 +14,8 @@ namespace TowerDefence.Data
         CurrencyStartBonus,
         TowerDamageBonus,
         UnitSpeedBonus,
-        UnlockSpell
+        UnlockSpell,
+        CurrencyStartFlatBonus
     }
     public enum SkillCategory
     {

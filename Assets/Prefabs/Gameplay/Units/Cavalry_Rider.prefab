@@ -294,6 +294,7 @@ GameObject:
   - component: {fileID: 6090172275762848046}
   - component: {fileID: 6946767834048660005}
   - component: {fileID: 7852849545580883502}
+  - component: {fileID: 5369874206448041274}
   m_Layer: 6
   m_Name: Cavalry_Rider
   m_TagString: Untagged
@@ -359,6 +360,7 @@ MonoBehaviour:
   firePoint: {fileID: 0}
   indicatorHeight: 3
   indicatorRadius: 1
+  unitIndicatorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
 --- !u!136 &7852849545580883502
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -382,6 +384,19 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!114 &5369874206448041274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8320310418398813175}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32dd57ca2bdcdb847a3d9f1939028714, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.HeroSelectionIndicator
+  cursorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
 --- !u!1001 &704243989225845812
 PrefabInstance:
   m_ObjectHideFlags: 0

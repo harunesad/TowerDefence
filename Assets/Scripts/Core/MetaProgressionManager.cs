@@ -429,6 +429,25 @@ namespace TowerDefence.Core
             return totalMultiplier; 
         }
 
+        public float GetTotalAdditiveBonus(UpgradeType type, Side side)
+        {
+            float totalBonus = 0f;
+
+            foreach (var skillID in saveData.unlockedSkillIDs)
+            {
+                SkillNodeData skill = allAvailableSkills.Find(s => s.skillID == skillID);
+                if (skill != null && skill.upgradeType == type)
+                {
+                    if (skill.side == Side.Neutral || skill.side == side)
+                    {
+                        totalBonus += skill.multiplier;
+                    }
+                }
+            }
+
+            return totalBonus;
+        }
+
         private static readonly string encryptionKey = "TowerDefenceSecretKey123";
 
         private string EncryptDecrypt(string text)

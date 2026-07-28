@@ -86,7 +86,8 @@ GameObject:
   - component: {fileID: 9069496709650642130}
   - component: {fileID: 5434795008457682392}
   - component: {fileID: 3249503071257404613}
-  - component: {fileID: 6263550920824481983}
+  - component: {fileID: 883442010466539662}
+  - component: {fileID: 706722575235334385}
   m_Layer: 6
   m_Name: Celestial_Archon
   m_TagString: Untagged
@@ -156,7 +157,20 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
---- !u!114 &6263550920824481983
+--- !u!114 &883442010466539662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 434998222774166397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32dd57ca2bdcdb847a3d9f1939028714, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.HeroSelectionIndicator
+  cursorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+--- !u!114 &706722575235334385
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -172,9 +186,10 @@ MonoBehaviour:
   moveSpeed: 3
   rotationSpeed: 10
   healthBar: {fileID: 5965505657625554096}
-  firePoint: {fileID: 5860608880114581579}
+  firePoint: {fileID: 787161052994582004}
   indicatorHeight: 3
   indicatorRadius: 0.6
+  unitIndicatorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
   heroID: 
   respawnTime: 15
 --- !u!1 &2850138721900062125
@@ -206,8 +221,39 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7316702706916907906}
+  - {fileID: 2034371683654402741}
   m_Father: {fileID: 9069496709650642130}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3318502422703856679
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 787161052994582004}
+  m_Layer: 6
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &787161052994582004
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3318502422703856679}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1067940153795027495}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4934191336533711301
 GameObject:
@@ -285,37 +331,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!1 &6576080904326766842
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5860608880114581579}
-  m_Layer: 6
-  m_Name: FirePoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5860608880114581579
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6576080904326766842}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.1, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6152485146275549869}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8456421106785840536
 GameObject:
   m_ObjectHideFlags: 0
@@ -415,13 +430,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.UI.HealthBarUI
   fillImage: {fileID: 5056015232220326846}
   container: {fileID: 8456421106785840536}
---- !u!1001 &5974233648954766662
+--- !u!1001 &673477896398521804
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 4052390783246150058}
+    m_TransformParent: {fileID: 4723528265032691869}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: b743cd767271661418f9a963c147e69d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -516,15 +531,15 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: b743cd767271661418f9a963c147e69d, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5860608880114581579}
+      addedObject: {fileID: 787161052994582004}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b743cd767271661418f9a963c147e69d, type: 3}
---- !u!4 &6152485146275549869 stripped
+--- !u!4 &1067940153795027495 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b743cd767271661418f9a963c147e69d, type: 3}
-  m_PrefabInstance: {fileID: 5974233648954766662}
+  m_PrefabInstance: {fileID: 673477896398521804}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &7061819200508443753
+--- !u!1001 &1995432433967228254
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -753,35 +768,25 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 6502182839619065283, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 6152485146275549869}
+      addedObject: {fileID: 1067940153795027495}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5829273903185221246}
+      addedObject: {fileID: 5447472840833986376}
   m_SourcePrefab: {fileID: 100100000, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
---- !u!4 &4052390783246150058 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6502182839619065283, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
-  m_PrefabInstance: {fileID: 7061819200508443753}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &7316702706916907906 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
-  m_PrefabInstance: {fileID: 7061819200508443753}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &7980931543421649208 stripped
+--- !u!1 &1688949813076678671 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
-  m_PrefabInstance: {fileID: 7061819200508443753}
+  m_PrefabInstance: {fileID: 1995432433967228254}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &5829273903185221246
+--- !u!95 &5447472840833986376
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7980931543421649208}
+  m_GameObject: {fileID: 1688949813076678671}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 3bdd5b7d5c79f314ebd6cef01493f116, type: 2}
@@ -796,3 +801,13 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!4 &2034371683654402741 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
+  m_PrefabInstance: {fileID: 1995432433967228254}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &4723528265032691869 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6502182839619065283, guid: 00e360fd4071ca94f8edeb9017f282ea, type: 3}
+  m_PrefabInstance: {fileID: 1995432433967228254}
+  m_PrefabAsset: {fileID: 0}

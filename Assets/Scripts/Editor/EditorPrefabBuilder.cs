@@ -1336,9 +1336,32 @@ public class EditorPrefabBuilder : Editor
         Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (mat == null)
         {
-            mat = new Material(Shader.Find("Sprites/Default"));
+            Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+            if (shader == null) shader = Shader.Find("Particles/Standard Unlit");
+            if (shader == null) shader = Shader.Find("Sprites/Default");
+            mat = new Material(shader);
             AssetDatabase.CreateAsset(mat, path);
         }
+        // URP Transparent + Additive ayarları
+        mat.SetFloat("_Surface", 1); // Transparent
+        mat.SetFloat("_Blend", 2);   // Additive
+        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
+        mat.SetInt("_ZWrite", 0);
+        mat.SetColor("_BaseColor", Color.white);
+        mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        mat.EnableKeyword("_BLENDMODE_ADD");
+        mat.renderQueue = 3000;
+
+        // Unity default particle texture for smooth trail
+        Texture2D defaultParticle = AssetDatabase.GetBuiltinExtraResource<Texture2D>("Default-Particle.psd");
+        if (defaultParticle != null)
+        {
+            mat.SetTexture("_BaseMap", defaultParticle);
+            mat.SetTexture("_MainTex", defaultParticle);
+        }
+
+        EditorUtility.SetDirty(mat);
         return mat;
     }
 

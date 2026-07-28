@@ -505,6 +505,8 @@ namespace TowerDefence.Editor
             drSO.FindProperty("infoText").objectReferenceValue = drInfo;
             drSO.FindProperty("claimButton").objectReferenceValue = claimBtn;
             drSO.FindProperty("closeButton").objectReferenceValue = drCloseBtn;
+            drSO.FindProperty("karmaSprite").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/Karma.png");
+            drSO.FindProperty("crystalSprite").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/Crystal.png");
             drSO.ApplyModifiedProperties();
 
             // 5. Top Currency Panel
@@ -532,21 +534,23 @@ namespace TowerDefence.Editor
             // Karma Box
             GameObject karmaBox = CreateUINode(currencyCont.transform, "Karma", new Vector2(200, 50));
             HorizontalLayoutGroup kHlg = karmaBox.AddComponent<HorizontalLayoutGroup>();
-            kHlg.spacing = 5; kHlg.childAlignment = TextAnchor.MiddleRight;
+            kHlg.spacing = 15; kHlg.childAlignment = TextAnchor.MiddleRight;
             
-            TextMeshProUGUI kLabel = CreateTMP(karmaBox.transform, "Label", "KARMA:", 18, 80, 40);
-            kLabel.color = Color.gray;
+            GameObject karmaIconGo = CreateUINode(karmaBox.transform, "Icon", new Vector2(40, 40));
+            karmaIconGo.AddComponent<Image>().sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/Karma.png");
+            
             TextMeshProUGUI karmaVal = CreateTMP(karmaBox.transform, "Value", "0", 24, 100, 40);
             karmaVal.alignment = TextAlignmentOptions.Left;
             karmaVal.color = Color.yellow;
 
             // Crystal Box
-            GameObject crystalBox = CreateUINode(currencyCont.transform, "Crystals", new Vector2(220, 50));
+            GameObject crystalBox = CreateUINode(currencyCont.transform, "Crystals", new Vector2(200, 50));
             HorizontalLayoutGroup cHlg = crystalBox.AddComponent<HorizontalLayoutGroup>();
-            cHlg.spacing = 5; cHlg.childAlignment = TextAnchor.MiddleLeft;
+            cHlg.spacing = 15; cHlg.childAlignment = TextAnchor.MiddleLeft;
             
-            TextMeshProUGUI cLabel = CreateTMP(crystalBox.transform, "Label", "CRYSTALS:", 18, 100, 40);
-            cLabel.color = Color.gray;
+            GameObject crystalIconGo = CreateUINode(crystalBox.transform, "Icon", new Vector2(40, 40));
+            crystalIconGo.AddComponent<Image>().sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/Crystal.png");
+            
             TextMeshProUGUI crystalVal = CreateTMP(crystalBox.transform, "Value", "0", 24, 100, 40);
             crystalVal.alignment = TextAlignmentOptions.Left;
             crystalVal.color = Color.cyan;
@@ -1276,7 +1280,18 @@ namespace TowerDefence.Editor
             statsHlg.spacing = 50;
 
             TextMeshProUGUI livesText = CreateTMP(statsPanel.transform, "LivesText", "Lives: 20/20", 24, 150, 40);
-            TextMeshProUGUI currencyText = CreateTMP(statsPanel.transform, "CurrencyText", "Gold: 100", 24, 150, 40);
+            
+            GameObject currGroup = CreateUINode(statsPanel.transform, "CurrencyGroup", new Vector2(150, 40));
+            HorizontalLayoutGroup cHlg = currGroup.AddComponent<HorizontalLayoutGroup>();
+            cHlg.childAlignment = TextAnchor.MiddleCenter;
+            cHlg.spacing = 10;
+            
+            GameObject curIconGo = CreateUINode(currGroup.transform, "CurrencyIcon", new Vector2(35, 35));
+            Image curIconImg = curIconGo.AddComponent<Image>();
+            
+            TextMeshProUGUI currencyText = CreateTMP(currGroup.transform, "CurrencyText", "100", 24, 100, 40);
+            currencyText.alignment = TextAlignmentOptions.Left;
+
             TextMeshProUGUI timerText = CreateTMP(statsPanel.transform, "TimerText", "Time: 30s", 24, 150, 40);
             TextMeshProUGUI phaseText = CreateTMP(statsPanel.transform, "PhaseText", "PREPARATION", 24, 150, 40);
             phaseText.color = Color.yellow;
@@ -1288,6 +1303,9 @@ namespace TowerDefence.Editor
             var hudSo = new UnityEditor.SerializedObject(hud);
             hudSo.FindProperty("livesText").objectReferenceValue = livesText;
             hudSo.FindProperty("currencyText").objectReferenceValue = currencyText;
+            hudSo.FindProperty("currencyIcon").objectReferenceValue = curIconImg;
+            hudSo.FindProperty("goldSprite").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/Gold.png");
+            hudSo.FindProperty("soulSprite").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/Soul.png");
             hudSo.FindProperty("timerText").objectReferenceValue = timerText;
             hudSo.FindProperty("phaseText").objectReferenceValue = phaseText;
             hudSo.FindProperty("skipPrepButton").objectReferenceValue = skipButton;
@@ -1695,7 +1713,33 @@ namespace TowerDefence.Editor
             root.AddComponent<SpellManager>();
             root.AddComponent<MetaProgressionManager>();
             root.AddComponent<DailyRewardManager>();
-            root.AddComponent<VFXManager>();
+            VFXManager vfxMgr = root.AddComponent<VFXManager>();
+            var vfxSo = new SerializedObject(vfxMgr);
+            var poolProp = vfxSo.FindProperty("poolConfig");
+            poolProp.ClearArray();
+
+            string[] vfxNames = { 
+                "VFX_LightImpact", "VFX_DarkImpact", "VFX_HealingAura", "VFX_CorruptionPulse", "VFX_UnitSpawn", "VFX_UnitDeath", "VFX_SlowEffect",
+                "VFX_SpellMeteor", "VFX_SpellEarthquake", "VFX_SpellPlagueRain", "VFX_MuzzleFlashLight", "VFX_MuzzleFlashDark", "VFX_EconomyGold", "VFX_EconomySoul", "VFX_UpgradeSparkle" 
+            };
+            VFXType[] vfxTypes = { 
+                VFXType.LightImpact, VFXType.DarkImpact, VFXType.HealingAura, VFXType.CorruptionPulse, VFXType.UnitSpawn, VFXType.UnitDeath, VFXType.SlowEffect,
+                VFXType.SpellMeteor, VFXType.SpellEarthquake, VFXType.SpellPlagueRain, VFXType.MuzzleFlashLight, VFXType.MuzzleFlashDark, VFXType.EconomyGold, VFXType.EconomySoul, VFXType.UpgradeSparkle
+            };
+            
+            for (int i = 0; i < vfxNames.Length; i++)
+            {
+                var p = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/VFX/{vfxNames[i]}.prefab");
+                if (p != null)
+                {
+                    poolProp.InsertArrayElementAtIndex(poolProp.arraySize);
+                    var item = poolProp.GetArrayElementAtIndex(poolProp.arraySize - 1);
+                    item.FindPropertyRelative("type").enumValueIndex = (int)vfxTypes[i];
+                    item.FindPropertyRelative("prefab").objectReferenceValue = p;
+                    item.FindPropertyRelative("initialAmount").intValue = 5;
+                }
+            }
+            vfxSo.ApplyModifiedProperties();
             root.AddComponent<AudioManager>();
             root.AddComponent<SideController>();
             root.AddComponent<CampaignManager>();

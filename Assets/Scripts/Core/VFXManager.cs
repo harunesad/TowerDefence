@@ -11,7 +11,15 @@ namespace TowerDefence.Core
         CorruptionPulse,
         UnitSpawn,
         UnitDeath,
-        SlowEffect
+        SlowEffect,
+        SpellMeteor,
+        SpellEarthquake,
+        SpellPlagueRain,
+        MuzzleFlashLight,
+        MuzzleFlashDark,
+        EconomyGold,
+        EconomySoul,
+        UpgradeSparkle
     }
 
     [System.Serializable]

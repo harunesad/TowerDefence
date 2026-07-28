@@ -183,6 +183,9 @@ namespace TowerDefence.Combat
             }
         }
 
+        [Header("UI")]
+        public Sprite unitIndicatorSprite;
+
         private static Sprite cachedIndicatorSprite;
 
         private void CreateUnitIndicator()
@@ -191,18 +194,29 @@ namespace TowerDefence.Combat
 
             unitIndicator = new GameObject("UnitIndicator");
             unitIndicator.transform.SetParent(transform, false);
-            unitIndicator.transform.localPosition = new Vector3(0f, indicatorHeight, 0f);
-
-            if (cachedIndicatorSprite == null)
-                cachedIndicatorSprite = CreateBlueCircleSprite();
 
             var sr = unitIndicator.AddComponent<SpriteRenderer>();
-            sr.sprite = cachedIndicatorSprite;
-            sr.color = new Color(0.05f, 0.05f, 0.3f, 1f);
-            sr.sortingOrder = 10;
 
-            unitIndicator.transform.localScale = Vector3.one;
-            unitIndicator.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            if (unitIndicatorSprite != null)
+            {
+                unitIndicator.transform.localPosition = new Vector3(0f, 3f, 0f);
+                unitIndicator.transform.localRotation = Quaternion.Euler(15f, 0f, 0f);
+                unitIndicator.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+                sr.sprite = unitIndicatorSprite;
+                sr.color = Color.white;
+                sr.sortingOrder = 10;
+            }
+            else
+            {
+                unitIndicator.transform.localPosition = new Vector3(0f, indicatorHeight, 0f);
+                unitIndicator.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                unitIndicator.transform.localScale = Vector3.one;
+                if (cachedIndicatorSprite == null)
+                    cachedIndicatorSprite = CreateBlueCircleSprite();
+                sr.sprite = cachedIndicatorSprite;
+                sr.color = new Color(0.05f, 0.05f, 0.3f, 1f);
+                sr.sortingOrder = 10;
+            }
         }
 
         private static Sprite CreateBlueCircleSprite()
@@ -432,7 +446,9 @@ namespace TowerDefence.Combat
             }
             else
             {
-                if (animator != null) animator.SetBool("IsMoving", false);
+                // Savaş/saldırı sırasında yürüme animasyonunu kapat — ama sadece normal üniteler için.
+                // Hero'lar kendi animasyon yönetimlerini HeroUnit.Update() içinde yapıyor.
+                if (!(this is HeroUnit) && animator != null) animator.SetBool("IsMoving", false);
             }
         }
 

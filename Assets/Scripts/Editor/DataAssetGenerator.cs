@@ -864,7 +864,7 @@ public class DataAssetGenerator : Editor
         string spellPath = "Assets/Data/Spells";
 
         // Eco Branch
-        SkillNodeData ecoRoot = CreateSkill(path, "Skill_Eco_Root", "Bountiful Start", "Start every level with +50 Gold", 200, UpgradeType.CurrencyStartBonus, 1.1f, Side.Neutral, null, null, SkillCategory.General_Economy, 0);
+        SkillNodeData ecoRoot = CreateSkill(path, "Skill_Eco_Root", "Bountiful Start", "Start every level with +50 Currency", 200, UpgradeType.CurrencyStartFlatBonus, 50f, Side.Neutral, null, null, SkillCategory.General_Economy, 0);
 
         // Light & Dark Root
         SkillNodeData lightRoot = CreateSkill(path, "Skill_Light_Root", "Light Initiation", "Light Tower damage +5%", 150, UpgradeType.TowerDamageBonus, 1.05f, Side.Light, null, null, SkillCategory.Light_Towers, 0);
@@ -872,8 +872,8 @@ public class DataAssetGenerator : Editor
         SkillNodeData darkRoot = CreateSkill(path, "Skill_Dark_Root", "Dark Initiation", "Dark Unit speed +5%", 150, UpgradeType.UnitSpeedBonus, 1.05f, Side.Dark, null, null, SkillCategory.Dark_Units, 0);
 
         // --- ECO UPGRADES ---
-        SkillNodeData eco1 = CreateSkill(path, "Skill_Eco_1", "Wealthy Kingdom I", "Starting Gold +100", 400, UpgradeType.CurrencyStartBonus, 1.2f, Side.Neutral, ecoRoot, null, SkillCategory.General_Economy, 1);
-        SkillNodeData eco2 = CreateSkill(path, "Skill_Eco_2", "Wealthy Kingdom II", "Starting Gold +250", 800, UpgradeType.CurrencyStartBonus, 1.5f, Side.Neutral, eco1, null, SkillCategory.General_Economy, 2);
+        SkillNodeData eco1 = CreateSkill(path, "Skill_Eco_1", "Wealthy Kingdom I", "Starting Currency +100", 400, UpgradeType.CurrencyStartFlatBonus, 100f, Side.Neutral, ecoRoot, null, SkillCategory.General_Economy, 1);
+        SkillNodeData eco2 = CreateSkill(path, "Skill_Eco_2", "Wealthy Kingdom II", "Starting Currency +250", 800, UpgradeType.CurrencyStartFlatBonus, 250f, Side.Neutral, eco1, null, SkillCategory.General_Economy, 2);
         
         var goldSpell = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Neutral_Gold.asset");
         if (goldSpell != null)
@@ -952,7 +952,7 @@ public class DataAssetGenerator : Editor
         CreateSkill(path, "Skill_Dark_SoulHarvest", "Soul Harvest", "Dark Unit speed +25% and damage +10%", 0, UpgradeType.UnitSpeedBonus, 1.25f, Side.Dark, darkSpd2, null, SkillCategory.Dark_Units, 4, 40);
 
         // Extra Neutral
-        SkillNodeData tradeRoutes = CreateSkill(path, "Skill_Neutral_TradeRoutes", "Trade Routes", "Starting Gold +200", 500, UpgradeType.CurrencyStartBonus, 1.7f, Side.Neutral, eco1, null, SkillCategory.General_Base, 2);
+        SkillNodeData tradeRoutes = CreateSkill(path, "Skill_Neutral_TradeRoutes", "Trade Routes", "Starting Currency +200", 500, UpgradeType.CurrencyStartFlatBonus, 200f, Side.Neutral, eco1, null, SkillCategory.General_Base, 2);
         
         CreateSkill(path, "Skill_Neutral_CrystalVault", "Crystal Vault", "Start every level with +15 Crystals", 0, UpgradeType.CurrencyStartBonus, 1f, Side.Neutral, eco2, null, SkillCategory.General_Base, 3, 30);
         CreateSkill(path, "Skill_Neutral_AncientWisdom", "Ancient Wisdom", "All units gain +10% to all stats", 0, UpgradeType.DamageBonus, 1.1f, Side.Neutral, ecoRoot, null, SkillCategory.General_Base, 1, 60);
@@ -2106,9 +2106,17 @@ public class DataAssetGenerator : Editor
             }
         }
 
-        // 3. Unit -> HealthBar Link
+        // 3. Unit -> HealthBar Link & Indicator Link
         var unitSo = new SerializedObject(unit);
         unitSo.FindProperty("healthBar").objectReferenceValue = hbScript;
+        unitSo.FindProperty("unitIndicatorSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/UnitCursor.png");
+
+        // 4. Selection Cursor Link
+        HeroSelectionIndicator hsi = root.GetComponent<HeroSelectionIndicator>();
+        if (hsi == null) hsi = root.AddComponent<HeroSelectionIndicator>();
+        var hsiSo = new SerializedObject(hsi);
+        hsiSo.FindProperty("cursorSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/UnitCursor.png");
+        hsiSo.ApplyModifiedProperties();
 
         if (data.projectilePrefab != null)
         {
@@ -3625,6 +3633,33 @@ public class DataAssetGenerator : Editor
         data.power = power;
         data.radius = radius;
         data.cooldown = cooldown;
+        
+        // Atama: VFX Type belirle
+        VFXType vfx = VFXType.SpellMeteor;
+        if (id.Contains("Meteor") || id.Contains("Rift")) vfx = VFXType.SpellMeteor;
+        else if (id.Contains("Earthquake")) vfx = VFXType.SpellEarthquake;
+        else if (id.Contains("PlagueRain")) vfx = VFXType.SpellPlagueRain;
+        else if (id.Contains("Gold")) vfx = VFXType.EconomyGold;
+        else if (id.Contains("Shield") || id.Contains("Blessing")) vfx = VFXType.HealingAura;
+        else if (id.Contains("Bloodlust")) vfx = VFXType.CorruptionPulse;
+        else if (id.Contains("Reinforce")) vfx = VFXType.UnitSpawn;
+        else if (id.Contains("Freeze")) vfx = VFXType.SlowEffect;
+        
+        data.spellVFXType = vfx;
+        
+        // Atama: Reinforcement Unit belirle
+        if (type == SpellType.Reinforcement)
+        {
+            if (id == "Spell_Light_Reinforce_1")
+            {
+                data.unitPrefabToSpawn = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Units/Militia_Defender.prefab");
+            }
+            else if (id == "Spell_Light_Reinforce_2")
+            {
+                data.unitPrefabToSpawn = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gameplay/Units/Holy_Knight.prefab");
+            }
+        }
+        
         
         // Spell ID -> İkon dosya adı eşleştirmesi
         var spellIconMap = new System.Collections.Generic.Dictionary<string, string>

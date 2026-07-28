@@ -52,7 +52,7 @@ namespace TowerDefence.Core
             ExecuteSpellEffect(spell, targetPos);
 
             // VFX & SFX
-            if (spell.vfxPrefab != null) Instantiate(spell.vfxPrefab, targetPos, Quaternion.identity);
+            if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(spell.spellVFXType, targetPos, Quaternion.identity);
             if (AudioManager.Instance != null && spell.castSFX != null) AudioManager.Instance.PlaySFX(spell.castSFX);
         }
 

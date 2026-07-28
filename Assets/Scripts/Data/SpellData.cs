@@ -33,7 +33,7 @@ namespace TowerDefence.Data
         public float radius = 3f;    // Etki alanı yarıçapı
         
         [Header("Visuals")]
-        public GameObject vfxPrefab;
+        public VFXType spellVFXType;
         public AudioClip castSFX;
 
         [Header("Spawn Settings (For Reinforcements)")]

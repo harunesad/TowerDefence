@@ -21,6 +21,8 @@ namespace TowerDefence.Combat
         private HeroSelectionIndicator selectionIndicator;
         private float abilityCooldownTimer;
         private bool isMovingToManualTarget;
+        private float stuckTimer;
+        private Vector3 lastPosition;
         public bool IsMovingToManualTarget => isMovingToManualTarget;
 
         public bool IsSelected => selectionIndicator != null &&
@@ -111,6 +113,8 @@ namespace TowerDefence.Combat
             moveDestination = point;
             hasMoveDestination = true;
             isMovingToManualTarget = true;
+            stuckTimer = 0f;
+            lastPosition = transform.position;
             
             // Mevcut saldırı ve hedef eylemlerini anında iptal et
             StopAllCoroutines();
@@ -143,11 +147,29 @@ namespace TowerDefence.Combat
             Vector3 flatPos = new Vector3(transform.position.x, 0, transform.position.z);
             Vector3 flatDest = new Vector3(moveDestination.x, 0, moveDestination.z);
 
-            if (Vector3.Distance(flatPos, flatDest) > 0.25f)
+            // Düşmana tıklandığında çarpışma yüzünden hedefe varamayıp sonsuza dek yürümemesi için
+            // varış toleransını 0.5f'ye ayarlayıp, bir yere takılıp takılmadığımızı (stuck) kontrol ediyoruz.
+            if (Vector3.Distance(flatPos, flatDest) > 0.5f)
             {
                 MoveTowardsTarget(moveDestination);
                 HandleRotation(moveDestination);
                 if (animator != null) animator.SetBool("IsMoving", true);
+
+                // Takılma (Stuck) kontrolü: Eğer fiziksel olarak ilerleyemiyorsak (örn. düşmana tosladıysak) saldırmaya başla
+                if (Vector3.Distance(transform.position, lastPosition) < 0.01f)
+                {
+                    stuckTimer += Time.deltaTime;
+                    if (stuckTimer > 0.2f)
+                    {
+                        isMovingToManualTarget = false;
+                        if (animator != null) animator.SetBool("IsMoving", false);
+                    }
+                }
+                else
+                {
+                    stuckTimer = 0f;
+                }
+                lastPosition = transform.position;
             }
             else 
             {
@@ -167,21 +189,22 @@ namespace TowerDefence.Combat
                 base.Update();
                 TickAbility();
 
-                // KRİTİK DÜZELTME: Hedef yoksa veya öldüyse, saldırı animasyonunda takılı kalma!
                 IDamageable currentTarget = GetTarget();
-                if (currentTarget == null || currentTarget.IsDead)
+                
+                // Hedef öldüyse animasyonu resetle
+                if (currentTarget != null && currentTarget.IsDead)
                 {
-                    if (isAttacking || (animator != null && animator.GetCurrentAnimatorStateInfo(0).IsName("Attack")))
-                    {
-                        ResetHeroAnimationState();
-                    }
+                    ResetHeroAnimationState();
                 }
-
-                // Saldırı bittiyse ve hareket etmiyorsak animasyonu Idle'a zorla
-                if (!isAttacking && !isMovingToManualTarget && !IsBlocked && animator != null)
+                // Savaşırken veya saldırırken yürüme animasyonunu kapat
+                else if (isAttacking || (currentTarget != null && !currentTarget.IsDead))
                 {
-                    if (animator.GetBool("IsMoving")) animator.SetBool("IsMoving", false);
-                    animator.ResetTrigger("Attack");
+                    if (animator != null) animator.SetBool("IsMoving", false);
+                }
+                // Ne savaşıyor ne hareket ediyor — Idle'da kal
+                else if (!isMovingToManualTarget && currentTarget == null && !isAttacking)
+                {
+                    if (animator != null) animator.SetBool("IsMoving", false);
                 }
             }
             else 
@@ -247,6 +270,7 @@ namespace TowerDefence.Combat
             switch (heroConfig.abilityType)
             {
                 case HeroAbilityType.RallyHeal:
+                    if (GetHealth() >= GetMaxHealth()) return false;
                     Heal(GetMaxHealth() * 0.15f * heroConfig.abilityPower);
                     if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(VFXType.HealingAura, transform.position, Quaternion.identity);
                     return true;
@@ -304,6 +328,7 @@ namespace TowerDefence.Combat
                     return ApplyAbilityPoison(heroConfig.abilityRadius, heroConfig.abilityPower * 8f, 4f);
 
                 case HeroAbilityType.BoneArmor:
+                    if (GetHealth() >= GetMaxHealth()) return false;
                     Heal(GetMaxHealth() * 0.12f * heroConfig.abilityPower);
                     if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(VFXType.HealingAura, transform.position, Quaternion.identity);
                     return true;

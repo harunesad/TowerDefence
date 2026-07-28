@@ -11,6 +11,9 @@ namespace TowerDefence.UI
     {
         [Header("Text Elements")]
         [SerializeField] private TextMeshProUGUI currencyText;
+        [SerializeField] private UnityEngine.UI.Image currencyIcon;
+        [SerializeField] private Sprite goldSprite;
+        [SerializeField] private Sprite soulSprite;
         [SerializeField] private TextMeshProUGUI livesText;
         [SerializeField] private TextMeshProUGUI timerText;
         [SerializeField] private TextMeshProUGUI phaseText;
@@ -133,8 +136,13 @@ namespace TowerDefence.UI
         {
             if (side != SideController.Instance.GetPlayerSide()) return;
 
-            string label = side == Side.Light ? "Gold" : "Soul";
-            currencyText.text = $"{label}: {amount}";
+            currencyText.text = amount.ToString();
+            
+            if (currencyIcon != null)
+            {
+                currencyIcon.sprite = side == Side.Light ? goldSprite : soulSprite;
+                currencyIcon.gameObject.SetActive(true);
+            }
         }
 
         private void UpdateTimerUI(float time)

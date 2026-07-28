@@ -71,8 +71,11 @@ namespace TowerDefence.Core
                 float lightMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.CurrencyStartBonus, Side.Light);
                 float darkMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.CurrencyStartBonus, Side.Dark);
 
-                gold = Mathf.RoundToInt(gold * lightMult);
-                soul = Mathf.RoundToInt(soul * darkMult);
+                int lightFlat = Mathf.RoundToInt(MetaProgressionManager.Instance.GetTotalAdditiveBonus(UpgradeType.CurrencyStartFlatBonus, Side.Light));
+                int darkFlat = Mathf.RoundToInt(MetaProgressionManager.Instance.GetTotalAdditiveBonus(UpgradeType.CurrencyStartFlatBonus, Side.Dark));
+
+                gold = Mathf.RoundToInt(gold * lightMult) + lightFlat;
+                soul = Mathf.RoundToInt(soul * darkMult) + darkFlat;
             }
         }
 
