@@ -21,8 +21,6 @@ namespace TowerDefence.Combat
         private HeroSelectionIndicator selectionIndicator;
         private float abilityCooldownTimer;
         private bool isMovingToManualTarget;
-        private float stuckTimer;
-        private Vector3 lastPosition;
         public bool IsMovingToManualTarget => isMovingToManualTarget;
 
         public bool IsSelected => selectionIndicator != null &&
@@ -113,8 +111,6 @@ namespace TowerDefence.Combat
             moveDestination = point;
             hasMoveDestination = true;
             isMovingToManualTarget = true;
-            stuckTimer = 0f;
-            lastPosition = transform.position;
             
             // Mevcut saldırı ve hedef eylemlerini anında iptal et
             StopAllCoroutines();
@@ -147,34 +143,17 @@ namespace TowerDefence.Combat
             Vector3 flatPos = new Vector3(transform.position.x, 0, transform.position.z);
             Vector3 flatDest = new Vector3(moveDestination.x, 0, moveDestination.z);
 
-            // Düşmana tıklandığında çarpışma yüzünden hedefe varamayıp sonsuza dek yürümemesi için
-            // varış toleransını 0.5f'ye ayarlayıp, bir yere takılıp takılmadığımızı (stuck) kontrol ediyoruz.
-            if (Vector3.Distance(flatPos, flatDest) > 0.5f)
+            if (Vector3.Distance(flatPos, flatDest) > 0.25f)
             {
                 MoveTowardsTarget(moveDestination);
                 HandleRotation(moveDestination);
                 if (animator != null) animator.SetBool("IsMoving", true);
-
-                // Takılma (Stuck) kontrolü: Eğer fiziksel olarak ilerleyemiyorsak (örn. düşmana tosladıysak) saldırmaya başla
-                if (Vector3.Distance(transform.position, lastPosition) < 0.01f)
-                {
-                    stuckTimer += Time.deltaTime;
-                    if (stuckTimer > 0.2f)
-                    {
-                        isMovingToManualTarget = false;
-                        if (animator != null) animator.SetBool("IsMoving", false);
-                    }
-                }
-                else
-                {
-                    stuckTimer = 0f;
-                }
-                lastPosition = transform.position;
             }
             else 
             {
                 isMovingToManualTarget = false;
                 if (animator != null) animator.SetBool("IsMoving", false);
+                Debug.Log($"[STATE] MOVE→IDLE (destination reached). hasMoveDest={hasMoveDestination}");
             }
         }
 
@@ -190,21 +169,18 @@ namespace TowerDefence.Combat
                 TickAbility();
 
                 IDamageable currentTarget = GetTarget();
-                
-                // Hedef öldüyse animasyonu resetle
-                if (currentTarget != null && currentTarget.IsDead)
+                if (currentTarget == null || currentTarget.IsDead)
                 {
-                    ResetHeroAnimationState();
+                    if ((isAttacking || (animator != null && animator.GetCurrentAnimatorStateInfo(0).IsName("Attack"))) && !hasMoveDestination)
+                    {
+                        Debug.Log($"[STATE] target lost → RESET");
+                        ResetHeroAnimationState();
+                    }
                 }
-                // Savaşırken veya saldırırken yürüme animasyonunu kapat
-                else if (isAttacking || (currentTarget != null && !currentTarget.IsDead))
+
+                if (!isAttacking && !isMovingToManualTarget && !IsBlocked && currentTarget == null && animator != null && animator.GetBool("IsMoving"))
                 {
-                    if (animator != null) animator.SetBool("IsMoving", false);
-                }
-                // Ne savaşıyor ne hareket ediyor — Idle'da kal
-                else if (!isMovingToManualTarget && currentTarget == null && !isAttacking)
-                {
-                    if (animator != null) animator.SetBool("IsMoving", false);
+                    animator.SetBool("IsMoving", false);
                 }
             }
             else 

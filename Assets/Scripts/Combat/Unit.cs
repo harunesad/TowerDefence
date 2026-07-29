@@ -330,11 +330,6 @@ namespace TowerDefence.Combat
             {
                 float distance = GetFlatDistance(transform.position, ((MonoBehaviour)targetCombatant).transform.position);
                 
-                if (this is HeroUnit)
-                {
-                    Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} target: {((MonoBehaviour)targetCombatant).name}, distance: {distance}, attackRange: {attackRange}, nextAttackTime: {nextAttackTime}, Time.time: {Time.time}, isAttacking: {isAttacking}");
-                }
-
                 // Saldırı menziline küçük bir tolerans ekle (+0.5f)
                 if (distance <= attackRange + 0.5f)
                 {
@@ -343,10 +338,6 @@ namespace TowerDefence.Combat
                     
                     if (Time.time >= nextAttackTime && !isAttacking)
                     {
-                        if (this is HeroUnit)
-                        {
-                            Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} starting PerformAttack coroutine.");
-                        }
                         StartCoroutine(PerformAttack((MonoBehaviour)targetCombatant));
                         nextAttackTime = Time.time + 1f / attackRate;
                     }
@@ -370,19 +361,17 @@ namespace TowerDefence.Combat
                     
                     if (distance > stopDistance)
                     {
-                        if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} chasing: moving towards target. stopDistance: {stopDistance}");
                         MoveTowardsTarget(chaseTarget);
                         if (animator != null) animator.SetBool("IsMoving", true);
                     }
                     else
                     {
-                        if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} close enough to stop chasing. stopDistance: {stopDistance}");
                         if (animator != null) animator.SetBool("IsMoving", false);
                     }
                     
                     HandleRotation(chaseTarget);
                 }
-                else if (!isBlocked)
+                else if (!isBlocked || (this is HeroUnit && ((HeroUnit)this).IsMovingToManualTarget))
                 {
                     if (!ShouldFollowPath())
                     {
@@ -560,7 +549,10 @@ namespace TowerDefence.Combat
                 }
             }
 
-            targetCombatant = nearestTarget;
+            if (nearestTarget != null)
+                targetCombatant = nearestTarget;
+            else if (targetCombatant == null || targetCombatant.IsDead)
+                targetCombatant = null;
         }
 
         private PathWaypoints currentPath;
@@ -729,10 +721,9 @@ namespace TowerDefence.Combat
             {
                 if (animator != null) 
                 {
-                    // Animator hızını attackRate ile orantılı artırarak yavaş/hızlı birimlerin animasyonlarını senkronize et
-                    // (Orijinal animasyon çok yavaşsa kılıç inmeden süre bitebileceği için min. oran korunur)
                     animator.speed = Mathf.Max(1f, attackRate / 1.5f);
                     animator.SetTrigger("Attack");
+                    animator.SetBool("IsMoving", false);
                 }
 
                 // Animasyonun "vurma anı" için bekleme (Saldırı döngüsünün %50'si)
