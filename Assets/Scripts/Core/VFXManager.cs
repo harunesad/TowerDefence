@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using TowerDefence.VFX;
 
 namespace TowerDefence.Core
 {
@@ -12,14 +13,16 @@ namespace TowerDefence.Core
         UnitSpawn,
         UnitDeath,
         SlowEffect,
-        SpellMeteor,
+        SpellThunderstrike,
+        SpellRift,
         SpellEarthquake,
         SpellPlagueRain,
         MuzzleFlashLight,
         MuzzleFlashDark,
         EconomyGold,
         EconomySoul,
-        UpgradeSparkle
+        UpgradeSparkle,
+        None
     }
 
     [System.Serializable]
@@ -76,7 +79,6 @@ namespace TowerDefence.Core
                 }
                 else
                 {
-                    // Havuz boşsa yeni oluştur (Dinamik büyüme)
                     var config = poolConfig.Find(p => p.type == type);
                     obj = Instantiate(config.prefab, transform);
                 }
@@ -91,6 +93,30 @@ namespace TowerDefence.Core
             return null;
         }
 
+        public GameObject SpawnVFX(VFXType type, Transform parent, Vector3 localPosition, Quaternion localRotation, float destroyDelay)
+        {
+            var prefab = GetVFXPrefab(type);
+            if (prefab == null) return null;
+
+            GameObject obj = Instantiate(prefab, parent);
+            obj.transform.localPosition = localPosition;
+            obj.transform.localRotation = localRotation;
+            obj.SetActive(true);
+            Destroy(obj, destroyDelay);
+            return obj;
+        }
+
+        public GameObject GetVFXPrefab(VFXType type)
+        {
+            var config = poolConfig.Find(p => p.type == type);
+            if (config == null || config.prefab == null)
+            {
+                Debug.LogWarning($"VFX Type {type} not found in pools!");
+                return null;
+            }
+            return config.prefab;
+        }
+
         public void ReturnVFX(VFXType type, GameObject obj)
         {
             obj.SetActive(false);
@@ -100,7 +126,7 @@ namespace TowerDefence.Core
             }
             else
             {
-                Destroy(obj); // Eğer havuz yoksa (beklenmedik durum)
+                Destroy(obj);
             }
         }
     }

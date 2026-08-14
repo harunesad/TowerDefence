@@ -36,8 +36,8 @@ public class DataAssetGenerator : Editor
         // Dark Towers
         CreateTower(towerPath, "Dark Sentry", Side.Dark, 80, 8, 2.0f, 11, 0, true);
         CreateTower(towerPath, "Void Obelisk", Side.Dark, 380, 0, 0f, 15, 0, true); 
-        CreateTower(towerPath, "Poison Spitter", Side.Dark, 220, 15, 1.0f, 11, 0, true, StatusEffectType.Poison, 5f, 2f);
-        CreateTower(towerPath, "Bone Catapult", Side.Dark, 320, 60, 0.5f, 18, 4, true); 
+        CreateTower(towerPath, "Poison Spitter", Side.Dark, 220, 15, 1.0f, 11, 0, true, StatusEffectType.Poison, 5f, 8f);
+        CreateTower(towerPath, "Bone Catapult", Side.Dark, 320, 60, 0.5f, 18, 4, true, artillery: true); 
         CreateTower(towerPath, "Soul Harvester", Side.Dark, 150, 12, 3.0f, 11, 0, true);
         CreateTower(towerPath, "Graveyard", Side.Dark, 300, 0, 0f, 28f, 0, true); 
 
@@ -126,10 +126,12 @@ public class DataAssetGenerator : Editor
         FixMissingTowerReferences();
         FixMissingUnitReferences();
         ConfigureAuraTowers(towerPath);
+        ConfigureBeamTowers(towerPath);
         
         ConfigureTowerPrefabs(towerPath);
-        ConfigureUnitPrefabs(unitPath);
-        GenerateHeroes(); // YENİ: Kahramanları üret
+        GenerateHeroVFX(); // VFX'leri hazırla (GUID'ler sabit, sadece yoksa oluşur)
+        GenerateHeroes(); // Hero prefab'larını sıfırdan oluştur (VFX referansları valid)
+        ConfigureUnitPrefabs(unitPath); // Hero UnitData'ları da işler — artık taze prefab'lar var
         FixHeroReferences(); // Kahraman ikonları ve karşılıklarını düzelt
         
         GenerateDefaultSpells(); // Büyüleri önce üret (Yetenekler bunlara bağlı)
@@ -169,7 +171,7 @@ public class DataAssetGenerator : Editor
             ("Hero_Light_Archon",  "Celestial Archon",  Side.Light, "Elven_Ranger",  420, 1.1f,  45, 2.2f, 1.1f, 750, false, HeroAbilityType.ArrowRain,      "Arrow Rain",      "Damages all enemies in an area.", 12f, 1f, 4f),
             ("Hero_Light_Scout",   "Holy Scout",        Side.Light, "Scout",        380, 1.25f, 32, 1.7f, 1.3f, 550, false, HeroAbilityType.SwiftStrike,    "Swift Strike",    "Deals a burst of bonus damage.", 10f, 1f, 0f),
             ("Hero_Light_Bulwark", "Shield Bearer",     Side.Light, "Shieldmaiden",     720, 0.8f,  30, 1.5f, 0.85f,650, false, HeroAbilityType.FortifyTaunt,   "Fortify",         "Taunts nearby enemies.", 18f, 1f, 5f),
-            ("Hero_Light_Solar",   "Sun Knight",        Side.Light, "Holy_Knight",       480, 1.0f,  38, 1.9f, 1.0f, 800, false, HeroAbilityType.SolarSmite,     "Solar Smite",     "Holy explosion around the hero.", 13f, 1f, 3.5f),
+            ("Hero_Light_Solar",   "Sun Knight",        Side.Light, "Holy_Knight",       480, 1.0f,  38, 1.9f, 1.0f, 800, false, HeroAbilityType.SolarSmite,     "Thunderstrike",   "Strikes enemies around the hero with lightning.", 13f, 1f, 3.5f),
             ("Hero_Dark_Vampire",  "Crimson Count",     Side.Dark,  "Vampire_Lord",    450, 1.2f,  35, 1.5f, 1.2f, 600, false, HeroAbilityType.LifeDrain,      "Life Drain",      "Steals health from the target.", 11f, 1f, 0f),
             ("Hero_Dark_Reaper",   "Soul Reaper",       Side.Dark,  "Wraith",            380, 1.3f,  42, 1.7f, 1.3f, 750, false, HeroAbilityType.SoulExecute,    "Soul Execute",    "Executes wounded enemies.", 15f, 1f, 0f),
             ("Hero_Dark_Behemoth", "Abyssal Lord",      Side.Dark,  "Abyssal_Behemoth",  700, 0.75f, 50, 1.4f, 0.8f, 900, false, HeroAbilityType.GroundSlam,     "Ground Slam",     "Slams the ground for heavy AoE damage.", 14f, 1f, 4f),
@@ -178,14 +180,23 @@ public class DataAssetGenerator : Editor
             ("Hero_Dark_Stalker",  "Night Stalker",     Side.Dark,  "Shadow_Assassin",    430, 1.35f, 40, 1.6f, 1.25f,800, false, HeroAbilityType.ShadowStep,     "Shadow Step",     "Teleports behind the target.", 13f, 1f, 0f),
         };
 
+        // Complete repair: varolan tum hero prefab'larini sil, sonra sifirdan olustur
         foreach (var def in heroDefs)
         {
             string safeName = def.name.Replace(" ", "_");
             string sourcePfb = $"Assets/Prefabs/Gameplay/Units/{def.sourceUnit}.prefab";
             string targetPfb = $"{heroPrefabPath}/{safeName}.prefab";
 
-            if (!System.IO.File.Exists(targetPfb) && System.IO.File.Exists(sourcePfb))
-                AssetDatabase.CopyAsset(sourcePfb, targetPfb);
+            if (!System.IO.File.Exists(sourcePfb))
+            {
+                Debug.LogWarning($"[Heroes] Source unit not found: {sourcePfb}");
+                continue;
+            }
+
+            if (System.IO.File.Exists(targetPfb))
+                AssetDatabase.DeleteAsset(targetPfb);
+
+            AssetDatabase.CopyAsset(sourcePfb, targetPfb);
         }
 
         AssetDatabase.Refresh();
@@ -198,7 +209,7 @@ public class DataAssetGenerator : Editor
             UnitData unitData = CreateHeroAsset(heroDataPath, def.name, def.side, 0, 0,
                 def.hp, def.spd, def.dmg, def.rng, def.rate, targetPfb);
 
-            ConfigureHeroPrefab(targetPfb, unitData, def.name);
+            ConfigureHeroPrefab(targetPfb, unitData, def.name, def.ability);
 
             CreateHeroDataAsset(heroDataPath, def.id, def.name, def.side, unitData,
                 def.unlockCost, def.starter, def.ability, def.abName, def.abDesc, def.abCd, def.abPow, def.abRad);
@@ -207,6 +218,76 @@ public class DataAssetGenerator : Editor
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("✔ Heroes (UnitData + HeroData) generated successfully!");
+    }
+
+    private static void GenerateHeroVFX()
+    {
+        string heroVfxPath = "Assets/Prefabs/HeroVFX";
+        string sourceVfxPath = "Assets/Prefabs/VFX";
+        EnsureDirectory(heroVfxPath);
+
+        var vfxMap = new (HeroAbilityType ability, string sourceVfxName)[]
+        {
+            (HeroAbilityType.RallyHeal,     "VFX_HealingAura"),
+            (HeroAbilityType.HolyShield,    "VFX_HealingAura"),
+            (HeroAbilityType.LifeDrain,     "VFX_HealingAura"),
+            (HeroAbilityType.BoneArmor,     "VFX_HealingAura"),
+            (HeroAbilityType.ArrowRain,     "VFX_SpellPlagueRain"),
+            (HeroAbilityType.SwiftStrike,   "VFX_LightImpact"),
+            (HeroAbilityType.FortifyTaunt,  "VFX_DarkImpact"),
+            (HeroAbilityType.SolarSmite,    "VFX_SpellThunderstrike"),
+            (HeroAbilityType.SoulExecute,   "VFX_DarkImpact"),
+            (HeroAbilityType.GroundSlam,    "VFX_SpellEarthquake"),
+            (HeroAbilityType.PlagueCloud,   "VFX_SpellPlagueRain"),
+            (HeroAbilityType.ShadowStep,    "VFX_DarkImpact"),
+        };
+
+        // VFX prefab'larını kopyala — SADECE yoksa. Delete+copy meta GUID'ini değiştirir ve
+        // hero prefab'ların nested prefab referanslarını kırar. Mevcut GUID korunur; tweak
+        // senkronu kaynak prefab'lar (VFX/... prefab) üzerinde yapılır, hero kopyası sadece
+        // instantiate edilir.
+        foreach (var (ability, sourceName) in vfxMap)
+        {
+            string sourceFile = $"{sourceVfxPath}/{sourceName}.prefab";
+            string targetFile = $"{heroVfxPath}/{ability}.prefab";
+
+            if (!File.Exists(sourceFile))
+            {
+                Debug.LogWarning($"[HeroVFX] Source not found: {sourceFile}");
+                continue;
+            }
+
+            if (File.Exists(targetFile))
+                continue; // GUID sabit kalsın — hero prefab referansları bozulmasın
+            AssetDatabase.CopyAsset(sourceFile, targetFile);
+        }
+
+        // PooledVFX component'lerini temizle ve stopAction'ı None yap
+        foreach (var (ability, _) in vfxMap)
+        {
+            string targetFile = $"{heroVfxPath}/{ability}.prefab";
+            if (!File.Exists(targetFile)) continue;
+
+            GameObject contents = PrefabUtility.LoadPrefabContents(targetFile);
+            if (contents == null) continue;
+
+            var pooledList = contents.GetComponentsInChildren<TowerDefence.VFX.PooledVFX>(true);
+            for (int i = pooledList.Length - 1; i >= 0; i--)
+                DestroyImmediate(pooledList[i], true);
+
+            var pss = contents.GetComponentsInChildren<ParticleSystem>(true);
+            foreach (var ps in pss)
+            {
+                var main = ps.main;
+                main.stopAction = ParticleSystemStopAction.None;
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(contents, targetFile);
+            PrefabUtility.UnloadPrefabContents(contents);
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log($"✔ Hero VFX prefabs generated at {heroVfxPath}");
     }
 
     private static HeroData CreateHeroDataAsset(string path, string heroID, string displayName, Side side,
@@ -348,6 +429,29 @@ public class DataAssetGenerator : Editor
             data.icon = FindIcon(fallbackIconName);
         }
 
+        // Hero prefab'ına status effect ikonlarını ata ve Visuals büyüklüğünü (1,1,1) yap
+        if (data.prefab != null)
+        {
+            Transform visuals = data.prefab.transform.Find("Visuals");
+            if (visuals != null)
+            {
+                SerializedObject visualsSO = new SerializedObject(visuals);
+                visualsSO.FindProperty("m_LocalScale").vector3Value = Vector3.one;
+                visualsSO.ApplyModifiedProperties();
+            }
+
+            Unit unitComp = data.prefab.GetComponent<Unit>();
+            if (unitComp != null)
+            {
+                SerializedObject so = new SerializedObject(unitComp);
+                AssignStatusEffectIcons(so);
+                so.ApplyModifiedProperties();
+            }
+
+            EditorUtility.SetDirty(data.prefab);
+            PrefabUtility.SavePrefabAsset(data.prefab);
+        }
+
         // Heroes don't have enemy counterparts
         data.enemyCounterpart = null;
 
@@ -368,7 +472,7 @@ public class DataAssetGenerator : Editor
         return data;
     }
 
-    private static void ConfigureHeroPrefab(string prefabPath, UnitData data, string heroName)
+    private static void ConfigureHeroPrefab(string prefabPath, UnitData data, string heroName, HeroAbilityType abilityType = HeroAbilityType.RallyHeal)
     {
         GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
         if (root == null) return;
@@ -551,9 +655,56 @@ public class DataAssetGenerator : Editor
 
         FixVisualModelGroundOffset(root);
 
+        // --- Ability VFX Container Setup ---
+        Transform abilityVFX = root.transform.Find("AbilityVFX");
+        if (abilityVFX == null)
+        {
+            GameObject vfxContainer = new GameObject("AbilityVFX");
+            vfxContainer.transform.SetParent(root.transform, false);
+            abilityVFX = vfxContainer.transform;
+        }
+
+        // Ability VFX child'ını ekle (pool'suz, direkt prefab'dan)
+        string heroVfxPath = "Assets/Prefabs/HeroVFX";
+        string vfxPrefabFile = $"{heroVfxPath}/{abilityType}.prefab";
+        GameObject vfxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(vfxPrefabFile);
+        if (vfxPrefab != null)
+        {
+            // Tum eski VFX child'larını temizle (bozuk nested prefab referansları dahil)
+            for (int i = abilityVFX.childCount - 1; i >= 0; i--)
+                DestroyImmediate(abilityVFX.GetChild(i).gameObject, true);
+
+            GameObject vfxInstance = PrefabUtility.InstantiatePrefab(vfxPrefab) as GameObject;
+            if (vfxInstance != null)
+            {
+                vfxInstance.name = abilityType.ToString();
+                vfxInstance.transform.SetParent(abilityVFX, false);
+                vfxInstance.transform.localPosition = Vector3.zero;
+                vfxInstance.transform.localRotation = Quaternion.identity;
+                vfxInstance.SetActive(false);
+
+                // ParticleSystem stopAction'ı None yap
+                var pss = vfxInstance.GetComponentsInChildren<ParticleSystem>(true);
+                foreach (var ps in pss)
+                {
+                    var main = ps.main;
+                    main.stopAction = ParticleSystemStopAction.None;
+                }
+            }
+        }
+
+        // HeroUnit component'ına abilityVFXContainer referansını ata
+        HeroUnit heroUnit = root.GetComponent<HeroUnit>();
+        if (heroUnit != null)
+        {
+            var abilityVfxSo = new SerializedObject(heroUnit);
+            abilityVfxSo.FindProperty("abilityVFXContainer").objectReferenceValue = abilityVFX;
+            abilityVfxSo.FindProperty("unitIndicatorSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/UnitCursor.png");
+            abilityVfxSo.ApplyModifiedProperties();
+        }
+
         // Final Hero Transform Setup (Requirement: Scale 1.5, Y 0.2)
         root.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
-        // We set local position Y to 0.2 in the prefab itself
         root.transform.localPosition = new Vector3(root.transform.localPosition.x, 0.2f, root.transform.localPosition.z);
 
         PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
@@ -682,15 +833,17 @@ public class DataAssetGenerator : Editor
                 GameObject weaponInstance = (GameObject)PrefabUtility.InstantiatePrefab(weaponPrefab);
                 weaponInstance.transform.SetParent(bone);
                 
-                // Default position/rotation
+                // Default position/rotation/scale
                 Vector3 localPos = Vector3.zero;
                 Vector3 localRot = Vector3.zero;
+                Vector3 localScale = Vector3.one;
 
                 string n = unitName.Replace(" ", "").Replace("_", "");
                 
                 // Specific offsets requested by user
                 if (n == "Archangel" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
                 else if (n == "DarkKnight" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, -0.8f);
+                else if (n == "DemonKing" && boneName == "RightHand") { localPos = new Vector3(-0.00046f, 0.00085f, 0.00012f); localRot = new Vector3(0f, -97.539f, 0f); }
                 else if (n == "CavalryRider" && boneName == "RightHand") localPos = new Vector3(0, 0.2f, 0);
                 else if (n == "DeathKnightCommander" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
                 else if (n == "DwarvenCannoneer" && boneName == "RightHand") localPos = new Vector3(0, 0.9f, 0);
@@ -702,11 +855,12 @@ public class DataAssetGenerator : Editor
                 else if (n == "Crossbowman" && boneName == "RightHand") { localPos = new Vector3(-0.055f, 0.166f, 0.003f); localRot = new Vector3(-1.316f, 6.562f, -68.717f); }
                 else if (n == "CultistInitiate" && boneName == "RightHand") { localPos = new Vector3(0.11f, 0.41f, 0f); localRot = new Vector3(180f, 0f, 0f); }
                 else if (n == "DarkElfSniper" && boneName == "RightHand") { localPos = new Vector3(-0.021f, 0.15f, 0f); localRot = new Vector3(0f, 0f, -74.64f); }
-                else if (n == "GrandPaladin" && boneName == "RightHand") { localRot = new Vector3(-21.668f, -87.826f, 31.072f); }
+                else if (n == "GrandPaladin" && boneName == "RightHand") { localPos = new Vector3(-0.00021f, 0.00145f, 0.00102f); localRot = new Vector3(-32.489f, -62.454f, 19.319f); localScale = new Vector3(0.5f, 0.5f, 0.5f); }
+                else if (n == "GrandPaladin" && boneName == "LeftHand") { localPos = new Vector3(0.0013f, 0f, 0.0002f); localRot = new Vector3(0f, 221.456f, 0f); localScale = new Vector3(0.5f, 0.5f, 0.5f); }
                 else if (n == "GriffinTamer" && boneName == "RightHand") { localRot = new Vector3(-70f, -50f, 0f); }
                 else if (n == "HolyKnight" && boneName == "RightHand") { localRot = new Vector3(0f, -100f, 0f); }
                 else if (n == "Necromancer" && boneName == "RightHand") { localPos = new Vector3(0.002f, -0.258f, 0.598f); localRot = new Vector3(-57.415f, -0.426f, 0.505f); }
-                else if (n == "Lich" && boneName == "RightHand") { localPos = new Vector3(-0.156f, 0.226f, 0.46f); localRot = new Vector3(0f, 40f, -90f); }
+                else if (n == "Lich" && boneName == "RightHand") { localPos = new Vector3(0.00235f, 0.00078f, 0.00411f); localRot = new Vector3(-59.422f, -53.22f, 83.83f); }
                 else if (n == "BloodMage" && boneName == "RightHand") { localPos = new Vector3(0.459f, 0.093f, 0.323f); localRot = new Vector3(-85.171f, 0f, 55.586f); }
                 else if (n == "ClericoftheDawn" && boneName == "RightHand") { localPos = new Vector3(0.314f, -0.017f, 0.167f); localRot = new Vector3(-72.599f, 0f, 62.466f); }
                 else if (n == "NoviceArcher" && boneName == "LeftHand") { localRot = new Vector3(180f, 0f, 0f); }
@@ -742,9 +896,16 @@ public class DataAssetGenerator : Editor
                 else if (n == "NightStalker" && boneName == "RightHand" && weaponName == "DualShortDaggers") { localPos = new Vector3(-0.071f, 0.436f, 0f); localRot = new Vector3(0f, 0f, 180f); }
                 else if (n == "ArthurPendragon" && boneName == "RightHand" && weaponName == "HolyGreatsword") { localRot = new Vector3(-21.668f, -87.826f, 31.072f); }
 
+                float modelGlobalScale = (modelInstance != null) ? modelInstance.transform.localScale.x : 1f;
+                if (modelGlobalScale != 1f)
+                {
+                    localScale = new Vector3(localScale.x / modelGlobalScale, localScale.y / modelGlobalScale, localScale.z / modelGlobalScale);
+                    Debug.Log($"[WeaponScaleDivisor] {unitName}/{weaponName}: {modelGlobalScale} -> localScale {localScale}");
+                }
+
                 weaponInstance.transform.localPosition = localPos;
                 weaponInstance.transform.localRotation = Quaternion.Euler(localRot);
-                weaponInstance.transform.localScale = Vector3.one; // Ensure scale is exactly (1,1,1)
+                weaponInstance.transform.localScale = localScale;
 
                 // If it's a ranged weapon, ensure fire point exists and is set up correctly
                 if (IsRangedWeapon(weaponName) || (!string.IsNullOrEmpty(unitName) && unitName.Contains("Cleric")))
@@ -783,8 +944,6 @@ public class DataAssetGenerator : Editor
         {
             // --- IŞIK AURA KULELERİ ---
             ("Solar_Prism",        8f, 0.25f, 0.15f),
-            ("Luminous_Beamer",    9f, 0.35f, 0.20f), // Lvl-2 Solar Prism branşı
-            ("Prismatic_Ray",      9f, 0.30f, 0.25f), // Lvl-2 Solar Prism branşı
 
             // --- KARANLIK AURA KULELERİ ---
             ("Void_Obelisk",       7f, 0.30f, 0.10f),
@@ -818,6 +977,39 @@ public class DataAssetGenerator : Editor
         Debug.Log($"✔ [AuraTower] Toplam {count} aura kulesi yapılandırıldı.");
     }
 
+    private static void ConfigureBeamTowers(string towerPath)
+    {
+        // Işın kulesi tanımlamaları: (dosya_adı, damagePerSecond)
+        var beamTowers = new (string file, float dps)[]
+        {
+            ("Luminous_Beamer",    60f), // Lvl-2 Solar Prism branşı
+            ("Prismatic_Ray",      90f), // Lvl-2 Solar Prism branşı
+        };
+
+        int count = 0;
+        foreach (var (file, dps) in beamTowers)
+        {
+            string path = $"{towerPath}/{file}.asset";
+            TowerData td = AssetDatabase.LoadAssetAtPath<TowerData>(path);
+            if (td == null)
+            {
+                Debug.LogWarning($"⚠ [BeamTower] Bulunamadı: {path}");
+                continue;
+            }
+
+            td.isBeamTower  = true;
+            td.isAuraTower  = false; // Aura kulesi olmaktan çıkar (lazer kulesine dönüşür)
+            td.damage       = dps;   // Işın DPS'i
+            td.fireRate     = 2f;    // Hedef taraması için ateş hızı > 0 olmalı (Tower.Update hedefi buna göre tarar)
+            EditorUtility.SetDirty(td);
+            count++;
+            Debug.Log($"✔ [BeamTower] {file} → DPS:{dps}");
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log($"✔ [BeamTower] Toplam {count} ışın kulesi yapılandırıldı.");
+    }
+
     private static void LinkSpellData(string path)
     {
         if (!AssetDatabase.IsValidFolder(path))
@@ -826,8 +1018,6 @@ public class DataAssetGenerator : Editor
             AssetDatabase.Refresh();
         }
 
-        // Meteor
-        CreateSpellAsset(path, "Spell_Meteor", "Meteor Strike", "Deals 100 AoE damage and stuns enemies.", 50, 15f, SpellType.Meteor, 100f, 4f);
         // Freeze
         CreateSpellAsset(path, "Spell_Freeze", "Freeze Blast", "Freezes all enemies in area for 3 seconds.", 40, 20f, SpellType.Freeze, 3f, 5f);
         // Reinforcements
@@ -900,15 +1090,15 @@ public class DataAssetGenerator : Editor
         if (blessSpell != null)
             CreateSkill(path, "Skill_Unlock_Blessing", "Holy Blessing", "Unlock Holy Blessing spell", 1100, UpgradeType.UnlockSpell, 1, Side.Light, hero2, blessSpell, SkillCategory.Light_Spells, 4);
 
-        // Meteor Path
-        var met1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Meteor_1.asset");
-        if (met1 != null)
+        // Thunderstrike Path
+        var th1 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Thunder_1.asset");
+        if (th1 != null)
         {
-            SkillNodeData metNode1 = CreateSkill(path, "Skill_Met_1", "Meteor Strike", met1.description, 250, UpgradeType.UnlockSpell, 1, Side.Light, lightRoot, met1, SkillCategory.Light_Spells, 1);
-            var met2 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Meteor_2.asset");
-            if (met2 != null)
+            SkillNodeData thunderNode1 = CreateSkill(path, "Skill_Thunder_1", "Thunderstrike", th1.description, 250, UpgradeType.UnlockSpell, 1, Side.Light, lightRoot, th1, SkillCategory.Light_Spells, 1);
+            var th2 = AssetDatabase.LoadAssetAtPath<SpellData>(spellPath + "/Spell_Light_Thunder_2.asset");
+            if (th2 != null)
             {
-                CreateSkill(path, "Skill_Met_2", "Elite Meteor", met2.description, 700, UpgradeType.UnlockSpell, 1, Side.Light, metNode1, met2, SkillCategory.Light_Spells, 2);
+                CreateSkill(path, "Skill_Thunder_2", "Greater Thunderstrike", th2.description, 700, UpgradeType.UnlockSpell, 1, Side.Light, thunderNode1, th2, SkillCategory.Light_Spells, 2);
             }
         }
 
@@ -1053,8 +1243,8 @@ public class DataAssetGenerator : Editor
             { "Skill_Light_HolyBlessing", "LightInitiation" }, // Holy Blessing passive - aynı konsept
             { "Skill_Unlock_Shield", "DivineShield" },
             { "Skill_Unlock_Blessing", "LightInitiation" }, // Holy Blessing spell
-            { "Skill_Met_1", "MeteorStrike" },
-            { "Skill_Met_2", "MeteorStrike" },             // Elite Meteor - aynı ikon
+            { "Skill_Thunder_1", "Thunderstrike" },
+            { "Skill_Thunder_2", "Thunderstrike" },          // Greater Thunderstrike - aynı ikon
 
             // === DARK FACTION ===
             { "Skill_Dark_Root", "DarkInitiation" },
@@ -1118,8 +1308,8 @@ public class DataAssetGenerator : Editor
         {
             cannon.specializations = new System.Collections.Generic.List<TowerData>
             {
-                CreateTower(towerPath, "Siege Cannon", side: Side.Light, cost: 400, damage: 120, fireRate: 0.4f, range: 14f, explosion: 5f),
-                CreateTower(towerPath, "Volley Mortar", side: Side.Light, cost: 350, damage: 50, fireRate: 1.5f, range: 18f, explosion: 3f)
+                CreateTower(towerPath, "Siege Cannon", side: Side.Light, cost: 400, damage: 120, fireRate: 0.4f, range: 14f, explosion: 5f, effect: StatusEffectType.Stun, duration: 1f, power: 0f),
+                CreateTower(towerPath, "Volley Mortar", side: Side.Light, cost: 350, damage: 50, fireRate: 1.5f, range: 18f, explosion: 3f, effect: StatusEffectType.Burn, duration: 3f, power: 10f)
             };
             EditorUtility.SetDirty(cannon);
         }
@@ -1131,7 +1321,7 @@ public class DataAssetGenerator : Editor
             mage.specializations = new System.Collections.Generic.List<TowerData>
             {
                 CreateTower(towerPath, "Arcane Archmage", side: Side.Light, cost: 450, damage: 100, fireRate: 1.0f, range: 15f, explosion: 0f, effect: StatusEffectType.Slow, duration: 3f, power: 0.7f),
-                CreateTower(towerPath, "Elemental Summoner", side: Side.Light, cost: 500, damage: 80, fireRate: 1.2f, range: 13f, explosion: 2f)
+                CreateTower(towerPath, "Elemental Summoner", side: Side.Light, cost: 500, damage: 80, fireRate: 1.2f, range: 13f, explosion: 2f, effect: StatusEffectType.Burn, duration: 3f, power: 8f)
             };
             EditorUtility.SetDirty(mage);
         }
@@ -1181,7 +1371,7 @@ public class DataAssetGenerator : Editor
             catapult.specializations = new System.Collections.Generic.List<TowerData>
             {
                 CreateTower(towerPath, "Fossil Hurler", side: Side.Dark, cost: 380, damage: 100, fireRate: 0.4f, range: 20f, explosion: 5f),
-                CreateTower(towerPath, "Cursed Lobber", side: Side.Dark, cost: 420, damage: 70, fireRate: 0.6f, range: 18f, explosion: 4f, effect: StatusEffectType.Poison, duration: 4f, power: 1f)
+                CreateTower(towerPath, "Cursed Lobber", side: Side.Dark, cost: 420, damage: 70, fireRate: 0.6f, range: 18f, explosion: 4f, effect: StatusEffectType.Poison, duration: 4f, power: 6f)
             };
             EditorUtility.SetDirty(catapult);
         }
@@ -1192,8 +1382,8 @@ public class DataAssetGenerator : Editor
         {
             spitter.specializations = new System.Collections.Generic.List<TowerData>
             {
-                CreateTower(towerPath, "Venomous Cloud", side: Side.Dark, cost: 300, damage: 10, fireRate: 2.0f, range: 12f, explosion: 6f, effect: StatusEffectType.Poison, duration: 6f, power: 3f),
-                CreateTower(towerPath, "Acid Sprayer", side: Side.Dark, cost: 320, damage: 40, fireRate: 1.5f, range: 10f, explosion: 0f, effect: StatusEffectType.Slow, duration: 2f, power: 0.5f)
+                CreateTower(towerPath, "Venomous Cloud", side: Side.Dark, cost: 300, damage: 10, fireRate: 2.0f, range: 12f, explosion: 6f, effect: StatusEffectType.Poison, duration: 6f, power: 12f),
+                CreateTower(towerPath, "Acid Sprayer", side: Side.Dark, cost: 320, damage: 40, fireRate: 1.5f, range: 10f, explosion: 0f, effect: StatusEffectType.Slow, duration: 2f, power: 0.5f, isSlowTower: true)
             };
             EditorUtility.SetDirty(spitter);
         }
@@ -1330,7 +1520,8 @@ public class DataAssetGenerator : Editor
                 string n = data.unitName.ToLower();
                 string projName = "Arrow";
 
-                if (n.Contains("mage") || n.Contains("necromancer")) projName = "Fireball";
+                if (n.Contains("bone dragon")) projName = "Fireball"; // Bone Dragon ağzından ateş topu atar
+                else if (n.Contains("mage") || n.Contains("necromancer")) projName = "Fireball";
                 else if (n.Contains("lich") || n.Contains("bone") || n.Contains("skeleton")) projName = "Frostbolt";
                 else if (n.Contains("priestess") || n.Contains("cleric") || n.Contains("arcane")) projName = "LightOrb";
                 else if (n.Contains("dark orb") || n.Contains("blood")) projName = "DarkOrb";
@@ -1358,7 +1549,7 @@ public class DataAssetGenerator : Editor
         }
     }
 
-    private static TowerData CreateTower(string path, string name, Side side, int cost, float damage, float fireRate, float range, float explosion, bool isBase = false, StatusEffectType effect = StatusEffectType.None, float duration = 0, float power = 0)
+    private static TowerData CreateTower(string path, string name, Side side, int cost, float damage, float fireRate, float range, float explosion, bool isBase = false, StatusEffectType effect = StatusEffectType.None, float duration = 0, float power = 0, bool artillery = false, bool isBeamTower = false, bool isSlowTower = false)
     {
         string safeName = name.Replace(" ", "_");
         string assetPath = $"{path}/{safeName}.asset";
@@ -1373,6 +1564,9 @@ public class DataAssetGenerator : Editor
         data.towerName = name;
         data.side = side;
         data.isBaseTower = isBase;
+        data.isArtillery = artillery;
+        data.isBeamTower = isBeamTower;
+        data.isSlowTower = isSlowTower;
         data.cost = cost;
         data.upgradeCost = cost;
         data.damage = damage;
@@ -1442,6 +1636,7 @@ public class DataAssetGenerator : Editor
             {
                 SerializedObject so = new SerializedObject(unitComp);
                 so.FindProperty("unitData").objectReferenceValue = data;
+                AssignStatusEffectIcons(so);
                 so.ApplyModifiedProperties();
                 EditorUtility.SetDirty(data.prefab);
             }
@@ -1449,6 +1644,21 @@ public class DataAssetGenerator : Editor
         
         EditorUtility.SetDirty(data);
         return data;
+    }
+
+    private static void AssignStatusEffectIcons(SerializedObject so)
+    {
+        string basePath = "Assets/Data/Icons/UI";
+        
+        Sprite burnSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{basePath}/Burn.png");
+        Sprite poisonSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{basePath}/Poison.png");
+        Sprite slowSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{basePath}/Slow.png");
+        Sprite stunSprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{basePath}/Stun.png");
+
+        if (burnSprite != null) so.FindProperty("burnIcon").objectReferenceValue = burnSprite;
+        if (poisonSprite != null) so.FindProperty("poisonIcon").objectReferenceValue = poisonSprite;
+        if (slowSprite != null) so.FindProperty("slowIcon").objectReferenceValue = slowSprite;
+        if (stunSprite != null) so.FindProperty("stunIcon").objectReferenceValue = stunSprite;
     }
 
     public static void ConfigureTowerPrefabs(string towerPath = "Assets/Data/Towers")
@@ -1651,6 +1861,40 @@ public class DataAssetGenerator : Editor
         {
             var existingAura = root.GetComponent<TowerDefence.Combat.AuraTower>();
             if (existingAura != null) Object.DestroyImmediate(existingAura);
+        }
+
+        // 4b. Beam Tower Bileşeni (Işın kulesi: mermi atmaz, lazerle DPS verir)
+        if (data.isBeamTower)
+        {
+            TowerDefence.Combat.BeamTower beam = root.GetComponent<TowerDefence.Combat.BeamTower>();
+            if (beam == null) beam = root.AddComponent<TowerDefence.Combat.BeamTower>();
+
+            var beamSO = new SerializedObject(beam);
+            beamSO.FindProperty("damagePerSecond").floatValue = data.damage;
+            beamSO.ApplyModifiedProperties();
+        }
+        else
+        {
+            var existingBeam = root.GetComponent<TowerDefence.Combat.BeamTower>();
+            if (existingBeam != null) Object.DestroyImmediate(existingBeam);
+        }
+
+        // 4c. Slow Tower Bileşeni (Alan yavaşlatma kulesi)
+        if (data.isSlowTower)
+        {
+            TowerDefence.Combat.SlowTower slow = root.GetComponent<TowerDefence.Combat.SlowTower>();
+            if (slow == null) slow = root.AddComponent<TowerDefence.Combat.SlowTower>();
+
+            var slowSO = new SerializedObject(slow);
+            slowSO.FindProperty("slowRadius").floatValue = data.range;
+            slowSO.FindProperty("slowPercentage").floatValue = data.effectPower > 0f ? data.effectPower : 0.5f;
+            slowSO.FindProperty("targetLayer").intValue = (data.side == Side.Light) ? (1 << 7) : (1 << 6);
+            slowSO.ApplyModifiedProperties();
+        }
+        else
+        {
+            var existingSlow = root.GetComponent<TowerDefence.Combat.SlowTower>();
+            if (existingSlow != null) Object.DestroyImmediate(existingSlow);
         }
 
         PrefabUtility.SaveAsPrefabAsset(root, path);
@@ -2022,7 +2266,11 @@ public class DataAssetGenerator : Editor
         bool isSoldier = data.unitName.Contains("Swordsman") || data.unitName.Contains("Skeleton") || data.unitName.Contains("Knight");
         Unit unit = root.GetComponent<Unit>();
         
-        if (isSoldier)
+        if (unit is HeroUnit)
+        {
+            // Hero prefab — component already configured by ConfigureHeroPrefab, don't touch
+        }
+        else if (isSoldier)
         {
             if (unit != null && !(unit is Soldier)) { DestroyImmediate(unit, true); unit = null; }
             if (unit == null) unit = root.AddComponent<Soldier>();
@@ -2118,33 +2366,40 @@ public class DataAssetGenerator : Editor
         hsiSo.FindProperty("cursorSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/UnitCursor.png");
         hsiSo.ApplyModifiedProperties();
 
+        ApplyBossScale(root, prefab.name);
+
+        // Silahları mevcut modele yeniden bağla (offset/scale değişiklikleri repair ile uygulanır).
+        // Bu, eski silah GameObject'lerini (içlerindeki FirePoint'lerle birlikte) yok edip yeni
+        // silah/FirePoint üretir. Bu yüzden firepoint ataması ve override BURADAN SONRA yapılmalı ki
+        // unitSo.firePoint, yok edilmemiş yeni FirePoint'i işaret etsin.
+        ReapplyUnitWeapons(root, prefab.name);
+
+        // FirePoint ataması YALNIZCA ranged (projectile) birimlerde yapılır.
+        // Melee birimlerin firepoint'ine dokunulmaz.
         if (data.projectilePrefab != null)
         {
             EditorPrefabBuilder.EnsureRangedUnitFirePoints(root, prefab.name);
             Transform fp = EditorPrefabBuilder.GetFirstFirePointTransform(root);
             if (fp != null)
                 unitSo.FindProperty("firePoint").objectReferenceValue = fp;
-        }
 
-        // Cleric_of_the_Dawn özel durum: fire point yoksa oluştur
-        if (prefab.name == "Cleric_of_the_Dawn")
-        {
-            Transform fp = EditorPrefabBuilder.GetFirstFirePointTransform(root);
-            if (fp == null)
+            // Cleric_of_the_Dawn özel durum: fire point yoksa oluştur
+            if (prefab.name == "Cleric_of_the_Dawn")
             {
-                Transform visuals = root.transform.Find("Visuals");
-                Transform parent = visuals != null ? visuals : root.transform;
-                GameObject firePointGO = new GameObject("FirePoint");
-                firePointGO.transform.SetParent(parent, false);
-                firePointGO.transform.localPosition = new Vector3(0, 0.5f, 0.3f);
-                unitSo.FindProperty("firePoint").objectReferenceValue = firePointGO.transform;
+                if (fp == null)
+                {
+                    Transform visuals = root.transform.Find("Visuals");
+                    Transform parent = visuals != null ? visuals : root.transform;
+                    GameObject firePointGO = new GameObject("FirePoint");
+                    firePointGO.transform.SetParent(parent, false);
+                    firePointGO.transform.localPosition = new Vector3(0, 0.5f, 0.3f);
+                    unitSo.FindProperty("firePoint").objectReferenceValue = firePointGO.transform;
+                }
             }
+
+            // Manuel fire point pozisyon düzeltmeleri
+            ApplyFirePointOverride(root, prefab.name);
         }
-
-        // Manuel fire point pozisyon düzeltmeleri
-        ApplyFirePointOverride(root, prefab.name);
-
-        ApplyBossScale(root, prefab.name);
 
         unitSo.ApplyModifiedProperties();
 
@@ -2160,6 +2415,56 @@ public class DataAssetGenerator : Editor
         if (go == null) return;
         go.layer = layer;
         foreach (Transform child in go.transform) SetLayerRecursive(child.gameObject, layer);
+    }
+
+    // Mevcut prefab'daki Visuals/model'in RightHand/LeftHand bone'larına silahları yeniden bağlar.
+    // Eski silah instance'larını (Weapons klasöründen instantiate edilen) önce temizler, sonra
+    // AttachWeaponToBone'daki güncel offset/scale ile yeniden ekler.
+    private static void ReapplyUnitWeapons(GameObject root, string unitName)
+    {
+        if (root == null) return;
+
+        Transform visuals = root.transform.Find("Visuals");
+        if (visuals == null) return;
+
+        Transform modelInstance = null;
+        foreach (Transform child in visuals)
+        {
+            if (GetTransformRecursive(child, "RightHand") != null || GetTransformRecursive(child, "LeftHand") != null)
+            {
+                modelInstance = child;
+                break;
+            }
+        }
+        if (modelInstance == null) return;
+
+        // Eski silah instance'larını temizle (Weapons klasörü prefab'larının kopyaları)
+        ClearWeaponInstances(modelInstance, "RightHand");
+        ClearWeaponInstances(modelInstance, "LeftHand");
+
+        GetWeaponForUnit(unitName, out string rWeapon, out string lWeapon);
+        AttachWeaponToBone(modelInstance.gameObject, unitName, "RightHand", rWeapon);
+        AttachWeaponToBone(modelInstance.gameObject, unitName, "LeftHand", lWeapon);
+    }
+
+    private static void ClearWeaponInstances(Transform modelInstance, string boneName)
+    {
+        Transform bone = GetTransformRecursive(modelInstance, boneName);
+        if (bone == null) return;
+
+        for (int i = bone.childCount - 1; i >= 0; i--)
+        {
+            Transform child = bone.GetChild(i);
+            if (child == null) continue;
+
+            GameObject src = PrefabUtility.GetCorrespondingObjectFromSource(child.gameObject);
+            if (src != null)
+            {
+                string srcPath = AssetDatabase.GetAssetPath(src);
+                if (!string.IsNullOrEmpty(srcPath) && srcPath.Contains("Models/Weapons"))
+                    Object.DestroyImmediate(child.gameObject, true);
+            }
+        }
     }
     // --- MANUAL FIRE POINT OVERRIDES ---
     private static readonly System.Collections.Generic.Dictionary<string, Vector3> firePointOverrides = new()
@@ -2198,7 +2503,7 @@ public class DataAssetGenerator : Editor
             Transform visuals = root.transform.Find("Visuals");
             if (visuals != null)
             {
-                visuals.localScale = new Vector3(2.5f, 2.5f, 2.5f);
+                visuals.localScale = new Vector3(5f, 5f, 5f);
             }
         }
     }
@@ -3587,8 +3892,8 @@ public class DataAssetGenerator : Editor
         EnsureDirectory(path, true); // TAM TEMİZLİK
 
         // LIGHT SPELLS (3)
-        CreateSpell(path, "Spell_Light_Meteor_1", "Meteor Strike", Side.Light, 50, SpellType.Meteor, 100f, 4f, 15f);
-        CreateSpell(path, "Spell_Light_Meteor_2", "Elite Meteor", Side.Light, 150, SpellType.Meteor, 200f, 6f, 15f);
+        CreateSpell(path, "Spell_Light_Thunder_1", "Thunderstrike", Side.Light, 50, SpellType.Thunderstrike, 100f, 4f, 15f);
+        CreateSpell(path, "Spell_Light_Thunder_2", "Greater Thunderstrike", Side.Light, 150, SpellType.Thunderstrike, 200f, 6f, 15f);
         CreateSpell(path, "Spell_Light_Shield", "Divine Shield", Side.Light, 100, SpellType.Shield, 8f, 5f, 20f);
         
         // REINFORCEMENTS (2)
@@ -3596,19 +3901,19 @@ public class DataAssetGenerator : Editor
         CreateSpell(path, "Spell_Light_Reinforce_2", "Royal Guards", Side.Light, 120, SpellType.Reinforcement, 3f, 0f, 25f);
 
         // DARK SPELLS (3)
-        CreateSpell(path, "Spell_Dark_Rift", "Abyssal Rift", Side.Dark, 120, SpellType.Meteor, 100f, 8f, 12f);
+        CreateSpell(path, "Spell_Dark_Rift", "Abyssal Rift", Side.Dark, 120, SpellType.Thunderstrike, 100f, 8f, 12f);
         CreateSpell(path, "Spell_Dark_Bloodlust", "Bloodlust", Side.Dark, 80, SpellType.Buff, 1.5f, 4f, 10f);
         CreateSpell(path, "Spell_Dark_Freeze", "Shadow Freeze", Side.Dark, 110, SpellType.Freeze, 4f, 6f, 18f);
 
         // NEUTRAL SPELLS (2)
         CreateSpell(path, "Spell_Neutral_Gold", "Gold Rush", Side.Neutral, 0, SpellType.GoldBoost, 100f, 0f, 60f);
-        CreateSpell(path, "Spell_Neutral_Earthquake", "Earthquake", Side.Neutral, 150, SpellType.Meteor, 50f, 12f, 45f);
+        CreateSpell(path, "Spell_Neutral_Earthquake", "Earthquake", Side.Neutral, 150, SpellType.Thunderstrike, 50f, 12f, 45f);
 
         // EXTRA LIGHT SPELL (1)
         CreateSpell(path, "Spell_Light_Blessing", "Holy Blessing", Side.Light, 60, SpellType.Buff, 2.0f, 5f, 25f);
 
         // EXTRA DARK SPELL (1)
-        CreateSpell(path, "Spell_Dark_PlagueRain", "Plague Rain", Side.Dark, 140, SpellType.Meteor, 80f, 6f, 15f);
+        CreateSpell(path, "Spell_Dark_PlagueRain", "Plague Rain", Side.Dark, 140, SpellType.Thunderstrike, 80f, 6f, 15f);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -3635,8 +3940,8 @@ public class DataAssetGenerator : Editor
         data.cooldown = cooldown;
         
         // Atama: VFX Type belirle
-        VFXType vfx = VFXType.SpellMeteor;
-        if (id.Contains("Meteor") || id.Contains("Rift")) vfx = VFXType.SpellMeteor;
+        VFXType vfx = VFXType.SpellThunderstrike;
+        if (id.Contains("Rift")) vfx = VFXType.SpellRift;
         else if (id.Contains("Earthquake")) vfx = VFXType.SpellEarthquake;
         else if (id.Contains("PlagueRain")) vfx = VFXType.SpellPlagueRain;
         else if (id.Contains("Gold")) vfx = VFXType.EconomyGold;
@@ -3646,7 +3951,7 @@ public class DataAssetGenerator : Editor
         else if (id.Contains("Freeze")) vfx = VFXType.SlowEffect;
         
         data.spellVFXType = vfx;
-        
+
         // Atama: Reinforcement Unit belirle
         if (type == SpellType.Reinforcement)
         {
@@ -3664,8 +3969,8 @@ public class DataAssetGenerator : Editor
         // Spell ID -> İkon dosya adı eşleştirmesi
         var spellIconMap = new System.Collections.Generic.Dictionary<string, string>
         {
-            { "Spell_Light_Meteor_1", "MeteorStrike" },
-            { "Spell_Light_Meteor_2", "MeteorStrike" },
+            { "Spell_Light_Thunder_1", "Thunderstrike" },
+            { "Spell_Light_Thunder_2", "Thunderstrike" },
             { "Spell_Light_Shield", "DivineShield" },
             { "Spell_Light_Reinforce_1", "LightInitiation" },
             { "Spell_Light_Reinforce_2", "LightInitiation" },

@@ -13,6 +13,13 @@ namespace TowerDefence.Editor
     {
         private const string VFX_PREFAB_PATH = "Assets/Prefabs/VFX";
 
+        private class VFXTweak
+        {
+            public float scale = 1f;
+            public float fillMult = 1f;
+            public float shapeRadius = 0f;
+        }
+
         [MenuItem("Tower Defence/Generate/VFX Prefabs (Asset Store Integration)")]
         public static void GenerateVFXPrefabs()
         {
@@ -34,7 +41,8 @@ namespace TowerDefence.Editor
                 { "VFX_UnitDeath", "CFXR Explosion 1" }, // JMO
                 { "VFX_SlowEffect", "Freeze circle" }, // Hovl
                 
-                { "VFX_SpellMeteor", "Explosion" }, // Hovl
+                { "VFX_SpellThunderstrike", "Electro hit" }, // Hovl
+                { "VFX_SpellRift", "Explosion" }, // Hovl
                 { "VFX_SpellEarthquake", "CFXR2 Ground Hit" }, // JMO
                 { "VFX_SpellPlagueRain", "CFXR2 Poison Cloud" }, // JMO (Şimdilik zehir bulutu)
                 
@@ -46,6 +54,12 @@ namespace TowerDefence.Editor
                 { "VFX_UpgradeSparkle", "CFXR2 Shiny Item (Loop)" } 
             };
 
+            // VFX bazında ölçek / doluluk / disk yayılımı düzeltmeleri (CSR her çalıştığında yeniden uygulanır)
+            var vfxTweaks = new Dictionary<string, VFXTweak>
+            {
+                { "VFX_SpellThunderstrike", new VFXTweak { scale = 3f, fillMult = 3f, shapeRadius = 1.2f } },
+            };
+
             int successCount = 0;
 
             foreach (var kvp in map)
@@ -53,7 +67,7 @@ namespace TowerDefence.Editor
                 string targetName = kvp.Key;
                 string sourceName = kvp.Value;
 
-                // Asset veritabanında prefabı bul
+                // Asset veritabanında prefabı bul (tam isim eşleşmesini önceliklendir)
                 string[] guids = AssetDatabase.FindAssets(sourceName + " t:Prefab");
                 if (guids.Length == 0)
                 {
@@ -61,14 +75,59 @@ namespace TowerDefence.Editor
                     continue;
                 }
 
-                // Genellikle en kısa path doğru olan asıl prefabdır
-                string sourcePath = AssetDatabase.GUIDToAssetPath(guids[0]);
+                string sourcePath = null;
+                for (int i = 0; i < guids.Length; i++)
+                {
+                    string candidate = AssetDatabase.GUIDToAssetPath(guids[i]);
+                    if (candidate.EndsWith("/" + sourceName + ".prefab", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        sourcePath = candidate;
+                        break;
+                    }
+                }
+                if (sourcePath == null) sourcePath = AssetDatabase.GUIDToAssetPath(guids[0]);
                 GameObject sourcePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
                 
                 if (sourcePrefab == null) continue;
 
                 // Sahnede geçici olarak yarat
                 GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(sourcePrefab);
+
+                // VFX tweak'lerini uygula (ölçek + doluluk + disk yayılımı)
+                if (vfxTweaks.TryGetValue(targetName, out VFXTweak tweak))
+                {
+                    if (tweak.scale > 1f)
+                        instance.transform.localScale = instance.transform.localScale * tweak.scale;
+
+                    if (tweak.fillMult > 1f || tweak.shapeRadius > 0f)
+                    {
+                        var tweakPss = instance.GetComponentsInChildren<ParticleSystem>(true);
+                        foreach (var tweakPs in tweakPss)
+                        {
+                            if (tweak.fillMult > 1f)
+                            {
+                                var emission = tweakPs.emission;
+                                emission.rateOverTimeMultiplier *= tweak.fillMult;
+                                int burstCount = emission.burstCount;
+                                for (int i = 0; i < burstCount; i++)
+                                {
+                                    var burst = emission.GetBurst(i);
+                                    burst.minCount = (short)(burst.minCount * tweak.fillMult);
+                                    burst.maxCount = (short)(burst.maxCount * tweak.fillMult);
+                                    emission.SetBurst(i, burst);
+                                }
+                                var tweakMain = tweakPs.main;
+                                tweakMain.maxParticles = Mathf.Max(100, (int)(tweakMain.maxParticles * tweak.fillMult));
+                            }
+
+                            if (tweak.shapeRadius > 0f)
+                            {
+                                var shape = tweakPs.shape;
+                                shape.radius = tweak.shapeRadius;
+                            }
+                        }
+                    }
+                }
                 
                 // PooledVFX bileşenini ekle 
                 var pooled = instance.GetComponent<TowerDefence.VFX.PooledVFX>();
@@ -103,7 +162,7 @@ namespace TowerDefence.Editor
                         if (dur > maxDuration) maxDuration = dur;
                     }
                 }
-                
+
                 so.FindProperty("lifeTime").floatValue = maxDuration + 0.5f;
                 so.FindProperty("autoReturnByTime").boolValue = true;
                 

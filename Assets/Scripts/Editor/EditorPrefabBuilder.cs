@@ -1029,15 +1029,17 @@ public class EditorPrefabBuilder : Editor
                 GameObject weaponInstance = (GameObject)PrefabUtility.InstantiatePrefab(weaponPrefab);
                 weaponInstance.transform.SetParent(bone);
                 
-                // Default position/rotation
+                // Default position/rotation/scale
                 Vector3 localPos = Vector3.zero;
                 Vector3 localRot = Vector3.zero;
+                Vector3 localScale = Vector3.one;
 
                 string n = unitName.Replace(" ", "").Replace("_", "");
                 
                 // Specific offsets requested by user
                 if (n == "Archangel" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
                 else if (n == "DarkKnight" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, -0.8f);
+                else if (n == "DemonKing" && boneName == "RightHand") { localPos = new Vector3(-0.00046f, 0.00085f, 0.00012f); localRot = new Vector3(0f, -97.539f, 0f); }
                 else if (n == "CavalryRider" && boneName == "RightHand") localPos = new Vector3(0, 0.2f, 0);
                 else if (n == "DeathKnightCommander" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
                 else if (n == "DwarvenCannoneer" && boneName == "RightHand") localPos = new Vector3(0, 0.9f, 0);
@@ -1049,11 +1051,12 @@ public class EditorPrefabBuilder : Editor
                 else if (n == "Crossbowman" && boneName == "RightHand") { localPos = new Vector3(-0.055f, 0.166f, 0.003f); localRot = new Vector3(-1.316f, 6.562f, -68.717f); }
                 else if (n == "CultistInitiate" && boneName == "RightHand") { localPos = new Vector3(0.11f, 0.41f, 0f); localRot = new Vector3(180f, 0f, 0f); }
                 else if (n == "DarkElfSniper" && boneName == "RightHand") { localPos = new Vector3(-0.021f, 0.15f, 0f); localRot = new Vector3(0f, 0f, -74.64f); }
-                else if (n == "GrandPaladin" && boneName == "RightHand") { localRot = new Vector3(-21.668f, -87.826f, 31.072f); }
+                else if (n == "GrandPaladin" && boneName == "RightHand") { localPos = new Vector3(-0.00021f, 0.00145f, 0.00102f); localRot = new Vector3(-32.489f, -62.454f, 19.319f); localScale = new Vector3(0.5f, 0.5f, 0.5f); }
+                else if (n == "GrandPaladin" && boneName == "LeftHand") { localPos = new Vector3(0.0013f, 0f, 0.0002f); localRot = new Vector3(0f, 221.456f, 0f); localScale = new Vector3(0.5f, 0.5f, 0.5f); }
                 else if (n == "GriffinTamer" && boneName == "RightHand") { localRot = new Vector3(-70f, -50f, 0f); }
                 else if (n == "HolyKnight" && boneName == "RightHand") { localRot = new Vector3(0f, -100f, 0f); }
                 else if (n == "Necromancer" && boneName == "RightHand") { localPos = new Vector3(0.002f, -0.258f, 0.598f); localRot = new Vector3(-57.415f, -0.426f, 0.505f); }
-                else if (n == "Lich" && boneName == "RightHand") { localPos = new Vector3(-0.156f, 0.226f, 0.46f); localRot = new Vector3(0f, 40f, -90f); }
+                else if (n == "Lich" && boneName == "RightHand") { localPos = new Vector3(0.00235f, 0.00078f, 0.00411f); localRot = new Vector3(-59.422f, -53.22f, 83.83f); }
                 else if (n == "BloodMage" && boneName == "RightHand") { localPos = new Vector3(0.459f, 0.093f, 0.323f); localRot = new Vector3(-85.171f, 0f, 55.586f); }
                 else if (n == "ClericoftheDawn" && boneName == "RightHand") { localPos = new Vector3(0.314f, -0.017f, 0.167f); localRot = new Vector3(-72.599f, 0f, 62.466f); }
                 else if (n == "NoviceArcher" && boneName == "LeftHand") { localRot = new Vector3(180f, 0f, 0f); }
@@ -1072,9 +1075,16 @@ public class EditorPrefabBuilder : Editor
                 else if (n == "TrollBrute" && boneName == "RightHand") { localPos = new Vector3(0.001f, 0.155f, -0.421f); }
                 else if (n == "Wraith" && boneName == "RightHand") { localPos = new Vector3(0.115f, 0.326f, 0.083f); localRot = new Vector3(0f, -66.934f, 0f); }
 
+                float modelGlobalScale = (modelInstance != null) ? modelInstance.transform.localScale.x : 1f;
+                if (modelGlobalScale != 1f)
+                {
+                    localScale = new Vector3(localScale.x / modelGlobalScale, localScale.y / modelGlobalScale, localScale.z / modelGlobalScale);
+                    Debug.Log($"[WeaponScaleDivisor] {unitName}/{weaponName}: {modelGlobalScale} -> localScale {localScale}");
+                }
+
                 weaponInstance.transform.localPosition = localPos;
                 weaponInstance.transform.localRotation = Quaternion.Euler(localRot);
-                weaponInstance.transform.localScale = Vector3.one; // Ensure scale is exactly (1,1,1)
+                weaponInstance.transform.localScale = localScale;
 
                 if (IsRangedWeapon(weaponName) || (!string.IsNullOrEmpty(unitName) && unitName.Contains("Cleric")))
                     EnsureFirePointOnWeapon(weaponInstance.transform, unitName);
@@ -1141,15 +1151,17 @@ public class EditorPrefabBuilder : Editor
             }
         }
 
+        // Mevcut FirePoint (kullanıcının/override'ın ayarladığı konum/rotasyon) varsa ona asla dokunmayız.
+        // Yalnızca hiç yoksa oluşturup varsayılan konuma koyarız. Böylece COMPLETE SYSTEM REPAIR
+        // unit/hero firepoint konumlarını sıfırlamaz.
         if (firePoint == null)
         {
             GameObject firePointGo = new GameObject("FirePoint");
             firePoint = firePointGo.transform;
+            firePoint.SetParent(targetParent, false);
+            firePoint.localPosition = targetLocalPos;
+            firePoint.localRotation = Quaternion.identity;
         }
-
-        firePoint.SetParent(targetParent, false);
-        firePoint.localPosition = targetLocalPos;
-        firePoint.localRotation = Quaternion.identity;
     }
 
     public static void EnsureRangedUnitFirePoints(GameObject unitRoot, string unitName = "")

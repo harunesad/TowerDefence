@@ -22,7 +22,7 @@ namespace TowerDefence.Editor
             GameObject root = new GameObject("TowerUpgradeUI", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster), typeof(TowerUpgradeUI));
             TowerUpgradeUI uiScript = root.GetComponent<TowerUpgradeUI>();
             RectTransform rootRT = root.GetComponent<RectTransform>();
-            rootRT.sizeDelta = new Vector2(300, 400); 
+            rootRT.sizeDelta = new Vector2(300, 560); 
             rootRT.localScale = new Vector3(0.03f, 0.03f, 0.005f); 
             rootRT.localRotation = Quaternion.Euler(65f, 0f, 0f);
 
@@ -30,22 +30,41 @@ namespace TowerDefence.Editor
             canvas.renderMode = RenderMode.WorldSpace;
 
             // 2. Main Panel
-            GameObject mainPanel = CreateUINode(root.transform, "MainPanel", new Vector2(300, 400));
+            GameObject mainPanel = CreateUINode(root.transform, "MainPanel", new Vector2(300, 560));
             mainPanel.SetActive(false); // Başlangıçta gizli
             mainPanel.AddComponent<Image>().color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
             VerticalLayoutGroup vlg = mainPanel.AddComponent<VerticalLayoutGroup>();
             vlg.padding = new RectOffset(20, 20, 20, 20);
-            vlg.spacing = 15;
+            vlg.spacing = 12;
             vlg.childAlignment = TextAnchor.MiddleCenter;
             vlg.childControlHeight = false;
             vlg.childControlWidth = true;
             vlg.childForceExpandHeight = false;
             uiScript.mainPanel = mainPanel;
 
-            // ... (Kısaltılmış mantık, asıl metodları aşağıya taşıyoruz)
-            uiScript.towerNameText = CreateTMP(mainPanel.transform, "TowerName", "Archer Tower", 32);
-            uiScript.levelText = CreateTMP(mainPanel.transform, "LevelText", "Level 1", 24);
+            // Header (Name + Level)
+            uiScript.towerNameText = CreateTMP(mainPanel.transform, "TowerName", "Archer Tower", 28);
+            uiScript.levelText = CreateTMP(mainPanel.transform, "LevelText", "Level 1", 22);
 
+            // Stats Panel (NEW)
+            GameObject statsPanel = CreateUINode(mainPanel.transform, "StatsPanel", new Vector2(260, 160));
+            statsPanel.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.5f);
+            uiScript.statsPanel = statsPanel;
+            VerticalLayoutGroup statsVlg = statsPanel.AddComponent<VerticalLayoutGroup>();
+            statsVlg.padding = new RectOffset(10, 10, 10, 10);
+            statsVlg.spacing = 3;
+            statsVlg.childAlignment = TextAnchor.UpperLeft;
+            statsVlg.childControlHeight = false;
+            statsVlg.childControlWidth = true;
+            statsVlg.childForceExpandHeight = false;
+            TextMeshProUGUI statsHeader = CreateTMP(statsPanel.transform, "StatsHeader", "STATS", 16, 240, 20);
+            statsHeader.color = new Color(1f, 0.85f, 0.2f);
+            statsHeader.alignment = TextAlignmentOptions.Left;
+            uiScript.statsText = CreateTMP(statsPanel.transform, "StatsText", "DMG: 10\nRNG: 5\nHP: 100/100", 16, 240, 120);
+            uiScript.statsText.alignment = TextAlignmentOptions.Left;
+            uiScript.statsText.enableWordWrapping = false;
+
+            // Normal Upgrade
             GameObject normalGroup = CreateUINode(mainPanel.transform, "NormalUpgradeGroup", new Vector2(260, 100));
             uiScript.normalUpgradeGroup = normalGroup;
             VerticalLayoutGroup normalVlg = normalGroup.AddComponent<VerticalLayoutGroup>();
@@ -55,6 +74,7 @@ namespace TowerDefence.Editor
             uiScript.upgradeButton = CreateButton(normalGroup.transform, "UpgradeButton", "UPGRADE");
             uiScript.upgradeCostText = CreateTMP(normalGroup.transform, "UpgradeCost", "100", 20);
 
+            // Specialization
             GameObject specGroup = CreateUINode(mainPanel.transform, "SpecializationGroup", new Vector2(260, 150));
             uiScript.specializationGroup = specGroup;
             HorizontalLayoutGroup hlg = specGroup.AddComponent<HorizontalLayoutGroup>();
@@ -77,11 +97,12 @@ namespace TowerDefence.Editor
             uiScript.specBButton = CreateButton(specBCont.transform, "SpecBButton", "SELECT");
             uiScript.specBCostText = CreateTMP(specBCont.transform, "Cost", "200", 18);
 
+            // Sell
             uiScript.sellButton = CreateButton(mainPanel.transform, "SellButton", "SELL");
             uiScript.sellButton.GetComponent<Image>().color = new Color(0.8f, 0.2f, 0.2f);
             uiScript.sellValueText = CreateTMP(mainPanel.transform, "Value", "50", 18);
 
-            // 7. Targeting Priority (NEW)
+            // Targeting Priority
             GameObject targetGroup = CreateUINode(mainPanel.transform, "TargetingGroup", new Vector2(260, 60));
             HorizontalLayoutGroup targetHlg = targetGroup.AddComponent<HorizontalLayoutGroup>();
             targetHlg.childAlignment = TextAnchor.MiddleCenter;
@@ -445,6 +466,20 @@ namespace TowerDefence.Editor
             timerText.rectTransform.anchoredPosition = new Vector2(0, -25); // Slightly below the button text, inside button area
             timerText.color = Color.green;
 
+            // 3e. Fortune Wheel Button (On Main Menu)
+            Button fortuneBtn = CreateButton(mainMenuPanel.transform, "FortuneWheelButton", "FORTUNE WHEEL", 250, 80, 20);
+            RectTransform fortuneRT = fortuneBtn.GetComponent<RectTransform>();
+            fortuneRT.anchorMin = new Vector2(1, 0);
+            fortuneRT.anchorMax = new Vector2(1, 0);
+            fortuneRT.anchoredPosition = new Vector2(-430, 100);
+            fortuneBtn.GetComponent<Image>().color = new Color(0.4f, 0.15f, 0.4f); // Purple
+
+            TextMeshProUGUI fortuneTimerText = CreateTMP(fortuneBtn.transform, "Timer", "Available!", 16, 250, 30);
+            fortuneTimerText.rectTransform.anchorMin = new Vector2(0.5f, 0);
+            fortuneTimerText.rectTransform.anchorMax = new Vector2(0.5f, 0);
+            fortuneTimerText.rectTransform.anchoredPosition = new Vector2(0, -25); // Slightly below the button text
+            fortuneTimerText.color = Color.green;
+
             // 4. Panels
             GameObject levelPanel = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/LevelSelectionPanel.prefab", false);
             GameObject skillPanel = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/SkillTreePanel.prefab",   false);
@@ -555,6 +590,57 @@ namespace TowerDefence.Editor
             crystalVal.alignment = TextAlignmentOptions.Left;
             crystalVal.color = Color.cyan;
 
+            // Fortune Wheel Panel Create
+            GameObject fwBackdrop = CreateUINode(root.transform, "FortuneWheelBackdrop", new Vector2(4000, 4000));
+            fwBackdrop.SetActive(false);
+            fwBackdrop.AddComponent<Image>().color = new Color(0, 0, 0, 0.8f);
+
+            GameObject fwPanel = CreateUINode(root.transform, "FortuneWheelPanel", new Vector2(1000, 1000));
+            fwPanel.SetActive(false);
+            fwPanel.AddComponent<Image>().color = new Color(0.1f, 0.1f, 0.15f, 1f);
+            
+            TextMeshProUGUI fwTitle = CreateTMP(fwPanel.transform, "Title", "FORTUNE WHEEL", 48, 600, 60);
+            fwTitle.rectTransform.anchorMin = new Vector2(0.5f, 1);
+            fwTitle.rectTransform.anchorMax = new Vector2(0.5f, 1);
+            fwTitle.rectTransform.anchoredPosition = new Vector2(0, -60);
+            
+            // Wheel graphic
+            GameObject wheelObj = CreateUINode(fwPanel.transform, "WheelGraphic", new Vector2(500, 500));
+            wheelObj.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 50);
+            wheelObj.AddComponent<Image>().color = new Color(0.8f, 0.6f, 0.2f); // Golden placeholder for wheel
+            
+            // Pointer
+            GameObject pointerObj = CreateUINode(fwPanel.transform, "Pointer", new Vector2(40, 60));
+            pointerObj.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 320); // Above wheel
+            pointerObj.AddComponent<Image>().color = Color.red;
+
+            // Spin Button
+            Button spinBtn = CreateButton(fwPanel.transform, "SpinButton", "SPIN", 200, 80, 24);
+            spinBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -350);
+            spinBtn.GetComponent<Image>().color = new Color(0.2f, 0.6f, 0.2f);
+
+            // Reward Text
+            TextMeshProUGUI fwRewardText = CreateTMP(fwPanel.transform, "RewardText", "Spin to Win!", 28, 600, 50);
+            fwRewardText.rectTransform.anchoredPosition = new Vector2(0, -250);
+            
+            // Close Button
+            Button fwCloseBtn = CreateButton(fwPanel.transform, "CloseButton", "CLOSE", 200, 80, 24);
+            fwCloseBtn.GetComponent<RectTransform>().anchorMin = new Vector2(0.5f, 0);
+            fwCloseBtn.GetComponent<RectTransform>().anchorMax = new Vector2(0.5f, 0);
+            fwCloseBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 60);
+
+            // Add FortuneWheelUI script
+            FortuneWheelUI fwUI = fwPanel.AddComponent<FortuneWheelUI>();
+            fwUI.wheelTransform = wheelObj.GetComponent<RectTransform>();
+            fwUI.spinButton = spinBtn;
+            fwUI.rewardText = fwRewardText;
+            fwUI.closeButtonObj = fwCloseBtn.gameObject;
+            
+            // Link backdrop to close (optional, but good)
+            Button fwBackdropBtn = fwBackdrop.AddComponent<Button>();
+            fwBackdropBtn.onClick.AddListener(() => { fwPanel.SetActive(false); fwBackdrop.SetActive(false); });
+            fwCloseBtn.onClick.AddListener(() => { fwPanel.SetActive(false); fwBackdrop.SetActive(false); });
+
             // 6. MainMenuController bağlantıları
             MainMenuController mc = root.AddComponent<MainMenuController>();
             var so = new UnityEditor.SerializedObject(mc);
@@ -571,6 +657,10 @@ namespace TowerDefence.Editor
             so.FindProperty("dailyRewardBackdrop").objectReferenceValue = drBackdrop;
             so.FindProperty("dailyRewardButton").objectReferenceValue = dailyBtn;
             so.FindProperty("dailyRewardTimerText").objectReferenceValue = timerText;
+
+            so.FindProperty("fortuneWheelPanel").objectReferenceValue = fwPanel;
+            so.FindProperty("fortuneWheelButton").objectReferenceValue = fortuneBtn;
+            so.FindProperty("fortuneWheelTimerText").objectReferenceValue = fortuneTimerText;
 
             so.FindProperty("playButton").objectReferenceValue       = playBtn;
             so.FindProperty("skillTreeButton").objectReferenceValue  = skillBtn;
@@ -1272,14 +1362,15 @@ namespace TowerDefence.Editor
             statsRT.anchorMax = new Vector2(0.5f, 1);
             statsRT.pivot = new Vector2(0.5f, 1);
             statsRT.anchoredPosition = new Vector2(0, -10);
-            statsRT.sizeDelta = new Vector2(800, 60);
+            statsRT.sizeDelta = new Vector2(1050, 60);
             statsPanel.GetComponent<Image>().color = new Color(0, 0, 0, 0.6f);
 
             HorizontalLayoutGroup statsHlg = statsPanel.AddComponent<HorizontalLayoutGroup>();
             statsHlg.childAlignment = TextAnchor.MiddleCenter;
-            statsHlg.spacing = 50;
+            statsHlg.spacing = 40;
 
             TextMeshProUGUI livesText = CreateTMP(statsPanel.transform, "LivesText", "Lives: 20/20", 24, 150, 40);
+            TextMeshProUGUI waveText  = CreateTMP(statsPanel.transform, "WaveText",  "Wave: 1/5",    24, 150, 40);
             
             GameObject currGroup = CreateUINode(statsPanel.transform, "CurrencyGroup", new Vector2(150, 40));
             HorizontalLayoutGroup cHlg = currGroup.AddComponent<HorizontalLayoutGroup>();
@@ -1302,6 +1393,7 @@ namespace TowerDefence.Editor
             HUDController hud = root.AddComponent<HUDController>();
             var hudSo = new UnityEditor.SerializedObject(hud);
             hudSo.FindProperty("livesText").objectReferenceValue = livesText;
+            hudSo.FindProperty("waveText").objectReferenceValue = waveText;
             hudSo.FindProperty("currencyText").objectReferenceValue = currencyText;
             hudSo.FindProperty("currencyIcon").objectReferenceValue = curIconImg;
             hudSo.FindProperty("goldSprite").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/Gold.png");
@@ -1476,157 +1568,19 @@ namespace TowerDefence.Editor
             heroHlg.childAlignment = TextAnchor.MiddleLeft;
             heroHlg.spacing = 15;
 
-            // Hero 1 Butonu
-            GameObject hero1Obj = new GameObject("HeroButton_1", typeof(RectTransform), typeof(Image), typeof(Button), typeof(HeroButtonUI));
-            hero1Obj.transform.SetParent(heroPanel.transform, false);
-            hero1Obj.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 100);
-            hero1Obj.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
-
-            GameObject hero1Icon = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-            hero1Icon.transform.SetParent(hero1Obj.transform, false);
-            hero1Icon.GetComponent<RectTransform>().sizeDelta = new Vector2(80, 80);
-            hero1Icon.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
-
-            // Health Slider (Alt Kısımda)
-            GameObject hero1SliderObj = new GameObject("HealthSlider", typeof(RectTransform), typeof(Slider));
-            hero1SliderObj.transform.SetParent(hero1Obj.transform, false);
-            RectTransform h1SliderRT = hero1SliderObj.GetComponent<RectTransform>();
-            h1SliderRT.anchorMin = new Vector2(0, 0);
-            h1SliderRT.anchorMax = new Vector2(1, 0);
-            h1SliderRT.pivot = new Vector2(0.5f, 0);
-            h1SliderRT.anchoredPosition = new Vector2(0, 5);
-            h1SliderRT.sizeDelta = new Vector2(-10, 10);
-
-            GameObject h1Background = new GameObject("Background", typeof(RectTransform), typeof(Image));
-            h1Background.transform.SetParent(hero1SliderObj.transform, false);
-            h1Background.GetComponent<RectTransform>().anchorMin = Vector2.zero;
-            h1Background.GetComponent<RectTransform>().anchorMax = Vector2.one;
-            h1Background.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-            h1Background.GetComponent<Image>().color = Color.gray;
-
-            GameObject h1FillArea = new GameObject("Fill Area", typeof(RectTransform));
-            h1FillArea.transform.SetParent(hero1SliderObj.transform, false);
-            h1FillArea.GetComponent<RectTransform>().anchorMin = Vector2.zero;
-            h1FillArea.GetComponent<RectTransform>().anchorMax = Vector2.one;
-            h1FillArea.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-
-            GameObject h1Fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
-            h1Fill.transform.SetParent(h1FillArea.transform, false);
-            h1Fill.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-            h1Fill.GetComponent<Image>().color = Color.green;
-
-            Slider h1Slider = hero1SliderObj.GetComponent<Slider>();
-            h1Slider.fillRect = h1Fill.GetComponent<RectTransform>();
-            h1Slider.targetGraphic = h1Fill.GetComponent<Image>();
-            h1Slider.value = 1f;
-
-            // Respawn Overlay
-            GameObject hero1Overlay = new GameObject("RespawnOverlay", typeof(RectTransform), typeof(Image));
-            hero1Overlay.transform.SetParent(hero1Obj.transform, false);
-            hero1Overlay.GetComponent<RectTransform>().anchorMin = Vector2.zero;
-            hero1Overlay.GetComponent<RectTransform>().anchorMax = Vector2.one;
-            hero1Overlay.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-            Image h1OverlayImg = hero1Overlay.GetComponent<Image>();
-            h1OverlayImg.color = new Color(0, 0, 0, 0.7f);
-            h1OverlayImg.type = Image.Type.Filled;
-            h1OverlayImg.fillMethod = Image.FillMethod.Radial360;
-
-            // Timer Text
-            TextMeshProUGUI hero1Timer = CreateTMP(hero1Obj.transform, "TimerText", "30s", 20, 100, 30);
-            hero1Timer.rectTransform.anchoredPosition = Vector2.zero;
-
-            Image hero1SelectionFrame = CreateImage(hero1Obj.transform, "SelectionFrame", new Vector2(100, 100));
-            hero1SelectionFrame.color = new Color(0.2f, 1f, 0.3f, 0.7f);
-            hero1SelectionFrame.gameObject.SetActive(false);
-
-            HeroButtonUI heroUI1 = hero1Obj.GetComponent<HeroButtonUI>();
-            var h1So = new SerializedObject(heroUI1);
-            h1So.FindProperty("iconImage").objectReferenceValue = hero1Icon.GetComponent<Image>();
-            h1So.FindProperty("healthSlider").objectReferenceValue = h1Slider;
-            h1So.FindProperty("respawnOverlay").objectReferenceValue = h1OverlayImg;
-            h1So.FindProperty("timerText").objectReferenceValue = hero1Timer;
-            h1So.FindProperty("selectButton").objectReferenceValue = hero1Obj.GetComponent<Button>();
-            h1So.FindProperty("selectionFrame").objectReferenceValue = hero1SelectionFrame;
-            h1So.ApplyModifiedProperties();
-
-            // Hero 2 Butonu
-            GameObject hero2Obj = new GameObject("HeroButton_2", typeof(RectTransform), typeof(Image), typeof(Button), typeof(HeroButtonUI));
-            hero2Obj.transform.SetParent(heroPanel.transform, false);
-            hero2Obj.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 100);
-            hero2Obj.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
-
-            GameObject hero2Icon = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-            hero2Icon.transform.SetParent(hero2Obj.transform, false);
-            hero2Icon.GetComponent<RectTransform>().sizeDelta = new Vector2(80, 80);
-            hero2Icon.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
-
-            // Health Slider (Alt Kısımda)
-            GameObject hero2SliderObj = new GameObject("HealthSlider", typeof(RectTransform), typeof(Slider));
-            hero2SliderObj.transform.SetParent(hero2Obj.transform, false);
-            RectTransform h2SliderRT = hero2SliderObj.GetComponent<RectTransform>();
-            h2SliderRT.anchorMin = new Vector2(0, 0);
-            h2SliderRT.anchorMax = new Vector2(1, 0);
-            h2SliderRT.pivot = new Vector2(0.5f, 0);
-            h2SliderRT.anchoredPosition = new Vector2(0, 5);
-            h2SliderRT.sizeDelta = new Vector2(-10, 10);
-
-            GameObject h2Background = new GameObject("Background", typeof(RectTransform), typeof(Image));
-            h2Background.transform.SetParent(hero2SliderObj.transform, false);
-            h2Background.GetComponent<RectTransform>().anchorMin = Vector2.zero;
-            h2Background.GetComponent<RectTransform>().anchorMax = Vector2.one;
-            h2Background.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-            h2Background.GetComponent<Image>().color = Color.gray;
-
-            GameObject h2FillArea = new GameObject("Fill Area", typeof(RectTransform));
-            h2FillArea.transform.SetParent(hero2SliderObj.transform, false);
-            h2FillArea.GetComponent<RectTransform>().anchorMin = Vector2.zero;
-            h2FillArea.GetComponent<RectTransform>().anchorMax = Vector2.one;
-            h2FillArea.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-
-            GameObject h2Fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
-            h2Fill.transform.SetParent(h2FillArea.transform, false);
-            h2Fill.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-            h2Fill.GetComponent<Image>().color = Color.green;
-
-            Slider h2Slider = hero2SliderObj.GetComponent<Slider>();
-            h2Slider.fillRect = h2Fill.GetComponent<RectTransform>();
-            h2Slider.targetGraphic = h2Fill.GetComponent<Image>();
-            h2Slider.value = 1f;
-
-            // Respawn Overlay
-            GameObject hero2Overlay = new GameObject("RespawnOverlay", typeof(RectTransform), typeof(Image));
-            hero2Overlay.transform.SetParent(hero2Obj.transform, false);
-            hero2Overlay.GetComponent<RectTransform>().anchorMin = Vector2.zero;
-            hero2Overlay.GetComponent<RectTransform>().anchorMax = Vector2.one;
-            hero2Overlay.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-            Image h2OverlayImg = hero2Overlay.GetComponent<Image>();
-            h2OverlayImg.color = new Color(0, 0, 0, 0.7f);
-            h2OverlayImg.type = Image.Type.Filled;
-            h2OverlayImg.fillMethod = Image.FillMethod.Radial360;
-
-            // Timer Text
-            TextMeshProUGUI hero2Timer = CreateTMP(hero2Obj.transform, "TimerText", "30s", 20, 100, 30);
-            hero2Timer.rectTransform.anchoredPosition = Vector2.zero;
-
-            Image hero2SelectionFrame = CreateImage(hero2Obj.transform, "SelectionFrame", new Vector2(100, 100));
-            hero2SelectionFrame.color = new Color(0.2f, 1f, 0.3f, 0.7f);
-            hero2SelectionFrame.gameObject.SetActive(false);
-
-            HeroButtonUI heroUI2 = hero2Obj.GetComponent<HeroButtonUI>();
-            var h2So = new SerializedObject(heroUI2);
-            h2So.FindProperty("iconImage").objectReferenceValue = hero2Icon.GetComponent<Image>();
-            h2So.FindProperty("healthSlider").objectReferenceValue = h2Slider;
-            h2So.FindProperty("respawnOverlay").objectReferenceValue = h2OverlayImg;
-            h2So.FindProperty("timerText").objectReferenceValue = hero2Timer;
-            h2So.FindProperty("selectButton").objectReferenceValue = hero2Obj.GetComponent<Button>();
-            h2So.FindProperty("selectionFrame").objectReferenceValue = hero2SelectionFrame;
-            h2So.ApplyModifiedProperties();
-
-            // HUDController'a Hero butonlarını bağla
             var hudHeroSo = new SerializedObject(hud);
-            hudHeroSo.FindProperty("heroButton1").objectReferenceValue = heroUI1;
-            hudHeroSo.FindProperty("heroButton2").objectReferenceValue = heroUI2;
+            hudHeroSo.FindProperty("heroPanel").objectReferenceValue = heroPanel;
             hudHeroSo.ApplyModifiedProperties();
+
+            // --- YENİ: Hero Stats Panel (Başlangıçta gizli) ---
+            GameObject heroStatsPanelGo = CreateHeroStatsPanelInCanvas(root.transform);
+            if (heroStatsPanelGo != null)
+            {
+                HeroStatsPanel hsp = heroStatsPanelGo.GetComponent<HeroStatsPanel>();
+                var hspSo = new SerializedObject(hud);
+                hspSo.FindProperty("heroStatsPanel").objectReferenceValue = hsp;
+                hspSo.ApplyModifiedProperties();
+            }
 
             // 6. Level Result Panel (Phase 4) - BAŞLAĞIÇTA GİZLİ
             GameObject resultObj = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/LevelResultPanel.prefab", false);
@@ -1702,6 +1656,135 @@ namespace TowerDefence.Editor
             GameObject.DestroyImmediate(root);
         }
 
+        public static void CreateHeroStatsPanelPrefab()
+        {
+            EnsureDirectory();
+            GameObject root = CreateHeroStatsPanelRoot(out HeroStatsPanel _);
+            SaveAndCleanup(root, "HeroStatsPanel");
+        }
+
+        private static GameObject CreateHeroStatsPanelInCanvas(Transform parent)
+        {
+            GameObject root = CreateHeroStatsPanelRoot(out HeroStatsPanel _);
+            root.transform.SetParent(parent, false);
+            RectTransform rt = root.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            return root;
+        }
+
+        private static GameObject CreateHeroStatsPanelRoot(out HeroStatsPanel panelScript)
+        {
+            GameObject root = new GameObject("HeroStatsPanel", typeof(RectTransform), typeof(HeroStatsPanel));
+            panelScript = root.GetComponent<HeroStatsPanel>();
+
+            // Blocker (tam ekran arka plan tıkayıcı, tıklayınca gizler)
+            GameObject blocker = new GameObject("BlockerPanel", typeof(RectTransform), typeof(Image), typeof(Button));
+            blocker.transform.SetParent(root.transform, false);
+            RectTransform blockerRT = blocker.GetComponent<RectTransform>();
+            blockerRT.anchorMin = Vector2.zero;
+            blockerRT.anchorMax = Vector2.one;
+            blockerRT.offsetMin = Vector2.zero;
+            blockerRT.offsetMax = Vector2.zero;
+            blocker.GetComponent<Image>().color = new Color(0, 0, 0, 0.001f);
+            blocker.SetActive(false);
+
+            // İç panel (görünen kısım) - ikonlar çıkarıldığı için biraz daha dardır
+            GameObject panelRoot = CreateUINode(root.transform, "PanelRoot", new Vector2(340, 540));
+            panelRoot.AddComponent<Image>().color = new Color(0.08f, 0.08f, 0.12f, 0.98f);
+            panelRoot.SetActive(false);
+
+            VerticalLayoutGroup vlg = panelRoot.AddComponent<VerticalLayoutGroup>();
+            vlg.padding = new RectOffset(18, 18, 18, 18);
+            vlg.spacing = 10;
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            vlg.childControlHeight = false;
+            vlg.childControlWidth = true;
+            vlg.childForceExpandHeight = false;
+            vlg.childForceExpandWidth = false;
+
+            // Header: isim + side (ikon yok)
+            GameObject header = CreateUINode(panelRoot.transform, "Header", new Vector2(304, 70));
+            VerticalLayoutGroup hdrVlg = header.AddComponent<VerticalLayoutGroup>();
+            hdrVlg.spacing = 4;
+            hdrVlg.childAlignment = TextAnchor.MiddleCenter;
+            hdrVlg.childControlHeight = false;
+            hdrVlg.childControlWidth = true;
+            hdrVlg.childForceExpandHeight = false;
+
+            TextMeshProUGUI heroName = CreateTMP(header.transform, "HeroName", "Hero Name", 28, 304, 40);
+            heroName.alignment = TextAlignmentOptions.Center;
+            heroName.color = Color.white;
+            heroName.fontStyle = FontStyles.Bold;
+            TextMeshProUGUI sideText = CreateTMP(header.transform, "SideText", "LIGHT", 18, 304, 22);
+            sideText.alignment = TextAlignmentOptions.Center;
+
+            // Stats box
+            GameObject statsBox = CreateUINode(panelRoot.transform, "StatsBox", new Vector2(304, 150));
+            statsBox.AddComponent<Image>().color = new Color(0, 0, 0, 0.45f);
+            VerticalLayoutGroup statsVlg = statsBox.AddComponent<VerticalLayoutGroup>();
+            statsVlg.padding = new RectOffset(10, 10, 8, 8);
+            statsVlg.spacing = 2;
+            statsVlg.childAlignment = TextAnchor.UpperLeft;
+            statsVlg.childControlHeight = false;
+            statsVlg.childControlWidth = true;
+            statsVlg.childForceExpandHeight = false;
+
+            TextMeshProUGUI statsHeader = CreateTMP(statsBox.transform, "StatsHeader", "STATS", 14, 284, 18);
+            statsHeader.color = new Color(1f, 0.85f, 0.2f);
+            statsHeader.alignment = TextAlignmentOptions.Left;
+            TextMeshProUGUI statsText = CreateTMP(statsBox.transform, "StatsText",
+                "Tier 1\nHP: 100\nDMG: 10   ATK: 1.0/s\nRNG: 2.0   SPD: 3.0",
+                16, 284, 110);
+            statsText.alignment = TextAlignmentOptions.Left;
+            statsText.enableWordWrapping = false;
+
+            // Ability section (ikonsuz)
+            GameObject abilityBox = CreateUINode(panelRoot.transform, "AbilityBox", new Vector2(304, 210));
+            abilityBox.AddComponent<Image>().color = new Color(0, 0, 0, 0.45f);
+            VerticalLayoutGroup abVlg = abilityBox.AddComponent<VerticalLayoutGroup>();
+            abVlg.padding = new RectOffset(10, 10, 8, 8);
+            abVlg.spacing = 4;
+            abVlg.childAlignment = TextAnchor.UpperLeft;
+            abVlg.childControlHeight = false;
+            abVlg.childControlWidth = true;
+            abVlg.childForceExpandHeight = false;
+
+            TextMeshProUGUI abHeader = CreateTMP(abilityBox.transform, "AbilityHeader", "UNIQUE ABILITY", 14, 284, 18);
+            abHeader.color = new Color(1f, 0.85f, 0.2f);
+            abHeader.alignment = TextAlignmentOptions.Left;
+
+            TextMeshProUGUI abName = CreateTMP(abilityBox.transform, "AbilityName", "[Type] Ability Name", 18, 284, 28);
+            abName.alignment = TextAlignmentOptions.Left;
+            abName.fontStyle = FontStyles.Bold;
+
+            TextMeshProUGUI abDesc = CreateTMP(abilityBox.transform, "AbilityDesc",
+                "Ability description goes here...",
+                14, 284, 110);
+            abDesc.alignment = TextAlignmentOptions.Left;
+            abDesc.enableWordWrapping = true;
+
+            TextMeshProUGUI abCD = CreateTMP(abilityBox.transform, "AbilityCooldown", "CD: 12.0s", 14, 284, 18);
+            abCD.alignment = TextAlignmentOptions.Left;
+            abCD.color = new Color(0.6f, 0.9f, 1f);
+
+            // SerializedObject ile bağla (ikonlar kaldırıldı)
+            var so = new UnityEditor.SerializedObject(panelScript);
+            so.FindProperty("panelRoot").objectReferenceValue = panelRoot;
+            so.FindProperty("heroNameText").objectReferenceValue = heroName;
+            so.FindProperty("heroSideText").objectReferenceValue = sideText;
+            so.FindProperty("statsText").objectReferenceValue = statsText;
+            so.FindProperty("abilityNameText").objectReferenceValue = abName;
+            so.FindProperty("abilityDescText").objectReferenceValue = abDesc;
+            so.FindProperty("abilityCooldownText").objectReferenceValue = abCD;
+            so.FindProperty("blockerPanel").objectReferenceValue = blocker;
+            so.ApplyModifiedProperties();
+
+            return root;
+        }
+
         public static void CreateCoreEnginePrefab()
         {
             GameObject root = new GameObject("_Engine_MasterPrefab");
@@ -1720,11 +1803,11 @@ namespace TowerDefence.Editor
 
             string[] vfxNames = { 
                 "VFX_LightImpact", "VFX_DarkImpact", "VFX_HealingAura", "VFX_CorruptionPulse", "VFX_UnitSpawn", "VFX_UnitDeath", "VFX_SlowEffect",
-                "VFX_SpellMeteor", "VFX_SpellEarthquake", "VFX_SpellPlagueRain", "VFX_MuzzleFlashLight", "VFX_MuzzleFlashDark", "VFX_EconomyGold", "VFX_EconomySoul", "VFX_UpgradeSparkle" 
+                "VFX_SpellThunderstrike", "VFX_SpellRift", "VFX_SpellEarthquake", "VFX_SpellPlagueRain", "VFX_MuzzleFlashLight", "VFX_MuzzleFlashDark", "VFX_EconomyGold", "VFX_EconomySoul", "VFX_UpgradeSparkle" 
             };
             VFXType[] vfxTypes = { 
                 VFXType.LightImpact, VFXType.DarkImpact, VFXType.HealingAura, VFXType.CorruptionPulse, VFXType.UnitSpawn, VFXType.UnitDeath, VFXType.SlowEffect,
-                VFXType.SpellMeteor, VFXType.SpellEarthquake, VFXType.SpellPlagueRain, VFXType.MuzzleFlashLight, VFXType.MuzzleFlashDark, VFXType.EconomyGold, VFXType.EconomySoul, VFXType.UpgradeSparkle
+                VFXType.SpellThunderstrike, VFXType.SpellRift, VFXType.SpellEarthquake, VFXType.SpellPlagueRain, VFXType.MuzzleFlashLight, VFXType.MuzzleFlashDark, VFXType.EconomyGold, VFXType.EconomySoul, VFXType.UpgradeSparkle
             };
             
             for (int i = 0; i < vfxNames.Length; i++)

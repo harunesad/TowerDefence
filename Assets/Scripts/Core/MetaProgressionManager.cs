@@ -44,6 +44,7 @@ namespace TowerDefence.Core
         public List<int> highestUnlockedLevelIndexPerDifficulty = new List<int> { 0, 0, 0, 0 }; // İndeksler: 1=Normal, 2=Hard, 3=Expert
         
         public List<LevelProgress> levelProgressList = new List<LevelProgress>();
+        public long lastFortuneWheelTime; // Son çark çevirme zamanı (Ticks)
     }
 
     public class MetaProgressionManager : MonoBehaviour
@@ -95,6 +96,14 @@ namespace TowerDefence.Core
         }
 
         public int GetTotalCrystals() => saveData.totalCrystals;
+
+        public long GetLastFortuneWheelTime() => saveData.lastFortuneWheelTime;
+
+        public void SetLastFortuneWheelTime(long ticks)
+        {
+            saveData.lastFortuneWheelTime = ticks;
+            SaveGame();
+        }
 
         public long GetLastDailyRewardTime() => saveData.lastDailyRewardTime;
 

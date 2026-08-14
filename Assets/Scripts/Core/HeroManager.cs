@@ -15,6 +15,8 @@ namespace TowerDefence.Core
         [SerializeField] private float globalRespawnCooldown = 15f;
         [SerializeField] private float spawnSpread = 2.5f;
 
+
+
         private readonly HeroUnit[] activeHeroes = new HeroUnit[2];
         private readonly HeroData[] equippedHeroData = new HeroData[2];
         private readonly float[] respawnTimers = new float[2];
@@ -30,6 +32,13 @@ namespace TowerDefence.Core
         public event System.Action<HeroUnit> OnHeroSelectionChanged;
 
         public HeroData GetEquippedHeroData(int slot) => (slot >= 0 && slot < 2) ? equippedHeroData[slot] : null;
+        public int GetEquippedHeroCount()
+        {
+            int count = 0;
+            for (int i = 0; i < 2; i++)
+                if (equippedHeroData[i] != null) count++;
+            return count;
+        }
         public HeroUnit GetActiveHero(int slot) => (slot >= 0 && slot < 2) ? activeHeroes[slot] : null;
         public bool IsHeroDead(int slot) => respawnTimers[slot] > 0;
         public HeroUnit SelectedHero => selectedHero;

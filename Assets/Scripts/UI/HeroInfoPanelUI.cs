@@ -53,10 +53,13 @@ namespace TowerDefence.UI
             rt.sizeDelta = new Vector2(panelW, panelH);
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
+            // Sol alt köşeyi pivot olarak belirliyoruz ki butonun sağ üstüne doğru büyüsün
+            rt.pivot = new Vector2(0f, 0f);
 
-            Vector3 btnPos = source.position;
-            rt.position = new Vector3(btnPos.x, btnPos.y + panelH * 0.5f + 10f, btnPos.z);
+            // Pozisyonu tam olarak butonun dünya pozisyonuna eşitleyip
+            rt.position = source.position;
+            // Canvas ölçeklemesinden bağımsız olarak UI üzerinde sağ üste kaydırıyoruz
+            rt.anchoredPosition += new Vector2(source.rect.width * 0.5f + 10f, source.rect.height * 0.5f + 10f);
 
             Image bgImg = gameObject.GetComponent<Image>();
             if (bgImg == null) bgImg = gameObject.AddComponent<Image>();

@@ -33,6 +33,10 @@ namespace TowerDefence.Editor
                     // 1. Create Tower Slot Prefabs (Visuals)
                     UIMasterPrefabCreator.CreateTowerSlotPrefab();
 
+                    // 1.5 VFX Prefabs (Asset Store integration) — GenerateAllData'dan ÖNCE,
+                    // hero VFX kopyalama (GenerateHeroVFX) kaynak VFX'leri bulsun
+                    VFXPrefabGenerator.GenerateVFXPrefabs();
+
                     // 2. Data & Logic
                     DataAssetGenerator.GenerateAllData(); 
                     
@@ -51,7 +55,7 @@ namespace TowerDefence.Editor
                     // 4. Configurations
                     DataAssetGenerator.ConfigureTowerPrefabs();
                     DataAssetGenerator.ConfigureUnitPrefabs();
-                    
+
                     // 5. Master Prefabs (Composite)
                     UIMasterPrefabCreator.CreateCoreEnginePrefab();
                     UIMasterPrefabCreator.CreateMainMenuMaster();

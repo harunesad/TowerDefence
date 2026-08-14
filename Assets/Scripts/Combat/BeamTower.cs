@@ -21,6 +21,46 @@ namespace TowerDefence.Combat
         private void Awake()
         {
             if (baseTower == null) baseTower = GetComponent<Tower>();
+            ResolveFirePoint();
+            ResolveLineRenderer();
+        }
+
+        private void ResolveFirePoint()
+        {
+            if (firePoint != null) return;
+
+            Transform visuals = transform.Find("Visuals");
+            if (visuals != null && visuals.childCount > 0)
+            {
+                Transform firstVisual = visuals.GetChild(0);
+                Transform fp = firstVisual.Find("FirePoint");
+                if (fp != null)
+                {
+                    firePoint = fp;
+                    return;
+                }
+            }
+
+            firePoint = transform.Find("FirePoint");
+            if (firePoint == null) firePoint = transform;
+        }
+
+        private void ResolveLineRenderer()
+        {
+            if (lineRenderer != null) return;
+
+            GameObject beamGO = new GameObject("BeamRenderer");
+            beamGO.transform.SetParent(transform);
+            beamGO.transform.localPosition = Vector3.zero;
+            lineRenderer = beamGO.AddComponent<LineRenderer>();
+            lineRenderer.positionCount = 2;
+            lineRenderer.startWidth = beamWidth;
+            lineRenderer.endWidth = beamWidth;
+            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            lineRenderer.startColor = Color.cyan;
+            lineRenderer.endColor = Color.cyan;
+            lineRenderer.useWorldSpace = true;
+            lineRenderer.enabled = false;
         }
 
         private void Update()

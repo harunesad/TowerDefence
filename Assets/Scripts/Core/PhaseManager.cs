@@ -17,6 +17,7 @@ namespace TowerDefence.Core
 
         public event Action<GamePhase> OnPhaseChanged;
         public event Action<float> OnTimerUpdated;
+        public event Action<int, int> OnWaveChanged; // (currentWave, totalWaves)
 
         [Header("Settings")]
         [SerializeField] private float prepPhaseDuration = 30f;
@@ -74,6 +75,7 @@ namespace TowerDefence.Core
             timer = prepPhaseDuration;
             isTimerActive = true;
             OnPhaseChanged?.Invoke(currentPhase);
+            NotifyWaveChanged();
             Debug.Log("Preparation Phase Started!");
         }
 
@@ -164,6 +166,7 @@ namespace TowerDefence.Core
         public void ResetWaveIndex()
         {
             currentWaveIndex = 0;
+            NotifyWaveChanged();
             Debug.Log("Core: Wave Index Reset.");
         }
 
@@ -175,12 +178,23 @@ namespace TowerDefence.Core
             if (level != null && currentWaveIndex < level.waves.Count - 1)
             {
                 currentWaveIndex++;
+                NotifyWaveChanged();
                 StartPreparationPhase();
             }
             else
             {
                 GameManager.Instance.ChangeState(GameState.Victory);
             }
+        }
+
+        private void NotifyWaveChanged()
+        {
+            int totalWaves = 0;
+            LevelData level = CampaignManager.Instance?.GetCurrentLevel();
+            if (level != null)
+                totalWaves = level.waves.Count;
+
+            OnWaveChanged?.Invoke(currentWaveIndex + 1, totalWaves);
         }
     }
 }

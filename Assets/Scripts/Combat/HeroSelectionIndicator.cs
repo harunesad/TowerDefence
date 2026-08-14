@@ -12,8 +12,8 @@ namespace TowerDefence.Combat
     /// <summary>Her zaman görünen seçim halkası — pasif (soluk) / aktif (parlak).</summary>
     public class HeroSelectionIndicator : MonoBehaviour
     {
-        private static readonly Color PassiveColor = new Color(0.15f, 0.75f, 0.25f, 0.35f);
-        private static readonly Color ActiveColor = new Color(0.2f, 1f, 0.35f, 0.85f);
+        private static readonly Color PassiveColor = new Color(0.02f, 0.04f, 0.18f, 0.35f);
+        private static readonly Color ActiveColor = new Color(0.03f, 0.07f, 0.3f, 0.85f);
 
         public Sprite cursorSprite;
         private GameObject ringObject;

@@ -15,6 +15,7 @@ namespace TowerDefence.UI
         [SerializeField] private Sprite goldSprite;
         [SerializeField] private Sprite soulSprite;
         [SerializeField] private TextMeshProUGUI livesText;
+        [SerializeField] private TextMeshProUGUI waveText;
         [SerializeField] private TextMeshProUGUI timerText;
         [SerializeField] private TextMeshProUGUI phaseText;
 
@@ -32,6 +33,9 @@ namespace TowerDefence.UI
         private readonly Color speedActiveColor   = new Color(1f,   0.75f, 0.1f); // Sarı - aktif
         private readonly Color speedInactiveColor = new Color(0.2f, 0.2f,  0.2f); // Koyu - pasif
         
+        [Header("Wave Info")]
+        [SerializeField] private WaveInfoUI waveInfoUI;
+
         [Header("Selection UIs")]
         [SerializeField] private UnitSelectionUI unitSelectionUI;
 
@@ -39,8 +43,8 @@ namespace TowerDefence.UI
         [SerializeField] private LevelResultUI levelResultUI;
 
         [Header("Hero HUD")]
-        [SerializeField] private HeroButtonUI heroButton1;
-        [SerializeField] private HeroButtonUI heroButton2;
+        [SerializeField] private GameObject heroPanel;
+        [SerializeField] private HeroStatsPanel heroStatsPanel;
 
         private void Start()
         {
@@ -52,6 +56,7 @@ namespace TowerDefence.UI
             {
                 PhaseManager.Instance.OnTimerUpdated += UpdateTimerUI;
                 PhaseManager.Instance.OnPhaseChanged += UpdatePhaseUI;
+                PhaseManager.Instance.OnWaveChanged += UpdateWaveUI;
             }
 
             if (AbilityManager.Instance != null)
@@ -87,18 +92,46 @@ namespace TowerDefence.UI
             }
 
             if (PhaseManager.Instance != null)
+            {
                 UpdatePhaseUI(PhaseManager.Instance.GetCurrentPhase());
+                int total = 0;
+                var lvl = CampaignManager.Instance?.GetCurrentLevel();
+                if (lvl != null) total = lvl.waves.Count;
+                UpdateWaveUI(PhaseManager.Instance.GetCurrentWaveIndex() + 1, total);
+            }
             
             if (LivesManager.Instance != null)
                 UpdateLivesUI(LivesManager.Instance.GetCurrentLives(), LivesManager.Instance.GetMaxLives());
 
             SetupHeroButtons();
+            SetupWaveInfoUI();
         }
 
         private void SetupHeroButtons()
         {
-            if (heroButton1 != null) heroButton1.gameObject.SetActive(false);
-            if (heroButton2 != null) heroButton2.gameObject.SetActive(false);
+            if (HeroManager.Instance == null || heroPanel == null) return;
+            for (int i = heroPanel.transform.childCount - 1; i >= 0; i--)
+                Destroy(heroPanel.transform.GetChild(i).gameObject);
+
+            var hlg = heroPanel.GetComponent<HorizontalLayoutGroup>();
+            if (hlg != null) hlg.spacing = 100;
+
+            int heroCount = HeroManager.Instance.GetEquippedHeroCount();
+            for (int i = 0; i < heroCount; i++)
+                HeroButtonUI.Create(heroPanel.GetComponent<RectTransform>(), i);
+        }
+
+        private void SetupWaveInfoUI()
+        {
+            if (waveInfoUI != null) return;
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            GameObject go = new GameObject("WaveInfoUI", typeof(RectTransform));
+            go.transform.SetParent(canvas.transform, false);
+            waveInfoUI = go.AddComponent<WaveInfoUI>();
         }
 
         private void OnDestroy()
@@ -110,6 +143,7 @@ namespace TowerDefence.UI
             {
                 PhaseManager.Instance.OnTimerUpdated -= UpdateTimerUI;
                 PhaseManager.Instance.OnPhaseChanged -= UpdatePhaseUI;
+                PhaseManager.Instance.OnWaveChanged -= UpdateWaveUI;
             }
 
             if (AbilityManager.Instance != null)
@@ -129,6 +163,14 @@ namespace TowerDefence.UI
             if (livesText != null)
             {
                 livesText.text = $"Lives: {current}/{max}";
+            }
+        }
+
+        private void UpdateWaveUI(int currentWave, int totalWaves)
+        {
+            if (waveText != null)
+            {
+                waveText.text = $"Wave: {currentWave}/{totalWaves}";
             }
         }
 

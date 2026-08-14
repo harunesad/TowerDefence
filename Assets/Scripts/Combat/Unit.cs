@@ -16,11 +16,13 @@ namespace TowerDefence.Combat
         [Header("Movement")]
         [SerializeField] private float moveSpeed = 3f;
         [SerializeField] private float rotationSpeed = 10f;
+        private float slowMultiplier = 1f;
         [SerializeField] protected HealthBarUI healthBar;
         [SerializeField] private Transform firePoint;
 
         private float maxHealth;
         private float attackDamage;
+        public float GetDamage() => attackDamage;
         private float attackRange;
         private float attackRate;
         private Side unitSide;
@@ -36,7 +38,6 @@ namespace TowerDefence.Combat
         private bool walkPathBackward;
 
         [Header("Indicator")]
-        [SerializeField] private float indicatorHeight = 3f;
         [SerializeField] private float indicatorRadius = 0.6f;
         private GameObject unitIndicator;
 
@@ -66,23 +67,20 @@ namespace TowerDefence.Combat
 
         public static List<Unit> AllUnits = new List<Unit>();
 
-        // Hit Flash
-        private Dictionary<Renderer, Color> originalColors = new Dictionary<Renderer, Color>();
+        // Hit Flash (URP uyumlu — _BaseColor/_Color ikisini de destekler)
+        private Renderer[] flashRenderers;
+        private MaterialPropertyBlock flashBlock;
         private Coroutine flashCoroutine;
+        private static readonly int ColorPropId = Shader.PropertyToID("_Color");
+        private static readonly int BaseColorPropId = Shader.PropertyToID("_BaseColor");
 
         private void Awake()
         {
             AllUnits.Add(this);
             animator = GetComponentInChildren<Animator>();
             
-            Renderer[] renderers = GetComponentsInChildren<Renderer>();
-            foreach (var r in renderers)
-            {
-                if (r.material != null && r.material.HasProperty("_Color"))
-                {
-                    originalColors[r] = r.material.color;
-                }
-            }
+            flashRenderers = GetComponentsInChildren<Renderer>();
+            flashBlock = new MaterialPropertyBlock();
 
             if (unitData != null) Initialize(unitData);
         }
@@ -185,8 +183,12 @@ namespace TowerDefence.Combat
 
         [Header("UI")]
         public Sprite unitIndicatorSprite;
-
-        private static Sprite cachedIndicatorSprite;
+        [Header("Status Effect Visuals")]
+        public Sprite burnIcon;
+        public Sprite poisonIcon;
+        public Sprite slowIcon;
+        public Sprite stunIcon;
+        private Dictionary<StatusEffectType, GameObject> activeEffectVisuals = new Dictionary<StatusEffectType, GameObject>();
 
         private void CreateUnitIndicator()
         {
@@ -194,50 +196,30 @@ namespace TowerDefence.Combat
 
             unitIndicator = new GameObject("UnitIndicator");
             unitIndicator.transform.SetParent(transform, false);
+            unitIndicator.transform.localPosition = new Vector3(0f, 3f, 0f);
+            unitIndicator.transform.localRotation = Quaternion.Euler(15f, 0f, 0f);
+            unitIndicator.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
 
             var sr = unitIndicator.AddComponent<SpriteRenderer>();
-
-            if (unitIndicatorSprite != null)
-            {
-                unitIndicator.transform.localPosition = new Vector3(0f, 3f, 0f);
-                unitIndicator.transform.localRotation = Quaternion.Euler(15f, 0f, 0f);
-                unitIndicator.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-                sr.sprite = unitIndicatorSprite;
-                sr.color = Color.white;
-                sr.sortingOrder = 10;
-            }
-            else
-            {
-                unitIndicator.transform.localPosition = new Vector3(0f, indicatorHeight, 0f);
-                unitIndicator.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                unitIndicator.transform.localScale = Vector3.one;
-                if (cachedIndicatorSprite == null)
-                    cachedIndicatorSprite = CreateBlueCircleSprite();
-                sr.sprite = cachedIndicatorSprite;
-                sr.color = new Color(0.05f, 0.05f, 0.3f, 1f);
-                sr.sortingOrder = 10;
-            }
+            sr.sprite = unitIndicatorSprite != null ? unitIndicatorSprite : CreateFallbackSprite();
+            sr.color = Color.white;
+            sr.sortingOrder = 10;
         }
 
-        private static Sprite CreateBlueCircleSprite()
+        private static Sprite CreateFallbackSprite()
         {
             int size = 64;
             Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
             tex.filterMode = FilterMode.Bilinear;
-
             Vector2 center = new Vector2(size / 2f, size / 2f);
             float radius = size / 2f - 2f;
-
             for (int y = 0; y < size; y++)
-            {
                 for (int x = 0; x < size; x++)
                 {
                     float dist = Vector2.Distance(new Vector2(x, y), center);
                     float alpha = dist <= radius ? 1f : 0f;
                     tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
                 }
-            }
-
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
         }
@@ -325,8 +307,9 @@ namespace TowerDefence.Combat
             }
 
             // Savaş Durumu Check — isBlocked'dan bağımsız çalışır
+            bool isStunned = activeEffects.Exists(e => e.type == StatusEffectType.Stun);
             bool isFighting = false;
-            if (targetCombatant != null && !targetCombatant.IsDead)
+            if (!isStunned && targetCombatant != null && !targetCombatant.IsDead)
             {
                 float distance = GetFlatDistance(transform.position, ((MonoBehaviour)targetCombatant).transform.position);
                 
@@ -345,8 +328,6 @@ namespace TowerDefence.Combat
             }
 
             // Hareket Mantığı — isBlocked sadece yol/kovalama hareketini engeller
-            bool isStunned = activeEffects.Exists(e => e.type == StatusEffectType.Stun);
-
             if (!isFighting && !isStunned && !isAttacking)
             {
                 // Değişiklik: isBlocked olsa bile eğer bir hedefimiz (düello partnerimiz) varsa ona yürüyebilelim
@@ -445,7 +426,7 @@ namespace TowerDefence.Combat
         {
             Vector3 targetWithMyY = new Vector3(targetPos.x, transform.position.y, targetPos.z);
             // MoveTowards kullanımı, hedefi geçip geri dönme (titreme) sorununu tamamen engeller
-            transform.position = Vector3.MoveTowards(transform.position, targetWithMyY, moveSpeed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, targetWithMyY, moveSpeed * slowMultiplier * Time.deltaTime);
         }
 
         private void UpdateMoveTarget()
@@ -621,9 +602,58 @@ namespace TowerDefence.Combat
             {
                 if (!activeEffects[i].Update(this))
                 {
+                    StatusEffectType typeToRemove = activeEffects[i].type;
                     activeEffects.RemoveAt(i);
+                    RemoveStatusVisual(typeToRemove);
                 }
             }
+
+            RefreshSlowFactor();
+            UpdateStatusVisualPositions();
+        }
+
+        private void RemoveStatusVisual(StatusEffectType type)
+        {
+            if (activeEffectVisuals.TryGetValue(type, out GameObject visualObj))
+            {
+                if (visualObj != null) Destroy(visualObj);
+                activeEffectVisuals.Remove(type);
+            }
+        }
+
+        private void UpdateStatusVisualPositions()
+        {
+            if (activeEffectVisuals.Count == 0) return;
+            
+            int index = 0;
+            float spacing = 0.6f;
+            float startX = -(activeEffectVisuals.Count - 1) * spacing / 2f;
+            
+            // Health barın Y pozisyonunun biraz altında
+            float yPos = (healthBar != null) ? healthBar.transform.localPosition.y - 0.75f : 2.5f;
+
+            foreach (var kvp in activeEffectVisuals)
+            {
+                if (kvp.Value != null)
+                {
+                    kvp.Value.transform.localPosition = new Vector3(startX + (index * spacing), yPos, 0f);
+                    // Kameraya bakması (billboard) sağlanabilir, ama HealthBarUI'nin parent'ı zaten billboard yapıyorsa sorun yok.
+                    // UnitIndicator tarzı Yere paralel mi olsun, yoksa ekrana mı baksın? 
+                    // İkon oldukları için SpriteRenderer ile ekrana bakmaları daha iyidir.
+                    if (Camera.main != null)
+                    {
+                        kvp.Value.transform.rotation = Camera.main.transform.rotation;
+                    }
+                }
+                index++;
+            }
+        }
+
+        private void RefreshSlowFactor()
+        {
+            StatusEffect slow = activeEffects.Find(e => e.type == StatusEffectType.Slow);
+            slowMultiplier = (slow != null) ? slow.power : 1f;
+            SyncAnimatorSpeed(moveSpeed * slowMultiplier);
         }
 
         public void AddStatusEffect(StatusEffectType type, float duration, float power)
@@ -641,7 +671,33 @@ namespace TowerDefence.Combat
             else
             {
                 activeEffects.Add(new StatusEffect(type, duration, power));
+                AddStatusVisual(type);
             }
+        }
+
+        private void AddStatusVisual(StatusEffectType type)
+        {
+            Sprite icon = type switch
+            {
+                StatusEffectType.Burn => burnIcon,
+                StatusEffectType.Poison => poisonIcon,
+                StatusEffectType.Slow => slowIcon,
+                StatusEffectType.Stun => stunIcon,
+                _ => null
+            };
+
+            if (icon == null) return;
+
+            GameObject visualObj = new GameObject($"StatusVisual_{type}");
+            visualObj.transform.SetParent(transform, false);
+            
+            SpriteRenderer sr = visualObj.AddComponent<SpriteRenderer>();
+            sr.sprite = icon;
+            sr.sortingOrder = 15; // Healthbar'ın üstünde/altında net görünsün
+            visualObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // İkonların boyutu
+            
+            activeEffectVisuals[type] = visualObj;
+            UpdateStatusVisualPositions();
         }
 
         public void Heal(float amount)
@@ -658,8 +714,8 @@ namespace TowerDefence.Combat
         public void ApplySlow(float multiplier, float duration)
         {
             AddStatusEffect(StatusEffectType.Slow, duration, multiplier);
-            // Slow uygulandığında animasyonu da yavaşlat
-            SyncAnimatorSpeed(moveSpeed * multiplier);
+            // Slow uygulandığında animasyonu ve hareketi yavaşlat
+            RefreshSlowFactor();
         }
 
         private void FindTargetBase()
@@ -757,7 +813,8 @@ namespace TowerDefence.Combat
                         Projectile proj = projGO.GetComponent<Projectile>();
                         if (proj != null)
                         {
-                            proj.Initialize(attackDamage, 0f, (unitSide == Side.Light) ? VFXType.LightImpact : VFXType.DarkImpact);
+                            VFXType projImpactVFX = this is HeroUnit ? VFXType.None : (unitSide == Side.Light) ? VFXType.LightImpact : VFXType.DarkImpact;
+                            proj.Initialize(attackDamage, 0f, projImpactVFX);
                             proj.Seek(targetMB.transform);
                         }
                     }
@@ -825,16 +882,29 @@ namespace TowerDefence.Combat
 
         private IEnumerator FlashRoutine()
         {
-            foreach (var kvp in originalColors)
+            Color flashColor = new Color(1f, 0.75f, 0.75f, 1f); // Cok hafif kirmizi
+
+            foreach (var r in flashRenderers)
             {
-                if (kvp.Key != null && kvp.Key.material != null && kvp.Key.material.HasProperty("_Color"))
-                    kvp.Key.material.color = Color.white; // Vurulunca beyaz veya kırmızı (Color.red de olabilir) parlama
+                if (r == null) continue;
+
+                r.GetPropertyBlock(flashBlock);
+                if (r.material.HasProperty(BaseColorPropId))
+                    flashBlock.SetColor(BaseColorPropId, flashColor);
+                if (r.material.HasProperty(ColorPropId))
+                    flashBlock.SetColor(ColorPropId, flashColor);
+                r.SetPropertyBlock(flashBlock);
             }
+
             yield return new WaitForSeconds(0.1f);
-            foreach (var kvp in originalColors)
+
+            foreach (var r in flashRenderers)
             {
-                if (kvp.Key != null && kvp.Key.material != null && kvp.Key.material.HasProperty("_Color"))
-                    kvp.Key.material.color = kvp.Value;
+                if (r == null) continue;
+
+                r.GetPropertyBlock(flashBlock);
+                flashBlock.Clear();
+                r.SetPropertyBlock(flashBlock);
             }
         }
 
@@ -856,9 +926,13 @@ namespace TowerDefence.Combat
             }
             blockedEnemies.Clear();
 
-            if (animator != null) animator.SetTrigger("Die");
+            isDead = true;
             if (healthBar != null) healthBar.SetVisible(false);
+            
+            // Efekt görsellerini temizle
+            ClearAllStatusEffects();
 
+            if (animator != null) animator.SetTrigger("Die");
             Debug.Log($"{gameObject.name} died!");
 
             // Ölüm efekti
@@ -872,19 +946,26 @@ namespace TowerDefence.Combat
                 AudioManager.Instance.PlaySFX(unitData.deathSFX);
             }
 
-            // Ekonomi ödülü: Ölen birimin karşı tarafına kaynak ver
-            Side opponentSide = unitSide == Side.Light ? Side.Dark : Side.Light;
-            int rewardAmount = unitData.killReward;
-            CurrencyManager.Instance.AddCurrency(opponentSide, rewardAmount);
-
-            // Rakip birim öldüğünde Karma ödülü ver (Örn: 1 Karma)
-            if (unitSide != SideController.Instance.GetPlayerSide())
+            if (unitData.killReward > 0 && CurrencyManager.Instance != null)
             {
+                Side opponentSide = GetSide() == Side.Light ? Side.Dark : Side.Light;
+                CurrencyManager.Instance.AddCurrency(opponentSide, unitData.killReward);
                 MetaProgressionManager.Instance.AddKarma(1);
             }
 
             Destroy(gameObject, 2f);
         }
+
+        protected void ClearAllStatusEffects()
+        {
+            activeEffects.Clear();
+            foreach (var kvp in activeEffectVisuals)
+            {
+                if (kvp.Value != null) Destroy(kvp.Value);
+            }
+            activeEffectVisuals.Clear();
+        }
+
 
         // --- SOLDIER SPECIFIC LOGIC ---
         public void OnBlockedEnemyDied(Unit enemy)

@@ -24,6 +24,12 @@ namespace TowerDefence.Combat
         public int CurrentLevel => currentLevel;
         public List<TowerData> GetSpecializations() => towerData != null ? towerData.specializations : null;
 
+        public float GetCurrentDamage() => damage;
+        public float GetCurrentRange() => range;
+        public float GetCurrentFireRate() => fireRate;
+        public float GetCurrentHealth() => currentHealth;
+        public float GetMaxHealth() => maxHealth;
+
         private float range;
         private float fireRate;
         private GameObject projectilePrefab;
@@ -111,6 +117,7 @@ namespace TowerDefence.Combat
         }
 
         private float damage;
+        private bool isBeamTower;
 
         // --- AURA BUFF SYSTEM ---
         private float auraDamageMultiplier = 1f;
@@ -182,6 +189,7 @@ namespace TowerDefence.Combat
             damage = data.damage * damageMult;
             targetLayer = data.targetLayer;
             projectilePrefab = data.projectilePrefab;
+            isBeamTower = data.isBeamTower;
 
             // Health Initialization
             maxHealth = data.health > 0 ? data.health : 100f; // Fallback
@@ -272,7 +280,10 @@ namespace TowerDefence.Combat
                 LockOnTarget();
                 if (fireCountdown <= 0f)
                 {
-                    Shoot();
+                    if (!isBeamTower)
+                    {
+                        Shoot();
+                    }
                     fireCountdown = 1f / (fireRate * tempFireRateMultiplier);
                 }
             }
@@ -468,7 +479,7 @@ namespace TowerDefence.Combat
             if (projectile != null)
             {
                 VFXType impactType = towerSide == Side.Light ? VFXType.LightImpact : VFXType.DarkImpact;
-                projectile.Initialize(damage, towerData.explosionRadius, impactType, towerData.effectType, towerData.effectDuration, towerData.effectPower);
+                projectile.Initialize(damage, towerData.explosionRadius, impactType, towerData.effectType, towerData.effectDuration, towerData.effectPower, towerData.isArtillery);
                 
                 projectile.Seek(target);
 

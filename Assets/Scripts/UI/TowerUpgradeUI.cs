@@ -16,6 +16,10 @@ namespace TowerDefence.UI
         public GameObject mainPanel;
         public TextMeshProUGUI towerNameText;
         public TextMeshProUGUI levelText;
+        public TextMeshProUGUI statsText;
+
+        [Header("Stats Panel")]
+        public GameObject statsPanel;
         
         [Header("Normal Upgrade")]
         public GameObject normalUpgradeGroup;
@@ -124,6 +128,34 @@ namespace TowerDefence.UI
             TowerData data = currentTower.GetTowerData();
             towerNameText.text = data.towerName;
             levelText.text = $"Level {currentTower.CurrentLevel}";
+
+            if (statsText != null)
+            {
+                float dmg = currentTower.GetCurrentDamage();
+                float rng = currentTower.GetCurrentRange();
+                float rate = currentTower.GetCurrentFireRate();
+                float hp = currentTower.GetCurrentHealth();
+                float maxHp = currentTower.GetMaxHealth();
+
+                string dps = rate > 0f ? $"{(dmg * rate):F1}" : "-";
+                string extra = "";
+                if (data.isAuraTower)
+                {
+                    extra = $"\n<color=#5FB3FF>Aura: +{Mathf.RoundToInt(data.auraDamageBonus * 100)}% DMG / +{Mathf.RoundToInt(data.auraFireRateBonus * 100)}% SPD</color>";
+                }
+                else if (data.isSlowTower)
+                {
+                    extra = $"\n<color=#8AE6FF>Slow Effect: {Mathf.RoundToInt(data.effectPower * 100)}% for {data.effectDuration:F1}s</color>";
+                }
+                else if (data.effectDuration > 0f && data.effectPower > 0f)
+                {
+                    extra = $"\n<color=#FFB38A>{data.effectType}: {Mathf.RoundToInt(data.effectPower * 100)}% for {data.effectDuration:F1}s</color>";
+                }
+
+                statsText.text = $"DMG: {dmg:F0}   DPS: {dps}\n" +
+                                 $"RNG: {rng:F1}   SPD: {rate:F2}/s\n" +
+                                 $"HP: {hp:F0}/{maxHp:F0}{extra}";
+            }
 
             int level = currentTower.CurrentLevel;
             var specs = currentTower.GetSpecializations();

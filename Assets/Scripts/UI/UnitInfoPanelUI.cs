@@ -19,7 +19,7 @@ namespace TowerDefence.UI
         {
             float panelW = 300;
             int statCount = showCost ? 4 : 3;
-            float iconArea = 10 + 64 + 8;
+            float iconArea = 15; // İkon kaldırıldığı için sadece üst boşluk
             float panelH = iconArea + 14 + 2 + statCount * 20 + 12;
 
             // Overlay (en üste, panelin arkasında kalacak)
@@ -45,10 +45,13 @@ namespace TowerDefence.UI
             rt.sizeDelta = new Vector2(panelW, panelH);
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
+            // Sol alt köşeyi pivot olarak belirliyoruz ki butonun sağ üstüne doğru büyüsün
+            rt.pivot = new Vector2(0f, 0f);
 
-            Vector3 btnPos = source.position;
-            rt.position = new Vector3(btnPos.x, btnPos.y + panelH * 0.5f + 10f, btnPos.z);
+            // Pozisyonu tam olarak butonun dünya pozisyonuna eşitleyip
+            rt.position = source.position;
+            // Canvas ölçeklemesinden bağımsız olarak UI üzerinde sağ üste kaydırıyoruz
+            rt.anchoredPosition += new Vector2(source.rect.width * 0.5f + 10f, source.rect.height * 0.5f + 10f);
 
             Image bgImg = gameObject.GetComponent<Image>();
             if (bgImg == null) bgImg = gameObject.AddComponent<Image>();
@@ -64,32 +67,7 @@ namespace TowerDefence.UI
             CreateImage("Border", Vector2.zero, Vector2.zero, Vector2.one, Vector2.zero, new Color(0.2f, 0.2f, 0.3f, 1f), false);
             CreateImage("InnerBg", Vector2.zero, Vector2.zero, Vector2.one, new Vector2(-4, -4), new Color(0.08f, 0.08f, 0.13f, 1f), false);
 
-            float iconSize = 64f;
-            GameObject icoBg = new GameObject("IconBg", typeof(RectTransform), typeof(Image));
-            icoBg.transform.SetParent(transform, false);
-            RectTransform icoBgRT = icoBg.GetComponent<RectTransform>();
-            icoBgRT.anchorMin = new Vector2(0.5f, 1f);
-            icoBgRT.anchorMax = new Vector2(0.5f, 1f);
-            icoBgRT.pivot = new Vector2(0.5f, 1f);
-            icoBgRT.anchoredPosition = new Vector2(0, -10);
-            icoBgRT.sizeDelta = new Vector2(iconSize, iconSize);
-            Image icoBgImg = icoBg.GetComponent<Image>();
-            icoBgImg.color = new Color(0.12f, 0.12f, 0.18f, 1f);
-            icoBgImg.raycastTarget = false;
-
-            GameObject icoGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-            icoGO.transform.SetParent(icoBg.transform, false);
-            RectTransform icoRT = icoGO.GetComponent<RectTransform>();
-            icoRT.anchorMin = Vector2.zero;
-            icoRT.anchorMax = Vector2.one;
-            icoRT.offsetMin = Vector2.zero;
-            icoRT.offsetMax = Vector2.zero;
-            Image icoImg = icoGO.GetComponent<Image>();
-            icoImg.sprite = data.icon;
-            icoImg.preserveAspect = true;
-            icoImg.raycastTarget = false;
-
-            float y = -10 - iconSize - 8;
+            float y = -15; // İkon olmadığı için y koordinatını yukarıdan başlatıyoruz
             CreateText("NameText", data.unitName, new Vector2(0, y), new Vector2(260, 22),
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 18, FontStyles.Bold, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f));
             y -= 26;

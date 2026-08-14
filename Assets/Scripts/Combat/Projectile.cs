@@ -12,7 +12,18 @@ namespace TowerDefence.Combat
         private float effectDuration;
         private float effectPower;
 
-        public void Initialize(float _damage, float _explosionRadius, VFXType _vfxType, StatusEffectType _effectType = StatusEffectType.None, float _effectDuration = 0, float _effectPower = 0)
+        [SerializeField] private bool useArc = false;
+        [SerializeField] private float arcGravity = 20f;
+
+        private bool isBallistic;
+        private Vector3 aimPoint;
+        private Vector3 launchPos;
+        private Vector3 velocity;
+        private float flightTime;
+        private float elapsed;
+        private Side cachedTargetSide = Side.Dark;
+
+        public void Initialize(float _damage, float _explosionRadius, VFXType _vfxType, StatusEffectType _effectType = StatusEffectType.None, float _effectDuration = 0, float _effectPower = 0, bool _useArc = false)
         {
             damage = _damage;
             explosionRadius = _explosionRadius;
@@ -20,6 +31,7 @@ namespace TowerDefence.Combat
             effectType = _effectType;
             effectDuration = _effectDuration;
             effectPower = _effectPower;
+            useArc = _useArc;
         }
 
         [SerializeField] private float explosionRadius = 0f;
@@ -30,13 +42,43 @@ namespace TowerDefence.Combat
         public void Seek(Transform _target)
         {
             target = _target;
+
+            // Balistik atış: atış anındaki hedef noktasını dondur (dumb lob — hedef yürürse ıskalanabilir)
+            if (useArc && target != null)
+            {
+                isBallistic = true;
+                launchPos = transform.position;
+                aimPoint = target.position;
+
+                IDamageable cachedDmg = target.GetComponentInParent<IDamageable>();
+                if (cachedDmg != null) cachedTargetSide = cachedDmg.GetSide();
+
+                Vector3 flat = aimPoint - launchPos;
+                flat.y = 0f;
+                float horizontalDist = flat.magnitude;
+                if (horizontalDist < 0.01f) horizontalDist = 0.01f;
+
+                flightTime = Mathf.Max(0.1f, horizontalDist / speed);
+
+                velocity = flat / flightTime;
+                velocity.y = (aimPoint.y - launchPos.y + 0.5f * arcGravity * flightTime * flightTime) / flightTime;
+                elapsed = 0f;
+
+                transform.LookAt(aimPoint);
+            }
         }
 
         private void Update()
         {
-            if (target == null)
+            if (target == null && !isBallistic)
             {
                 Destroy(gameObject);
+                return;
+            }
+
+            if (isBallistic)
+            {
+                UpdateBallistic();
                 return;
             }
 
@@ -53,13 +95,26 @@ namespace TowerDefence.Combat
             transform.LookAt(target);
         }
 
-        private void HitTarget()
+        private void UpdateBallistic()
         {
-            if (VFXManager.Instance != null)
+            elapsed += Time.deltaTime;
+
+            if (elapsed >= flightTime)
             {
-                VFXManager.Instance.SpawnVFX(impactVFX, transform.position, transform.rotation);
+                transform.position = aimPoint;
+                HitTarget();
+                return;
             }
 
+            velocity.y -= arcGravity * Time.deltaTime;
+            transform.position += velocity * Time.deltaTime;
+
+            if (velocity.sqrMagnitude > 0.001f)
+                transform.rotation = Quaternion.LookRotation(velocity.normalized);
+        }
+
+        private void HitTarget()
+        {
             if (explosionRadius > 0f)
             {
                 Explode();
@@ -74,11 +129,11 @@ namespace TowerDefence.Combat
 
         private void Explode()
         {
-            if (target == null) return;
+            if (target == null && !isBallistic) return;
 
             // Hedefin tarafını (Side) alalım ki sadece hedefle aynı taraftaki birimlere hasar verelim.
-            IDamageable targetDamageable = target.GetComponentInParent<IDamageable>();
-            Side targetSide = targetDamageable != null ? targetDamageable.GetSide() : Side.Dark;
+            IDamageable targetDamageable = target != null ? target.GetComponentInParent<IDamageable>() : null;
+            Side targetSide = targetDamageable != null ? targetDamageable.GetSide() : cachedTargetSide;
 
             Collider[] colliders = Physics.OverlapSphere(transform.position, explosionRadius);
             System.Collections.Generic.HashSet<IDamageable> damagedEntities = new System.Collections.Generic.HashSet<IDamageable>();

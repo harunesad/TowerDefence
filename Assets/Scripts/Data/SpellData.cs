@@ -5,7 +5,7 @@ namespace TowerDefence.Data
 {
     public enum SpellType
     {
-        Meteor,        // Alan hasarı + Stun
+        Thunderstrike, // Anlık alan hasarı
         Reinforcement, // Yol üzerine geçici asker çağırma
         Freeze,        // Tüm düşmanları dondurma
         GoldBoost,     // Anlık altın kazanımı

@@ -38,10 +38,16 @@ namespace TowerDefence.UI
         [SerializeField] private Button dailyRewardButton;
         [SerializeField] private TMPro.TextMeshProUGUI dailyRewardTimerText;
 
+        [Header("Fortune Wheel")]
+        [SerializeField] private GameObject fortuneWheelPanel;
+        [SerializeField] private Button fortuneWheelButton;
+        [SerializeField] private TMPro.TextMeshProUGUI fortuneWheelTimerText;
+
         private void Update()
         {
             UpdateCurrencyUI();
             UpdateDailyRewardUI();
+            UpdateFortuneWheelUI();
         }
 
         private void UpdateCurrencyUI()
@@ -72,6 +78,37 @@ namespace TowerDefence.UI
             }
         }
 
+        private void UpdateFortuneWheelUI()
+        {
+            if (fortuneWheelButton == null || fortuneWheelTimerText == null || MetaProgressionManager.Instance == null) return;
+            
+            long lastTimeTicks = MetaProgressionManager.Instance.GetLastFortuneWheelTime();
+            bool available = true;
+
+            if (lastTimeTicks > 0)
+            {
+                System.DateTime lastTime = new System.DateTime(lastTimeTicks);
+                System.DateTime nextTime = lastTime.AddDays(1).Date;
+                if (System.DateTime.Now < nextTime)
+                    available = false;
+            }
+
+            if (available)
+            {
+                fortuneWheelTimerText.text = "SPIN NOW!";
+                fortuneWheelTimerText.color = Color.green;
+            }
+            else
+            {
+                System.DateTime lastTime = new System.DateTime(lastTimeTicks);
+                System.DateTime nextTime = lastTime.AddDays(1).Date;
+                System.TimeSpan remaining = nextTime - System.DateTime.Now;
+                
+                fortuneWheelTimerText.text = string.Format("{0:D2}h {1:D2}m {2:D2}s", remaining.Hours, remaining.Minutes, remaining.Seconds);
+                fortuneWheelTimerText.color = Color.white;
+            }
+        }
+
         public void ShowDailyRewardPanel()
         {
             if (dailyRewardPanel != null)
@@ -85,6 +122,16 @@ namespace TowerDefence.UI
         {
             if (dailyRewardPanel != null) dailyRewardPanel.SetActive(false);
             if (dailyRewardBackdrop != null) dailyRewardBackdrop.SetActive(false);
+        }
+
+        public void ShowFortuneWheelPanel()
+        {
+            if (fortuneWheelPanel != null) fortuneWheelPanel.SetActive(true);
+        }
+
+        public void CloseFortuneWheelPanel()
+        {
+            if (fortuneWheelPanel != null) fortuneWheelPanel.SetActive(false);
         }
 
         private void Start()
@@ -119,9 +166,17 @@ namespace TowerDefence.UI
             // Buton olaylarını bağla
             if (playButton      != null) playButton.onClick.AddListener(ShowLevelSelect);
             if (skillTreeButton != null) skillTreeButton.onClick.AddListener(ShowSkillTree);
-            if (heroesButton    != null) heroesButton.onClick.AddListener(ShowHeroShop);
+            if (heroesButton != null) heroesButton.onClick.AddListener(ShowHeroShop);
             if (compendiumButton != null) compendiumButton.onClick.AddListener(ShowCompendium);
-            if (quitButton      != null) quitButton.onClick.AddListener(QuitGame);
+            
+            if (dailyRewardButton != null)
+                dailyRewardButton.onClick.AddListener(ShowDailyRewardPanel);
+
+            if (fortuneWheelButton != null)
+                fortuneWheelButton.onClick.AddListener(ShowFortuneWheelPanel);
+
+            if (quitButton != null)
+                quitButton.onClick.AddListener(QuitGame);
 
             // Ana menüyü hemen görünür olarak aç (fade yok, anında)
             if (mainMenuPanel != null)

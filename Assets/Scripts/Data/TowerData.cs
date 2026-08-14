@@ -42,6 +42,15 @@ namespace TowerDefence.Data
         [Header("Meta")]
         public bool isBaseTower = false; // Sadece ana kuleler (Archer, Mage vb.) true olur
 
+        [Header("Artillery")]
+        public bool isArtillery = false; // Mancınık/top kuleleri: mermi yay çizerek balistik düşer
+
+        [Header("Beam Tower")]
+        public bool isBeamTower = false; // Işın kulesi: mermi atmaz, hedefi sürekli lazerle yakar
+
+        [Header("Slow Tower")]
+        public bool isSlowTower = false; // Alan yavaşlatma kulesi: çevredeki rakip birimleri sürekli yavaşlatır
+
         [Header("Aura Tower")]
         public bool isAuraTower = false;
         [Range(1f, 15f)] public float auraRadius = 5f;

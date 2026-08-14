@@ -11,6 +11,9 @@ namespace TowerDefence.Combat
         [SerializeField] private string heroID;
         [SerializeField] private float respawnTime = 15f;
 
+        [Header("Ability VFX")]
+        [SerializeField] private Transform abilityVFXContainer;
+
         public string HeroID => heroID;
         public float RespawnTime => respawnTime;
 
@@ -22,6 +25,11 @@ namespace TowerDefence.Combat
         private float abilityCooldownTimer;
         private bool isMovingToManualTarget;
         public bool IsMovingToManualTarget => isMovingToManualTarget;
+
+        public HeroData HeroConfig => heroConfig;
+        public float AbilityCooldownRemaining => abilityCooldownTimer;
+        public float AbilityCooldownMax => heroConfig != null ? heroConfig.abilityCooldown : 0f;
+        public bool IsAbilityReady => abilityCooldownTimer <= 0f && heroConfig != null;
 
         public bool IsSelected => selectionIndicator != null &&
             selectionIndicator.CurrentState == HeroSelectionState.Active;
@@ -80,14 +88,27 @@ namespace TowerDefence.Combat
         {
             if (IsDead) return;
 
+            // VFX coroutine'i kesilmeden once VFX'i deaktive et
+            if (activeVFXInstance != null)
+                activeVFXInstance.SetActive(false);
+
             // 1. Animasyonları Idle'a çek
             if (animator != null)
             {
                 animator.SetBool("IsMoving", false);
                 animator.speed = 1f;
                 // Triggers temizliği
-                animator.ResetTrigger("Attack");
-                animator.ResetTrigger("Ability");
+                if (animator.parameters != null)
+                {
+                    foreach (var param in animator.parameters)
+                    {
+                        if (param.type == AnimatorControllerParameterType.Trigger &&
+                            (param.name == "Attack" || param.name == "Ability"))
+                        {
+                            animator.ResetTrigger(param.name);
+                        }
+                    }
+                }
                 // Sert sıfırlama: Idle animasyonuna anında geç
                 animator.Play("Idle", 0, 0f);
             }
@@ -136,6 +157,68 @@ namespace TowerDefence.Combat
         protected override bool ShouldSeekEnemyBase() => false;
         protected override bool CanAcquireTarget() => !isMovingToManualTarget;
 
+        private Coroutine activeVFXCoroutine;
+        private GameObject activeVFXInstance;
+
+        private void SpawnHeroVFX(HeroAbilityType abilityType, float delay)
+        {
+            Transform container = abilityVFXContainer;
+            if (container == null)
+                container = transform.Find("AbilityVFX");
+            if (container == null)
+            {
+                Debug.LogWarning($"[HeroVFX] AbilityVFX container not found on {gameObject.name}");
+                return;
+            }
+            Transform vfxTransform = container.Find(abilityType.ToString());
+            if (vfxTransform == null)
+            {
+                Debug.LogWarning($"[HeroVFX] Child '{abilityType}' not found under AbilityVFX on {gameObject.name}");
+                return;
+            }
+
+            if (activeVFXCoroutine != null)
+                StopCoroutine(activeVFXCoroutine);
+
+            activeVFXInstance = vfxTransform.gameObject;
+            activeVFXCoroutine = StartCoroutine(ActivateAndDeactivate(vfxTransform.gameObject, delay));
+        }
+
+        private System.Collections.IEnumerator ActivateAndDeactivate(GameObject vfx, float delay)
+        {
+            vfx.SetActive(true);
+
+            var allPs = vfx.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; i < allPs.Length; i++)
+            {
+                allPs[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                allPs[i].Play();
+            }
+
+            yield return new WaitForSeconds(delay);
+
+            if (vfx != null)
+                vfx.SetActive(false);
+        }
+
+        private void SpawnArrowRain(Vector3 center, float radius, int arrowCount)
+        {
+            GameObject arrowPrefab = unitData != null ? unitData.projectilePrefab : null;
+            if (arrowPrefab == null) return;
+
+            for (int i = 0; i < arrowCount; i++)
+            {
+                Vector2 randomCircle = Random.insideUnitCircle * radius;
+                Vector3 spawnPos = new Vector3(center.x + randomCircle.x, 12f, center.z + randomCircle.y);
+                Quaternion spawnRot = Quaternion.Euler(90f, Random.Range(0f, 360f), 0f);
+
+                GameObject arrow = Instantiate(arrowPrefab, spawnPos, spawnRot);
+                Projectile proj = arrow.GetComponent<Projectile>();
+                if (proj != null) Destroy(proj);
+                arrow.AddComponent<FallingArrow>();
+            }
+        }
+
         protected override void TryMoveToManualDestination()
         {
             if (!hasMoveDestination) return;
@@ -152,8 +235,8 @@ namespace TowerDefence.Combat
             else 
             {
                 isMovingToManualTarget = false;
+                hasMoveDestination = false;
                 if (animator != null) animator.SetBool("IsMoving", false);
-                Debug.Log($"[STATE] MOVE→IDLE (destination reached). hasMoveDest={hasMoveDestination}");
             }
         }
 
@@ -171,9 +254,8 @@ namespace TowerDefence.Combat
                 IDamageable currentTarget = GetTarget();
                 if (currentTarget == null || currentTarget.IsDead)
                 {
-                    if ((isAttacking || (animator != null && animator.GetCurrentAnimatorStateInfo(0).IsName("Attack"))) && !hasMoveDestination)
+                    if ((isAttacking || (animator != null && animator.GetCurrentAnimatorStateInfo(0).IsName("Attack"))) && !isMovingToManualTarget)
                     {
-                        Debug.Log($"[STATE] target lost → RESET");
                         ResetHeroAnimationState();
                     }
                 }
@@ -201,14 +283,21 @@ namespace TowerDefence.Combat
             if (abilityCooldownTimer > 0f)
             {
                 abilityCooldownTimer -= Time.deltaTime;
-                return;
             }
+        }
+
+        public bool CastAbility()
+        {
+            if (heroConfig == null || abilityCooldownTimer > 0f || IsDead) return false;
 
             if (TryUseAbility())
             {
                 abilityCooldownTimer = heroConfig.abilityCooldown;
                 CheckAndPlayAbilityAnimation();
+                return true;
             }
+            
+            return false;
         }
 
         private void CheckAndPlayAbilityAnimation()
@@ -248,72 +337,102 @@ namespace TowerDefence.Combat
                 case HeroAbilityType.RallyHeal:
                     if (GetHealth() >= GetMaxHealth()) return false;
                     Heal(GetMaxHealth() * 0.15f * heroConfig.abilityPower);
-                    if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(VFXType.HealingAura, transform.position, Quaternion.identity);
+                    SpawnHeroVFX(HeroAbilityType.RallyHeal, 2f);
                     return true;
 
                 case HeroAbilityType.HolyShield:
                     if (GetHealth() / GetMaxHealth() <= 0.35f)
                     {
                         Heal(GetMaxHealth() * 0.2f * heroConfig.abilityPower);
-                        if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(VFXType.HealingAura, transform.position, Quaternion.identity);
+                        SpawnHeroVFX(HeroAbilityType.HolyShield, 2f);
                         return true;
                     }
                     return false;
 
+                case HeroAbilityType.LifeDrain:
+                    if (GetTarget() is Unit target && !target.IsDead)
+                    {
+                        float dmg = GetDamage() * heroConfig.abilityPower * 1.5f;
+                        target.TakeDamage(dmg);
+                        Heal(dmg * 0.5f);
+                        SpawnHeroVFX(HeroAbilityType.LifeDrain, 2f);
+                        return true;
+                    }
+                    return false;
+
+                case HeroAbilityType.BoneArmor:
+                    if (GetHealth() >= GetMaxHealth()) return false;
+                    Heal(GetMaxHealth() * 0.12f * heroConfig.abilityPower);
+                    SpawnHeroVFX(HeroAbilityType.BoneArmor, 2f);
+                    return true;
+
                 case HeroAbilityType.ArrowRain:
-                    return DealAbilityAreaDamage(heroConfig.abilityRadius, heroConfig.abilityPower * 25f);
+                    if (DealAbilityAreaDamage(heroConfig.abilityRadius, GetDamage() * heroConfig.abilityPower * 2.0f))
+                    {
+                        SpawnHeroVFX(HeroAbilityType.ArrowRain, 2f);
+                        SpawnArrowRain(transform.position, heroConfig.abilityRadius, 8);
+                        return true;
+                    }
+                    return false;
 
                 case HeroAbilityType.SwiftStrike:
                     if (GetTarget() is Unit swiftTarget && !swiftTarget.IsDead)
                     {
-                        swiftTarget.TakeDamage(heroConfig.abilityPower * 18f);
+                        swiftTarget.TakeDamage(GetDamage() * heroConfig.abilityPower * 2.5f);
+                        SpawnHeroVFX(HeroAbilityType.SwiftStrike, 1f);
                         return true;
                     }
                     return false;
 
                 case HeroAbilityType.FortifyTaunt:
-                    return PullNearbyEnemies(heroConfig.abilityRadius);
+                    if (PullNearbyEnemies(heroConfig.abilityRadius))
+                    {
+                        SpawnHeroVFX(HeroAbilityType.FortifyTaunt, 2f);
+                        return true;
+                    }
+                    return false;
 
                 case HeroAbilityType.SolarSmite:
-                    return DealAbilityAreaDamage(heroConfig.abilityRadius, heroConfig.abilityPower * 35f);
-
-                case HeroAbilityType.LifeDrain:
-                    if (GetTarget() is Unit target && !target.IsDead)
+                    if (DealAbilityAreaDamage(heroConfig.abilityRadius, GetDamage() * heroConfig.abilityPower * 2.0f))
                     {
-                        float dmg = heroConfig.abilityPower * 20f;
-                        target.TakeDamage(dmg);
-                        Heal(dmg * 0.5f);
-                        if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(VFXType.HealingAura, transform.position, Quaternion.identity);
+                        SpawnHeroVFX(HeroAbilityType.SolarSmite, 1f);
                         return true;
                     }
                     return false;
 
                 case HeroAbilityType.SoulExecute:
                     if (GetTarget() is Unit execTarget && !execTarget.IsDead &&
-                        execTarget.GetHealth() / execTarget.GetMaxHealth() <= 0.25f)
+                        execTarget.GetHealth() / execTarget.GetMaxHealth() <= 0.40f)
                     {
-                        execTarget.TakeDamage(heroConfig.abilityPower * 60f);
+                        execTarget.TakeDamage(GetDamage() * heroConfig.abilityPower * 4.0f);
+                        SpawnHeroVFX(HeroAbilityType.SoulExecute, 1.5f);
                         return true;
                     }
                     return false;
 
                 case HeroAbilityType.GroundSlam:
-                    return DealAbilityAreaDamage(heroConfig.abilityRadius, heroConfig.abilityPower * 40f);
+                    if (DealAbilityAreaDamage(heroConfig.abilityRadius, GetDamage() * heroConfig.abilityPower * 2.2f))
+                    {
+                        SpawnHeroVFX(HeroAbilityType.GroundSlam, 2f);
+                        return true;
+                    }
+                    return false;
 
                 case HeroAbilityType.PlagueCloud:
-                    return ApplyAbilityPoison(heroConfig.abilityRadius, heroConfig.abilityPower * 8f, 4f);
-
-                case HeroAbilityType.BoneArmor:
-                    if (GetHealth() >= GetMaxHealth()) return false;
-                    Heal(GetMaxHealth() * 0.12f * heroConfig.abilityPower);
-                    if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(VFXType.HealingAura, transform.position, Quaternion.identity);
-                    return true;
+                    if (ApplyAbilityPoison(heroConfig.abilityRadius, GetDamage() * heroConfig.abilityPower * 0.5f, 4f))
+                    {
+                        SpawnHeroVFX(HeroAbilityType.PlagueCloud, 2f);
+                        return true;
+                    }
+                    return false;
 
                 case HeroAbilityType.ShadowStep:
                     if (GetTarget() is Unit stepTarget && !stepTarget.IsDead)
                     {
                         Vector3 behind = stepTarget.transform.position - stepTarget.transform.forward * 1.2f;
                         transform.position = new Vector3(behind.x, transform.position.y, behind.z);
+                        stepTarget.TakeDamage(GetDamage() * heroConfig.abilityPower * 3.0f);
+                        SpawnHeroVFX(HeroAbilityType.ShadowStep, 1f);
                         return true;
                     }
                     return false;
@@ -339,6 +458,18 @@ namespace TowerDefence.Combat
             return hitAnyone;
         }
 
+        private bool AnyEnemyInRange(float radius)
+        {
+            Collider[] hits = Physics.OverlapSphere(transform.position, radius, GetEnemyLayerMask());
+            foreach (var hit in hits)
+            {
+                IDamageable dmg = hit.GetComponentInParent<IDamageable>();
+                if (dmg != null && !dmg.IsDead && dmg.GetSide() != GetSide())
+                    return true;
+            }
+            return false;
+        }
+
         private bool ApplyAbilityPoison(float radius, float power, float duration)
         {
             Collider[] hits = Physics.OverlapSphere(transform.position, radius, GetEnemyLayerMask());
@@ -362,7 +493,7 @@ namespace TowerDefence.Combat
             foreach (var hit in hits)
             {
                 Unit enemy = hit.GetComponentInParent<Unit>();
-                if (enemy != null && !enemy.IsDead && enemy.GetSide() != GetSide() && CanBlockMore())
+                if (enemy != null && !enemy.IsDead && enemy.GetSide() != GetSide())
                 {
                     StartBlocking(enemy);
                     pulled = true;
@@ -395,6 +526,8 @@ namespace TowerDefence.Combat
                 if (enemy != null) enemy.Unblock();
             }
             blockedEnemies.Clear();
+            
+            ClearAllStatusEffects();
 
             // Unit.Die()'daki Destroy'u engellemek için base.Die() çağırmıyoruz
             isDead = true;
@@ -434,6 +567,7 @@ namespace TowerDefence.Combat
             blockedEnemies.Clear();
             isMovingToManualTarget = false;
             hasMoveDestination = false;
+            abilityCooldownTimer = 0f;
 
             currentHealth = GetMaxHealth();
             transform.position = new Vector3(position.x, 0.2f, position.z);

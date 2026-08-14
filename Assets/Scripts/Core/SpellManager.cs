@@ -52,7 +52,8 @@ namespace TowerDefence.Core
             ExecuteSpellEffect(spell, targetPos);
 
             // VFX & SFX
-            if (VFXManager.Instance != null) VFXManager.Instance.SpawnVFX(spell.spellVFXType, targetPos, Quaternion.identity);
+            if (VFXManager.Instance != null)
+                VFXManager.Instance.SpawnVFX(spell.spellVFXType, targetPos, Quaternion.identity);
             if (AudioManager.Instance != null && spell.castSFX != null) AudioManager.Instance.PlaySFX(spell.castSFX);
         }
 
@@ -60,7 +61,7 @@ namespace TowerDefence.Core
         {
             switch (spell.spellType)
             {
-                case Data.SpellType.Meteor:
+                case Data.SpellType.Thunderstrike:
                     ApplyAoEDamage(targetPos, spell.radius, spell.power);
                     break;
                 case Data.SpellType.Freeze:

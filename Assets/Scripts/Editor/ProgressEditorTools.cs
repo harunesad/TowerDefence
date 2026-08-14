@@ -44,6 +44,20 @@ public class ProgressEditorTools : Editor
         }
     }
 
+    [MenuItem("Tower Defence/Progress/Add 50 Crystal")]
+    public static void AddCrystal()
+    {
+        if (Application.isPlaying && MetaProgressionManager.Instance != null)
+        {
+            MetaProgressionManager.Instance.AddCrystals(50);
+            Debug.Log("Added 50 Crystal for testing.");
+        }
+        else
+        {
+            EditorUtility.DisplayDialog("Error", "You must be in Play Mode to add Crystal!", "OK");
+        }
+    }
+
     [MenuItem("Tower Defence/Progress/Open Save Folder")]
     public static void OpenSaveFolder()
     {
