@@ -14,13 +14,18 @@ namespace TowerDefence.UI
         [SerializeField] private GameObject heroShopPanel;
         [SerializeField] private GameObject sideSelectionPanel;
         [SerializeField] private GameObject compendiumPanel;
+        [SerializeField] private GameObject settingsPanel;
 
         [Header("Buttons")]
         [SerializeField] private Button playButton;
         [SerializeField] private Button skillTreeButton;
         [SerializeField] private Button heroesButton;
         [SerializeField] private Button compendiumButton;
+        [SerializeField] private Button settingsButton;
         [SerializeField] private Button quitButton;
+
+        [Header("Audio")]
+        [SerializeField] private AudioClip menuBGM;
 
         [Header("Animation Settings")]
         [SerializeField] private float fadeDuration = 0.3f;
@@ -40,8 +45,30 @@ namespace TowerDefence.UI
 
         [Header("Fortune Wheel")]
         [SerializeField] private GameObject fortuneWheelPanel;
+        [SerializeField] private GameObject fortuneWheelBackdrop;
         [SerializeField] private Button fortuneWheelButton;
         [SerializeField] private TMPro.TextMeshProUGUI fortuneWheelTimerText;
+
+
+        private void ShowSettings()
+        {
+            if (settingsPanel != null)
+            {
+                settingsPanel.SetActive(true);
+                SettingsUI ui = settingsPanel.GetComponent<SettingsUI>();
+                if (ui != null) ui.Open();
+            }
+        }
+
+        public void CloseSettings()
+        {
+            if (settingsPanel != null)
+            {
+                SettingsUI ui = settingsPanel.GetComponent<SettingsUI>();
+                if (ui != null) ui.Close();
+                else settingsPanel.SetActive(false);
+            }
+        }
 
         private void Update()
         {
@@ -127,11 +154,13 @@ namespace TowerDefence.UI
         public void ShowFortuneWheelPanel()
         {
             if (fortuneWheelPanel != null) fortuneWheelPanel.SetActive(true);
+            if (fortuneWheelBackdrop != null) fortuneWheelBackdrop.SetActive(true);
         }
 
         public void CloseFortuneWheelPanel()
         {
             if (fortuneWheelPanel != null) fortuneWheelPanel.SetActive(false);
+            if (fortuneWheelBackdrop != null) fortuneWheelBackdrop.SetActive(false);
         }
 
         private void Start()
@@ -162,12 +191,20 @@ namespace TowerDefence.UI
             InitPanel(compendiumPanel);
             if (dailyRewardPanel != null) dailyRewardPanel.SetActive(false);
             if (dailyRewardBackdrop != null) dailyRewardBackdrop.SetActive(false);
+            
+            if (fortuneWheelBackdrop == null) fortuneWheelBackdrop = FindChild("FortuneWheelBackdrop");
+            if (fortuneWheelPanel != null) fortuneWheelPanel.SetActive(false);
+            if (fortuneWheelBackdrop != null) fortuneWheelBackdrop.SetActive(false);
+            
+            GameObject settingsBackdrop = FindChild("SettingsBackdrop");
+            if (settingsBackdrop != null) settingsBackdrop.SetActive(false);
 
             // Buton olaylarını bağla
-            if (playButton      != null) playButton.onClick.AddListener(ShowLevelSelect);
+            if (playButton != null) playButton.onClick.AddListener(ShowLevelSelect);
             if (skillTreeButton != null) skillTreeButton.onClick.AddListener(ShowSkillTree);
             if (heroesButton != null) heroesButton.onClick.AddListener(ShowHeroShop);
             if (compendiumButton != null) compendiumButton.onClick.AddListener(ShowCompendium);
+            if (settingsButton != null) settingsButton.onClick.AddListener(ShowSettings);
             
             if (dailyRewardButton != null)
                 dailyRewardButton.onClick.AddListener(ShowDailyRewardPanel);
@@ -184,6 +221,12 @@ namespace TowerDefence.UI
                 currentActivePanel = mainMenuPanel;
                 mainMenuPanel.SetActive(true);
                 AnimatePanelIn(mainMenuPanel, instant: true);
+            }
+
+            // Müzik çal
+            if (AudioManager.Instance != null && menuBGM != null)
+            {
+                AudioManager.Instance.PlayBGM(menuBGM);
             }
         }
 

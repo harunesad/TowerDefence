@@ -8,23 +8,29 @@ namespace TowerDefence.UI
 {
     public class LevelSelectionUI : MonoBehaviour
     {
-        [SerializeField] private List<LevelData> levels;
+        [SerializeField] private List<LevelMapData> maps;
         [SerializeField] private GameObject levelButtonPrefab;
-        [SerializeField] private Transform container;
+        [SerializeField] private Image backgroundImage;
+        [SerializeField] private List<Transform> slotContainers; // Her harita için 1 container (LevelSlot_0..N çocukları)
+        [SerializeField] private Button leftArrowButton;
+        [SerializeField] private Button rightArrowButton;
+        [SerializeField] private TMPro.TextMeshProUGUI mapNameText;
 
         [SerializeField] private GameObject sideSelectionPanel; // Seviye seçince aktif olacak panel
         [SerializeField] private Button backButton;
-        [SerializeField] private bool useMapMode = false; // Harita üzerinde elle yerleştirme modu
 
         [Header("Difficulty Selection")]
         [SerializeField] private Button btnDiffNormal;
         [SerializeField] private Button btnDiffHard;
         [SerializeField] private Button btnDiffExpert;
-        
-        private List<GameObject> activeLevelButtons = new List<GameObject>();
+
+        private int currentMapIndex = 0;
+        private bool initialized = false;
 
         private void Start()
         {
+            SetupArrowButtons();
+
             if (backButton != null)
             {
                 backButton.onClick.AddListener(() => {
@@ -34,8 +40,69 @@ namespace TowerDefence.UI
             }
 
             SetupDifficultyButtons();
-            InitializeUI();
+            BuildAllMaps();
             RefreshDifficultyButtonsUI();
+
+            initialized = true;
+            ShowMap(0);
+        }
+
+        private void OnEnable()
+        {
+            // Kullanıcı geri döndüğünde ilk haritadan başlasın
+            if (initialized) ShowMap(0);
+        }
+
+        private void SetupArrowButtons()
+        {
+            if (leftArrowButton != null) leftArrowButton.onClick.AddListener(() => OnNavigateMap(-1));
+            if (rightArrowButton != null) rightArrowButton.onClick.AddListener(() => OnNavigateMap(1));
+        }
+
+        private void OnNavigateMap(int direction)
+        {
+            if (maps == null || maps.Count == 0) return;
+            int next = Mathf.Clamp(currentMapIndex + direction, 0, maps.Count - 1);
+            if (next != currentMapIndex) ShowMap(next);
+        }
+
+        private void ShowMap(int index)
+        {
+            if (maps == null || maps.Count == 0) return;
+            currentMapIndex = Mathf.Clamp(index, 0, maps.Count - 1);
+            LevelMapData map = maps[currentMapIndex];
+
+            // Slot container'ları toggle et
+            for (int i = 0; i < slotContainers.Count; i++)
+            {
+                if (slotContainers[i] != null)
+                    slotContainers[i].gameObject.SetActive(i == currentMapIndex);
+            }
+
+            // Arkaplan görselini güncelle (yüklenmediyse düz renk korunur)
+            if (backgroundImage != null)
+            {
+                if (map != null && map.mapBackground != null)
+                {
+                    backgroundImage.sprite = map.mapBackground;
+                    backgroundImage.color = Color.white;
+                }
+                else
+                {
+                    backgroundImage.sprite = null;
+                    backgroundImage.color = new Color(0.07f, 0.07f, 0.11f, 1f);
+                }
+            }
+
+            // Kenar durdurma: ilk haritada sol ok, son haritada sağ ok kapalı
+            if (leftArrowButton != null) leftArrowButton.interactable = currentMapIndex > 0;
+            if (rightArrowButton != null) rightArrowButton.interactable = currentMapIndex < maps.Count - 1;
+
+            // Harita adını güncelle
+            if (mapNameText != null)
+            {
+                mapNameText.text = map != null ? map.mapName : "MAP";
+            }
         }
 
         private void SetupDifficultyButtons()
@@ -51,101 +118,103 @@ namespace TowerDefence.UI
 
             CampaignManager.Instance.SetDifficulty(difficulty);
             RefreshDifficultyButtonsUI();
-            RefreshUI();
+            BuildAllMaps();
         }
 
         private void RefreshDifficultyButtonsUI()
         {
             int maxDiff = MetaProgressionManager.Instance.GetHighestUnlockedGlobalDifficulty();
-            int currentDiff = CampaignManager.Instance.CurrentDifficultyLevel;
 
-            if (btnDiffNormal != null) 
-            {
-                btnDiffNormal.interactable = (1 <= maxDiff);
-                // Burada buton rengi/seçili olma durumu ayarlanabilir (Örn: image.color)
-            }
+            if (btnDiffNormal != null) btnDiffNormal.interactable = (1 <= maxDiff);
             if (btnDiffHard != null) btnDiffHard.interactable = (2 <= maxDiff);
             if (btnDiffExpert != null) btnDiffExpert.interactable = (3 <= maxDiff);
         }
 
-        private void InitializeUI()
+        // Tüm haritaların slot'larına seviye butonu kurar/bağlar
+        private void BuildAllMaps()
         {
-            activeLevelButtons.Clear();
+            if (maps == null || slotContainers == null) return;
 
-            if (useMapMode)
+            int count = Mathf.Min(maps.Count, slotContainers.Count);
+            for (int i = 0; i < count; i++)
             {
-                // Mevcut butonları (Hierarchy'deki) kullan
-                for (int i = 0; i < levels.Count; i++)
-                {
-                    if (i >= container.childCount) break;
-                    
-                    GameObject buttonGO = container.GetChild(i).gameObject;
-                    activeLevelButtons.Add(buttonGO);
-                    SetupButton(buttonGO, levels[i]);
-                }
-            }
-            else
-            {
-                // Klasik liste şeklinde oluştur
-                foreach (LevelData level in levels)
-                {
-                    GameObject buttonGO = Instantiate(levelButtonPrefab, container);
-                    activeLevelButtons.Add(buttonGO);
-                    SetupButton(buttonGO, level);
-                }
+                BuildMapButtons(maps[i], slotContainers[i]);
             }
         }
 
-        private void RefreshUI()
+        private void BuildMapButtons(LevelMapData map, Transform container)
         {
-            for (int i = 0; i < activeLevelButtons.Count; i++)
+            if (map == null || container == null) return;
+
+            for (int i = 0; i < map.levels.Count; i++)
             {
-                if (i < levels.Count)
+                // Slot'lar isimle bulunur; layer'a dekor eklense bile hizalama bozulmaz
+                Transform slot = container.Find("LevelSlot_" + i);
+                if (slot == null) continue;
+
+                GameObject buttonGO = slot.childCount > 0 ? slot.GetChild(0).gameObject : null;
+                if (buttonGO == null)
                 {
-                    SetupButton(activeLevelButtons[i], levels[i]);
+                    buttonGO = Instantiate(levelButtonPrefab, slot);
+                    SetStretchToParent(buttonGO.GetComponent<RectTransform>());
                 }
+                SetupButton(buttonGO, map.levels[i]);
             }
+        }
+
+        private static void SetStretchToParent(RectTransform rt)
+        {
+            if (rt == null) return;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
         }
 
         private void SetupButton(GameObject buttonGO, LevelData level)
         {
             Button button = buttonGO.GetComponent<Button>();
-            
-            // Seviye ismini ata
-            var nameTxt = buttonGO.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-            if (nameTxt != null) nameTxt.text = level.levelName;
+            if (button == null) return;
 
-            // Önizleme resmini ata
-            Transform preview = buttonGO.transform.Find("PreviewImage");
-            if (preview != null) preview.GetComponent<Image>().sprite = level.levelPreview;
-
-            // Zorluk ikonlarını ayarla
-            Transform diffContainer = buttonGO.transform.Find("DifficultyContainer");
-            if (diffContainer != null)
+            // Tamamlanan yıldız sayısını al (tamamlanmamışsa 0 → 3 soluk yıldız)
+            int earnedStars = 0;
+            if (MetaProgressionManager.Instance != null)
             {
-                for (int i = 0; i < diffContainer.childCount; i++)
+                int difficulty = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
+                earnedStars = MetaProgressionManager.Instance.GetLevelStars(level.levelID, difficulty);
+            }
+
+            // Yıldızları marker'ın üstünde göster: kazanılan altın, kazanılmayan soluk
+            Transform starContainer = buttonGO.transform.Find("StarContainer");
+            if (starContainer != null)
+            {
+                for (int i = 0; i < starContainer.childCount; i++)
                 {
-                    diffContainer.GetChild(i).gameObject.SetActive(i < level.difficulty);
+                    Image starImg = starContainer.GetChild(i).GetComponent<Image>();
+                    if (starImg == null) continue;
+                    starImg.color = i < earnedStars
+                        ? new Color(1f, 0.85f, 0.1f)
+                        : new Color(0.3f, 0.3f, 0.38f);
                 }
             }
 
             // Kilit durumunu kontrol et
-            bool isUnlocked = CampaignManager.Instance.IsLevelUnlocked(level);
+            bool isUnlocked = CampaignManager.Instance != null && CampaignManager.Instance.IsLevelUnlocked(level);
             Transform lockedOverlay = buttonGO.transform.Find("LockedOverlay");
             if (lockedOverlay != null) lockedOverlay.gameObject.SetActive(!isUnlocked);
 
             button.interactable = isUnlocked;
-            button.onClick.RemoveAllListeners(); // Harita modunda temizlik önemli
+            button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => OnLevelSelected(level));
         }
 
         private void OnLevelSelected(LevelData level)
         {
-            if (!CampaignManager.Instance.IsLevelUnlocked(level)) return;
+            if (CampaignManager.Instance == null || !CampaignManager.Instance.IsLevelUnlocked(level)) return;
 
             CampaignManager.Instance.SelectLevel(level);
             Debug.Log($"LevelSelectionUI: {level.levelName} selected.");
-            
+
             MainMenuController mc = GetComponentInParent<MainMenuController>();
             if (mc != null)
             {

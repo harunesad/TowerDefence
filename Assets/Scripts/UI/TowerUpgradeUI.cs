@@ -18,6 +18,9 @@ namespace TowerDefence.UI
         public TextMeshProUGUI levelText;
         public TextMeshProUGUI statsText;
 
+        [Header("Rotation")]
+        [SerializeField] private Vector3 rotationOffset = new Vector3(-10f, 0f, 0f);
+
         [Header("Stats Panel")]
         public GameObject statsPanel;
         
@@ -116,7 +119,9 @@ namespace TowerDefence.UI
             currentTower.SetRangeVisible(true);
 
             // World Space modunda olduğumuz için billboarding yapıyoruz
-            transform.rotation = Camera.main.transform.rotation;
+            // Kameraya bakış yönünü koruyarak rotation offset'ini uygula
+            // Bu, editördeki (65,0,0) rotasyonu oyun içinde (75,0,0) olmaktan korur
+            transform.rotation = Camera.main.transform.rotation * Quaternion.Euler(rotationOffset);
 
             RefreshUI();
         }
@@ -281,7 +286,9 @@ namespace TowerDefence.UI
         {
             if (mainPanel.activeSelf && Camera.main != null)
             {
-                transform.rotation = Camera.main.transform.rotation;
+                // Kameraya bakış yönünü koruyarak rotation offset'ini uygula
+                // Bu, editördeki (65,0,0) rotasyonu oyun içinde (75,0,0) olmaktan korur
+                transform.rotation = Camera.main.transform.rotation * Quaternion.Euler(rotationOffset);
             }
         }
     }

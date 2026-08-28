@@ -52,8 +52,12 @@ namespace TowerDefence.Core
             ExecuteSpellEffect(spell, targetPos);
 
             // VFX & SFX
-            if (VFXManager.Instance != null)
-                VFXManager.Instance.SpawnVFX(spell.spellVFXType, targetPos, Quaternion.identity);
+            if (spell.spellVFXPrefab != null)
+            {
+                // Instantiate/Destroy mantığıyla VFX
+                GameObject vfx = Instantiate(spell.spellVFXPrefab, targetPos, Quaternion.identity);
+                Destroy(vfx, 3f); // 3 saniye sonra temizle
+            }
             if (AudioManager.Instance != null && spell.castSFX != null) AudioManager.Instance.PlaySFX(spell.castSFX);
         }
 
@@ -65,7 +69,7 @@ namespace TowerDefence.Core
                     ApplyAoEDamage(targetPos, spell.radius, spell.power);
                     break;
                 case Data.SpellType.Freeze:
-                    ApplyAoEFreeze(targetPos, spell.radius, spell.power);
+                    ApplyAoEFreeze(targetPos, spell.radius, spell.duration > 0 ? spell.duration : spell.power);
                     break;
                 case Data.SpellType.Reinforcement:
                     SpawnReinforcements(targetPos, spell.unitPrefabToSpawn, spell.unitSpawnCount);
@@ -74,10 +78,10 @@ namespace TowerDefence.Core
                     CurrencyManager.Instance.AddCurrency(SideController.Instance.GetPlayerSide(), (int)spell.power);
                     break;
                 case Data.SpellType.Shield:
-                    ApplyAoEShield(targetPos, spell.radius, spell.power);
+                    ApplyAoEShield(targetPos, spell.radius, spell.duration > 0 ? spell.duration : spell.power);
                     break;
                 case Data.SpellType.Buff:
-                    ApplyAoEBuff(targetPos, spell.radius, spell.power, 5f); // 5 saniyelik buff
+                    ApplyAoEBuff(targetPos, spell.radius, spell.power, spell.duration > 0 ? spell.duration : 5f);
                     break;
             }
         }
@@ -140,14 +144,57 @@ namespace TowerDefence.Core
 
         private void SpawnReinforcements(Vector3 center, GameObject prefab, int count)
         {
+            if (prefab == null) return;
+            
+            PathWaypoints[] allPaths = FindObjectsByType<PathWaypoints>(FindObjectsSortMode.None);
+            PathWaypoints nearestPath = null;
+            float minDist = float.MaxValue;
+
+            foreach (var path in allPaths)
+            {
+                if (path == null || path.GetWaypoints().Count == 0) continue;
+                // En yakın waypoint'i bul
+                foreach (var wp in path.GetWaypoints())
+                {
+                    float dist = Vector3.Distance(center, wp.position);
+                    if (dist < minDist)
+                    {
+                        minDist = dist;
+                        nearestPath = path;
+                    }
+                }
+            }
+
             for (int i = 0; i < count; i++)
             {
                 Vector3 spawnPos = center + Random.insideUnitSphere * 1.5f;
                 spawnPos.y = 0; // Zemine sabitle
                 GameObject unitGO = Instantiate(prefab, spawnPos, Quaternion.identity);
                 Unit unit = unitGO.GetComponent<Unit>();
-                // Geçici süre kalsınlar veya normal asker gibi devam etsinler? 
-                // Şimdilik normal ama canları az olabilir.
+                
+                if (unit != null)
+                {
+                    // Oyuncu tarafı olduğunu varsayıyoruz. 
+                    // StatMultiplier 1f.
+                    // unit.Initialize(unit.unitData); // Eğer start'ta initialize olmuyorsa
+
+                    if (nearestPath != null)
+                    {
+                        unit.SetPathAtNearestWaypoint(nearestPath, spawnPos);
+                    }
+
+                    // Reinforcement'lar kalıcı olmasın, 30 saniye sonra ölsünler (TakeDamage kullanarak güvenli ölüm)
+                    StartCoroutine(KillReinforcementAfterTime(unit, 30f));
+                }
+            }
+        }
+
+        private System.Collections.IEnumerator KillReinforcementAfterTime(Unit unit, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            if (unit != null)
+            {
+                unit.TakeDamage(99999f); // Güvenli ölüm (ölüm animasyonu vb. tetiklenir)
             }
         }
 

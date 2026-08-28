@@ -104,10 +104,7 @@ namespace TowerDefence.Combat
 
         private void Start()
         {
-            if (!TryLoadRallyPoint())
-            {
-                currentRallyPoint = FindNearestPathInRange();
-            }
+            currentRallyPoint = FindNearestPathInRange();
 
             // İşaretçiyi oluştur ama gizli başlat (SetRangeVisible ile menü açılınca görünecek)
             if (currentIndicator == null && rallyIndicatorPrefab != null)
@@ -118,6 +115,13 @@ namespace TowerDefence.Combat
             {
                 currentIndicator.transform.position = currentRallyPoint;
                 currentIndicator.SetActive(false);
+
+                // SpriteRenderer rengini yeşil yap (materyali değiştirmeden)
+                var sr = currentIndicator.GetComponent<SpriteRenderer>();
+                if (sr != null)
+                {
+                    sr.color = Color.green;
+                }
             }
 
             SpawnInitialSoldiers();
@@ -255,43 +259,9 @@ namespace TowerDefence.Combat
             return nearest;
         }
 
-        private string GetRallySaveKey()
-        {
-            Vector3 pos = transform.position;
-            return $"BarracksRally_{pos.x:F1}_{pos.y:F1}_{pos.z:F1}";
-        }
-
-        private bool TryLoadRallyPoint()
-        {
-            string key = GetRallySaveKey();
-            if (!PlayerPrefs.HasKey(key)) return false;
-
-            string val = PlayerPrefs.GetString(key);
-            string[] parts = val.Split(',');
-            if (parts.Length != 3) return false;
-
-            if (float.TryParse(parts[0], out float x) &&
-                float.TryParse(parts[1], out float y) &&
-                float.TryParse(parts[2], out float z))
-            {
-                currentRallyPoint = new Vector3(x, y, z);
-                return true;
-            }
-            return false;
-        }
-
-        private void SaveRallyPoint()
-        {
-            string key = GetRallySaveKey();
-            string val = $"{currentRallyPoint.x},{currentRallyPoint.y},{currentRallyPoint.z}";
-            PlayerPrefs.SetString(key, val);
-            PlayerPrefs.Save();
-        }
-
         public void SetRallyPoint(Vector3 newPoint)
         {
             currentRallyPoint = newPoint;
-            SaveRallyPoint();
 
             // Görsel İşaretçiyi Güncelle
             if (currentIndicator == null && rallyIndicatorPrefab != null)
@@ -303,6 +273,13 @@ namespace TowerDefence.Combat
             {
                 currentIndicator.transform.position = currentRallyPoint;
                 currentIndicator.transform.rotation = Quaternion.Euler(90, 0, 0);
+
+                // SpriteRenderer rengini yeşil yap (materyali değiştirmeden)
+                var sr = currentIndicator.GetComponent<SpriteRenderer>();
+                if (sr != null)
+                {
+                    sr.color = Color.green;
+                }
             }
 
             foreach (var soldier in activeSoldiers)

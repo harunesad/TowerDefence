@@ -57,7 +57,7 @@ namespace TowerDefence.UI
                 // Bekleme süresindeyken saniye yazsın
                 costText.text = $"{remaining:F1}s";
                 costText.color = Color.yellow;
-                iconImage.color = new Color(0.4f, 0.4f, 0.4f, 1f); // Karart
+                iconImage.color = new Color(0.6f, 0.6f, 0.6f, 1f); // Hafif karart
             }
             else
             {
@@ -75,7 +75,7 @@ namespace TowerDefence.UI
                 else
                 {
                     costText.color = Color.red; // Mana yetersizse kırmızı yazsın
-                    iconImage.color = new Color(0.4f, 0.4f, 0.4f, 1f); // Karart
+                    iconImage.color = new Color(0.6f, 0.6f, 0.6f, 1f); // Hafif karart
                 }
             }
             
@@ -90,6 +90,13 @@ namespace TowerDefence.UI
         {
             if (SpellManager.Instance != null && spellData != null)
             {
+                // Anında cast edilecek büyüler
+                if (spellData.spellType == SpellType.GoldBoost)
+                {
+                    SpellManager.Instance.CastSpell(spellData, Vector3.zero);
+                    return;
+                }
+
                 // Eğer zaten seçiliyse seçimi iptal et, değilse seç
                 if (SpellManager.Instance.SelectedSpell == spellData)
                 {

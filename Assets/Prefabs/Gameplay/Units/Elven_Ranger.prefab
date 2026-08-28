@@ -75,7 +75,7 @@ MonoBehaviour:
   moveSpeed: 3
   rotationSpeed: 10
   healthBar: {fileID: 6493999688323828450}
-  firePoint: {fileID: 5049919444631619250}
+  firePoint: {fileID: 6244961303944122284}
   indicatorRadius: 1
   unitIndicatorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
   burnIcon: {fileID: -1452674001, guid: a39b611d0ae5a6a4e8b393e5874db283, type: 3}
@@ -149,6 +149,37 @@ Transform:
   m_Children:
   - {fileID: 1862682664554581740}
   m_Father: {fileID: 9069496709650642130}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3761770474396928477
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6244961303944122284}
+  m_Layer: 0
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6244961303944122284
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3761770474396928477}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.016, y: -0.11, z: -0.008}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3817465356958850594}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4016154584888984013
 GameObject:
@@ -249,37 +280,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.UI.HealthBarUI
   fillImage: {fileID: 4416959535723248878}
   container: {fileID: 4016154584888984013}
---- !u!1 &6575328624879140347
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5049919444631619250}
-  m_Layer: 0
-  m_Name: FirePoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5049919444631619250
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6575328624879140347}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.016, y: -0.11, z: -0.008}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2896583388390087572}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6804283489003668766
 GameObject:
   m_ObjectHideFlags: 0
@@ -628,11 +628,14 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 6502182839619065283, guid: 9d4ea2f4bb2b2d94f93e1319d034faaf, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2896583388390087572}
+      addedObject: {fileID: 3817465356958850594}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9d4ea2f4bb2b2d94f93e1319d034faaf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1542370479991060798}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9d4ea2f4bb2b2d94f93e1319d034faaf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5167965541892428814}
   m_SourcePrefab: {fileID: 100100000, guid: 9d4ea2f4bb2b2d94f93e1319d034faaf, type: 3}
 --- !u!1 &1338207558443045974 stripped
 GameObject:
@@ -661,6 +664,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5167965541892428814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1338207558443045974}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8a4e5ede386470419d9daa058bcf802, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.AnimationEventHandler
 --- !u!4 &1862682664554581740 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9d4ea2f4bb2b2d94f93e1319d034faaf, type: 3}
@@ -671,7 +686,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6502182839619065283, guid: 9d4ea2f4bb2b2d94f93e1319d034faaf, type: 3}
   m_PrefabInstance: {fileID: 2185140266760972551}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &3438500805671697535
+--- !u!1001 &3706715352300337609
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -728,11 +743,11 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: b743cd767271661418f9a963c147e69d, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5049919444631619250}
+      addedObject: {fileID: 6244961303944122284}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b743cd767271661418f9a963c147e69d, type: 3}
---- !u!4 &2896583388390087572 stripped
+--- !u!4 &3817465356958850594 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b743cd767271661418f9a963c147e69d, type: 3}
-  m_PrefabInstance: {fileID: 3438500805671697535}
+  m_PrefabInstance: {fileID: 3706715352300337609}
   m_PrefabAsset: {fileID: 0}

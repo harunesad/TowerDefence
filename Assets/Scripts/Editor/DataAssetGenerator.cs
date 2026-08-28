@@ -142,13 +142,14 @@ public class DataAssetGenerator : Editor
         GenerateEliteTowerPrefabs(towerPath);
 
         // --- UI REGENERATION (Kritik: Yeni yetenekleri UI'ya ekler) ---
-        TowerDefence.Editor.UIMasterPrefabCreator.CreateSkillTreeUIPrefab();
-        TowerDefence.Editor.UIMasterPrefabCreator.CreateSideSelectionPanelPrefab();
-        TowerDefence.Editor.UIMasterPrefabCreator.CreateHeroShopPanelPrefab();
-        TowerDefence.Editor.UIMasterPrefabCreator.CreateGameplayHUDMaster();
+        // UI ÜRETİMİ BURADAN KALDIRILDI. Elle yapılan değişiklikleri (arkaplan vb.)
+        // ezmemesi için UI sadece kırmızı butonla (Rebuild UI) üretilmelidir.
 
         LinkUnitProjectiles();
-        GenerateLevels(); 
+        GenerateLevels();
+
+        // Seviyeler 4 haritaya gruplanır (Map1=1-12, Map2=13-25, Map3=26-38, Map4=39-50)
+        CreateLevelMapDataAssets();
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -1585,6 +1586,16 @@ public class DataAssetGenerator : Editor
         data.prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Gameplay/Towers/{safeName}.prefab");
         data.icon = FindIcon($"{safeName}_Icon");
 
+        // Otomatik Ses Bulma
+        if (artillery) 
+            data.shootSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/CannonFire.wav");
+        else if (isBeamTower || name.Contains("Mage") || name.Contains("Spitter") || name.Contains("Obelisk") || name.Contains("Prism") || name.Contains("Harvester"))
+            data.shootSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/MagicBlast.wav");
+        else if (name.Contains("Archer") || name.Contains("Sentry"))
+            data.shootSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/BowShoot.wav");
+        else 
+            data.shootSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/SwordClash.wav");
+
         // TERS BAĞLAMA: Prefab -> Data
         if (data.prefab != null)
         {
@@ -1627,6 +1638,9 @@ public class DataAssetGenerator : Editor
         // Otomatik Varlık Bulma
         data.prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Gameplay/Units/{safeName}.prefab");
         data.icon = FindIcon($"{safeName}_Icon");
+
+        data.spawnSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/SwordClash.wav");
+        data.deathSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/EnemyDeath.mp3");
 
         // TERS BAĞLAMA: Prefab -> Data
         if (data.prefab != null)
@@ -1774,18 +1788,14 @@ public class DataAssetGenerator : Editor
 
         // 3. Embedded UI
         Transform uiTransform = root.transform.Find("TowerUpgradeUI");
-        if (uiTransform != null)
-        {
-            uiTransform.localPosition = new Vector3(0, 6.5f, 0); // Kule tepesi (+2.5f)
-        }
-        else
+        if (uiTransform == null)
         {
             GameObject uiPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/TowerUpgradeUI.prefab");
             if (uiPrefab != null)
             {
                 GameObject uiInstance = (GameObject)PrefabUtility.InstantiatePrefab(uiPrefab, root.transform);
                 uiInstance.name = "TowerUpgradeUI";
-                uiInstance.transform.localPosition = new Vector3(0, 6.5f, 0); // Kule tepesi (+2.5f)
+                uiInstance.transform.localPosition = new Vector3(0, 6.5f, 0); // Varsayılan konum
             }
         }
 
@@ -1795,8 +1805,6 @@ public class DataAssetGenerator : Editor
 
         if (hbTransform != null)
         {
-            hbTransform.localPosition = new Vector3(0, 6.0f, 0); // Can barı (+2.5f)
-            
             // Update existing colors/sprites
             Transform bg = hbTransform.Find("Background");
             if (bg != null)
@@ -2544,6 +2552,98 @@ public class DataAssetGenerator : Editor
             CreateLevel(lvlDir, $"Level{lvlIdx}", levelName, startCurrencyLight, startCurrencyDark, theme, waves, paths, bases, customSlots);
         }
         Debug.Log("✔ 50 LEVELS AND WAVES GENERATED SUCCESSFULLY!");
+    }
+
+    // Seviyeleri 4 haritaya gruplar: Map1=1-12, Map2=13-25, Map3=26-38, Map4=39-50
+    public static void CreateLevelMapDataAssets()
+    {
+        const string mapPath = "Assets/Data/Maps";
+        EnsureDirectory(mapPath);
+
+        AssetDatabase.Refresh();
+
+        // Tüm LevelData'ları bulup seviye numarasına göre sırala
+        string[] levelGuids = AssetDatabase.FindAssets("t:LevelData");
+        List<LevelData> allLevels = new List<LevelData>();
+        for (int i = 0; i < levelGuids.Length; i++)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(levelGuids[i]);
+            LevelData level = AssetDatabase.LoadAssetAtPath<LevelData>(assetPath);
+            if (level != null) allLevels.Add(level);
+        }
+        allLevels.Sort((a, b) => ExtractLevelNumberFromId(a.levelID).CompareTo(ExtractLevelNumberFromId(b.levelID)));
+
+        // Harita aralıkları
+        int[][] ranges = new int[][]
+        {
+            new int[] { 1, 12 },
+            new int[] { 13, 25 },
+            new int[] { 26, 38 },
+            new int[] { 39, 50 }
+        };
+
+        System.Text.StringBuilder log = new System.Text.StringBuilder();
+        for (int m = 0; m < ranges.Length; m++)
+        {
+            string assetPath = $"{mapPath}/Map{m + 1}.asset";
+            LevelMapData map = AssetDatabase.LoadAssetAtPath<LevelMapData>(assetPath);
+            if (map == null)
+            {
+                map = ScriptableObject.CreateInstance<LevelMapData>();
+                AssetDatabase.CreateAsset(map, assetPath);
+            }
+
+            map.mapName = $"Map {m + 1}";
+            map.levels.Clear();
+
+            int min = ranges[m][0], max = ranges[m][1];
+            foreach (LevelData level in allLevels)
+            {
+                int num = ExtractLevelNumberFromId(level.levelID);
+                if (num >= min && num <= max) map.levels.Add(level);
+            }
+
+            // Arkaplan görseli: 'Assets/Data/Icons/LevelMaps/Map_{n}_Background.*' (png/jpg) konvansiyonuna göre otomatik bağlanır
+            Sprite bgSprite = null;
+            string[] bgGuids = AssetDatabase.FindAssets("Map_" + (m + 1) + "_Background");
+            for (int b = 0; b < bgGuids.Length; b++)
+            {
+                string bgPath = AssetDatabase.GUIDToAssetPath(bgGuids[b]);
+                if (bgPath.EndsWith(".png") || bgPath.EndsWith(".jpg") || bgPath.EndsWith(".jpeg"))
+                {
+                    // Görseli Sprite (2D and UI) olarak import et (jpg ise default Sprite değildir)
+                    TextureImporter importer = AssetImporter.GetAtPath(bgPath) as TextureImporter;
+                    if (importer != null && importer.textureType != TextureImporterType.Sprite)
+                    {
+                        importer.textureType = TextureImporterType.Sprite;
+                        importer.spriteImportMode = SpriteImportMode.Single;
+                        importer.mipmapEnabled = false;
+                        importer.SaveAndReimport();
+                    }
+                }
+                bgSprite = AssetDatabase.LoadAssetAtPath<Sprite>(bgPath);
+                if (bgSprite != null) break;
+            }
+            map.mapBackground = bgSprite;
+            if (bgSprite == null)
+            {
+                Debug.LogWarning($"Map {m + 1} background bulunamadı: 'Assets/Data/Icons/LevelMaps/Map_{m + 1}_Background' (png veya jpg) — Bu yola görsel eklenince otomatik bağlanır.");
+            }
+
+            EditorUtility.SetDirty(map);
+            log.AppendLine($"✔ Map {m + 1}: {map.levels.Count} seviye ({min}-{max})");
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log(log.ToString());
+    }
+
+    private static int ExtractLevelNumberFromId(string levelID)
+    {
+        if (string.IsNullOrEmpty(levelID)) return -1;
+        System.Text.RegularExpressions.Match match = System.Text.RegularExpressions.Regex.Match(levelID, @"\d+");
+        if (match.Success && int.TryParse(match.Value, out int result)) return result;
+        return -1;
     }
 
     private static LevelTheme GetThemeForLevel(int lvlIdx)
@@ -3939,18 +4039,59 @@ public class DataAssetGenerator : Editor
         data.radius = radius;
         data.cooldown = cooldown;
         
-        // Atama: VFX Type belirle
+        // Atama: VFX Type ve Prefab belirle
         VFXType vfx = VFXType.SpellThunderstrike;
-        if (id.Contains("Rift")) vfx = VFXType.SpellRift;
-        else if (id.Contains("Earthquake")) vfx = VFXType.SpellEarthquake;
-        else if (id.Contains("PlagueRain")) vfx = VFXType.SpellPlagueRain;
-        else if (id.Contains("Gold")) vfx = VFXType.EconomyGold;
-        else if (id.Contains("Shield") || id.Contains("Blessing")) vfx = VFXType.HealingAura;
-        else if (id.Contains("Bloodlust")) vfx = VFXType.CorruptionPulse;
-        else if (id.Contains("Reinforce")) vfx = VFXType.UnitSpawn;
-        else if (id.Contains("Freeze")) vfx = VFXType.SlowEffect;
+        string prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/Hits and explosions/Electro hit.prefab";
+
+        if (id.Contains("Rift"))
+        {
+            vfx = VFXType.SpellRift;
+            prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/Hits and explosions/Explosion.prefab";
+        }
+        else if (id.Contains("Earthquake"))
+        {
+            vfx = VFXType.SpellEarthquake;
+            prefabPath = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR2 Ground Hit.prefab";
+        }
+        else if (id.Contains("PlagueRain"))
+        {
+            vfx = VFXType.SpellPlagueRain;
+            prefabPath = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR2 Poison Cloud.prefab";
+        }
+        else if (id.Contains("Gold"))
+        {
+            vfx = VFXType.EconomyGold;
+            prefabPath = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR2 Shiny Item (Loop).prefab";
+        }
+        else if (id.Contains("Shield") || id.Contains("Blessing"))
+        {
+            vfx = VFXType.HealingAura;
+            prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/Magic circles/Healing circle.prefab";
+        }
+        else if (id.Contains("Bloodlust"))
+        {
+            vfx = VFXType.CorruptionPulse;
+            prefabPath = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR2 Poison Cloud.prefab";
+        }
+        else if (id.Contains("Reinforce"))
+        {
+            vfx = VFXType.UnitSpawn;
+            prefabPath = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR Magic Poof.prefab";
+        }
+        else if (id.Contains("Freeze"))
+        {
+            vfx = VFXType.SlowEffect;
+            prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/Magic circles/Freeze circle.prefab";
+        }
         
         data.spellVFXType = vfx;
+        data.spellVFXPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+
+        // Atama: SFX Belirle
+        if (id.Contains("Thunder") || id.Contains("Earthquake") || id.Contains("PlagueRain"))
+            data.castSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/MagicBlast.wav");
+        else
+            data.castSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/MagicBlast.wav");
 
         // Atama: Reinforcement Unit belirle
         if (type == SpellType.Reinforcement)

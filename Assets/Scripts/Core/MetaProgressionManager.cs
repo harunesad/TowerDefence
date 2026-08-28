@@ -45,6 +45,7 @@ namespace TowerDefence.Core
         
         public List<LevelProgress> levelProgressList = new List<LevelProgress>();
         public long lastFortuneWheelTime; // Son çark çevirme zamanı (Ticks)
+        public long lastFortuneWheelAdTime; // Son reklamla çark çevirme zamanı (Ticks)
     }
 
     public class MetaProgressionManager : MonoBehaviour
@@ -83,6 +84,14 @@ namespace TowerDefence.Core
 
         public event System.Action OnHeroProgressChanged;
 
+        [Header("Skill Tree Limits")]
+        [SerializeField] private int maxSkillsUnlocked = 10; // Maksimum açılabilir skill sayısı
+
+        public int GetMaxSkillsUnlocked() => maxSkillsUnlocked;
+        public int GetCurrentSkillsUnlocked() => saveData.unlockedSkillIDs.Count;
+
+        public void SetMaxSkillsUnlocked(int value) => maxSkillsUnlocked = value;
+
         public void AddKarma(int amount)
         {
             saveData.totalKarma += amount;
@@ -102,6 +111,14 @@ namespace TowerDefence.Core
         public void SetLastFortuneWheelTime(long ticks)
         {
             saveData.lastFortuneWheelTime = ticks;
+            SaveGame();
+        }
+
+        public long GetLastFortuneWheelAdTime() => saveData.lastFortuneWheelAdTime;
+
+        public void SetLastFortuneWheelAdTime(long ticks)
+        {
+            saveData.lastFortuneWheelAdTime = ticks;
             SaveGame();
         }
 
@@ -129,6 +146,13 @@ namespace TowerDefence.Core
                 foreach (var req in skill.requiredSkills)
                 {
                     if (!IsSkillUnlocked(req.skillID)) return false;
+                }
+
+                // Sınır kontrolü: Maksimum skill sayısı kontrolü
+                if (saveData.unlockedSkillIDs.Count >= maxSkillsUnlocked && maxSkillsUnlocked > 0)
+                {
+                    Debug.LogWarning($"[Progression] Skill limit reached! Maximum {maxSkillsUnlocked} skills can be unlocked. Current: {saveData.unlockedSkillIDs.Count}");
+                    return false;
                 }
 
                 saveData.totalKarma -= skill.karmaCost;

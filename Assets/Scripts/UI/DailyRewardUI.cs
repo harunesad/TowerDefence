@@ -84,9 +84,9 @@ namespace TowerDefence.UI
                 dayText.color = Color.white;
                 RectTransform dayRT = dayTextGO.GetComponent<RectTransform>();
                 dayRT.sizeDelta = new Vector2(100, 20);
-                dayRT.anchorMin = new Vector2(0.5f, 0.5f);
-                dayRT.anchorMax = new Vector2(0.5f, 0.5f);
-                dayRT.anchoredPosition = new Vector2(0, 10);
+                dayRT.anchorMin = new Vector2(0.5f, 1f);
+                dayRT.anchorMax = new Vector2(0.5f, 1f);
+                dayRT.anchoredPosition = new Vector2(0, -10);
 
                 GameObject iconGO = new GameObject("RewardIcon", typeof(RectTransform), typeof(Image));
                 iconGO.transform.SetParent(cell.transform, false);
@@ -95,7 +95,7 @@ namespace TowerDefence.UI
                 iconRT.sizeDelta = new Vector2(40, 40);
                 iconRT.anchorMin = new Vector2(0.5f, 0.5f);
                 iconRT.anchorMax = new Vector2(0.5f, 0.5f);
-                iconRT.anchoredPosition = new Vector2(0, -5);
+                iconRT.anchoredPosition = new Vector2(0, -2);
 
                 GameObject amountGO = new GameObject("RewardText", typeof(RectTransform), typeof(TextMeshProUGUI));
                 amountGO.transform.SetParent(cell.transform, false);
@@ -107,7 +107,7 @@ namespace TowerDefence.UI
                 amountRT.sizeDelta = new Vector2(100, 20);
                 amountRT.anchorMin = new Vector2(0.5f, 0f);
                 amountRT.anchorMax = new Vector2(0.5f, 0f);
-                amountRT.anchoredPosition = new Vector2(0, 15);
+                amountRT.anchoredPosition = new Vector2(0, 14);
 
                 GameObject statusGO = new GameObject("StatusText", typeof(RectTransform), typeof(TextMeshProUGUI));
                 statusGO.transform.SetParent(cell.transform, false);
@@ -120,7 +120,7 @@ namespace TowerDefence.UI
                 statusRT.sizeDelta = new Vector2(80, 16);
                 statusRT.anchorMin = new Vector2(0.5f, 0);
                 statusRT.anchorMax = new Vector2(0.5f, 0);
-                statusRT.anchoredPosition = new Vector2(0, 2);
+                statusRT.anchoredPosition = new Vector2(0, -6);
 
                 cells[i] = cell;
             }

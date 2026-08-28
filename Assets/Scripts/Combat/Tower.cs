@@ -47,6 +47,12 @@ namespace TowerDefence.Combat
             Debug.Log($"Targeting Priority changed to: {currentPriority}");
         }
 
+        [Header("Target Switch")]
+        [SerializeField] private float targetSwitchCooldown = 0.5f; // Gecikme süresi (saniye)
+        private float targetSwitchTimer = 0f;
+        private Transform previousTarget = null;
+        private float previousTargetTimer = 0f;
+
         [Header("Rotation")]
         [SerializeField] private Transform partToRotate;
         [SerializeField] private float rotationSpeed = 10f;
@@ -377,6 +383,8 @@ namespace TowerDefence.Combat
             Collider[] colliders = Physics.OverlapSphere(transform.position, range, targetLayer);
             if (colliders.Length == 0)
             {
+                previousTargetTimer = 0f;
+                previousTarget = null;
                 target = null;
                 return;
             }
@@ -453,6 +461,31 @@ namespace TowerDefence.Combat
 
             if (selectedEnemy != null)
             {
+                // Hedef değişiminde gecikme kontrolü
+                if (target != selectedEnemy.transform)
+                {
+                    // Eski target varsa timerı başlat/extend et
+                    if (previousTarget != null)
+                    {
+                        previousTargetTimer += Time.deltaTime;
+                        // Eski target hala range içinde ve alive ise, değişmeyi gecikttik
+                        Unit oldUnit = previousTarget.GetComponent<Unit>();
+                        if (oldUnit != null && !oldUnit.IsDead && Vector3.Distance(transform.position, oldUnit.transform.position) <= range)
+                        {
+                            // Eski target hala geçerli, yeni targeti bekle
+                            if (previousTargetTimer < targetSwitchCooldown)
+                            {
+                                // Hedef değişti ama cooldown dolmadı, değişmeyi gecikttik
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Önceki targeti kaydet ve timerı sıfırla
+                    previousTarget = target;
+                    previousTargetTimer = 0f;
+                }
+                
                 target = selectedEnemy.transform;
             }
             else

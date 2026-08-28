@@ -17,6 +17,13 @@ namespace TowerDefence.UI
         [SerializeField] private Button backButton;
         [SerializeField] private RectTransform contentRect; // Tree nodes parent
 
+        [Header("Skill Limits")]
+        [SerializeField] private TextMeshProUGUI skillsUnlockedText; // Current/unlocked count
+        [SerializeField] private TextMeshProUGUI skillsMaxText; // Max limit
+
+        [Header("Background")]
+        [SerializeField] private BackgroundScroller backgroundScroller;
+
         [Header("Detail Panel")]
         [SerializeField] private GameObject detailPanel;
         [SerializeField] private Image detailIcon;
@@ -28,8 +35,17 @@ namespace TowerDefence.UI
 
         private SkillNodeData selectedSkill;
 
+        private float backgroundScrollOffset;
+
         private void Start()
         {
+            if (backgroundScroller != null)
+            {
+                // Use this gameobject's RectTransform so entire panel moves together
+                backgroundScroller.SetUseThisGameObjectRect(true);
+                backgroundScroller.enabled = true;
+            }
+
             if (backButton != null)
             {
                 backButton.onClick.AddListener(() => {
@@ -150,7 +166,7 @@ namespace TowerDefence.UI
             
             // Merkezden hizalamak veya en soldan başlatmak için ofset (örneğin 8 kategori var)
             float startX = -((8 - 1) * columnSpacing) / 2f; 
-            float startY = -300f; // Aşağıdan (Tier 0) başlar
+            float startY = -800f; // Skilleri daha aşağıda başlat
 
             // Tüm düğümleri tier ve category'ye göre otomatik yerleştir
             foreach (var node in allNodes)
@@ -181,6 +197,11 @@ namespace TowerDefence.UI
         private float feedbackTimer;
         private void Update()
         {
+            if (backgroundScroller != null)
+            {
+                backgroundScroller.enabled = true;
+            }
+
             if (feedbackTimer > 0)
             {
                 feedbackTimer -= Time.deltaTime;
@@ -205,6 +226,24 @@ namespace TowerDefence.UI
             if (totalCrystalsText != null)
             {
                 totalCrystalsText.text = $"Crystals: {MetaProgressionManager.Instance.GetTotalCrystals()}";
+            }
+
+            // Skill limit info gösterimi
+            if (skillsUnlockedText != null || skillsMaxText != null)
+            {
+                int current = MetaProgressionManager.Instance.GetCurrentSkillsUnlocked();
+                int maximum = MetaProgressionManager.Instance.GetMaxSkillsUnlocked();
+
+                if (skillsUnlockedText != null)
+                    skillsUnlockedText.text = $"Unlocked: {current}";
+
+                if (skillsMaxText != null)
+                {
+                    if (maximum > 0)
+                        skillsMaxText.text = $"/ {maximum}";
+                    else
+                        skillsMaxText.text = "";
+                }
             }
 
             foreach (var node in allNodes)

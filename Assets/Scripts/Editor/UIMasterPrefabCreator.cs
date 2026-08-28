@@ -32,7 +32,9 @@ namespace TowerDefence.Editor
             // 2. Main Panel
             GameObject mainPanel = CreateUINode(root.transform, "MainPanel", new Vector2(300, 560));
             mainPanel.SetActive(false); // Başlangıçta gizli
-            mainPanel.AddComponent<Image>().color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+            Image bg = mainPanel.AddComponent<Image>();
+            bg.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Panel_Wood.png");
+            bg.type = Image.Type.Sliced;
             VerticalLayoutGroup vlg = mainPanel.AddComponent<VerticalLayoutGroup>();
             vlg.padding = new RectOffset(20, 20, 20, 20);
             vlg.spacing = 12;
@@ -126,7 +128,9 @@ namespace TowerDefence.Editor
             rootRT.anchorMax = Vector2.one;
             rootRT.offsetMin = Vector2.zero;
             rootRT.offsetMax = Vector2.zero;
-            root.GetComponent<Image>().color = new Color(0.05f, 0.05f, 0.1f, 0.98f);
+            Image rootImg = root.GetComponent<Image>();
+            rootImg.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Panel_Parchment.jpg");
+            rootImg.type = Image.Type.Sliced;
 
             // --- 2D Scroll View (Massive Area) ---
             GameObject scroll = new GameObject("TreeScrollView", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
@@ -134,7 +138,7 @@ namespace TowerDefence.Editor
             scroll.GetComponent<Image>().color = new Color(0, 0, 0, 0);
             RectTransform scrollRT = scroll.GetComponent<RectTransform>();
             SetStretch(scrollRT);
-            scrollRT.offsetMax = new Vector2(0, -100); // Header'ın altı
+            scrollRT.offsetMax = new Vector2(0, 0); // Üst boşluğu kaldır, arkaplan tam kaplasın
 
             // Content (The large canvas)
             GameObject content = new GameObject("Content", typeof(RectTransform));
@@ -163,7 +167,7 @@ namespace TowerDefence.Editor
             titleTmp.alignment = TextAlignmentOptions.Center;
 
             // Geri Butonu
-            Button backBtn = CreateButton(header.transform, "BackButton", "← BACK", 180, 60, 24);
+            Button backBtn = CreateButton(header.transform, "BackButton", "← BACK", 180, 80, 24);
             RectTransform backRT = backBtn.GetComponent<RectTransform>();
             backRT.anchorMin = new Vector2(0, 0.5f); backRT.anchorMax = new Vector2(0, 0.5f);
             backRT.anchoredPosition = new Vector2(110, 0);
@@ -191,7 +195,7 @@ namespace TowerDefence.Editor
             detailCost.alignment = TextAlignmentOptions.Center;
             detailCost.color = Color.green;
 
-            Button buyBtn = CreateButton(detail.transform, "BuyButton", "BUY SKILL", 300, 60, 24);
+            Button buyBtn = CreateButton(detail.transform, "BuyButton", "BUY SKILL", 300, 80, 24);
             buyBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -220);
 
             // Close button for detail panel
@@ -298,7 +302,9 @@ namespace TowerDefence.Editor
             EnsureDirectory();
             GameObject root = new GameObject("CompendiumPanel", typeof(RectTransform), typeof(Image), typeof(CompendiumUI));
             SetStretch(root.GetComponent<RectTransform>());
-            root.GetComponent<Image>().color = new Color(0.05f, 0.05f, 0.08f, 1f);
+            Image rootImg = root.GetComponent<Image>();
+            rootImg.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Panel_Parchment.jpg");
+            rootImg.type = Image.Type.Sliced;
 
             // Title
             TextMeshProUGUI title = CreateTMP(root.transform, "Title", "CHARACTER COMPENDIUM", 42, 600, 80);
@@ -377,7 +383,7 @@ namespace TowerDefence.Editor
             detailLore.alignment = TextAlignmentOptions.Center;
 
             // Back Button
-            Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 180, 60, 24);
+            Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 180, 80, 24);
             backBtn.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
             backBtn.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
             backBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(100, -50);
@@ -420,7 +426,8 @@ namespace TowerDefence.Editor
             bgRT.anchorMax = Vector2.one;
             bgRT.offsetMin = Vector2.zero;
             bgRT.offsetMax = Vector2.zero;
-            bg.GetComponent<Image>().color = new Color(0.05f, 0.05f, 0.1f, 1f);
+            bg.GetComponent<Image>().sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/MainMenu_BG.jpg");
+            bg.GetComponent<Image>().color = Color.white;
 
             // 3. MainMenuPanel — Başlık + Butonların hepsini sarar; MainMenuController bunu açıp kapatır
             GameObject mainMenuPanel = CreateUINode(root.transform, "MainMenuPanel", Vector2.zero);
@@ -432,11 +439,11 @@ namespace TowerDefence.Editor
 
             // 3a. Title Text
             TextMeshProUGUI title = CreateTMP(mainMenuPanel.transform, "GameTitle", "TOWER DEFENCE: EPIC BATTLE", 72, 1400, 150);
-            title.rectTransform.anchoredPosition = new Vector2(0, 300);
+            title.rectTransform.anchoredPosition = new Vector2(0, 420);
             title.color = new Color(1f, 0.8f, 0.2f);
 
             // 3b. Button Container
-            GameObject btnContainer = CreateUINode(mainMenuPanel.transform, "ButtonContainer", new Vector2(450, 550));
+            GameObject btnContainer = CreateUINode(mainMenuPanel.transform, "ButtonContainer", new Vector2(450, 750));
             btnContainer.AddComponent<Image>().color = new Color(0, 0, 0, 0.3f); // Subtle dark box
             VerticalLayoutGroup vlg = btnContainer.AddComponent<VerticalLayoutGroup>();
             vlg.padding = new RectOffset(20, 20, 20, 20);
@@ -446,19 +453,19 @@ namespace TowerDefence.Editor
             vlg.childForceExpandHeight = false;
 
             // 3c. Buttons
-            Button playBtn  = CreateButton(btnContainer.transform, "PlayButton",      "PLAY",  400, 80, 36);
-            Button skillBtn = CreateButton(btnContainer.transform, "SkillTreeButton", "SKILL TREE",400, 80, 36);
-            Button heroBtn  = CreateButton(btnContainer.transform, "HeroesButton",    "HEROES",    400, 80, 36);
-            Button compBtn  = CreateButton(btnContainer.transform, "CompendiumButton", "COMPENDIUM", 400, 80, 36);
-            Button quitBtn  = CreateButton(btnContainer.transform, "QuitButton",      "QUIT",        400, 80, 36);
+            Button playBtn  = CreateButton(btnContainer.transform, "PlayButton",      "PLAY",  400, 110, 36);
+            Button skillBtn = CreateButton(btnContainer.transform, "SkillTreeButton", "SKILL TREE",400, 110, 36);
+            Button heroBtn  = CreateButton(btnContainer.transform, "HeroesButton",    "HEROES",    400, 110, 36);
+            Button compBtn  = CreateButton(btnContainer.transform, "CompendiumButton", "COMPENDIUM", 400, 110, 36);
+            Button settingsBtn = CreateButton(btnContainer.transform, "SettingsButton", "SETTINGS", 400, 110, 36);
+            Button quitBtn  = CreateButton(btnContainer.transform, "QuitButton",      "QUIT",        400, 110, 36);
 
             // 3d. Daily Reward Button (On Main Menu)
-            Button dailyBtn = CreateButton(mainMenuPanel.transform, "DailyRewardButton", "DAILY REWARD", 250, 80, 20);
+            Button dailyBtn = CreateButton(mainMenuPanel.transform, "DailyRewardButton", "DAILY REWARD", 250, 100, 20);
             RectTransform dailyRT = dailyBtn.GetComponent<RectTransform>();
             dailyRT.anchorMin = new Vector2(1, 0);
             dailyRT.anchorMax = new Vector2(1, 0);
             dailyRT.anchoredPosition = new Vector2(-160, 100);
-            dailyBtn.GetComponent<Image>().color = new Color(0.15f, 0.4f, 0.15f); // Darker green
             
             TextMeshProUGUI timerText = CreateTMP(dailyBtn.transform, "Timer", "Available!", 16, 250, 30);
             timerText.rectTransform.anchorMin = new Vector2(0.5f, 0);
@@ -467,12 +474,11 @@ namespace TowerDefence.Editor
             timerText.color = Color.green;
 
             // 3e. Fortune Wheel Button (On Main Menu)
-            Button fortuneBtn = CreateButton(mainMenuPanel.transform, "FortuneWheelButton", "FORTUNE WHEEL", 250, 80, 20);
+            Button fortuneBtn = CreateButton(mainMenuPanel.transform, "FortuneWheelButton", "FORTUNE WHEEL", 250, 100, 20);
             RectTransform fortuneRT = fortuneBtn.GetComponent<RectTransform>();
             fortuneRT.anchorMin = new Vector2(1, 0);
             fortuneRT.anchorMax = new Vector2(1, 0);
             fortuneRT.anchoredPosition = new Vector2(-430, 100);
-            fortuneBtn.GetComponent<Image>().color = new Color(0.4f, 0.15f, 0.4f); // Purple
 
             TextMeshProUGUI fortuneTimerText = CreateTMP(fortuneBtn.transform, "Timer", "Available!", 16, 250, 30);
             fortuneTimerText.rectTransform.anchorMin = new Vector2(0.5f, 0);
@@ -486,6 +492,7 @@ namespace TowerDefence.Editor
             GameObject heroPanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/HeroShopPanel.prefab",    false);
             GameObject sidePanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/SideSelectionPanel.prefab", false);
             GameObject compPanel  = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/CompendiumPanel.prefab",   false);
+            GameObject setPanel   = AddPanelToMaster(root.transform, "Assets/Prefabs/UI/SettingsPanel.prefab",     false);
 
             // 4b. Daily Reward Panel (30-Day Calendar)
             GameObject drBackdrop = CreateUINode(root.transform, "DailyRewardBackdrop", new Vector2(4000, 4000));
@@ -522,7 +529,7 @@ namespace TowerDefence.Editor
             drInfo.rectTransform.anchoredPosition = new Vector2(0, -290);
             drInfo.alignment = TextAlignmentOptions.Center;
             
-            Button claimBtn = CreateButton(drPanel.transform, "ClaimButton", "CLAIM", 200, 55, 24);
+            Button claimBtn = CreateButton(drPanel.transform, "ClaimButton", "CLAIM", 200, 75, 24);
             claimBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -320);
             claimBtn.GetComponent<Image>().color = new Color(0.2f, 0.6f, 0.2f);
             
@@ -597,7 +604,9 @@ namespace TowerDefence.Editor
 
             GameObject fwPanel = CreateUINode(root.transform, "FortuneWheelPanel", new Vector2(1000, 1000));
             fwPanel.SetActive(false);
-            fwPanel.AddComponent<Image>().color = new Color(0.1f, 0.1f, 0.15f, 1f);
+            Image fwBg = fwPanel.AddComponent<Image>();
+            fwBg.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Panel_Wood.png");
+            fwBg.type = Image.Type.Sliced;
             
             TextMeshProUGUI fwTitle = CreateTMP(fwPanel.transform, "Title", "FORTUNE WHEEL", 48, 600, 60);
             fwTitle.rectTransform.anchorMin = new Vector2(0.5f, 1);
@@ -607,7 +616,7 @@ namespace TowerDefence.Editor
             // Wheel graphic
             GameObject wheelObj = CreateUINode(fwPanel.transform, "WheelGraphic", new Vector2(500, 500));
             wheelObj.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 50);
-            wheelObj.AddComponent<Image>().color = new Color(0.8f, 0.6f, 0.2f); // Golden placeholder for wheel
+            wheelObj.AddComponent<Image>().sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/FortuneWheel_Base.png");
             
             // Pointer
             GameObject pointerObj = CreateUINode(fwPanel.transform, "Pointer", new Vector2(40, 60));
@@ -635,6 +644,12 @@ namespace TowerDefence.Editor
             fwUI.spinButton = spinBtn;
             fwUI.rewardText = fwRewardText;
             fwUI.closeButtonObj = fwCloseBtn.gameObject;
+            fwUI.backdrop = fwBackdrop;
+            fwUI.tickSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/UIClick.wav");
+            
+            var fwSo = new UnityEditor.SerializedObject(fwUI);
+            fwSo.FindProperty("tickSound").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/SpinningWheelTick.mp3");
+            fwSo.ApplyModifiedProperties();
             
             // Link backdrop to close (optional, but good)
             Button fwBackdropBtn = fwBackdrop.AddComponent<Button>();
@@ -650,7 +665,7 @@ namespace TowerDefence.Editor
             so.FindProperty("heroShopPanel").objectReferenceValue    = heroPanel;
             so.FindProperty("sideSelectionPanel").objectReferenceValue = sidePanel;
             so.FindProperty("compendiumPanel").objectReferenceValue  = compPanel;
-            
+            so.FindProperty("settingsPanel").objectReferenceValue    = setPanel;
             so.FindProperty("karmaText").objectReferenceValue = karmaVal;
             so.FindProperty("crystalText").objectReferenceValue = crystalVal;
             so.FindProperty("dailyRewardPanel").objectReferenceValue = drPanel;
@@ -662,10 +677,13 @@ namespace TowerDefence.Editor
             so.FindProperty("fortuneWheelButton").objectReferenceValue = fortuneBtn;
             so.FindProperty("fortuneWheelTimerText").objectReferenceValue = fortuneTimerText;
 
+            so.FindProperty("menuBGM").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/FantasyMenu.wav");
+
             so.FindProperty("playButton").objectReferenceValue       = playBtn;
             so.FindProperty("skillTreeButton").objectReferenceValue  = skillBtn;
             so.FindProperty("heroesButton").objectReferenceValue     = heroBtn;
             so.FindProperty("compendiumButton").objectReferenceValue = compBtn;
+            so.FindProperty("settingsButton").objectReferenceValue   = settingsBtn;
             so.FindProperty("quitButton").objectReferenceValue       = quitBtn;
             so.ApplyModifiedProperties();
 
@@ -688,56 +706,28 @@ namespace TowerDefence.Editor
             rootRT.offsetMin = Vector2.zero;
             rootRT.offsetMax = Vector2.zero;
 
+            // Harita arkaplan görseli (en altta, kod tarafından yönetilir)
+            GameObject bg = new GameObject("BackgroundImage", typeof(RectTransform), typeof(Image));
+            bg.transform.SetParent(root.transform, false);
+            SetStretch(bg.GetComponent<RectTransform>());
+            Image bgImage = bg.GetComponent<Image>();
+            bgImage.color = new Color(0.07f, 0.07f, 0.11f, 1f);
+
             // Title
             TextMeshProUGUI titleTMP = CreateTMP(root.transform, "Title", "LEVEL SELECTION", 64, 900, 100);
             titleTMP.rectTransform.anchorMin = new Vector2(0.5f, 1f);
             titleTMP.rectTransform.anchorMax = new Vector2(0.5f, 1f);
             titleTMP.rectTransform.anchoredPosition = new Vector2(0, -80);
 
-            // Scroll View Root
-            GameObject scrollView = CreateUINode(root.transform, "Scroll View", new Vector2(1200, 650));
-            scrollView.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -50);
-            ScrollRect scrollRect = scrollView.AddComponent<ScrollRect>();
-            scrollRect.horizontal = false;
-            scrollRect.vertical = true;
-            scrollRect.movementType = ScrollRect.MovementType.Elastic;
-            
-            // Viewport
-            GameObject viewport = CreateUINode(scrollView.transform, "Viewport", new Vector2(1200, 650));
-            SetStretch(viewport.GetComponent<RectTransform>());
-            viewport.AddComponent<RectMask2D>();
-            
-            // Level Container (Grid) - Now inside Viewport
-            GameObject container = CreateUINode(viewport.transform, "LevelContainer", new Vector2(1200, 650));
-            SetStretch(container.GetComponent<RectTransform>());
-            
-            // Set ScrollRect references
-            scrollRect.viewport = viewport.GetComponent<RectTransform>();
-            scrollRect.content = container.GetComponent<RectTransform>();
-            
-            GridLayoutGroup glg = container.AddComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(240, 280);
-            glg.spacing = new Vector2(40, 40);
-            glg.startCorner = GridLayoutGroup.Corner.UpperLeft;
-            glg.startAxis = GridLayoutGroup.Axis.Horizontal;
-            glg.childAlignment = TextAnchor.UpperCenter;
-            glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            glg.constraintCount = 4;
-
-            // Make the container expand based on its children so scrolling works
-            ContentSizeFitter csf = container.AddComponent<ContentSizeFitter>();
-            csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            csf.verticalFit = ContentSizeFitter.FitMode.MinSize;
-
-            // Ensure the content starts at the top
-            RectTransform containerRT = container.GetComponent<RectTransform>();
-            containerRT.pivot = new Vector2(0.5f, 1f); // Set pivot to top center
-            containerRT.anchorMin = new Vector2(0f, 1f); // Anchor to top left
-            containerRT.anchorMax = new Vector2(1f, 1f); // Anchor to top right
-            containerRT.anchoredPosition = Vector2.zero; // Reset position to top
+            // Aktif harita adı
+            TextMeshProUGUI mapNameTMP = CreateTMP(root.transform, "MapName", "MAP 1", 30, 500, 45);
+            mapNameTMP.rectTransform.anchorMin = new Vector2(0.5f, 1f);
+            mapNameTMP.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            mapNameTMP.rectTransform.anchoredPosition = new Vector2(0, -135);
+            mapNameTMP.color = new Color(1f, 0.95f, 0.8f);
 
             // Back Button
-            Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 180, 60, 22);
+            Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 180, 80, 22);
             RectTransform backRT = backBtn.GetComponent<RectTransform>();
             backRT.anchorMin = new Vector2(0, 1);
             backRT.anchorMax = new Vector2(0, 1);
@@ -749,7 +739,7 @@ namespace TowerDefence.Editor
             RectTransform diffRowRT = diffRow.GetComponent<RectTransform>();
             diffRowRT.anchorMin = new Vector2(0.5f, 1f);
             diffRowRT.anchorMax = new Vector2(0.5f, 1f);
-            diffRowRT.anchoredPosition = new Vector2(0, -170); // Below Title
+            diffRowRT.anchoredPosition = new Vector2(0, -185);
 
             HorizontalLayoutGroup hlg = diffRow.AddComponent<HorizontalLayoutGroup>();
             hlg.spacing = 20;
@@ -757,14 +747,82 @@ namespace TowerDefence.Editor
             hlg.childControlWidth = true;
             hlg.childControlHeight = true;
 
-            Button btnNormal = CreateButton(diffRow.transform, "BtnDiffNormal", "NORMAL", 180, 50, 18);
-            Button btnHard = CreateButton(diffRow.transform, "BtnDiffHard", "HARD", 180, 50, 18);
-            Button btnExpert = CreateButton(diffRow.transform, "BtnDiffExpert", "EXPERT", 180, 50, 18);
+            Button btnNormal = CreateButton(diffRow.transform, "BtnDiffNormal", "NORMAL", 180, 70, 18);
+            Button btnHard = CreateButton(diffRow.transform, "BtnDiffHard", "HARD", 180, 70, 18);
+            Button btnExpert = CreateButton(diffRow.transform, "BtnDiffExpert", "EXPERT", 180, 70, 18);
+
+            // Haritalar (LevelMapData) — slot sayısı seviye sayısına göre değişir
+            List<LevelMapData> maps = LoadAllLevelMapsSorted();
+
+            // Mevcut prefab'daki kullanıcı konumlarını yakala (yeniden üretimde korunur)
+            Dictionary<string, SlotPose> preservePoses = CaptureSlotPoses(maps);
+
+            List<Transform> slotContainers = new List<Transform>();
+            for (int m = 0; m < maps.Count; m++)
+            {
+                GameObject layer = CreateUINode(root.transform, "MapSlotLayer_" + (m + 1), Vector2.zero);
+                SetStretch(layer.GetComponent<RectTransform>());
+                Image layerImg = layer.AddComponent<Image>();
+                layerImg.color = new Color(0, 0, 0, 0);
+                layerImg.raycastTarget = false;
+                layer.SetActive(m == 0);
+
+                LevelMapData map = maps[m];
+                int slotCount = Mathf.Max(1, map != null && map.levels != null ? map.levels.Count : 1);
+                int columns = 4;
+                for (int s = 0; s < slotCount; s++)
+                {
+                    GameObject slot = CreateUINode(layer.transform, "LevelSlot_" + s, new Vector2(64, 64));
+                    RectTransform slotRT = slot.GetComponent<RectTransform>();
+                    slotRT.anchorMin = new Vector2(0.5f, 0.45f);
+                    slotRT.anchorMax = new Vector2(0.5f, 0.45f);
+                    slotRT.pivot = new Vector2(0.5f, 0.5f);
+                    int col = s % columns;
+                    int row = s / columns;
+                    Vector2 defaultPos = new Vector2((col - (columns - 1) * 0.5f) * 110f, 130f - row * 130f);
+                    Vector2 slotSize = new Vector2(64, 64);
+
+                    // Kullanıcının daha önce belirlediği pozisyon varsa koru
+                    LevelData levelForSlot = map != null && s < map.levels.Count ? map.levels[s] : null;
+                    if (levelForSlot != null && preservePoses != null &&
+                        preservePoses.TryGetValue(levelForSlot.levelID, out SlotPose pose))
+                    {
+                        slotRT.anchoredPosition = pose.anchoredPosition;
+                        slotRT.sizeDelta = pose.size;
+                    }
+                    else
+                    {
+                        slotRT.anchoredPosition = defaultPos;
+                        slotRT.sizeDelta = slotSize;
+                    }
+                }
+                slotContainers.Add(layer.transform);
+            }
+
+            // Sol/Sağ ok butonları (ekran orta hizasında)
+            Button leftArrow = CreateButton(root.transform, "LeftArrowButton", "<", 90, 140, 48);
+            RectTransform leftRT = leftArrow.GetComponent<RectTransform>();
+            leftRT.anchorMin = new Vector2(0, 0.5f);
+            leftRT.anchorMax = new Vector2(0, 0.5f);
+            leftRT.pivot = new Vector2(0.5f, 0.5f);
+            leftRT.anchoredPosition = new Vector2(45, 0);
+            leftRT.sizeDelta = new Vector2(90, 140);
+
+            Button rightArrow = CreateButton(root.transform, "RightArrowButton", ">", 90, 140, 48);
+            RectTransform rightRT = rightArrow.GetComponent<RectTransform>();
+            rightRT.anchorMin = new Vector2(1, 0.5f);
+            rightRT.anchorMax = new Vector2(1, 0.5f);
+            rightRT.pivot = new Vector2(0.5f, 0.5f);
+            rightRT.anchoredPosition = new Vector2(-45, 0);
+            rightRT.sizeDelta = new Vector2(90, 140);
 
             // Link LevelSelectionUI references
             LevelSelectionUI ui = root.GetComponent<LevelSelectionUI>();
             var so = new UnityEditor.SerializedObject(ui);
-            so.FindProperty("container").objectReferenceValue = container.transform;
+            so.FindProperty("backgroundImage").objectReferenceValue = bgImage;
+            so.FindProperty("leftArrowButton").objectReferenceValue = leftArrow;
+            so.FindProperty("rightArrowButton").objectReferenceValue = rightArrow;
+            so.FindProperty("mapNameText").objectReferenceValue = mapNameTMP;
             so.FindProperty("backButton").objectReferenceValue = backBtn;
             so.FindProperty("btnDiffNormal").objectReferenceValue = btnNormal;
             so.FindProperty("btnDiffHard").objectReferenceValue = btnHard;
@@ -772,49 +830,79 @@ namespace TowerDefence.Editor
             if (levelBtnPrefab != null)
                 so.FindProperty("levelButtonPrefab").objectReferenceValue = levelBtnPrefab;
 
-            // Tüm LevelData ScriptableObject'leri otomatik bul ve listeye ekle
-            string[] guids = AssetDatabase.FindAssets("t:LevelData");
-            
-            // Level'ları topla ve isme göre (doğal sayısal sıralama ile) sırala
-            System.Collections.Generic.List<LevelData> allLevels = new System.Collections.Generic.List<LevelData>();
-            for (int i = 0; i < guids.Length; i++)
+            // Harita listesini bağla
+            var mapsProp = so.FindProperty("maps");
+            mapsProp.arraySize = maps.Count;
+            for (int i = 0; i < maps.Count; i++)
             {
-                string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
-                var levelData = AssetDatabase.LoadAssetAtPath<LevelData>(assetPath);
-                AutoAssignOrPlaceholder(levelData);
-                allLevels.Add(levelData);
+                mapsProp.GetArrayElementAtIndex(i).objectReferenceValue = maps[i];
             }
 
-            // Doğal sıralama için gelişmiş sayısal ayrıştırma (Regex ile)
-            allLevels.Sort((a, b) => {
-                string nameA = a.levelName != null ? a.levelName : a.name;
-                string nameB = b.levelName != null ? b.levelName : b.name;
-                
-                // İsimlerin içinden sadece sayıları çek
-                int numA = ExtractLevelNumber(nameA);
-                int numB = ExtractLevelNumber(nameB);
-                
-                // Eğer ikisinde de sayı bulunduysa sayısal karşılaştır
-                if (numA != -1 && numB != -1)
-                {
-                    return numA.CompareTo(numB);
-                }
-                
-                // Sayı yoksa normal string karşılaştırmasına dön
-                return string.Compare(nameA, nameB);
-            });
-
-            var levelsProp = so.FindProperty("levels");
-            levelsProp.arraySize = allLevels.Count;
-            for (int i = 0; i < allLevels.Count; i++)
+            // Slot container listesini bağla
+            var containersProp = so.FindProperty("slotContainers");
+            containersProp.arraySize = slotContainers.Count;
+            for (int i = 0; i < slotContainers.Count; i++)
             {
-                levelsProp.GetArrayElementAtIndex(i).objectReferenceValue = allLevels[i];
+                containersProp.GetArrayElementAtIndex(i).objectReferenceValue = slotContainers[i];
             }
-            Debug.Log($"✔ LevelSelectionPanel: {allLevels.Count} LevelData otomatik yüklendi ve sıralandı.");
             so.ApplyModifiedProperties();
 
             PrefabUtility.SaveAsPrefabAsset(root, PREFAB_PATH + "/LevelSelectionPanel.prefab");
             GameObject.DestroyImmediate(root);
+        }
+
+        // 'Assets/Data/Maps' klasöründeki LevelMapData asset'lerini Map1..Map4 sırasıyla yükler
+        private static List<LevelMapData> LoadAllLevelMapsSorted()
+        {
+            List<LevelMapData> maps = new List<LevelMapData>();
+            string[] guids = AssetDatabase.FindAssets("t:LevelMapData");
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                LevelMapData map = AssetDatabase.LoadAssetAtPath<LevelMapData>(path);
+                if (map != null) maps.Add(map);
+            }
+            maps.Sort((a, b) => ExtractLevelNumber(a.mapName != null ? a.mapName : a.name).CompareTo(ExtractLevelNumber(b.mapName != null ? b.mapName : b.name)));
+            return maps;
+        }
+
+        // Prefab yeniden üretilirken kullanıcının yerleştirdiği slot konumlarını korumak için yakalar
+        private class SlotPose
+        {
+            public Vector2 anchoredPosition;
+            public Vector2 size;
+        }
+
+        private static Dictionary<string, SlotPose> CaptureSlotPoses(List<LevelMapData> maps)
+        {
+            Dictionary<string, SlotPose> result = new Dictionary<string, SlotPose>();
+            string prefabPath = PREFAB_PATH + "/LevelSelectionPanel.prefab";
+            GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (existing == null || maps == null) return result;
+
+            for (int m = 0; m < maps.Count; m++)
+            {
+                if (maps[m] == null) continue;
+                Transform layer = existing.transform.Find("MapSlotLayer_" + (m + 1));
+                if (layer == null) continue;
+
+                LevelMapData map = maps[m];
+                int count = Mathf.Min(map.levels.Count, layer.childCount);
+                for (int s = 0; s < count; s++)
+                {
+                    if (map.levels[s] == null) continue;
+                    Transform slot = layer.Find("LevelSlot_" + s);
+                    if (slot == null) continue;
+                    RectTransform rt = slot.GetComponent<RectTransform>();
+                    if (rt == null) continue;
+                    result[map.levels[s].levelID] = new SlotPose
+                    {
+                        anchoredPosition = rt.anchoredPosition,
+                        size = rt.sizeDelta
+                    };
+                }
+            }
+            return result;
         }
 
         // Metnin içindeki ilk sayıyı bulur ve döndürür. (Örn: "Level 10" -> 10)
@@ -830,54 +918,57 @@ namespace TowerDefence.Editor
             return -1;
         }
 
-        // Level butonunu ayrı asset olarak kaydet ve döndür
+        // Level işaretçisi (marker) için yuvarlak sprite üretir / yükler — kutu DEĞİL, basit belirteç
+        private static Sprite GetOrCreateLevelMarkerSprite()
+        {
+            const string path = "Assets/Data/Icons/UI/LevelMarker.png";
+            Sprite existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (existing != null) return existing;
+
+            const int size = 128;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = (x + 0.5f) / size - 0.5f;
+                    float dy = (y + 0.5f) / size - 0.5f;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    float alpha = Mathf.Clamp01((0.5f - d) * 16f); // Yumuşak kenar
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+            tex.Apply();
+            byte[] png = tex.EncodeToPNG();
+            string dir = System.IO.Path.GetDirectoryName(path);
+            if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+            System.IO.File.WriteAllBytes(path, png);
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+
+            TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.mipmapEnabled = false;
+            importer.SaveAndReimport();
+
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        // Level butonunu ayrı asset olarak kaydet ve döndür — SADECE belirteç (marker), görsel/kutu yok
         private static GameObject CreateLevelButtonPrefabAsset()
         {
+            Sprite markerSprite = GetOrCreateLevelMarkerSprite();
+
+            // Marker gövdesi: yuvarlak belirteç
             GameObject btn = new GameObject("LevelButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            btn.GetComponent<Image>().color = new Color(0.15f, 0.15f, 0.22f, 1f);
+            Image btnImg = btn.GetComponent<Image>();
+            btnImg.sprite = markerSprite;
+            btnImg.color = new Color(0.85f, 0.95f, 1f);
+            btnImg.type = Image.Type.Simple;
+            btnImg.preserveAspect = true; // Slot'i değiştirsende yuvarlak kalsın
 
-            // Level ismi
-            TextMeshProUGUI nameTxt = CreateTMP(btn.transform, "LevelName", "Level 1", 28, 200, 40);
-            nameTxt.rectTransform.anchorMin = new Vector2(0, 1);
-            nameTxt.rectTransform.anchorMax = new Vector2(1, 1);
-            nameTxt.rectTransform.offsetMin = new Vector2(10, -50);
-            nameTxt.rectTransform.offsetMax = new Vector2(-10, -10);
-            nameTxt.alignment = TMPro.TextAlignmentOptions.Center;
-            nameTxt.enableAutoSizing = true;
-            nameTxt.fontSizeMin = 12;
-            nameTxt.fontSizeMax = 28;
-
-            // Preview Image alanı
-            GameObject preview = new GameObject("PreviewImage", typeof(RectTransform), typeof(Image));
-            preview.transform.SetParent(btn.transform, false);
-            RectTransform previewRT = preview.GetComponent<RectTransform>();
-            previewRT.anchorMin = new Vector2(0.1f, 0.2f);
-            previewRT.anchorMax = new Vector2(0.9f, 0.85f);
-            previewRT.offsetMin = new Vector2(0, -20); // bottom = -20
-            previewRT.offsetMax = new Vector2(0, 10);   // top = 10
-            previewRT.localScale = new Vector3(1f, 0.5f, 1f); // scale Y = 0.5
-            preview.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.4f, 1f);
-
-            // Zorluk Container (3 yıldız)
-            GameObject diffContainer = new GameObject("DifficultyContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            diffContainer.transform.SetParent(btn.transform, false);
-            RectTransform diffRT = diffContainer.GetComponent<RectTransform>();
-            diffRT.anchorMin = new Vector2(0.5f, 0);
-            diffRT.anchorMax = new Vector2(0.5f, 0);
-            diffRT.sizeDelta = new Vector2(120, 30);
-            diffRT.anchoredPosition = new Vector2(0, 30);
-            HorizontalLayoutGroup dhlg = diffContainer.GetComponent<HorizontalLayoutGroup>();
-            dhlg.childAlignment = TextAnchor.MiddleCenter;
-            dhlg.spacing = 5;
-            for (int i = 0; i < 3; i++)
-            {
-                GameObject star = new GameObject("Star_" + i, typeof(RectTransform), typeof(Image));
-                star.transform.SetParent(diffContainer.transform, false);
-                star.GetComponent<RectTransform>().sizeDelta = new Vector2(25, 25);
-                star.GetComponent<Image>().color = new Color(1f, 0.85f, 0.1f);
-            }
-
-            // Locked Overlay
+            // Kilit kaplaması (kilitli marker karartılır)
             GameObject locked = new GameObject("LockedOverlay", typeof(RectTransform), typeof(Image));
             locked.transform.SetParent(btn.transform, false);
             RectTransform lockedRT = locked.GetComponent<RectTransform>();
@@ -885,7 +976,32 @@ namespace TowerDefence.Editor
             lockedRT.anchorMax = Vector2.one;
             lockedRT.offsetMin = Vector2.zero;
             lockedRT.offsetMax = Vector2.zero;
-            locked.GetComponent<Image>().color = new Color(0, 0, 0, 0.65f);
+            Image lockedImg = locked.GetComponent<Image>();
+            lockedImg.sprite = markerSprite;
+            lockedImg.color = new Color(0, 0, 0, 0.8f);
+            lockedImg.preserveAspect = true;
+
+            // Yıldızlar — marker'ın hemen üstünde (tamamlanan seviyede o kadar yıldız yanar)
+            GameObject starCont = new GameObject("StarContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            starCont.transform.SetParent(btn.transform, false);
+            RectTransform starRT = starCont.GetComponent<RectTransform>();
+            starRT.anchorMin = new Vector2(0.5f, 1f);
+            starRT.anchorMax = new Vector2(0.5f, 1f);
+            starRT.pivot = new Vector2(0.5f, 1f);
+            starRT.sizeDelta = new Vector2(60, 18);
+            starRT.anchoredPosition = new Vector2(0, 10);
+            HorizontalLayoutGroup shlg = starCont.GetComponent<HorizontalLayoutGroup>();
+            shlg.childAlignment = TextAnchor.MiddleCenter;
+            shlg.spacing = 3;
+            for (int i = 0; i < 3; i++)
+            {
+                GameObject star = new GameObject("Star_" + i, typeof(RectTransform), typeof(Image));
+                star.transform.SetParent(starCont.transform, false);
+                Image starImg = star.GetComponent<Image>();
+                starImg.color = new Color(0.3f, 0.3f, 0.38f); // Soluk (tamamlanmamış)
+                starImg.raycastTarget = false;
+                star.GetComponent<RectTransform>().sizeDelta = new Vector2(16, 16);
+            }
 
             string path = PREFAB_PATH + "/LevelButton.prefab";
             GameObject savedPrefab = PrefabUtility.SaveAsPrefabAsset(btn, path);
@@ -1002,7 +1118,7 @@ namespace TowerDefence.Editor
             startMatchBtn.GetComponent<Image>().color = new Color(0.2f, 0.8f, 0.2f);
 
             // Back Button
-            Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 180, 60, 22);
+            Button backBtn = CreateButton(root.transform, "BackButton", "← BACK", 180, 80, 22);
             RectTransform backRT = backBtn.GetComponent<RectTransform>();
             backRT.anchorMin = new Vector2(0, 1);
             backRT.anchorMax = new Vector2(0, 1);
@@ -1166,7 +1282,9 @@ namespace TowerDefence.Editor
             GameObject itemPrefab = CreateHeroShopItemPrefabAsset();
 
             GameObject root = new GameObject("HeroShopPanel", typeof(RectTransform), typeof(Image), typeof(HeroShopUI));
-            root.GetComponent<Image>().color = new Color(0.08f, 0.08f, 0.12f, 0.97f);
+            Image rootImg = root.GetComponent<Image>();
+            rootImg.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Panel_Parchment.jpg");
+            rootImg.type = Image.Type.Sliced;
             RectTransform rootRT = root.GetComponent<RectTransform>();
             rootRT.anchorMin = Vector2.zero;
             rootRT.anchorMax = Vector2.one;
@@ -1241,8 +1359,8 @@ namespace TowerDefence.Editor
             TextMeshProUGUI abilityDesc = CreateTMP(detailRoot.transform, "AbilityDesc", "Description", 24, 450, 120);
             TextMeshProUGUI costText = CreateTMP(detailRoot.transform, "Cost", "500 Karma", 28, 300, 40);
 
-            Button actionBtn = CreateButton(detailRoot.transform, "ActionButton", "UNLOCK HERO", 280, 60, 26);
-            Button closeBtn = CreateButton(detailRoot.transform, "CloseButton", "CLOSE", 140, 50, 22);
+            Button actionBtn = CreateButton(detailRoot.transform, "ActionButton", "UNLOCK HERO", 280, 80, 26);
+            Button closeBtn = CreateButton(detailRoot.transform, "CloseButton", "CLOSE", 140, 70, 22);
 
             HeroDetailPanelUI detailUI = detailRoot.GetComponent<HeroDetailPanelUI>();
             var detailSo = new SerializedObject(detailUI);
@@ -1369,8 +1487,21 @@ namespace TowerDefence.Editor
             statsHlg.childAlignment = TextAnchor.MiddleCenter;
             statsHlg.spacing = 40;
 
-            TextMeshProUGUI livesText = CreateTMP(statsPanel.transform, "LivesText", "Lives: 20/20", 24, 150, 40);
-            TextMeshProUGUI waveText  = CreateTMP(statsPanel.transform, "WaveText",  "Wave: 1/5",    24, 150, 40);
+            GameObject livesGroup = CreateUINode(statsPanel.transform, "LivesGroup", new Vector2(150, 40));
+            HorizontalLayoutGroup livesHlg = livesGroup.AddComponent<HorizontalLayoutGroup>();
+            livesHlg.childAlignment = TextAnchor.MiddleCenter;
+            livesHlg.spacing = 10;
+            GameObject livesIconGo = CreateUINode(livesGroup.transform, "LivesIcon", new Vector2(35, 35));
+            livesIconGo.AddComponent<Image>().sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icon_Heart.png");
+            TextMeshProUGUI livesText = CreateTMP(livesGroup.transform, "LivesText", "20/20", 24, 100, 40);
+
+            GameObject waveGroup = CreateUINode(statsPanel.transform, "WaveGroup", new Vector2(150, 40));
+            HorizontalLayoutGroup waveHlg = waveGroup.AddComponent<HorizontalLayoutGroup>();
+            waveHlg.childAlignment = TextAnchor.MiddleCenter;
+            waveHlg.spacing = 10;
+            GameObject waveIconGo = CreateUINode(waveGroup.transform, "WaveIcon", new Vector2(35, 35));
+            waveIconGo.AddComponent<Image>().sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icon_Skull.png");
+            TextMeshProUGUI waveText  = CreateTMP(waveGroup.transform, "WaveText",  "1/5", 24, 100, 40);
             
             GameObject currGroup = CreateUINode(statsPanel.transform, "CurrencyGroup", new Vector2(150, 40));
             HorizontalLayoutGroup cHlg = currGroup.AddComponent<HorizontalLayoutGroup>();
@@ -1396,8 +1527,8 @@ namespace TowerDefence.Editor
             hudSo.FindProperty("waveText").objectReferenceValue = waveText;
             hudSo.FindProperty("currencyText").objectReferenceValue = currencyText;
             hudSo.FindProperty("currencyIcon").objectReferenceValue = curIconImg;
-            hudSo.FindProperty("goldSprite").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/Gold.png");
-            hudSo.FindProperty("soulSprite").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/Soul.png");
+            hudSo.FindProperty("goldSprite").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icon_Gold.png");
+            hudSo.FindProperty("soulSprite").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Icon_Soul.png");
             hudSo.FindProperty("timerText").objectReferenceValue = timerText;
             hudSo.FindProperty("phaseText").objectReferenceValue = phaseText;
             hudSo.FindProperty("skipPrepButton").objectReferenceValue = skipButton;
@@ -1413,7 +1544,7 @@ namespace TowerDefence.Editor
             spellRT.pivot = new Vector2(1, 0);
             spellRT.anchoredPosition = new Vector2(-30, 30);
             spellRT.sizeDelta = new Vector2(400, 100);
-            spellPanel.GetComponent<Image>().color = new Color(0, 0, 0, 0.4f);
+            spellPanel.GetComponent<Image>().color = new Color(0.15f, 0.12f, 0.1f, 0.5f);
 
             HorizontalLayoutGroup hlg = spellPanel.GetComponent<HorizontalLayoutGroup>();
             hlg.childAlignment = TextAnchor.MiddleCenter;
@@ -1523,9 +1654,9 @@ namespace TowerDefence.Editor
             speedHlg.childForceExpandWidth  = true;
             speedHlg.childForceExpandHeight = true;
 
-            Button speedX1Btn = CreateButton(speedPanel.transform, "SpeedX1Button", "x1", 65, 44, 22);
-            Button speedX2Btn = CreateButton(speedPanel.transform, "SpeedX2Button", "x2", 65, 44, 22);
-            Button speedX3Btn = CreateButton(speedPanel.transform, "SpeedX3Button", "x3", 65, 44, 22);
+            Button speedX1Btn = CreateButton(speedPanel.transform, "SpeedX1Button", "x1", 65, 55, 22);
+            Button speedX2Btn = CreateButton(speedPanel.transform, "SpeedX2Button", "x2", 65, 55, 22);
+            Button speedX3Btn = CreateButton(speedPanel.transform, "SpeedX3Button", "x3", 65, 55, 22);
 
             // Aktif buton sarı, pasifler koyu görünsün
             speedX1Btn.GetComponent<Image>().color = new Color(1f,   0.75f, 0.1f); // Varsayılan x1 aktif
@@ -1543,7 +1674,7 @@ namespace TowerDefence.Editor
             pauseRT.anchoredPosition = new Vector2(-20f, -90f);
             pauseRT.sizeDelta = new Vector2(240f, 50f);
 
-            Button pauseBtn = CreateButton(pausePanel.transform, "PauseButton", "PAUSE", 220, 36, 18);
+            Button pauseBtn = CreateButton(pausePanel.transform, "PauseButton", "PAUSE", 220, 50, 18);
             pauseBtn.GetComponent<Image>().color = new Color(0.2f, 0.2f,  0.2f);
 
             // HUDController'a hız buton referanslarını bağla
@@ -1607,6 +1738,11 @@ namespace TowerDefence.Editor
             rootRT.offsetMin = Vector2.zero;
             rootRT.offsetMax = Vector2.zero;
 
+            GameObject bgPanel = CreateUINode(root.transform, "BgPanel", new Vector2(900, 800));
+            Image bgImg = bgPanel.AddComponent<Image>();
+            bgImg.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Panel_Wood.png");
+            bgImg.type = Image.Type.Sliced;
+
             // Title
             TextMeshProUGUI title = CreateTMP(root.transform, "Title", "VICTORY!", 120, 800, 150);
             title.rectTransform.anchoredPosition = new Vector2(0, 300);
@@ -1635,8 +1771,23 @@ namespace TowerDefence.Editor
             btnHlg.childAlignment = TextAnchor.MiddleCenter;
             btnHlg.spacing = 50;
 
-            Button menuBtn = CreateButton(btnContainer.transform, "MenuButton", "MAIN MENU", 300, 80, 28);
-            Button nextBtn = CreateButton(btnContainer.transform, "NextButton", "NEXT", 300, 80, 28);
+            Button menuBtn = CreateButton(btnContainer.transform, "MenuButton", "MAIN MENU", 300, 100, 28);
+            Button nextBtn = CreateButton(btnContainer.transform, "NextButton", "NEXT", 300, 100, 28);
+
+            // Reward Text (ödül miktarını gösterir)
+            TextMeshProUGUI rewardTxt = CreateTMP(root.transform, "RewardText", "+50 Karma  +10 Crystals", 36, 800, 60);
+            rewardTxt.rectTransform.anchoredPosition = new Vector2(0, -100);
+            rewardTxt.alignment = TextAlignmentOptions.Center;
+            rewardTxt.color = new Color(1f, 0.84f, 0f); // Gold
+
+            // Double Reward Button (reklam izleyerek 2x ödül)
+            Button doubleBtn = CreateButton(root.transform, "DoubleRewardButton", "WATCH AD FOR 2X", 400, 90, 24);
+            doubleBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -180);
+            // Buton rengini özel yap (altın sarısı)
+            var dblColors = doubleBtn.colors;
+            dblColors.normalColor = new Color(0.85f, 0.65f, 0.13f);
+            dblColors.highlightedColor = new Color(1f, 0.84f, 0f);
+            doubleBtn.colors = dblColors;
 
             // Link LevelResultUI
             LevelResultUI ui = root.GetComponent<LevelResultUI>();
@@ -1650,9 +1801,101 @@ namespace TowerDefence.Editor
 
             so.FindProperty("menuButton").objectReferenceValue = menuBtn;
             so.FindProperty("nextLevelButton").objectReferenceValue = nextBtn;
+            so.FindProperty("rewardText").objectReferenceValue = rewardTxt;
+            so.FindProperty("doubleRewardButton").objectReferenceValue = doubleBtn;
             so.ApplyModifiedProperties();
 
             PrefabUtility.SaveAsPrefabAsset(root, PREFAB_PATH + "/LevelResultPanel.prefab");
+            GameObject.DestroyImmediate(root);
+        }
+
+        private static Slider CreateSlider(Transform parent, string name, Vector2 size)
+        {
+            GameObject root = CreateUINode(parent, name, size);
+            
+            GameObject bg = CreateUINode(root.transform, "Background", size);
+            bg.AddComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f, 1f);
+            
+            GameObject fillArea = CreateUINode(root.transform, "Fill Area", size);
+            GameObject fill = CreateUINode(fillArea.transform, "Fill", size);
+            fill.AddComponent<Image>().color = new Color(0.2f, 0.8f, 0.2f, 1f);
+            
+            Slider slider = root.AddComponent<Slider>();
+            slider.fillRect = fill.GetComponent<RectTransform>();
+            slider.value = 1f;
+            
+            // Set anchors for fill
+            RectTransform fillAreaRT = fillArea.GetComponent<RectTransform>();
+            fillAreaRT.anchorMin = new Vector2(0, 0.25f);
+            fillAreaRT.anchorMax = new Vector2(1, 0.75f);
+            fillAreaRT.offsetMin = Vector2.zero; fillAreaRT.offsetMax = Vector2.zero;
+
+            RectTransform fillRT = fill.GetComponent<RectTransform>();
+            fillRT.anchorMin = Vector2.zero; fillRT.anchorMax = Vector2.one;
+            fillRT.offsetMin = Vector2.zero; fillRT.offsetMax = Vector2.zero;
+
+            return slider;
+        }
+
+        public static void CreateSettingsUIPrefab()
+        {
+            EnsureDirectory();
+
+            GameObject root = new GameObject("SettingsPanel", typeof(RectTransform), typeof(Image), typeof(SettingsUI));
+            Image rootImg = root.GetComponent<Image>();
+            rootImg.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Panel_Wood.png");
+            rootImg.type = Image.Type.Sliced;
+            rootImg.color = Color.white;
+            RectTransform rootRT = root.GetComponent<RectTransform>();
+            rootRT.anchorMin = Vector2.zero;
+            rootRT.anchorMax = Vector2.one;
+            rootRT.offsetMin = Vector2.zero;
+            rootRT.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI title = CreateTMP(root.transform, "Title", "SETTINGS", 100, 800, 120);
+            title.rectTransform.anchoredPosition = new Vector2(0, 350);
+            title.color = Color.white;
+
+            // Sliders Container
+            GameObject sliderContainer = CreateUINode(root.transform, "SliderContainer", new Vector2(800, 500));
+            sliderContainer.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 50);
+            VerticalLayoutGroup vlg = sliderContainer.AddComponent<VerticalLayoutGroup>();
+            vlg.childAlignment = TextAnchor.MiddleCenter;
+            vlg.spacing = 80;
+            vlg.childControlHeight = false; vlg.childControlWidth = false;
+
+            // Master Volume
+            GameObject masterGrp = CreateUINode(sliderContainer.transform, "MasterGroup", new Vector2(600, 100));
+            CreateTMP(masterGrp.transform, "Label", "MASTER VOLUME", 36, 400, 50).rectTransform.anchoredPosition = new Vector2(0, 40);
+            Slider masterSlider = CreateSlider(masterGrp.transform, "MasterSlider", new Vector2(500, 40));
+            masterSlider.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -20);
+
+            // Music Volume
+            GameObject musicGrp = CreateUINode(sliderContainer.transform, "MusicGroup", new Vector2(600, 100));
+            CreateTMP(musicGrp.transform, "Label", "MUSIC VOLUME", 36, 400, 50).rectTransform.anchoredPosition = new Vector2(0, 40);
+            Slider musicSlider = CreateSlider(musicGrp.transform, "MusicSlider", new Vector2(500, 40));
+            musicSlider.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -20);
+
+            // SFX Volume
+            GameObject sfxGrp = CreateUINode(sliderContainer.transform, "SFXGroup", new Vector2(600, 100));
+            CreateTMP(sfxGrp.transform, "Label", "SFX VOLUME", 36, 400, 50).rectTransform.anchoredPosition = new Vector2(0, 40);
+            Slider sfxSlider = CreateSlider(sfxGrp.transform, "SFXSlider", new Vector2(500, 40));
+            sfxSlider.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -20);
+
+            // Close Button
+            Button closeBtn = CreateButton(root.transform, "CloseButton", "CLOSE", 300, 80, 36);
+            closeBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -350);
+
+            // Link SettingsUI
+            SettingsUI ui = root.GetComponent<SettingsUI>();
+            var so = new UnityEditor.SerializedObject(ui);
+            so.FindProperty("masterSlider").objectReferenceValue = masterSlider;
+            so.FindProperty("musicSlider").objectReferenceValue = musicSlider;
+            so.FindProperty("sfxSlider").objectReferenceValue = sfxSlider;
+            so.FindProperty("closeButton").objectReferenceValue = closeBtn;
+            so.ApplyModifiedProperties();
+
+            PrefabUtility.SaveAsPrefabAsset(root, PREFAB_PATH + "/SettingsPanel.prefab");
             GameObject.DestroyImmediate(root);
         }
 
@@ -1790,7 +2033,13 @@ namespace TowerDefence.Editor
             GameObject root = new GameObject("_Engine_MasterPrefab");
             
             // Tüm Manager'ları ekle (Tüm Scriptable Singleton veya MonoBehaviour tabanlı sistemler)
-            root.AddComponent<GameManager>();
+            GameManager gm = root.AddComponent<GameManager>();
+            var gmSo = new UnityEditor.SerializedObject(gm);
+            gmSo.FindProperty("battleBGM").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/BattleTheme.wav");
+            gmSo.FindProperty("victorySFX").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/Victory.wav");
+            gmSo.FindProperty("defeatSFX").objectReferenceValue = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/Failure.wav");
+            gmSo.ApplyModifiedProperties();
+
             root.AddComponent<PhaseManager>();
             root.AddComponent<CurrencyManager>();
             root.AddComponent<SpellManager>();
@@ -1879,6 +2128,8 @@ namespace TowerDefence.Editor
                 towersProp.GetArrayElementAtIndex(tIndex).objectReferenceValue = tData;
                 tIndex++;
             }
+            tpmSo.FindProperty("buildSFX").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/Construction.mp3");
+            tpmSo.FindProperty("menuOpenSFX").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/UIOpen.wav");
             tpmSo.ApplyModifiedProperties();
 
             // --- YENİ: UnitPlacementManager.allUnits Listesini Doldur ---
@@ -1948,7 +2199,7 @@ namespace TowerDefence.Editor
             
             GameObject slot = new GameObject("SpellButton_Template", typeof(RectTransform), typeof(Image), typeof(Button), typeof(SpellButtonUI));
             slot.GetComponent<RectTransform>().sizeDelta = new Vector2(80, 80);
-            slot.GetComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+            slot.GetComponent<Image>().color = new Color(0.4f, 0.35f, 0.3f, 0.7f);
 
             // Icon
             GameObject icon = new GameObject("Icon", typeof(RectTransform), typeof(Image));
@@ -1962,7 +2213,7 @@ namespace TowerDefence.Editor
             overlay.GetComponent<RectTransform>().anchorMax = Vector2.one;
             overlay.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
             Image overlayImg = overlay.GetComponent<Image>();
-            overlayImg.color = new Color(0, 0, 0, 0.6f);
+            overlayImg.color = new Color(0.1f, 0.1f, 0.1f, 0.45f);
             overlayImg.type = Image.Type.Filled;
             overlayImg.fillMethod = Image.FillMethod.Radial360;
 
@@ -2039,22 +2290,32 @@ namespace TowerDefence.Editor
             return tmp;
         }
 
-        private static Button CreateButton(Transform parent, string name, string label, float width = 100f, float height = 35f, int fontSize = 16)
+        private static Button CreateButton(Transform parent, string name, string label, float width = 160f, float height = 55f, int fontSize = 18)
         {
             GameObject go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
-            go.GetComponent<Image>().color = Color.white;
+            Image btnImg = go.GetComponent<Image>();
+            btnImg.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/UI/Button_Normal.png");
+            btnImg.type = Image.Type.Sliced;
+            btnImg.color = Color.white;
             
             RectTransform rt = go.GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(width, height);
             
             TextMeshProUGUI tmp = CreateTMP(go.transform, "Label", label, fontSize, width, height);
-            tmp.color = Color.black;
+            tmp.color = new Color(0.95f, 0.9f, 0.8f); // Warm off-white
+            tmp.fontStyle = FontStyles.Bold;
             tmp.rectTransform.anchorMin = Vector2.zero;
             tmp.rectTransform.anchorMax = Vector2.one;
             tmp.rectTransform.offsetMin = Vector2.zero;
             tmp.rectTransform.offsetMax = Vector2.zero;
             
+            UIButtonSound soundScript = go.AddComponent<UIButtonSound>();
+            AudioClip clickClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/UIClick.wav");
+            var so = new UnityEditor.SerializedObject(soundScript);
+            so.FindProperty("clickSound").objectReferenceValue = clickClip;
+            so.ApplyModifiedProperties();
+
             return go.GetComponent<Button>();
         }
 

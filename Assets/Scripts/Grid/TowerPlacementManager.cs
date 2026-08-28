@@ -16,6 +16,10 @@ namespace TowerDefence.Grid
         [SerializeField] private List<TowerData> allTowers;
         public List<TowerData> AllTowers => allTowers;
 
+        [Header("Audio")]
+        public AudioClip buildSFX;
+        public AudioClip menuOpenSFX;
+
         private TowerSlot activeSlot;
 
         private void Awake()
@@ -124,7 +128,7 @@ namespace TowerDefence.Grid
             if (Camera.main == null) return;
             Debug.Log("<color=white>[CLICK-TRACE]</color> HandleMouseClick Called!");
 
-            Vector2 mousePos = Mouse.current.position.ReadValue();
+            Vector2 mousePos = Pointer.current.position.ReadValue();
             Ray ray = Camera.main.ScreenPointToRay(mousePos);
             RaycastHit hit;
 
@@ -224,6 +228,8 @@ namespace TowerDefence.Grid
 
                 if (slot != null)
                 {
+                    if (AudioManager.Instance != null && menuOpenSFX != null)
+                        AudioManager.Instance.PlaySFX(menuOpenSFX);
                     slot.HandleClick();
                 }
                 else
@@ -235,6 +241,10 @@ namespace TowerDefence.Grid
             else
             {
                 // Gökyüzüne veya collider olmayan bir yere tıklandığında da kapat
+                if (SpellManager.Instance != null && SpellManager.Instance.SelectedSpell != null)
+                {
+                    SpellManager.Instance.ClearSelectedSpell();
+                }
                 CloseAllTowerUI();
             }
         }

@@ -88,9 +88,11 @@ namespace TowerDefence.UI
             if (skillData == null) return;
 
             bool isUnlocked = MetaProgressionManager.Instance.IsSkillUnlocked(skillData.skillID);
+            int maxUnlocked = MetaProgressionManager.Instance.GetMaxSkillsUnlocked();
+            int currentUnlocked = MetaProgressionManager.Instance.GetCurrentSkillsUnlocked();
 
             purchasedOverlay.gameObject.SetActive(isUnlocked);
-            buyButton.interactable = true;
+            buyButton.interactable = !isUnlocked && (maxUnlocked <= 0 || currentUnlocked < maxUnlocked);
 
             bool requirementsMet = true;
             foreach (var req in skillData.requiredSkills)

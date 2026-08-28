@@ -33,6 +33,20 @@ namespace TowerDefence.UI
                 });
             }
 
+            if (itemContainer != null)
+            {
+                RectTransform rt = itemContainer.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    // Scroll view'un düzgün çalışması için Content pivotu her zaman üstte (1) olmalı
+                    rt.pivot = new Vector2(0.5f, 1f);
+                    rt.anchorMin = new Vector2(0.5f, 1f);
+                    rt.anchorMax = new Vector2(0.5f, 1f);
+                    // Y pozisyonunu sıfırlayarak en üste yasla
+                    rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, 0);
+                }
+            }
+
             Populate();
         }
 
@@ -40,6 +54,18 @@ namespace TowerDefence.UI
         {
             if (MetaProgressionManager.Instance != null)
                 MetaProgressionManager.Instance.OnHeroProgressChanged += OnProgressChanged;
+            
+            // Panelin her açılışında scrollu en başa al
+            if (itemContainer != null)
+            {
+                RectTransform rt = itemContainer.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.pivot = new Vector2(0.5f, 1f);
+                    rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, 0);
+                }
+            }
+
             RefreshKarma();
             Populate();
         }

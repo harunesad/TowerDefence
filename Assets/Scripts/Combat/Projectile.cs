@@ -39,6 +39,13 @@ namespace TowerDefence.Combat
 
         private Transform target;
 
+        private Vector3 GetTargetCenter()
+        {
+            if (target == null) return transform.position;
+            // Karakterlerin merkez noktası ayaklarında olduğu için mermiyi göğüs hizasına (1 birim yukarı) nişanla
+            return target.position + Vector3.up * 1f;
+        }
+
         public void Seek(Transform _target)
         {
             target = _target;
@@ -48,7 +55,7 @@ namespace TowerDefence.Combat
             {
                 isBallistic = true;
                 launchPos = transform.position;
-                aimPoint = target.position;
+                aimPoint = GetTargetCenter();
 
                 IDamageable cachedDmg = target.GetComponentInParent<IDamageable>();
                 if (cachedDmg != null) cachedTargetSide = cachedDmg.GetSide();
@@ -82,7 +89,8 @@ namespace TowerDefence.Combat
                 return;
             }
 
-            Vector3 dir = target.position - transform.position;
+            Vector3 currentTargetPos = GetTargetCenter();
+            Vector3 dir = currentTargetPos - transform.position;
             float distanceThisFrame = speed * Time.deltaTime;
 
             if (dir.magnitude <= distanceThisFrame)
@@ -92,7 +100,7 @@ namespace TowerDefence.Combat
             }
 
             transform.Translate(dir.normalized * distanceThisFrame, Space.World);
-            transform.LookAt(target);
+            transform.LookAt(currentTargetPos);
         }
 
         private void UpdateBallistic()

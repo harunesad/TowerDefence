@@ -23,6 +23,11 @@ namespace TowerDefence.Core
         public event Action<GameState> OnGameStateChanged;
 
         [SerializeField] private GameState currentState;
+        
+        [Header("Audio")]
+        [SerializeField] private AudioClip battleBGM;
+        [SerializeField] private AudioClip victorySFX;
+        [SerializeField] private AudioClip defeatSFX;
 
         private void Awake()
         {
@@ -31,6 +36,10 @@ namespace TowerDefence.Core
                 Instance = this;
                 transform.SetParent(null);
                 DontDestroyOnLoad(gameObject);
+                
+                // Otomatik AdManager ekle
+                if (GetComponent<AdManager>() == null)
+                    gameObject.AddComponent<AdManager>();
             }
             else
             {
@@ -58,15 +67,20 @@ namespace TowerDefence.Core
             switch (newState)
             {
                 case GameState.Playing:
-                    // Oyun başladığında yapılacaklar
+                    if (AudioManager.Instance != null && battleBGM != null)
+                        AudioManager.Instance.PlayBGM(battleBGM);
                     break;
                 case GameState.Victory:
                     Debug.Log("Victory!");
+                    if (AudioManager.Instance != null && victorySFX != null)
+                        AudioManager.Instance.PlaySFX(victorySFX);
                     CampaignManager.Instance.CompleteCurrentLevel();
                     TriggerResultUI(true);
                     break;
                 case GameState.Defeat:
                     Debug.Log("Defeat.");
+                    if (AudioManager.Instance != null && defeatSFX != null)
+                        AudioManager.Instance.PlaySFX(defeatSFX);
                     MetaProgressionManager.Instance.AddKarma(20); // Teselli ödülü
                     TriggerResultUI(false);
                     break;

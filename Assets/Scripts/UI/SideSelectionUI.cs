@@ -149,12 +149,39 @@ namespace TowerDefence.UI
             foreach (Transform child in spellItemContainer)
                 Destroy(child.gameObject);
 
+            // En yüksek seviyeli büyüleri bulmak için gruplandır
+            Dictionary<string, SpellData> bestSpells = new Dictionary<string, SpellData>();
+            Dictionary<string, int> highestTiers = new Dictionary<string, int>();
+
             foreach (SpellData spell in allPossibleSpells)
             {
                 if (spell == null) continue;
                 if (spell.side != side && spell.side != Side.Neutral) continue;
                 if (!MetaProgressionManager.Instance.IsSpellUnlocked(spell.spellID)) continue;
 
+                // Spell_Light_Thunder_1 -> family: Spell_Light_Thunder, tier: 1
+                string family = spell.spellID;
+                int tier = 1;
+                int lastUnderscore = spell.spellID.LastIndexOf('_');
+                if (lastUnderscore > 0 && lastUnderscore < spell.spellID.Length - 1)
+                {
+                    string suffix = spell.spellID.Substring(lastUnderscore + 1);
+                    if (int.TryParse(suffix, out int parsedTier))
+                    {
+                        family = spell.spellID.Substring(0, lastUnderscore);
+                        tier = parsedTier;
+                    }
+                }
+
+                if (!highestTiers.ContainsKey(family) || tier > highestTiers[family])
+                {
+                    highestTiers[family] = tier;
+                    bestSpells[family] = spell;
+                }
+            }
+
+            foreach (SpellData spell in bestSpells.Values)
+            {
                 GameObject go = Instantiate(spellItemPrefab, spellItemContainer);
                 SpellLoadoutItemUI itemUI = go.GetComponent<SpellLoadoutItemUI>();
                 if (itemUI != null) itemUI.Setup(spell);

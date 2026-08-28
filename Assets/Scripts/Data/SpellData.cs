@@ -29,11 +29,13 @@ namespace TowerDefence.Data
 
         [Header("Effects")]
         public SpellType spellType;
-        public float power = 50f;     // Hasar, iyileştirme veya dondurma süresi
+        public float power = 50f;     // Hasar, iyileştirme veya buff çarpanı
         public float radius = 3f;    // Etki alanı yarıçapı
+        public float duration = 5f;  // Buff, dondurma veya kalkan süresi
         
         [Header("Visuals")]
         public VFXType spellVFXType;
+        public GameObject spellVFXPrefab; // Doğrudan instantiate edilecek VFX prefab'ı
         public AudioClip castSFX;
 
         [Header("Spawn Settings (For Reinforcements)")]

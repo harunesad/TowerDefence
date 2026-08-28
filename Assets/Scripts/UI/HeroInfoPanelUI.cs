@@ -42,12 +42,11 @@ namespace TowerDefence.UI
             int level = MetaProgressionManager.Instance != null
                 ? MetaProgressionManager.Instance.GetHeroLevel(data.heroID) : 1;
 
-            float iconSize = 64f;
-            float y = -10 - iconSize - 8;
+            float y = -10 - 8;
             float contentH = 24 + 2; // name + its bottom gap
             contentH += 5 * 18 + 4; // 5 stat rows
             contentH += 2 + 18 + 28; // sep2 + ability name + ability desc
-            float panelH = Mathf.Abs(y) + contentH + 12;
+            float panelH = Mathf.Abs(y) + contentH + 10;
 
             RectTransform rt = GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(panelW, panelH);
@@ -75,35 +74,7 @@ namespace TowerDefence.UI
             CreateImage("Border", Vector2.zero, Vector2.zero, Vector2.one, Vector2.zero, new Color(0.2f, 0.2f, 0.3f, 1f), false);
             CreateImage("InnerBg", Vector2.zero, Vector2.zero, Vector2.one, new Vector2(-4, -4), new Color(0.08f, 0.08f, 0.13f, 1f), false);
 
-            GameObject icoBg = new GameObject("IconBg", typeof(RectTransform), typeof(Image));
-            icoBg.transform.SetParent(transform, false);
-            RectTransform icoBgRT = icoBg.GetComponent<RectTransform>();
-            icoBgRT.anchorMin = new Vector2(0.5f, 1f);
-            icoBgRT.anchorMax = new Vector2(0.5f, 1f);
-            icoBgRT.pivot = new Vector2(0.5f, 1f);
-            icoBgRT.anchoredPosition = new Vector2(0, -10);
-            icoBgRT.sizeDelta = new Vector2(iconSize, iconSize);
-            Image icoBgImg = icoBg.GetComponent<Image>();
-            icoBgImg.color = new Color(0.12f, 0.12f, 0.18f, 1f);
-            icoBgImg.raycastTarget = false;
-
-            GameObject icoGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-            icoGO.transform.SetParent(icoBg.transform, false);
-            RectTransform icoRT = icoGO.GetComponent<RectTransform>();
-            icoRT.anchorMin = Vector2.zero;
-            icoRT.anchorMax = Vector2.one;
-            icoRT.offsetMin = Vector2.zero;
-            icoRT.offsetMax = Vector2.zero;
-            Image icoImg = icoGO.GetComponent<Image>();
-            icoImg.sprite = data.GetIcon();
-            icoImg.preserveAspect = true;
-            icoImg.raycastTarget = false;
-
-            CreateText("NameText", $"{data.displayName}  <size=15>Lv.{level}</size>",
-                new Vector2(0, y), new Vector2(290, 22),
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                18, FontStyles.Bold, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f));
-            y -= 26;
+            y -= 14;
 
             MetaProgressionManager.Instance.GetHeroCombatStats(data,
                 out float hp, out float dmg, out float spd, out float rng, out float rate);

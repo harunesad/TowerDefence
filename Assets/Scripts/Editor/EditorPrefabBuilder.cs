@@ -22,13 +22,14 @@ public class EditorPrefabBuilder : Editor
 
         EnsureFolders(uiFolder, unitsFolder, towersFolder, projectilesFolder);
 
-        // UI Prefabs
-        CreateLevelButtonPrefab(uiFolder);
-        CreateSkillNodePrefab(uiFolder);
-        CreateTowerButtonPrefab(uiFolder);
-        CreateUnitButtonPrefab(uiFolder);
-        CreateTowerSelectionPrefab(uiFolder);
-        CreateUnitSelectionPrefab(uiFolder);
+        // UI Prefabs — Bunlar artık sadece kırmızı "REBUILD ALL UI" butonu ile üretilir.
+        // Elle yapılan UI değişikliklerini korumak için burada ÇAĞRILMAZ.
+        // CreateLevelButtonPrefab(uiFolder);
+        // CreateSkillNodePrefab(uiFolder);
+        // CreateTowerButtonPrefab(uiFolder);
+        // CreateUnitButtonPrefab(uiFolder);
+        // CreateTowerSelectionPrefab(uiFolder);
+        // CreateUnitSelectionPrefab(uiFolder);
 
         // Mermi Varyasyonları (7 Adet)
         CreateProjectileTemplate(projectilesFolder, "Arrow", Color.white);
@@ -928,6 +929,10 @@ public class EditorPrefabBuilder : Editor
             // --- Add Animator Component to Model Instance ---
             Animator anim = modelInstance.GetComponent<Animator>();
             if (anim == null) anim = modelInstance.AddComponent<Animator>();
+
+            // Forward animation events to parent Unit script
+            if (modelInstance.GetComponent<TowerDefence.Combat.AnimationEventHandler>() == null)
+                modelInstance.AddComponent<TowerDefence.Combat.AnimationEventHandler>();
             
             // Try to find the Animator Controller (e.g. "LightSwordsmanAnim.controller")
             string modelDir = System.IO.Path.GetDirectoryName(AssetDatabase.GetAssetPath(modelPrefab)).Replace("\\", "/");
@@ -1290,7 +1295,11 @@ public class EditorPrefabBuilder : Editor
                 GameObject modelInstance = (GameObject)PrefabUtility.InstantiatePrefab(modelPrefab);
                 modelInstance.transform.SetParent(visuals.transform);
                 modelInstance.transform.localPosition = Vector3.zero;
-                modelInstance.transform.localRotation = Quaternion.identity; 
+                if (name == "Arrow" || name == "CrossbowBolt")
+                    modelInstance.transform.localRotation = Quaternion.Euler(0, 90, 0);
+                else
+                    modelInstance.transform.localRotation = Quaternion.identity; 
+
                 modelInstance.transform.localScale = Vector3.one * 1.5f;
 
                 // Orijinal materyalleri koru - Material override kaldırıldı

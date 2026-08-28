@@ -20,27 +20,32 @@ namespace TowerDefence.Editor
             GUILayout.Label("Project Initialization & Asset Management", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
-            // 0. MASTER REPAIR (New)
-            DrawSection("MASTER SYSTEMS", () => {
-                GUI.backgroundColor = new Color(0.7f, 1f, 0.7f); // Yeşil tonlu (Başarılı/Güvenli)
-                if (GUILayout.Button("COMPLETE SYSTEM REPAIR (Data, UI, Prefabs)", GUILayout.Height(50)))
+            // 1. DATA & LOGIC REPAIR (SAFE)
+            DrawSection("DATA & LOGIC (Safe for UI)", () => {
+                GUI.backgroundColor = new Color(0.7f, 1f, 0.7f); // Green
+                if (GUILayout.Button("REPAIR DATA & GAMEPLAY PREFABS", GUILayout.Height(40)))
                 {
-                    Debug.Log("Starting COMPLETE SYSTEM REPAIR...");
-
-                    // 0. Build/Update all base gameplay prefabs
+                    Debug.Log("Starting DATA REPAIR...");
                     EditorPrefabBuilder.GeneratePrefabs();
-
-                    // 1. Create Tower Slot Prefabs (Visuals)
-                    UIMasterPrefabCreator.CreateTowerSlotPrefab();
-
-                    // 1.5 VFX Prefabs (Asset Store integration) — GenerateAllData'dan ÖNCE,
-                    // hero VFX kopyalama (GenerateHeroVFX) kaynak VFX'leri bulsun
                     VFXPrefabGenerator.GenerateVFXPrefabs();
-
-                    // 2. Data & Logic
                     DataAssetGenerator.GenerateAllData(); 
+                    DataAssetGenerator.ConfigureTowerPrefabs();
+                    DataAssetGenerator.ConfigureUnitPrefabs();
                     
-                    // 3. UI Panels (Atomic)
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+                    Debug.Log("✔ DATA & PREFABS REPAIRED SUCCESSFULLY! (Your UI changes are untouched)");
+                }
+                GUI.backgroundColor = Color.white;
+            });
+
+            // 2. UI REBUILD (DANGEROUS)
+            DrawSection("UI GENERATION (WARNING: Overwrites Manual Changes)", () => {
+                GUI.backgroundColor = new Color(1f, 0.5f, 0.5f); // Red
+                if (GUILayout.Button("REBUILD ALL UI PREFABS FROM SCRATCH", GUILayout.Height(40)))
+                {
+                    Debug.Log("Starting UI REBUILD...");
+                    UIMasterPrefabCreator.CreateTowerSlotPrefab();
                     UIMasterPrefabCreator.CreateTowerUpgradeUIPrefab();
                     UIMasterPrefabCreator.CreateSkillTreeUIPrefab();
                     UIMasterPrefabCreator.CreateLevelSelectionPanelPrefab();
@@ -49,26 +54,38 @@ namespace TowerDefence.Editor
                     UIMasterPrefabCreator.CreateLevelResultUIPrefab();
                     UIMasterPrefabCreator.CreateSpellSlotPrefabs();
                     UIMasterPrefabCreator.CreateUnitButtonPrefab();
-                    UIMasterPrefabCreator.CreateTowerSlotPrefab();
                     UIMasterPrefabCreator.CreateCompendiumPanelPrefab();
-
-                    // 4. Configurations
-                    DataAssetGenerator.ConfigureTowerPrefabs();
-                    DataAssetGenerator.ConfigureUnitPrefabs();
-
-                    // 5. Master Prefabs (Composite)
+                    UIMasterPrefabCreator.CreateSettingsUIPrefab();
+                    
                     UIMasterPrefabCreator.CreateCoreEnginePrefab();
                     UIMasterPrefabCreator.CreateMainMenuMaster();
                     UIMasterPrefabCreator.CreateGameplayHUDMaster();
 
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();
-                    Debug.Log("✔ ALL SYSTEMS REPAIRED SUCCESSFULLY! (Map prefabs are not touched — assign manually)");
+                    Debug.Log("✔ ALL UI PREFABS REBUILT FROM CODE.");
                 }
                 GUI.backgroundColor = Color.white;
             });
 
-            EditorGUILayout.HelpBox("Use the button above to regenerate, link, and repair all Data Assets, Game Prefabs, and UI Systems. Map prefabs are NOT regenerated — assign them manually via LevelData.", MessageType.Info);
+            EditorGUILayout.HelpBox("Use 'REPAIR DATA' to fix data/logic without losing your manual UI changes. Use 'REBUILD ALL UI' only if you want to wipe manual UI changes and regenerate from code.", MessageType.Info);
+
+            EditorGUILayout.Space();
+
+            // 1.5. LEVEL MAPS (4 Map grouping + panel rebuild)
+            DrawSection("LEVEL SELECTION MAPS", () => {
+                GUI.backgroundColor = new Color(0.7f, 0.9f, 1f);
+                if (GUILayout.Button("GENERATE 4 LEVEL MAPS (Group Levels)", GUILayout.Height(40)))
+                {
+                    DataAssetGenerator.CreateLevelMapDataAssets();
+                    UIMasterPrefabCreator.CreateLevelSelectionPanelPrefab();
+                    UIMasterPrefabCreator.CreateMainMenuMaster();
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+                    Debug.Log("✔ 4 Level Maps generated & LevelSelectionPanel rebuild.");
+                }
+                GUI.backgroundColor = Color.white;
+            });
 
             GUILayout.EndScrollView();
         }

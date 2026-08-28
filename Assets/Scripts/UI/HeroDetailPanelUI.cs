@@ -57,6 +57,15 @@ namespace TowerDefence.UI
         {
             currentHero = hero;
             if (panelRoot != null) panelRoot.SetActive(true);
+            
+            // Hero icon'ı info panelde gösterme - kullanıcı istediği gibi gizle
+            // Sprite'ı null yap + toggle state'i koru (Repair sonrası da gizli kalması için)
+            if (heroIcon != null)
+            {
+                heroIcon.sprite = null;
+                heroIcon.enabled = false; // Image component'ını devre dışı bırak
+            }
+            
             RefreshCurrent();
         }
 
@@ -70,7 +79,11 @@ namespace TowerDefence.UI
         {
             if (currentHero == null || MetaProgressionManager.Instance == null) return;
 
-            if (heroIcon != null) heroIcon.sprite = currentHero.GetIcon();
+            // Hero icon'ı info panelde gösterme - kullanıcı istediği gibi gizle
+            // Icon sprite ve enabled state'i koru (Repair sonrası da gizli kalması için)
+            // if (heroIcon != null) heroIcon.sprite = currentHero.GetIcon();  // Commented out
+            // if (heroIcon != null) heroIcon.enabled = true;  // Commented out
+            
             if (heroNameText != null) heroNameText.text = currentHero.displayName;
             if (sideText != null) sideText.text = currentHero.side.ToString().ToUpper();
 

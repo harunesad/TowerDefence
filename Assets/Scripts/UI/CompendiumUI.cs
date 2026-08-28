@@ -118,7 +118,7 @@ namespace TowerDefence.UI
             nameRT.anchoredPosition = new Vector2(0, 10);
             
             TextMeshProUGUI nameTxt = nameObj.GetComponent<TextMeshProUGUI>();
-            nameTxt.fontSize = 21;
+            nameTxt.fontSize = 16;
             nameTxt.alignment = TextAlignmentOptions.Center;
             nameTxt.color = Color.white;
             nameTxt.enableWordWrapping = true;

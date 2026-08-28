@@ -79,6 +79,12 @@ namespace TowerDefence.Combat
             AllUnits.Add(this);
             animator = GetComponentInChildren<Animator>();
             
+            // Runtime Bulletproof Fix: Eğer AnimationEventHandler yoksa otomatik ekle
+            if (animator != null && animator.GetComponent<AnimationEventHandler>() == null)
+            {
+                animator.gameObject.AddComponent<AnimationEventHandler>();
+            }
+            
             flashRenderers = GetComponentsInChildren<Renderer>();
             flashBlock = new MaterialPropertyBlock();
 
@@ -129,6 +135,9 @@ namespace TowerDefence.Combat
             targetLayer = (unitSide == Side.Light) ? (1 << 7) : (1 << 6);
             if (unitSide == SideController.Instance.GetPlayerSide())
                 CreateUnitIndicator();
+
+            if (AudioManager.Instance != null && unitData.spawnSFX != null)
+                AudioManager.Instance.PlaySFX(unitData.spawnSFX);
         }
 
         /// <summary>Animator hızını verilen hareket hızına göre ayarlar.</summary>
@@ -539,6 +548,8 @@ namespace TowerDefence.Combat
         private PathWaypoints currentPath;
         private int currentWaypointIndex = 0;
         protected bool isAttacking = false;
+        protected bool hasDealtDamage = false;
+        protected MonoBehaviour currentTargetMB;
 
         public void SetPath(PathWaypoints path)
         {
@@ -771,6 +782,9 @@ namespace TowerDefence.Combat
         {
             if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} PerformAttack started.");
             isAttacking = true;
+            hasDealtDamage = false;
+            currentTargetMB = targetMB;
+
             IDamageable targetC = targetMB as IDamageable;
 
             if (targetC != null && !targetC.IsDead)
@@ -796,40 +810,10 @@ namespace TowerDefence.Combat
                     yield break;
                 }
 
-                // Phantom Hit Fix (Ölüye vurmayı engelle)
-                if (targetMB != null && targetC != null && !targetC.IsDead)
+                // Fallback: Eğer animasyon event'i yoksa (hasDealtDamage hala false ise), hasarı uygula.
+                if (!hasDealtDamage)
                 {
-                    if (unitData.projectilePrefab != null)
-                    {
-                        ResolveFirePoint();
-                        Vector3 spawnPos = firePoint != null
-                            ? firePoint.position
-                            : transform.position + Vector3.up * 1.2f;
-                        Quaternion spawnRot = firePoint != null
-                            ? firePoint.rotation
-                            : transform.rotation;
-
-                        GameObject projGO = Instantiate(unitData.projectilePrefab, spawnPos, spawnRot);
-                        Projectile proj = projGO.GetComponent<Projectile>();
-                        if (proj != null)
-                        {
-                            VFXType projImpactVFX = this is HeroUnit ? VFXType.None : (unitSide == Side.Light) ? VFXType.LightImpact : VFXType.DarkImpact;
-                            proj.Initialize(attackDamage, 0f, projImpactVFX);
-                            proj.Seek(targetMB.transform);
-                        }
-                    }
-                    else
-                    {
-                        // Yakın dövüş: Sadece başka ÜNİTELERE hasar verebilir, KULELERE vuramaz
-                        if (!(targetC is Tower))
-                        {
-                            targetC.TakeDamage(attackDamage);
-                        }
-                        else
-                        {
-                            Debug.Log($"[UNIT] {gameObject.name} is Melee and cannot reach tower {targetMB.name}");
-                        }
-                    }
+                    ExecuteAttackHit();
                 }
 
                 // Geri kalan attack animasyon süresini (Recoil) bitirmesini bekle ki hemen kaymaya başlamasın
@@ -839,6 +823,62 @@ namespace TowerDefence.Combat
             if (animator != null) animator.speed = 1f; // Animator hızını normale çek
             isAttacking = false;
             if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} PerformAttack finished. isAttacking reset to false.");
+        }
+
+        // Animation Event'ten çağrılacak metod
+        public void OnAttackHit()
+        {
+            // Eğer daha önceden (fallback veya çoklu event) hasar verildiyse çık
+            if (hasDealtDamage || isDead) return;
+            
+            // Eğer saldırı iptal edildiyse veya bitirildiyse vurma
+            if (!isAttacking) return;
+            
+            ExecuteAttackHit();
+        }
+
+        private void ExecuteAttackHit()
+        {
+            hasDealtDamage = true;
+
+            if (currentTargetMB == null) return;
+            IDamageable targetC = currentTargetMB as IDamageable;
+
+            // Phantom Hit Fix (Ölüye vurmayı engelle)
+            if (targetC != null && !targetC.IsDead)
+            {
+                if (unitData.projectilePrefab != null)
+                {
+                    ResolveFirePoint();
+                    Vector3 spawnPos = firePoint != null
+                        ? firePoint.position
+                        : transform.position + Vector3.up * 1.2f;
+                    Quaternion spawnRot = firePoint != null
+                        ? firePoint.rotation
+                        : transform.rotation;
+
+                    GameObject projGO = Instantiate(unitData.projectilePrefab, spawnPos, spawnRot);
+                    Projectile proj = projGO.GetComponent<Projectile>();
+                    if (proj != null)
+                    {
+                        VFXType projImpactVFX = this is HeroUnit ? VFXType.None : (unitSide == Side.Light) ? VFXType.LightImpact : VFXType.DarkImpact;
+                        proj.Initialize(attackDamage, 0f, projImpactVFX);
+                        proj.Seek(currentTargetMB.transform);
+                    }
+                }
+                else
+                {
+                    // Yakın dövüş: Sadece başka ÜNİTELERE hasar verebilir, KULELERE vuramaz
+                    if (!(targetC is Tower))
+                    {
+                        targetC.TakeDamage(attackDamage);
+                    }
+                    else
+                    {
+                        Debug.Log($"[UNIT] {gameObject.name} is Melee and cannot reach tower {currentTargetMB.name}");
+                    }
+                }
+            }
         }
 
         public void TakeDamage(float amount)

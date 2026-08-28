@@ -16,6 +16,14 @@ namespace TowerDefence.UI
         [SerializeField] private Button nextLevelButton;
         [SerializeField] private Button restartButton;
 
+        [Header("Reward UI")]
+        [SerializeField] private TextMeshProUGUI rewardText;
+        [SerializeField] private Button doubleRewardButton;
+
+        private int pendingKarma = 0;
+        private int pendingCrystals = 0;
+        private bool hasDoubled = false;
+
         [Header("Settings")]
         [SerializeField] private Color activeStarColor = Color.yellow;
         [SerializeField] private Color inactiveStarColor = Color.gray;
@@ -41,11 +49,14 @@ namespace TowerDefence.UI
                 nextLevelButton.onClick.AddListener(OnNextLevelClicked);
             if (restartButton != null)
                 restartButton.onClick.AddListener(OnRestartClicked);
+            if (doubleRewardButton != null)
+                doubleRewardButton.onClick.AddListener(OnDoubleRewardClicked);
         }
 
         public void Show(bool isVictory, int livesRemaining, int totalLives)
         {
             gameObject.SetActive(true);
+            hasDoubled = false;
             titleText.text = isVictory ? "VICTORY!" : "DEFEAT...";
             titleText.color = isVictory ? Color.green : Color.red;
 
@@ -66,6 +77,26 @@ namespace TowerDefence.UI
                 }
             }
 
+            // Ödül miktarlarını hesapla (CompleteCurrentLevel zaten verdi, burada sadece göstermek için)
+            int difficulty = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
+            if (isVictory)
+            {
+                pendingKarma = 50 * difficulty;
+                pendingCrystals = 10 * difficulty;
+            }
+            else
+            {
+                pendingKarma = 20; // Teselli ödülü (GameManager'da verildi)
+                pendingCrystals = 0;
+            }
+
+            // Ödül metnini güncelle
+            UpdateRewardText();
+
+            // 2X butonunu göster
+            if (doubleRewardButton != null)
+                doubleRewardButton.gameObject.SetActive(true);
+
             // Yıldızları Görselleştir
             for (int i = 0; i < starImages.Length; i++)
             {
@@ -79,13 +110,69 @@ namespace TowerDefence.UI
             }
         }
 
+        private void UpdateRewardText()
+        {
+            if (rewardText == null) return;
+
+            string text = $"+{pendingKarma} Karma";
+            if (pendingCrystals > 0)
+                text += $"  +{pendingCrystals} Crystals";
+            if (hasDoubled)
+                text += "  (2X!)";
+            rewardText.text = text;
+        }
+
+        private void OnDoubleRewardClicked()
+        {
+            if (hasDoubled) return;
+
+            if (AdManager.Instance != null)
+            {
+                AdManager.Instance.ShowRewardedAd(
+                    onSuccess: () =>
+                    {
+                        hasDoubled = true;
+
+                        // Ekstra ödül ver (ilk ödüller zaten verilmişti, şimdi bir katını daha ekle)
+                        if (MetaProgressionManager.Instance != null)
+                        {
+                            MetaProgressionManager.Instance.AddKarma(pendingKarma);
+                            if (pendingCrystals > 0)
+                                MetaProgressionManager.Instance.AddCrystals(pendingCrystals);
+                        }
+
+                        pendingKarma *= 2;
+                        pendingCrystals *= 2;
+                        UpdateRewardText();
+
+                        if (doubleRewardButton != null)
+                            doubleRewardButton.gameObject.SetActive(false);
+                    },
+                    onFailed: () =>
+                    {
+                        Debug.Log("Double reward ad failed.");
+                    }
+                );
+            }
+        }
+
         private void OnMenuClicked()
         {
             // Zamanı normale döndür
             Time.timeScale = 1f;
             
-            // Ana Menüye Dön
-            SceneManager.LoadScene(1); 
+            // Interstitial reklam göster, sonra ana menüye dön
+            if (AdManager.Instance != null)
+            {
+                AdManager.Instance.ShowInterstitialAd(onCompleted: () =>
+                {
+                    SceneManager.LoadScene(1);
+                });
+            }
+            else
+            {
+                SceneManager.LoadScene(1);
+            }
         }
 
         private void OnNextLevelClicked()

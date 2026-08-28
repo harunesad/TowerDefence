@@ -31,29 +31,59 @@ namespace TowerDefence.UI
                 Destroy(child.gameObject);
             }
 
-            Side playerSide = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
-            List<SpellData> targetList = (playerSide == Side.Light) ? lightSpells : darkSpells;
-
-            if (targetList == null || targetList.Count == 0)
-            {
-                Debug.LogWarning("SpellSelectionUI: No spells found for side " + playerSide);
-                return;
-            }
+            if (MetaProgressionManager.Instance == null) return;
 
             List<string> equippedIDs = MetaProgressionManager.Instance.GetEquippedSpellIDs();
+            if (equippedIDs == null || equippedIDs.Count == 0) return;
 
-            foreach (var spell in targetList)
+            // Tüm büyüleri topla: Inspector listesi + Resources'tan dinamik yükleme
+            Dictionary<string, SpellData> allSpellsMap = new Dictionary<string, SpellData>();
+
+            // Inspector'daki listeler varsa ekle
+            if (lightSpells != null)
+                foreach (var s in lightSpells)
+                    if (s != null && !allSpellsMap.ContainsKey(s.spellID))
+                        allSpellsMap[s.spellID] = s;
+
+            if (darkSpells != null)
+                foreach (var s in darkSpells)
+                    if (s != null && !allSpellsMap.ContainsKey(s.spellID))
+                        allSpellsMap[s.spellID] = s;
+
+            // Resources/Data/Spells altından da yükle (eksik olanları yakalar)
+            SpellData[] resourceSpells = Resources.LoadAll<SpellData>("Data/Spells");
+            if (resourceSpells != null)
+                foreach (var s in resourceSpells)
+                    if (s != null && !allSpellsMap.ContainsKey(s.spellID))
+                        allSpellsMap[s.spellID] = s;
+
+            // Assets/Data/Spells klasöründen de yükle (Resources dışındakiler için)
+            #if UNITY_EDITOR
+            string[] guids = UnityEditor.AssetDatabase.FindAssets("t:SpellData", new[] { "Assets/Data/Spells" });
+            foreach (string guid in guids)
             {
-                if (spell == null) continue;
-                
-                // Sadece kuşanılmış olanları göster
-                if (!equippedIDs.Contains(spell.spellID)) continue;
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                SpellData s = UnityEditor.AssetDatabase.LoadAssetAtPath<SpellData>(path);
+                if (s != null && !allSpellsMap.ContainsKey(s.spellID))
+                    allSpellsMap[s.spellID] = s;
+            }
+            #endif
 
-                GameObject btnGO = Instantiate(spellButtonPrefab, spellContainer);
-                SpellButtonUI btnScript = btnGO.GetComponent<SpellButtonUI>();
-                if (btnScript != null)
+            // Equipped büyüleri göster
+            foreach (string spellID in equippedIDs)
+            {
+                if (allSpellsMap.TryGetValue(spellID, out SpellData spell))
                 {
-                    btnScript.Setup(spell);
+                    GameObject btnGO = Instantiate(spellButtonPrefab, spellContainer);
+                    SpellButtonUI btnScript = btnGO.GetComponent<SpellButtonUI>();
+                    if (btnScript != null)
+                    {
+                        btnScript.Setup(spell);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"SpellSelectionUI: Equipped spell '{spellID}' bulunamadı!");
                 }
             }
         }
