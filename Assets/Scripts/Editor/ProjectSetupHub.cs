@@ -39,6 +39,17 @@ namespace TowerDefence.Editor
                 GUI.backgroundColor = Color.white;
             });
 
+            // 1.5. UI STYLING & FONT REPAIR
+            DrawSection("UI STYLING & FONTS (Safe)", () => {
+                GUI.backgroundColor = new Color(0.5f, 0.8f, 1f); // Mavi (Blue)
+                if (GUILayout.Button("REPAIR ALL FONTS (Apply Cinzel)", GUILayout.Height(40)))
+                {
+                    Debug.Log("Starting FONT REPAIR...");
+                    UIFontFixer.FixAllFonts();
+                }
+                GUI.backgroundColor = Color.white;
+            });
+
             // 2. UI REBUILD (DANGEROUS)
             DrawSection("UI GENERATION (WARNING: Overwrites Manual Changes)", () => {
                 GUI.backgroundColor = new Color(1f, 0.5f, 0.5f); // Red
