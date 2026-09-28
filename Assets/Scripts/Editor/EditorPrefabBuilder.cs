@@ -68,7 +68,7 @@ public class EditorPrefabBuilder : Editor
 
         CreateWaypointsPrefab(gameplayBase);
         CreateVFXPrefab(gameplayBase);
-        TowerDefence.Editor.UIMasterPrefabCreator.CreateTowerSlotPrefab();
+        // TowerDefence.Editor.UIMasterPrefabCreator.CreateTowerSlotPrefab(); // KORUMA: Kullanıcının manuel TowerSlot düzenlemelerini silmesin.
 
         // Counterpart ve Icon Bağlantıları
         LinkAllCounterparts();

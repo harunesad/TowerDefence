@@ -203,20 +203,10 @@ namespace TowerDefence.Core
         private bool TryGetGroundPoint(Ray ray, out Vector3 point)
         {
             point = Vector3.zero;
-            int groundMask = LayerMask.GetMask("Default", "Path", "Ground");
+            int groundMask = LayerMask.GetMask("Path");
 
             if (Physics.Raycast(ray, out RaycastHit hit, 250f, groundMask))
             {
-                point = hit.point;
-                return true;
-            }
-
-            // Yedek: herhangi bir collider (kule/yol dışı zemin)
-            if (Physics.Raycast(ray, out hit, 250f))
-            {
-                if (hit.collider.GetComponentInParent<HeroUnit>() != null)
-                    return false;
-
                 point = hit.point;
                 return true;
             }

@@ -98,6 +98,51 @@ namespace TowerDefence.UI
         }
 
         private static float lastShowTime = -1f;
+        private Vector3 defaultLocalPos;
+
+        private void Awake()
+        {
+            defaultLocalPos = transform.localPosition;
+        }
+
+        private void LateUpdate()
+        {
+            if (mainPanel == null || !mainPanel.activeSelf || Camera.main == null) return;
+
+            // 1. İstenen sabit değerlere ayarla (Pos=0,15,-5 RotX=90)
+            transform.localPosition = new Vector3(0f, 15f, -5f);
+            
+            // Kamera dönüşü veya offset yerine direkt olarak X=90 yap
+            transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+
+            // 2. UI'ın dünyadaki Y yüksekliğinde yatay bir zemin (Plane) oluştur
+            Plane plane = new Plane(Vector3.up, new Vector3(0, transform.position.y, 0));
+
+            // 3. Ekranın alt HUD sınırı (%28) için Z koordinatını bul
+            Ray bottomRay = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height * 0.28f, 0));
+            float minZ = float.MinValue;
+            if (plane.Raycast(bottomRay, out float d1)) {
+                minZ = bottomRay.GetPoint(d1).z;
+            }
+
+            // 4. Ekranın üst HUD sınırı (%85) için Z koordinatını bul
+            Ray topRay = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height * 0.82f, 0));
+            float maxZ = float.MaxValue;
+            if (plane.Raycast(topRay, out float d2)) {
+                maxZ = topRay.GetPoint(d2).z;
+            }
+
+            // (Güvenlik kontrolü)
+            if (minZ > maxZ) { float temp = minZ; minZ = maxZ; maxZ = temp; }
+
+            // 5. SADECE Z pozisyonunu sınırla!
+            Vector3 worldPos = transform.position;
+            
+            // UI'ın kendi yüksekliğini hesaba katıp Z ekseninde biraz pay bırak (3 birim alt, 4 birim üst payı)
+            worldPos.z = Mathf.Clamp(worldPos.z, minZ + 3f, maxZ - 4f);
+            
+            transform.position = worldPos;
+        }
 
         public void Show(TowerSlot slot, Tower tower)
         {
@@ -118,10 +163,8 @@ namespace TowerDefence.UI
             // Seçilen kulenin menzil halkasını göster (Range veya Kışla menzili)
             currentTower.SetRangeVisible(true);
 
-            // World Space modunda olduğumuz için billboarding yapıyoruz
-            // Kameraya bakış yönünü koruyarak rotation offset'ini uygula
-            // Bu, editördeki (65,0,0) rotasyonu oyun içinde (75,0,0) olmaktan korur
-            transform.rotation = Camera.main.transform.rotation * Quaternion.Euler(rotationOffset);
+            // İlk açılışta LateUpdate devralacak, burada da tetikleyelim ki anında düzelsin
+            LateUpdate();
 
             RefreshUI();
         }
@@ -138,11 +181,9 @@ namespace TowerDefence.UI
             {
                 float dmg = currentTower.GetCurrentDamage();
                 float rng = currentTower.GetCurrentRange();
-                float rate = currentTower.GetCurrentFireRate();
                 float hp = currentTower.GetCurrentHealth();
                 float maxHp = currentTower.GetMaxHealth();
 
-                string dps = rate > 0f ? $"{(dmg * rate):F1}" : "-";
                 string extra = "";
                 if (data.isAuraTower)
                 {
@@ -150,16 +191,14 @@ namespace TowerDefence.UI
                 }
                 else if (data.isSlowTower)
                 {
-                    extra = $"\n<color=#8AE6FF>Slow Effect: {Mathf.RoundToInt(data.effectPower * 100)}% for {data.effectDuration:F1}s</color>";
+                    extra = $"\n<color=#8AE6FF>Slow: {Mathf.RoundToInt(data.effectPower * 100)}% {data.effectDuration:F1}s</color>";
                 }
                 else if (data.effectDuration > 0f && data.effectPower > 0f)
                 {
-                    extra = $"\n<color=#FFB38A>{data.effectType}: {Mathf.RoundToInt(data.effectPower * 100)}% for {data.effectDuration:F1}s</color>";
+                    extra = $"\n<color=#FFB38A>{data.effectType}: {Mathf.RoundToInt(data.effectPower * 100)}% {data.effectDuration:F1}s</color>";
                 }
 
-                statsText.text = $"DMG: {dmg:F0}   DPS: {dps}\n" +
-                                 $"RNG: {rng:F1}   SPD: {rate:F2}/s\n" +
-                                 $"HP: {hp:F0}/{maxHp:F0}{extra}";
+                statsText.text = $"HP: {hp:F0}/{maxHp:F0}   DMG: {dmg:F0}   RNG: {rng:F1}{extra}";
             }
 
             int level = currentTower.CurrentLevel;

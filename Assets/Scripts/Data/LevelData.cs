@@ -17,6 +17,7 @@ namespace TowerDefence.Data
         Forest,
         Desert,
         Snow,
+        Lava,
         Underworld
     }
 
@@ -34,7 +35,7 @@ namespace TowerDefence.Data
         public int sceneIndex;
         public Sprite levelPreview;
         public LevelType levelType;
-        [Range(1, 3)] public int difficulty = 1;
+        [Range(1, 5)] public int difficulty = 1;
         public string levelID; // Kilit takibi için benzersiz ID
 
         [Header("Map Generation Settings")]
@@ -42,7 +43,6 @@ namespace TowerDefence.Data
         public List<LevelPath> paths = new List<LevelPath>();
         public List<Vector3> basePoints = new List<Vector3>();
         public List<Vector3> customSlotPositions = new List<Vector3>();
-        public int towerSlotCount = 5;
         public GameObject mapPrefab;
 
         [Header("Waves")]

@@ -11,7 +11,7 @@ namespace TowerDefence.Combat
 
         [Header("Settings")]
         [SerializeField] private LayerMask pathLayer;
-        [SerializeField] private float maxPathDetectionDistance = 4f;
+        [SerializeField] private float maxPathDetectionDistance = 2.5f;
         [SerializeField] private List<UnitData> allUnits;
         public List<UnitData> AllUnits => allUnits;
         private GameObject ghostUnit;
@@ -71,7 +71,7 @@ namespace TowerDefence.Combat
 
             Ray ray = Camera.main.ScreenPointToRay(mousePos);
             // Sadece UI ve Ignore Raycast katmanlarını yoksay, diğer her şeye çarp (zemin, dekorasyon vb.)
-            int layerMask = ~LayerMask.GetMask("UI", "Ignore Raycast");
+            int layerMask = LayerMask.GetMask("Path");
 
             if (Physics.Raycast(ray, out RaycastHit hit, 200f, layerMask))
             {

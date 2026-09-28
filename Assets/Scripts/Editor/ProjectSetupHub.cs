@@ -83,20 +83,7 @@ namespace TowerDefence.Editor
 
             EditorGUILayout.Space();
 
-            // 1.5. LEVEL MAPS (4 Map grouping + panel rebuild)
-            DrawSection("LEVEL SELECTION MAPS", () => {
-                GUI.backgroundColor = new Color(0.7f, 0.9f, 1f);
-                if (GUILayout.Button("GENERATE 4 LEVEL MAPS (Group Levels)", GUILayout.Height(40)))
-                {
-                    DataAssetGenerator.CreateLevelMapDataAssets();
-                    UIMasterPrefabCreator.CreateLevelSelectionPanelPrefab();
-                    UIMasterPrefabCreator.CreateMainMenuMaster();
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-                    Debug.Log("✔ 4 Level Maps generated & LevelSelectionPanel rebuild.");
-                }
-                GUI.backgroundColor = Color.white;
-            });
+
 
             GUILayout.EndScrollView();
         }

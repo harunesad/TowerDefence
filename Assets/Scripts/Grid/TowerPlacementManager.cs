@@ -132,15 +132,12 @@ namespace TowerDefence.Grid
             Ray ray = Camera.main.ScreenPointToRay(mousePos);
             RaycastHit hit;
 
-            int pathLayerId = LayerMask.NameToLayer("Path");
-            int pathLayerMask = pathLayerId >= 0 ? 1 << pathLayerId : 0;
+            int pathLayerMask = LayerMask.GetMask("Path");
             bool hitSomething = false;
 
             if (isInRallyMode)
             {
-                Debug.Log($"[RALLY] Raycasting with pathLayerMask=0x{pathLayerMask:X8}, pathLayerId={pathLayerId}");
                 hitSomething = Physics.Raycast(ray, out hit, 150f, pathLayerMask, QueryTriggerInteraction.Collide);
-                Debug.Log($"[RALLY] Raycast result: hitSomething={hitSomething}, point={(hitSomething ? hit.point.ToString() : "N/A")}");
             }
             else
             {
@@ -150,46 +147,63 @@ namespace TowerDefence.Grid
             // --- RALLY MODE HANDLING ---
             if (isInRallyMode && currentRallyBarracks != null)
             {
-                Debug.Log($"[RALLY-DEBUG] Click! hitSomething={hitSomething}, pathLayerId={pathLayerId}");
-
                 if (hitSomething)
                 {
-                    GameObject hitGO = hit.collider.gameObject;
-                    int hitLayer = hitGO.layer;
-                    string hitName = hitGO.name.ToLower();
-                    Vector3 targetPoint = hit.point;
-                    float dist = Vector3.Distance(currentRallyBarracks.transform.position, targetPoint);
+                    Vector3 clickedPoint = hit.point;
+                    clickedPoint.y = 0; // Zemin düzlemi
 
-                    bool layerMatch = (pathLayerId != -1 && hitLayer == pathLayerId);
-                    bool nameMatch = (hitName.Contains("tile") || hitName.Contains("path"));
+                    // En yakın yol noktasını matematiksel olarak bul (Uzaklık Sınırı Yok)
+                    PathWaypoints[] allPaths = FindObjectsByType<PathWaypoints>(FindObjectsSortMode.None);
+                    float minPathDist = float.MaxValue; 
+                    Vector3 snappedPos = hit.point;
+                    bool pathFound = false;
 
-                    // HER DURUMDA LOGLA: Neyin üzerine tıkladık ve ne kadar uzaktayız?
-                    Debug.Log($"<color=cyan>[RALLY-DEBUG]</color> Hit: <b>{hitGO.name}</b> | Layer: {hitLayer} | Dist: {dist:F2} | LayerMatch: {layerMatch} | NameMatch: {nameMatch}");
-
-                    if (layerMatch || nameMatch)
+                    foreach (var path in allPaths)
                     {
-                        // MENZİL DIŞINDAYSA: Sınıra çek (Clamp)
-                        if (dist > currentRallyBarracks.rallyRadius)
+                        var wps = path.GetWaypoints();
+                        if (wps.Count < 2) continue;
+
+                        for (int i = 0; i < wps.Count - 1; i++)
                         {
-                            Vector3 direction = (targetPoint - currentRallyBarracks.transform.position).normalized;
-                            targetPoint = currentRallyBarracks.transform.position + direction * currentRallyBarracks.rallyRadius;
-                            
-                            Debug.Log($"<color=cyan>[RALLY-DEBUG]</color> <color=orange>CLAMPED!</color> Original: {dist:F1} -> Target: {currentRallyBarracks.rallyRadius:F1}");
+                            Vector3 pA = wps[i].position; pA.y = 0;
+                            Vector3 pB = wps[i+1].position; pB.y = 0;
+
+                            Vector3 closestPoint = GetClosestPointOnSegment(clickedPoint, pA, pB);
+                            float d = Vector3.Distance(clickedPoint, closestPoint);
+
+                            if (d < minPathDist)
+                            {
+                                minPathDist = d;
+                                snappedPos = new Vector3(closestPoint.x, hit.point.y, closestPoint.z);
+                                pathFound = true;
+                            }
+                        }
+                    }
+
+                    if (pathFound)
+                    {
+                        float distToBarracks = Vector3.Distance(currentRallyBarracks.transform.position, snappedPos);
+
+                        // MENZİL DIŞINDAYSA: Sınıra çek (Clamp)
+                        if (distToBarracks > currentRallyBarracks.rallyRadius)
+                        {
+                            Vector3 direction = (snappedPos - currentRallyBarracks.transform.position).normalized;
+                            snappedPos = currentRallyBarracks.transform.position + direction * currentRallyBarracks.rallyRadius;
                         }
 
-                        currentRallyBarracks.SetRallyPoint(targetPoint);
+                        currentRallyBarracks.SetRallyPoint(snappedPos);
                         currentRallyBarracks.SetRangeVisible(false); // İşlem bitince gizle
                         
                         if (VFXManager.Instance != null)
-                            VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, targetPoint, Quaternion.identity);
+                            VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, snappedPos, Quaternion.identity);
 
                         isInRallyMode = false;
                         currentRallyBarracks = null;
-                        Debug.Log("<color=cyan>[RALLY-DEBUG]</color> <color=green>SUCCESS!</color> Rally Point Set.");
+                        Debug.Log("<color=cyan>[RALLY-DEBUG]</color> <color=green>SUCCESS!</color> Rally Point Set at mathematically snapped pos.");
                     }
                     else
                     {
-                        Debug.LogWarning($"<color=cyan>[RALLY-DEBUG]</color> Invalid Object! <b>{hitGO.name}</b> is not a Path. Cancelled.");
+                        Debug.LogWarning($"<color=cyan>[RALLY-DEBUG]</color> Clicked too far from any path line (>{minPathDist} units). Cancelled.");
                         if (currentRallyBarracks != null) currentRallyBarracks.SetRangeVisible(false);
                         isInRallyMode = false;
                         currentRallyBarracks = null;
@@ -205,6 +219,7 @@ namespace TowerDefence.Grid
 
                 return;
             }
+
 
             Debug.Log($"[TowerPlacementManager] Click detected on: {(hitSomething ? hit.collider.gameObject.name : "Nothing")}");
 
@@ -294,6 +309,12 @@ namespace TowerDefence.Grid
             // Singleton yerine kulenin kendi içindeki (çocuk) UI'ı tetikle
             TowerUpgradeUI ui = tower.GetComponentInChildren<TowerUpgradeUI>(true);
             if (ui != null) ui.Show(slot, tower);
+        }
+        private Vector3 GetClosestPointOnSegment(Vector3 p, Vector3 a, Vector3 b)
+        {
+            Vector3 ab = b - a;
+            float t = Vector3.Dot(p - a, ab) / Vector3.Dot(ab, ab);
+            return a + Mathf.Clamp01(t) * ab;
         }
     }
 }

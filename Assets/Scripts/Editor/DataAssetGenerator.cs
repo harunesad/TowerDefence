@@ -146,10 +146,10 @@ public class DataAssetGenerator : Editor
         // ezmemesi için UI sadece kırmızı butonla (Rebuild UI) üretilmelidir.
 
         LinkUnitProjectiles();
-        GenerateLevels();
+        // GenerateLevels(); // KORUMA: Kullanıcının Map Configurator ile yaptığı tasarımları silmemesi için kapatıldı.
 
         // Seviyeler 4 haritaya gruplanır (Map1=1-12, Map2=13-25, Map3=26-38, Map4=39-50)
-        CreateLevelMapDataAssets();
+        // CreateLevelMapDataAssets(); // KORUMA: Level Map UI üretimi durduruldu.
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -628,7 +628,9 @@ public class DataAssetGenerator : Editor
         }
         else
         {
-            hbTransform.localPosition = new Vector3(0, targetY, 0);
+            // KORUMA: Repair butonu kullanıldığında, eğer Canvas zaten varsa 
+            // kullanıcının manuel yaptığı Y pozisyonunu sıfırlamaması için kapatıldı.
+            // hbTransform.localPosition = new Vector3(0, targetY, 0);
             hbScript = hbTransform.GetComponent<HealthBarUI>();
             
             // Update existing colors/sprites
@@ -1795,7 +1797,8 @@ public class DataAssetGenerator : Editor
             {
                 GameObject uiInstance = (GameObject)PrefabUtility.InstantiatePrefab(uiPrefab, root.transform);
                 uiInstance.name = "TowerUpgradeUI";
-                uiInstance.transform.localPosition = new Vector3(0, 6.5f, 0); // Varsayılan konum
+                uiInstance.transform.localPosition = new Vector3(0, 15f, -5f); // Kullanıcı isteği
+                uiInstance.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Kullanıcı isteği
             }
         }
 
@@ -2341,7 +2344,9 @@ public class DataAssetGenerator : Editor
         }
         else
         {
-            hbTransform.localPosition = new Vector3(0, targetY, 0);
+            // KORUMA: Repair butonu kullanıldığında, eğer Canvas zaten varsa 
+            // kullanıcının manuel yaptığı Y pozisyonunu sıfırlamaması için kapatıldı.
+            // hbTransform.localPosition = new Vector3(0, targetY, 0);
             hbScript = hbTransform.GetComponent<HealthBarUI>();
             
             // Update existing colors/sprites
@@ -3678,7 +3683,6 @@ public class DataAssetGenerator : Editor
         level.customSlotPositions.Clear();
         level.customSlotPositions.AddRange(customSlots);
 
-        level.towerSlotCount = 15 + (waves.Count * 2); // Dalga sayısına göre slot artırımı
         level.sceneIndex = 2; // Default Gameplay Scene
 
         // Otomatik Icon (Level Preview) ataması

@@ -2452,17 +2452,14 @@ namespace TowerDefence.Editor
                 case 1: // Forest - Zig Zag
                     data.theme = LevelTheme.Forest;
                     p.points.AddRange(new Vector3[] { new Vector3(-50, 0, 20), new Vector3(25, 0, 20), new Vector3(-25, 0, 0), new Vector3(50, 0, 0) });
-                    data.towerSlotCount = 10;
                     break;
                 case 2: // Desert - U-Turn
                     data.theme = LevelTheme.Desert;
                     p.points.AddRange(new Vector3[] { new Vector3(-30, 0, 30), new Vector3(-30, 0, -10), new Vector3(30, 0, -10), new Vector3(30, 0, 30) });
-                    data.towerSlotCount = 12;
                     break;
                 case 3: // Snow - Long S
                     data.theme = LevelTheme.Snow;
                     p.points.AddRange(new Vector3[] { new Vector3(-50, 0, 40), new Vector3(50, 0, 20), new Vector3(-50, 0, 0), new Vector3(50, 0, -20) });
-                    data.towerSlotCount = 15;
                     break;
             }
             data.paths.Add(p);
@@ -2589,7 +2586,7 @@ namespace TowerDefence.Editor
                 // Kule Slotları (Yol boyunca - Sadece özel konumlar yoksa)
                 if (data.customSlotPositions == null || data.customSlotPositions.Count == 0)
                 {
-                    CreateTowerSlotsAlongPath(root.transform, points, data.towerSlotCount / levelPaths.Count);
+                    CreateTowerSlotsAlongPath(root.transform, points, 5);
                 }
             }
 
