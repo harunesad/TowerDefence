@@ -430,16 +430,18 @@ public class DataAssetGenerator : Editor
             data.icon = FindIcon(fallbackIconName);
         }
 
-        // Hero prefab'ına status effect ikonlarını ata ve Visuals büyüklüğünü (1,1,1) yap
+        // Hero prefab'ına status effect ikonlarını ata
+        // KORUMA: Visuals scale'ine repair sırasında dokunulmaz (kullanıcının manuel ayarı korunur)
+        // if (visuals != null) { visualsSO.FindProperty("m_LocalScale").vector3Value = Vector3.one; }
         if (data.prefab != null)
         {
-            Transform visuals = data.prefab.transform.Find("Visuals");
-            if (visuals != null)
-            {
-                SerializedObject visualsSO = new SerializedObject(visuals);
-                visualsSO.FindProperty("m_LocalScale").vector3Value = Vector3.one;
-                visualsSO.ApplyModifiedProperties();
-            }
+            // Transform visuals = data.prefab.transform.Find("Visuals");
+            // if (visuals != null)
+            // {
+            //     SerializedObject visualsSO = new SerializedObject(visuals);
+            //     visualsSO.FindProperty("m_LocalScale").vector3Value = Vector3.one;
+            //     visualsSO.ApplyModifiedProperties();
+            // }
 
             Unit unitComp = data.prefab.GetComponent<Unit>();
             if (unitComp != null)
@@ -656,7 +658,8 @@ public class DataAssetGenerator : Editor
         heroSo.FindProperty("healthBar").objectReferenceValue = hbScript;
         heroSo.ApplyModifiedProperties();
 
-        FixVisualModelGroundOffset(root);
+        // KORUMA: Visuals pozisyonuna repair sırasında dokunulmaz (kullanıcının manuel ayarı korunur)
+        // FixVisualModelGroundOffset(root);
 
         // --- Ability VFX Container Setup ---
         Transform abilityVFX = root.transform.Find("AbilityVFX");
@@ -2379,7 +2382,8 @@ public class DataAssetGenerator : Editor
         hsiSo.FindProperty("cursorSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Data/Icons/UI/UnitCursor.png");
         hsiSo.ApplyModifiedProperties();
 
-        ApplyBossScale(root, prefab.name);
+        // KORUMA: Boss Visuals scale'ine repair sırasında dokunulmaz (kullanıcının manuel ayarı korunur)
+        // ApplyBossScale(root, prefab.name);
 
         // Silahları mevcut modele yeniden bağla (offset/scale değişiklikleri repair ile uygulanır).
         // Bu, eski silah GameObject'lerini (içlerindeki FirePoint'lerle birlikte) yok edip yeni
@@ -2416,7 +2420,8 @@ public class DataAssetGenerator : Editor
 
         unitSo.ApplyModifiedProperties();
 
-        FixVisualModelGroundOffset(root);
+        // KORUMA: Visuals pozisyonuna repair sırasında dokunulmaz (kullanıcının manuel ayarı korunur)
+        // FixVisualModelGroundOffset(root);
 
         PrefabUtility.SaveAsPrefabAsset(root, path);
         PrefabUtility.UnloadPrefabContents(root);
@@ -4010,7 +4015,8 @@ public class DataAssetGenerator : Editor
         CreateSpell(path, "Spell_Dark_Freeze", "Shadow Freeze", Side.Dark, 110, SpellType.Freeze, 4f, 6f, 18f);
 
         // NEUTRAL SPELLS (2)
-        CreateSpell(path, "Spell_Neutral_Gold", "Gold Rush", Side.Neutral, 0, SpellType.GoldBoost, 100f, 0f, 60f);
+        SpellData goldSpell = CreateSpell(path, "Spell_Neutral_Gold", "Gold Rush", Side.Neutral, 0, SpellType.GoldBoost, 100f, 0f, 60f);
+        if (goldSpell != null) goldSpell.isOneTimeUse = true;
         CreateSpell(path, "Spell_Neutral_Earthquake", "Earthquake", Side.Neutral, 150, SpellType.Thunderstrike, 50f, 12f, 45f);
 
         // EXTRA LIGHT SPELL (1)
@@ -4024,7 +4030,7 @@ public class DataAssetGenerator : Editor
         Debug.Log("✔ 12 Unique Spells Generated Successfully!");
     }
 
-    private static void CreateSpell(string path, string id, string name, Side side, int cost, SpellType type, float power, float radius, float cooldown)
+    private static SpellData CreateSpell(string path, string id, string name, Side side, int cost, SpellType type, float power, float radius, float cooldown)
     {
         string assetPath = $"{path}/{id}.asset";
         SpellData data = AssetDatabase.LoadAssetAtPath<SpellData>(assetPath);
@@ -4064,8 +4070,9 @@ public class DataAssetGenerator : Editor
         }
         else if (id.Contains("Gold"))
         {
-            vfx = VFXType.EconomyGold;
-            prefabPath = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR2 Shiny Item (Loop).prefab";
+            vfx = VFXType.None;
+            prefabPath = "";
+            data.isOneTimeUse = true;
         }
         else if (id.Contains("Shield") || id.Contains("Blessing"))
         {
@@ -4143,6 +4150,7 @@ public class DataAssetGenerator : Editor
 
         EditorUtility.SetDirty(data);
         AssetDatabase.SaveAssetIfDirty(data);
+        return data;
     }
 
     private static void EnsureDirectory(string path, bool clear = false)

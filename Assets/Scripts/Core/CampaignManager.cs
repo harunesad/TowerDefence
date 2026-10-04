@@ -212,12 +212,12 @@ namespace TowerDefence.Core
 
             foreach (var path in allPaths)
             {
-                if (path.GetWaypoints() == null) continue;
-                foreach (var wp in path.GetWaypoints())
+                var pts = path.GetPathPoints();
+                if (pts == null) continue;
+                foreach (var wp in pts)
                 {
-                    if (wp == null) continue;
-                    if (first) { bounds = new Bounds(wp.position, Vector3.zero); first = false; }
-                    else bounds.Encapsulate(wp.position);
+                    if (first) { bounds = new Bounds(wp, Vector3.zero); first = false; }
+                    else bounds.Encapsulate(wp);
                 }
             }
 

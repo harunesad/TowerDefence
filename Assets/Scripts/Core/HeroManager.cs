@@ -83,17 +83,54 @@ namespace TowerDefence.Core
             HandleInput();
         }
 
+        private bool IsPointerOverInteractiveUI()
+        {
+            if (UnityEngine.EventSystems.EventSystem.current == null) return false;
+            
+            UnityEngine.EventSystems.PointerEventData eventData = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
+            {
+                position = Pointer.current.position.ReadValue()
+            };
+            
+            System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult> results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+            UnityEngine.EventSystems.EventSystem.current.RaycastAll(eventData, results);
+            
+            if (results.Count > 0)
+            {
+                foreach (var result in results)
+                {
+                    bool isRealUIElement = (result.gameObject.layer == LayerMask.NameToLayer("UI")) ||
+                                           (result.module is UnityEngine.UI.GraphicRaycaster);
+                                           
+                    if (!isRealUIElement) continue; // 3D objeleri (PhysicsRaycaster) yoksay
+
+                    string uiName = result.gameObject.name;
+                    bool isIgnorable = uiName.Contains("MasterPrefab") || 
+                                       uiName.Contains("MainPanel") ||
+                                       (uiName.Contains("Panel") && !uiName.Contains("Selection") && !uiName.Contains("Upgrade")) ||
+                                       uiName.Contains("Label") || uiName.Contains("Text") || uiName.Contains("TMP") || uiName.Contains("TextMesh") ||
+                                       uiName.Contains("Background");
+                    if (!isIgnorable)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         private void HandleInput()
         {
             if (Pointer.current == null || !Pointer.current.press.wasPressedThisFrame) return;
             if (Camera.main == null) return;
+            
+            if (IsPointerOverInteractiveUI()) return;
 
             Vector2 pointerPos = Pointer.current.position.ReadValue();
             Ray ray = Camera.main.ScreenPointToRay(pointerPos);
 
-            // 1. ÖNCELİK: 3D dünyada Hero tıklamasını kontrol et (UI engellemesinden bağımsız)
+            // 1. ÖNCELİK: 3D dünyada Hero tıklamasını kontrol et
             RaycastHit[] hits = Physics.RaycastAll(ray, 250f);
-            // Mesafeye göre sırala — en yakın collider'ı önce kontrol et
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
             foreach (var hit in hits)
             {
@@ -101,12 +138,19 @@ namespace TowerDefence.Core
                 if (clickedHero != null && !clickedHero.IsDead && IsManagedHero(clickedHero))
                 {
                     Debug.Log($"[HeroManager] Hero clicked: {clickedHero.gameObject.name}");
-                    SelectHeroInstance(clickedHero);
+                    if (selectedHero == clickedHero)
+                    {
+                        DeselectHero();
+                    }
+                    else
+                    {
+                        SelectHeroInstance(clickedHero);
+                    }
                     return;
                 }
             }
 
-            // 2. Seçili hero varsa zemine tıklayarak hareket ettir (UI engellemesinden bağımsız)
+            // 2. Seçili hero varsa zemine tıklayarak hareket ettir
             if (awaitingMoveCommand && selectedHero != null && !selectedHero.IsDead)
             {
                 if (TryGetGroundPoint(ray, out Vector3 groundPoint))
@@ -117,12 +161,7 @@ namespace TowerDefence.Core
                 }
             }
 
-            // 3. UI üzerindeyse deselect işlemini engelle
-            if (UnityEngine.EventSystems.EventSystem.current != null &&
-                UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
-                return;
-
-            // 4. Boş alana tıklandıysa seçimi kaldır
+            // 3. Boş alana tıklandıysa seçimi kaldır
             if (selectedHero != null)
             {
                 DeselectHero();
@@ -137,7 +176,14 @@ namespace TowerDefence.Core
             HeroUnit hero = activeHeroes[slotIndex];
             if (hero == null || hero.IsDead) return;
 
-            SelectHeroInstance(hero, slotIndex);
+            if (selectedHero == hero)
+            {
+                DeselectHero();
+            }
+            else
+            {
+                SelectHeroInstance(hero, slotIndex);
+            }
         }
 
         private void SelectHeroInstance(HeroUnit hero, int slotIndex = -1)

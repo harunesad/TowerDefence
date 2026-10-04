@@ -75,7 +75,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!1 &3667375251562448602
+--- !u!1 &3112978222390029146
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -83,7 +83,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5578819412932948251}
+  - component: {fileID: 7785702097898272905}
   m_Layer: 0
   m_Name: FirePoint
   m_TagString: Untagged
@@ -91,20 +91,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5578819412932948251
+--- !u!4 &7785702097898272905
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3667375251562448602}
+  m_GameObject: {fileID: 3112978222390029146}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.563, y: 0.022, z: 0.037}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2838098747213426121}
+  m_Father: {fileID: 2829075078733792944}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4009301545907205493
 GameObject:
@@ -181,9 +181,10 @@ MonoBehaviour:
   moveSpeed: 3
   rotationSpeed: 10
   healthBar: {fileID: 1811711404030082955}
-  firePoint: {fileID: 5578819412932948251}
+  firePoint: {fileID: 7785702097898272905}
   indicatorRadius: 1
-  unitIndicatorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+  indicatorPosition: {x: 0, y: 3, z: 0}
+  unitIndicatorSprite: {fileID: 0}
   burnIcon: {fileID: -1452674001, guid: a39b611d0ae5a6a4e8b393e5874db283, type: 3}
   poisonIcon: {fileID: -1357811797, guid: b92791fc799d2dd4389b4b282f57f702, type: 3}
   slowIcon: {fileID: -926218613, guid: 5ea6da0b1ea8bbb489e4038476ae69a3, type: 3}
@@ -223,7 +224,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32dd57ca2bdcdb847a3d9f1939028714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.HeroSelectionIndicator
-  cursorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+  cursorSprite: {fileID: 0}
+  indicatorPosition: {x: 0, y: 0.05, z: 0}
 --- !u!1 &4992955762714790196
 GameObject:
   m_ObjectHideFlags: 0
@@ -424,7 +426,7 @@ Transform:
   m_GameObject: {fileID: 7487965164949782030}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.35, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -628,7 +630,7 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 1852576806548013000, guid: 7a3a5dd886b855e4c9c8d4069a421373, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2838098747213426121}
+      addedObject: {fileID: 2829075078733792944}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7a3a5dd886b855e4c9c8d4069a421373, type: 3}
       insertIndex: -1
@@ -686,7 +688,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8a4e5ede386470419d9daa058bcf802, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.AnimationEventHandler
---- !u!1001 &2371227372702550562
+--- !u!1001 &2362241044989075803
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -743,11 +745,11 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 080ccfb943f5adb40a51f195b2d922be, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5578819412932948251}
+      addedObject: {fileID: 7785702097898272905}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 080ccfb943f5adb40a51f195b2d922be, type: 3}
---- !u!4 &2838098747213426121 stripped
+--- !u!4 &2829075078733792944 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 080ccfb943f5adb40a51f195b2d922be, type: 3}
-  m_PrefabInstance: {fileID: 2371227372702550562}
+  m_PrefabInstance: {fileID: 2362241044989075803}
   m_PrefabAsset: {fileID: 0}

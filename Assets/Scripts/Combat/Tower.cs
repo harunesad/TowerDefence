@@ -338,13 +338,13 @@ namespace TowerDefence.Combat
 
             foreach (var path in paths)
             {
-                var wps = path.GetWaypoints();
+                var wps = path.GetPathPoints();
                 if (wps.Count < 2) continue;
 
                 for (int i = 0; i < wps.Count - 1; i++)
                 {
-                    Vector3 pA = wps[i].position; pA.y = 0;
-                    Vector3 pB = wps[i + 1].position; pB.y = 0;
+                    Vector3 pA = wps[i]; pA.y = 0;
+                    Vector3 pB = wps[i + 1]; pB.y = 0;
                     Vector3 towerPos = transform.position; towerPos.y = 0;
 
                     Vector3 closest = GetClosestPointOnSegment(towerPos, pA, pB);

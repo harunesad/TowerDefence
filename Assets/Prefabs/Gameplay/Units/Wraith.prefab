@@ -153,7 +153,8 @@ MonoBehaviour:
   healthBar: {fileID: 8012359187082775234}
   firePoint: {fileID: 0}
   indicatorRadius: 1
-  unitIndicatorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+  indicatorPosition: {x: 0, y: 3, z: 0}
+  unitIndicatorSprite: {fileID: 0}
   burnIcon: {fileID: -1452674001, guid: a39b611d0ae5a6a4e8b393e5874db283, type: 3}
   poisonIcon: {fileID: -1357811797, guid: b92791fc799d2dd4389b4b282f57f702, type: 3}
   slowIcon: {fileID: -926218613, guid: 5ea6da0b1ea8bbb489e4038476ae69a3, type: 3}
@@ -193,7 +194,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32dd57ca2bdcdb847a3d9f1939028714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.HeroSelectionIndicator
-  cursorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+  cursorSprite: {fileID: 0}
+  indicatorPosition: {x: 0, y: 0.05, z: 0}
 --- !u!1 &5411330204014552235
 GameObject:
   m_ObjectHideFlags: 0
@@ -353,7 +355,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!114 &8012359187082775234
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -393,7 +395,7 @@ Transform:
   m_GameObject: {fileID: 8528116412999977613}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.35, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -565,7 +567,7 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -639763325267172598, guid: c4c546a0b8406eb4a91fd60652cd3c2a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4183589442521474217}
+      addedObject: {fileID: 7139461448005457000}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c4c546a0b8406eb4a91fd60652cd3c2a, type: 3}
       insertIndex: -1
@@ -623,7 +625,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -639763325267172598, guid: c4c546a0b8406eb4a91fd60652cd3c2a, type: 3}
   m_PrefabInstance: {fileID: 3118508572584420133}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &4433126514701910850
+--- !u!1001 &7250460191715193731
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -680,8 +682,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ff5fdab0ef68e19438e2f5802c0e72ab, type: 3}
---- !u!4 &4183589442521474217 stripped
+--- !u!4 &7139461448005457000 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ff5fdab0ef68e19438e2f5802c0e72ab, type: 3}
-  m_PrefabInstance: {fileID: 4433126514701910850}
+  m_PrefabInstance: {fileID: 7250460191715193731}
   m_PrefabAsset: {fileID: 0}

@@ -26,6 +26,7 @@ namespace TowerDefence.Data
         [Header("Economics")]
         public int manaCost;        // Büyü enerjisi / Altın maliyeti
         public float cooldown = 10f;
+        public bool isOneTimeUse = false; // Oyunda sadece bir kez mi kullanılabilir?
 
         [Header("Effects")]
         public SpellType spellType;

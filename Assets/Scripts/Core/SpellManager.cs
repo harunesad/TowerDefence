@@ -26,9 +26,17 @@ namespace TowerDefence.Core
         public void ClearSelectedSpell() => SelectedSpell = null;
 
         private Dictionary<string, float> cooldowns = new Dictionary<string, float>();
+        private HashSet<string> usedOneTimeSpells = new HashSet<string>();
+
+        public bool HasBeenUsed(Data.SpellData spell)
+        {
+            return spell.isOneTimeUse && usedOneTimeSpells.Contains(spell.spellID);
+        }
 
         public bool CanCast(Data.SpellData spell)
         {
+            if (HasBeenUsed(spell)) return false;
+
             if (cooldowns.ContainsKey(spell.spellID))
             {
                 if (Time.time < cooldowns[spell.spellID]) return false;
@@ -45,8 +53,16 @@ namespace TowerDefence.Core
             // Maliyeti düş
             CurrencyManager.Instance.TrySpendCurrency(SideController.Instance.GetPlayerSide(), spell.manaCost);
             
-            // Cooldown başlat
-            cooldowns[spell.spellID] = Time.time + spell.cooldown;
+            // Eğer tek seferlikse kaydet
+            if (spell.isOneTimeUse)
+            {
+                usedOneTimeSpells.Add(spell.spellID);
+            }
+            else
+            {
+                // Cooldown başlat
+                cooldowns[spell.spellID] = Time.time + spell.cooldown;
+            }
 
             // Yazılım Mantığını Uygula
             ExecuteSpellEffect(spell, targetPos);
@@ -152,11 +168,11 @@ namespace TowerDefence.Core
 
             foreach (var path in allPaths)
             {
-                if (path == null || path.GetWaypoints().Count == 0) continue;
+                if (path == null || path.GetPathPoints().Count == 0) continue;
                 // En yakın waypoint'i bul
-                foreach (var wp in path.GetWaypoints())
+                foreach (var wp in path.GetPathPoints())
                 {
-                    float dist = Vector3.Distance(center, wp.position);
+                    float dist = Vector3.Distance(center, wp);
                     if (dist < minDist)
                     {
                         minDist = dist;

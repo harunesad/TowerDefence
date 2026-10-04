@@ -150,9 +150,10 @@ MonoBehaviour:
   moveSpeed: 3
   rotationSpeed: 10
   healthBar: {fileID: 8053252397391417698}
-  firePoint: {fileID: 933577211653076288}
+  firePoint: {fileID: 3119814690711281966}
   indicatorRadius: 1
-  unitIndicatorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+  indicatorPosition: {x: 0, y: 3, z: 0}
+  unitIndicatorSprite: {fileID: 0}
   burnIcon: {fileID: -1452674001, guid: a39b611d0ae5a6a4e8b393e5874db283, type: 3}
   poisonIcon: {fileID: -1357811797, guid: b92791fc799d2dd4389b4b282f57f702, type: 3}
   slowIcon: {fileID: -926218613, guid: 5ea6da0b1ea8bbb489e4038476ae69a3, type: 3}
@@ -192,7 +193,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32dd57ca2bdcdb847a3d9f1939028714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.HeroSelectionIndicator
-  cursorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+  cursorSprite: {fileID: 0}
+  indicatorPosition: {x: 0, y: 0.05, z: 0}
 --- !u!1 &2264068797469075214
 GameObject:
   m_ObjectHideFlags: 0
@@ -218,7 +220,7 @@ Transform:
   m_GameObject: {fileID: 2264068797469075214}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -301,7 +303,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!1 &5422726751450427559
+--- !u!1 &5807334089705390554
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -309,7 +311,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 933577211653076288}
+  - component: {fileID: 3119814690711281966}
   m_Layer: 0
   m_Name: FirePoint
   m_TagString: Untagged
@@ -317,20 +319,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &933577211653076288
+--- !u!4 &3119814690711281966
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5422726751450427559}
+  m_GameObject: {fileID: 5807334089705390554}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.527, y: 0.034, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3773974804277401474}
+  m_Father: {fileID: 6113727706546425451}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8363490303213228468
 GameObject:
@@ -628,7 +630,7 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 1852576806548013000, guid: 91bab4727531c02488adea78d89c5ffa, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3773974804277401474}
+      addedObject: {fileID: 6113727706546425451}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 91bab4727531c02488adea78d89c5ffa, type: 3}
       insertIndex: -1
@@ -686,7 +688,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1852576806548013000, guid: 91bab4727531c02488adea78d89c5ffa, type: 3}
   m_PrefabInstance: {fileID: 470458294223710401}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &3735000780114489449
+--- !u!1001 &6004120224542271872
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -743,11 +745,11 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 080ccfb943f5adb40a51f195b2d922be, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 933577211653076288}
+      addedObject: {fileID: 3119814690711281966}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 080ccfb943f5adb40a51f195b2d922be, type: 3}
---- !u!4 &3773974804277401474 stripped
+--- !u!4 &6113727706546425451 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 080ccfb943f5adb40a51f195b2d922be, type: 3}
-  m_PrefabInstance: {fileID: 3735000780114489449}
+  m_PrefabInstance: {fileID: 6004120224542271872}
   m_PrefabAsset: {fileID: 0}

@@ -124,7 +124,7 @@ Transform:
   m_GameObject: {fileID: 6640417128636608980}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -231,7 +231,8 @@ MonoBehaviour:
   healthBar: {fileID: 7074111820427576320}
   firePoint: {fileID: 0}
   indicatorRadius: 1
-  unitIndicatorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+  indicatorPosition: {x: 0, y: 3, z: 0}
+  unitIndicatorSprite: {fileID: 0}
   burnIcon: {fileID: -1452674001, guid: a39b611d0ae5a6a4e8b393e5874db283, type: 3}
   poisonIcon: {fileID: -1357811797, guid: b92791fc799d2dd4389b4b282f57f702, type: 3}
   slowIcon: {fileID: -926218613, guid: 5ea6da0b1ea8bbb489e4038476ae69a3, type: 3}
@@ -249,7 +250,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32dd57ca2bdcdb847a3d9f1939028714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.HeroSelectionIndicator
-  cursorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+  cursorSprite: {fileID: 0}
+  indicatorPosition: {x: 0, y: 0.05, z: 0}
 --- !u!1 &7866384909757321825
 GameObject:
   m_ObjectHideFlags: 0
@@ -726,7 +728,7 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 1852576806548013000, guid: abeab74d105ee45469d5c8d975cfb601, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7062505969888722479}
+      addedObject: {fileID: 8559428331941319524}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: abeab74d105ee45469d5c8d975cfb601, type: 3}
       insertIndex: -1
@@ -784,7 +786,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1852576806548013000, guid: abeab74d105ee45469d5c8d975cfb601, type: 3}
   m_PrefabInstance: {fileID: 2582311513666816210}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &7316580004215101892
+--- !u!1001 &8161520652302136463
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -853,8 +855,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d093f09440e29694280c207f46199cb9, type: 3}
---- !u!4 &7062505969888722479 stripped
+--- !u!4 &8559428331941319524 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d093f09440e29694280c207f46199cb9, type: 3}
-  m_PrefabInstance: {fileID: 7316580004215101892}
+  m_PrefabInstance: {fileID: 8161520652302136463}
   m_PrefabAsset: {fileID: 0}

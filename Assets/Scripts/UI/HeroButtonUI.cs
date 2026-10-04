@@ -49,7 +49,31 @@ namespace TowerDefence.UI
             mainButton.onClick.AddListener(OnHeroButtonClicked);
         }
 
+        private float lastClickTime = 0f;
+        private const float DOUBLE_CLICK_THRESHOLD = 0.3f;
+
         private void OnHeroButtonClicked()
+        {
+            float currentTime = Time.unscaledTime;
+            
+            if (currentTime - lastClickTime <= DOUBLE_CLICK_THRESHOLD)
+            {
+                // ÇİFT TIKLAMA - Stats Panelini Aç
+                ShowStatsPanel();
+            }
+            else
+            {
+                // TEK TIKLAMA - Kahramanı Seç
+                if (HeroManager.Instance != null && slotIndex >= 0)
+                {
+                    HeroManager.Instance.SelectHeroSlot(slotIndex);
+                }
+            }
+            
+            lastClickTime = currentTime;
+        }
+
+        private void ShowStatsPanel()
         {
             HeroStatsPanel panel = GetStatsPanel();
             if (panel == null) return;

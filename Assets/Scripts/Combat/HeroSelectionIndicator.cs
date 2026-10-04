@@ -16,6 +16,7 @@ namespace TowerDefence.Combat
         private static readonly Color ActiveColor = new Color(0.03f, 0.07f, 0.3f, 0.85f);
 
         public Sprite cursorSprite;
+        [SerializeField] private Vector3 indicatorPosition = new Vector3(0f, 0.05f, 0f);
         private GameObject ringObject;
         private SpriteRenderer ringRenderer;
         private HeroSelectionState currentState = HeroSelectionState.Hidden;
@@ -51,7 +52,7 @@ namespace TowerDefence.Combat
 
             ringObject = new GameObject("SelectionRing");
             ringObject.transform.SetParent(transform, false);
-            ringObject.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+            ringObject.transform.localPosition = indicatorPosition;
             ringObject.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Yere paralel olsun
             ringObject.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
 

@@ -224,14 +224,14 @@ namespace TowerDefence.Combat
                 float minDistWp = float.MaxValue;
                 foreach (var path in paths)
                 {
-                    var wps = path.GetWaypoints();
+                    var wps = path.GetPathPoints();
                     for (int i = 0; i < wps.Count; i++)
                     {
-                        float d = Vector3.Distance(transform.position, wps[i].position);
+                        float d = Vector3.Distance(transform.position, wps[i]);
                         if (d < minDistWp && d <= searchRange)
                         {
                             minDistWp = d;
-                            nearestWp = wps[i].position;
+                            nearestWp = wps[i];
                         }
                     }
                 }

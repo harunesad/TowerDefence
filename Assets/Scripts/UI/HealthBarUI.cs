@@ -30,6 +30,14 @@ namespace TowerDefence.UI
             }
         }
 
+        public void SetColor(Color color)
+        {
+            if (fillImage != null)
+            {
+                fillImage.color = color;
+            }
+        }
+
         private void LateUpdate()
         {
             // Billboard efekti: Her zaman kameraya bak

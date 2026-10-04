@@ -89,13 +89,13 @@ namespace TowerDefence.Combat
                 foreach (var path in allPaths)
                 {
                     if (path == null) continue;
-                    var wps = path.GetWaypoints();
+                    var wps = path.GetPathPoints();
                     if (wps.Count < 2) continue;
 
                     for (int i = 0; i < wps.Count - 1; i++)
                     {
-                        Vector3 pA = wps[i].position; pA.y = 0;
-                        Vector3 pB = wps[i+1].position; pB.y = 0;
+                        Vector3 pA = wps[i]; pA.y = 0;
+                        Vector3 pB = wps[i+1]; pB.y = 0;
                         Vector3 pHit = hit.point; pHit.y = 0;
 
                         Vector3 closestPointOnSegment = GetClosestPointOnSegment(pHit, pA, pB);
@@ -113,7 +113,7 @@ namespace TowerDefence.Combat
 
                 if (nearestPath != null)
                 {
-                    var wps = nearestPath.GetWaypoints();
+                    var wps = nearestPath.GetPathPoints();
                     if (isPlayer)
                     {
                         // Player unitleri path'te geriye doğru yürüsün (wp[son] → wp[0] = düşmana doğru)
@@ -124,10 +124,10 @@ namespace TowerDefence.Combat
                         targetWaypointIndex = Mathf.Min(nearestWpIdx + 1, wps.Count - 1);
                     }
                     Debug.Log($"[DROP-DEBUG] nearestPath={nearestPath.name}, nearestWpIdx={nearestWpIdx}, targetWpIdx={targetWaypointIndex}, wpCount={wps.Count}");
-                    Debug.Log($"[DROP-DEBUG] wp[0]={wps[0].position}, wp[{wps.Count-1}]={wps[wps.Count-1].position}, snappedPos={snappedPos}");
+                    Debug.Log($"[DROP-DEBUG] wp[0]={wps[0]}, wp[{wps.Count-1}]={wps[wps.Count-1]}, snappedPos={snappedPos}");
 
                     ghostUnit.transform.position = snappedPos;
-                    Vector3 lookPos = wps[targetWaypointIndex].position;
+                    Vector3 lookPos = wps[targetWaypointIndex];
                     lookPos.y = snappedPos.y;
                     
                     Vector3 dir = (lookPos - ghostUnit.transform.position);
@@ -180,9 +180,9 @@ namespace TowerDefence.Combat
 
                     if (correctSpawner != null)
                     {
-                        var wps = nearestPath.GetWaypoints();
+                        var wps = nearestPath.GetPathPoints();
                         Debug.Log($"[DROP-DEBUG] SPAWNING: spawner={correctSpawner.gameObject.name}, isPlayerSpawner={correctSpawner.isPlayerSpawner}");
-                        Debug.Log($"[DROP-DEBUG] path={nearestPath.name}, wpCount={wps.Count}, wp[0]={wps[0].position}, wp[{wps.Count-1}]={wps[wps.Count-1].position}");
+                        Debug.Log($"[DROP-DEBUG] path={nearestPath.name}, wpCount={wps.Count}, wp[0]={wps[0]}, wp[{wps.Count-1}]={wps[wps.Count-1]}");
                         Debug.Log($"[DROP-DEBUG] targetWpIdx={targetWaypointIndex}, ghostPos={ghostUnit.transform.position}, walkBackward={isPlayer}");
                         correctSpawner.ManualSpawnAtPosition(currentDraggingUnit, ghostUnit.transform.position, nearestPath, targetWaypointIndex, isPlayer);
                     }

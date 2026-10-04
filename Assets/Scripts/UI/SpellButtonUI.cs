@@ -49,7 +49,16 @@ namespace TowerDefence.UI
             bool canAfford = CurrencyManager.Instance.CanAfford(SideController.Instance.GetPlayerSide(), spellData.manaCost);
             bool isSelected = SpellManager.Instance.SelectedSpell == spellData;
 
-            if (remaining > 0)
+            if (SpellManager.Instance.HasBeenUsed(spellData))
+            {
+                cooldownOverlay.fillAmount = 1f; // Tamamen karart
+                button.interactable = false;
+                
+                costText.text = "USED";
+                costText.color = Color.red;
+                iconImage.color = new Color(0.3f, 0.3f, 0.3f, 1f); // Koyu karart
+            }
+            else if (remaining > 0)
             {
                 cooldownOverlay.fillAmount = remaining / total;
                 button.interactable = false;

@@ -152,7 +152,8 @@ MonoBehaviour:
   healthBar: {fileID: 6346809716810038126}
   firePoint: {fileID: 0}
   indicatorRadius: 0.6
-  unitIndicatorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+  indicatorPosition: {x: 0, y: 3, z: 0}
+  unitIndicatorSprite: {fileID: 0}
   burnIcon: {fileID: -1452674001, guid: a39b611d0ae5a6a4e8b393e5874db283, type: 3}
   poisonIcon: {fileID: -1357811797, guid: b92791fc799d2dd4389b4b282f57f702, type: 3}
   slowIcon: {fileID: -926218613, guid: 5ea6da0b1ea8bbb489e4038476ae69a3, type: 3}
@@ -176,10 +177,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 2
+  m_Radius: 1
+  m_Height: 4
   m_Direction: 1
-  m_Center: {x: 0, y: 1, z: 0}
+  m_Center: {x: 0, y: 2, z: 0}
 --- !u!114 &905363543924499829
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -192,7 +193,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32dd57ca2bdcdb847a3d9f1939028714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefence.Combat.HeroSelectionIndicator
-  cursorSprite: {fileID: -1134256901, guid: 80ce6e0bd5ae2bb41a0617dcc2a7a028, type: 3}
+  cursorSprite: {fileID: 0}
+  indicatorPosition: {x: 0, y: 0.05, z: 0}
 --- !u!1 &7437165178280511498
 GameObject:
   m_ObjectHideFlags: 0
@@ -393,14 +395,14 @@ Transform:
   m_GameObject: {fileID: 8759144416754095205}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_LocalPosition: {x: 0, y: 0.4, z: 0}
+  m_LocalScale: {x: 250, y: 250, z: 250}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7189432571950845439}
   m_Father: {fileID: 2742342043769588321}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &5610094489856388962
+--- !u!1001 &532910411053458164
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -469,10 +471,10 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: db24b376489257546aca3d7cd05b431c, type: 3}
---- !u!4 &5355261862860114057 stripped
+--- !u!4 &67552136792081695 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: db24b376489257546aca3d7cd05b431c, type: 3}
-  m_PrefabInstance: {fileID: 5610094489856388962}
+  m_PrefabInstance: {fileID: 532910411053458164}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7228074714998876692
 PrefabInstance:
@@ -488,15 +490,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e10ee39d09e31b146be9a6177afa5b8d, type: 3}
       propertyPath: m_LocalScale.x
-      value: 50
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e10ee39d09e31b146be9a6177afa5b8d, type: 3}
       propertyPath: m_LocalScale.y
-      value: 50
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e10ee39d09e31b146be9a6177afa5b8d, type: 3}
       propertyPath: m_LocalScale.z
-      value: 50
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e10ee39d09e31b146be9a6177afa5b8d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -683,7 +685,7 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 1852576806548013000, guid: e10ee39d09e31b146be9a6177afa5b8d, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5355261862860114057}
+      addedObject: {fileID: 67552136792081695}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e10ee39d09e31b146be9a6177afa5b8d, type: 3}
       insertIndex: -1

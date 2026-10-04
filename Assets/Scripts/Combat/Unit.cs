@@ -39,6 +39,7 @@ namespace TowerDefence.Combat
 
         [Header("Indicator")]
         [SerializeField] private float indicatorRadius = 0.6f;
+        [SerializeField] private Vector3 indicatorPosition = new Vector3(0f, 3f, 0f);
         private GameObject unitIndicator;
 
         // Status effects
@@ -126,15 +127,26 @@ namespace TowerDefence.Combat
             // 1.0f = referans hız, animasyon bu hıza göre kalibre edilmiş sayılır
             SyncAnimatorSpeed(moveSpeed);
 
-            if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
+            if (healthBar != null) 
+            {
+                // Dost birimler mavi, düşman birimler yeşil/kırmızı (prefabın orijinal rengi veya yeşil)
+                if (unitSide == SideController.Instance.GetPlayerSide())
+                    healthBar.SetColor(new Color(0.2f, 0.6f, 1f)); // Mavi
+                else
+                    healthBar.SetColor(new Color(0.2f, 0.8f, 0.2f)); // Yeşil
+                    
+                healthBar.UpdateHealth(currentHealth, maxHealth);
+            }
 
             ResolveFirePoint();
 
             InitializeStatusEffects();
             SetLayerRecursive(gameObject, (unitSide == Side.Light) ? 6 : 7);
             targetLayer = (unitSide == Side.Light) ? (1 << 7) : (1 << 6);
-            if (unitSide == SideController.Instance.GetPlayerSide())
-                CreateUnitIndicator();
+            
+            // Kullanıcı isteği üzerine: Dost birliklerin altına çıkan indicator halkası tamamen kaldırıldı (Can barı renklerinden ayırt ediliyor)
+            // if (unitSide == SideController.Instance.GetPlayerSide())
+            //     CreateUnitIndicator();
 
             if (AudioManager.Instance != null && unitData.spawnSFX != null)
                 AudioManager.Instance.PlaySFX(unitData.spawnSFX);
@@ -205,8 +217,8 @@ namespace TowerDefence.Combat
 
             unitIndicator = new GameObject("UnitIndicator");
             unitIndicator.transform.SetParent(transform, false);
-            unitIndicator.transform.localPosition = new Vector3(0f, 3f, 0f);
-            unitIndicator.transform.localRotation = Quaternion.Euler(15f, 0f, 0f);
+            unitIndicator.transform.localPosition = indicatorPosition; // Editörden ayarlanan pozisyon
+            unitIndicator.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             unitIndicator.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
 
             var sr = unitIndicator.AddComponent<SpriteRenderer>();
@@ -373,9 +385,9 @@ namespace TowerDefence.Combat
                     Vector3 targetPos = Vector3.zero;
 
                     if (currentPath != null && 
-                        (walkPathBackward ? currentWaypointIndex >= 0 : currentWaypointIndex < currentPath.GetWaypoints().Count))
+                        (walkPathBackward ? currentWaypointIndex >= 0 : currentWaypointIndex < currentPath.GetPathPoints().Count))
                     {
-                        targetPos = currentPath.GetWaypoints()[currentWaypointIndex].position;
+                        targetPos = currentPath.GetPathPoints()[currentWaypointIndex];
                         Vector3 flatPos = new Vector3(transform.position.x, 0, transform.position.z);
                         Vector3 flatTarget = new Vector3(currentMoveTarget.x, 0, currentMoveTarget.z);
                         
@@ -388,7 +400,7 @@ namespace TowerDefence.Combat
 
                             bool reachedEnd = walkPathBackward 
                                 ? currentWaypointIndex < 0 
-                                : currentWaypointIndex >= currentPath.GetWaypoints().Count;
+                                : currentWaypointIndex >= currentPath.GetPathPoints().Count;
 
                             if (reachedEnd)
                             {
@@ -440,9 +452,9 @@ namespace TowerDefence.Combat
 
         private void UpdateMoveTarget()
         {
-            if (currentPath == null || currentWaypointIndex < 0 || currentWaypointIndex >= currentPath.GetWaypoints().Count) return;
+            if (currentPath == null || currentWaypointIndex < 0 || currentWaypointIndex >= currentPath.GetPathPoints().Count) return;
 
-            Vector3 baseTarget = currentPath.GetWaypoints()[currentWaypointIndex].position;
+            Vector3 baseTarget = currentPath.GetPathPoints()[currentWaypointIndex];
             Vector3 targetWithMyY = new Vector3(baseTarget.x, transform.position.y, baseTarget.z);
             
             // Yanal sapmayı (lane içinde mikro-varyans) waypoint bazlı hesapla ve sabitle
@@ -555,7 +567,7 @@ namespace TowerDefence.Combat
         {
             currentPath = path;
             
-            if (currentPath != null && currentPath.GetWaypoints().Count > 0)
+            if (currentPath != null && currentPath.GetPathPoints().Count > 0)
             {
                 currentWaypointIndex = 0;
                 UpdateMoveTarget();
@@ -568,13 +580,13 @@ namespace TowerDefence.Combat
             currentPath = path;
             if (path == null) return;
 
-            var wps = path.GetWaypoints();
+            var wps = path.GetPathPoints();
             float minDistance = float.PositiveInfinity;
             int nearestIdx = 0;
 
             for (int i = 0; i < wps.Count; i++)
             {
-                float dist = Vector3.Distance(currentPos, wps[i].position);
+                float dist = Vector3.Distance(currentPos, wps[i]);
                 if (dist < minDistance)
                 {
                     minDistance = dist;
@@ -588,7 +600,7 @@ namespace TowerDefence.Combat
             if (currentWaypointIndex >= 0 && currentWaypointIndex < wps.Count)
             {
                 UpdateMoveTarget();
-                SnapRotationToTarget(wps[currentWaypointIndex].position);
+                SnapRotationToTarget(wps[currentWaypointIndex]);
             }
         }
 
@@ -598,7 +610,7 @@ namespace TowerDefence.Combat
             walkPathBackward = walkBackward;
             if (path == null) return;
 
-            var wps = path.GetWaypoints();
+            var wps = path.GetPathPoints();
             if (wps.Count == 0) return;
 
             currentWaypointIndex = Mathf.Clamp(targetIdx, 0, wps.Count - 1);
@@ -735,10 +747,10 @@ namespace TowerDefence.Combat
             
             // Eğer yol atanmışsa, hedef olarak yolun son noktasını (Base kapısını) referans al
             Vector3 referencePos = transform.position;
-            if (currentPath != null && currentPath.GetWaypoints().Count > 0)
+            if (currentPath != null && currentPath.GetPathPoints().Count > 0)
             {
-                var wps = currentPath.GetWaypoints();
-                referencePos = wps[wps.Count - 1].position;
+                var wps = currentPath.GetPathPoints();
+                referencePos = wps[wps.Count - 1];
             }
 
             float minDistance = float.MaxValue;
