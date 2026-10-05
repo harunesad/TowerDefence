@@ -24,11 +24,16 @@ namespace TowerDefence.UI
             }
         }
 
+        private List<UnitButton> spawnedButtons = new List<UnitButton>();
+
         private void OnEnable()
         {
             if (SideController.Instance != null)
                 SideController.Instance.OnSideChanged += HandleSideChanged;
             
+            if (PhaseManager.Instance != null)
+                PhaseManager.Instance.OnWaveChanged += HandleWaveChanged;
+
             StopAllCoroutines();
             StartCoroutine(DeferredInit());
         }
@@ -55,11 +60,38 @@ namespace TowerDefence.UI
             StopAllCoroutines();
             if (SideController.Instance != null)
                 SideController.Instance.OnSideChanged -= HandleSideChanged;
+            if (PhaseManager.Instance != null)
+                PhaseManager.Instance.OnWaveChanged -= HandleWaveChanged;
         }
 
         private void HandleSideChanged(Side side)
         {
             InitializeUI();
+        }
+
+        private void HandleWaveChanged(int currentWave, int totalWaves)
+        {
+            UpdateButtonsInteractability();
+        }
+
+        private void UpdateButtonsInteractability()
+        {
+            if (PhaseManager.Instance == null || CampaignManager.Instance == null || CampaignManager.Instance.GetCurrentLevel() == null) 
+                return;
+
+            int totalWaves = CampaignManager.Instance.GetCurrentLevel().waves.Count;
+            bool isBossWave = PhaseManager.Instance.GetCurrentWaveIndex() >= totalWaves - 1;
+
+            foreach (var btn in spawnedButtons)
+            {
+                if (btn == null || btn.UnitData == null) continue;
+                
+                bool isBoss = SideSelectionUI.BossNames.Contains(btn.UnitData.unitName);
+                
+                // Normal wavelerde sadece normal unit, boss wavede sadece boss
+                bool shouldBeActive = (isBossWave && isBoss) || (!isBossWave && !isBoss);
+                btn.SetInteractable(shouldBeActive);
+            }
         }
 
         private void InitializeUI()
@@ -68,7 +100,6 @@ namespace TowerDefence.UI
             
             lastSide = SideController.Instance.GetPlayerSide();
 
-            // Konteynerdaki eski butonları temizle
             if (container != null)
             {
                 foreach (Transform child in container)
@@ -76,8 +107,8 @@ namespace TowerDefence.UI
                     if (child != null) Object.Destroy(child.gameObject);
                 }
             }
+            spawnedButtons.Clear();
 
-            // Birim verilerini al (Agresif bulma fallback ile)
             List<UnitData> unitsPool = new List<UnitData>();
             if (UnitPlacementManager.Instance != null && UnitPlacementManager.Instance.AllUnits != null && UnitPlacementManager.Instance.AllUnits.Count > 0)
             {
@@ -112,6 +143,7 @@ namespace TowerDefence.UI
                     if (ub == null) ub = btnGO.AddComponent<UnitButton>();
                     
                     ub.Setup(finalUnit);
+                    spawnedButtons.Add(ub);
                 }
             }
 
@@ -119,6 +151,9 @@ namespace TowerDefence.UI
             {
                 Debug.LogWarning("[CORE-UNIT] No units found for side: " + playerSide);
             }
+
+            // Butonları oluşturduktan sonra wave durumuna göre kontrol et
+            UpdateButtonsInteractability();
         }
 
         private void OnUnitButtonClicked(UnitData unit)

@@ -13,6 +13,7 @@ namespace TowerDefence.UI
         [SerializeField] private TMPro.TextMeshProUGUI costText;
         
         private UnitData unitData;
+        public UnitData UnitData => unitData;
         private UnitInfoPanelUI activePanel;
 
         private void OnEnable()
@@ -66,8 +67,21 @@ namespace TowerDefence.UI
             panelRT.position = new Vector3(btnPos.x, btnPos.y + panelH * 0.5f + 10f, btnPos.z);
         }
 
+        private bool isInteractable = true;
+
+        public void SetInteractable(bool interactable)
+        {
+            isInteractable = interactable;
+            if (iconImage != null)
+            {
+                iconImage.color = interactable ? Color.white : new Color(0.3f, 0.3f, 0.3f, 1f);
+            }
+        }
+
         public void OnBeginDrag(PointerEventData eventData)
         {
+            if (!isInteractable) return;
+            
             if (UnitPlacementManager.Instance != null && CurrencyManager.Instance.CanAfford(unitData.side, unitData.spawnCost))
             {
                 UnitPlacementManager.Instance.StartDragging(unitData);

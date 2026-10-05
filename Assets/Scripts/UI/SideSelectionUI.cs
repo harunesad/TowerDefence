@@ -188,12 +188,53 @@ namespace TowerDefence.UI
             }
         }
 
+        public static readonly HashSet<string> BossNames = new HashSet<string> {
+            "Abyssal Behemoth", "Blood Mage", "Bone Dragon", "Death Knight Commander", "Demon King", "Shadow Leviathan",
+            "Archangel", "Avatar of Light", "Dragon of the Sun", "Grand Paladin", "Holy Colossus", "Phoenix Summoner"
+        };
+
+        private Transform bossItemContainer;
+        private TextMeshProUGUI bossLoadoutHint;
+
+        private void SetupBossUI()
+        {
+            if (bossItemContainer != null) return;
+            
+            // unitItemContainer = UnitContent, onun parent'i UnitScroll
+            if (unitItemContainer == null || unitItemContainer.parent == null) return;
+
+            Transform unitScroll = unitItemContainer.parent; 
+            GameObject bossScrollObj = Instantiate(unitScroll.gameObject, unitScroll.parent);
+            bossScrollObj.name = "BossScroll";
+            
+            RectTransform bossRT = bossScrollObj.GetComponent<RectTransform>();
+            bossRT.anchoredPosition = new Vector2(bossRT.anchoredPosition.x, bossRT.anchoredPosition.y - 150f);
+            
+            ScrollRect bossScroll = bossScrollObj.GetComponent<ScrollRect>();
+            if (bossScroll != null)
+                bossItemContainer = bossScroll.content;
+            else
+                bossItemContainer = bossScrollObj.transform.Find("UnitContent") ?? bossScrollObj.transform; // Fallback
+
+            // UnitHint kopyası
+            if (unitLoadoutHint != null)
+            {
+                GameObject bossHintObj = Instantiate(unitLoadoutHint.gameObject, unitLoadoutHint.transform.parent);
+                bossHintObj.name = "BossLoadoutHint";
+                RectTransform hintRT = bossHintObj.GetComponent<RectTransform>();
+                hintRT.anchoredPosition = new Vector2(hintRT.anchoredPosition.x, hintRT.anchoredPosition.y - 150f);
+                bossLoadoutHint = bossHintObj.GetComponent<TextMeshProUGUI>();
+            }
+        }
+
         private void PopulateUnitLoadout(Side side)
         {
+            SetupBossUI();
+
             if (unitItemContainer == null || unitItemPrefab == null) return;
 
-            foreach (Transform child in unitItemContainer)
-                Destroy(child.gameObject);
+            foreach (Transform child in unitItemContainer) Destroy(child.gameObject);
+            foreach (Transform child in bossItemContainer) Destroy(child.gameObject);
 
             if (MetaProgressionManager.Instance == null) return;
 
@@ -205,7 +246,11 @@ namespace TowerDefence.UI
                 if (string.IsNullOrEmpty(unit.unitName) || addedNames.Contains(unit.unitName)) continue;
 
                 addedNames.Add(unit.unitName);
-                GameObject go = Instantiate(unitItemPrefab, unitItemContainer);
+
+                bool isBoss = BossNames.Contains(unit.unitName);
+                Transform targetContainer = isBoss ? bossItemContainer : unitItemContainer;
+
+                GameObject go = Instantiate(unitItemPrefab, targetContainer);
                 UnitLoadoutItemUI itemUI = go.GetComponent<UnitLoadoutItemUI>();
                 if (itemUI != null) itemUI.Setup(unit);
             }
@@ -217,33 +262,49 @@ namespace TowerDefence.UI
         {
             if (MetaProgressionManager.Instance == null) return;
 
-            int equippedUnitCount = MetaProgressionManager.Instance.GetEquippedUnitNames().Count;
-            if (equippedUnitCount != 5)
+            List<string> equipped = MetaProgressionManager.Instance.GetEquippedUnitNames();
+            int normalCount = 0;
+            int bossCount = 0;
+
+            foreach(var u in equipped)
             {
-                if (unitLoadoutHint != null)
-                {
-                    unitLoadoutHint.text = $"SELECT EXACTLY 5 UNITS! ({equippedUnitCount}/5)";
-                    unitLoadoutHint.color = Color.red;
-                }
-                if (startMatchButton != null) startMatchButton.interactable = false;
+                if (BossNames.Contains(u)) bossCount++;
+                else normalCount++;
             }
-            else
+
+            bool normalOk = normalCount == 4;
+            bool bossOk = bossCount == 1;
+
+            if (unitLoadoutHint != null)
             {
-                if (unitLoadoutHint != null)
-                {
-                    unitLoadoutHint.text = "UNITS SELECTED (5/5)";
-                    unitLoadoutHint.color = Color.green;
-                }
-                if (startMatchButton != null) startMatchButton.interactable = true;
+                unitLoadoutHint.text = normalOk ? "NORMAL UNITS (4/4)" : $"SELECT 4 NORMAL UNITS! ({normalCount}/4)";
+                unitLoadoutHint.color = normalOk ? Color.green : Color.red;
             }
+
+            if (bossLoadoutHint != null)
+            {
+                bossLoadoutHint.text = bossOk ? "BOSS UNIT (1/1)" : $"SELECT 1 BOSS UNIT! ({bossCount}/1)";
+                bossLoadoutHint.color = bossOk ? Color.green : Color.red;
+            }
+
+            if (startMatchButton != null) 
+                startMatchButton.interactable = (normalOk && bossOk);
         }
 
         private void StartMatch()
         {
             if (MetaProgressionManager.Instance == null) return;
 
-            // Force verification
-            if (MetaProgressionManager.Instance.GetEquippedUnitNames().Count != 5)
+            List<string> equipped = MetaProgressionManager.Instance.GetEquippedUnitNames();
+            int normalCount = 0;
+            int bossCount = 0;
+            foreach(var u in equipped)
+            {
+                if (BossNames.Contains(u)) bossCount++;
+                else normalCount++;
+            }
+
+            if (normalCount != 4 || bossCount != 1)
             {
                 RefreshStartMatchButton();
                 return;
