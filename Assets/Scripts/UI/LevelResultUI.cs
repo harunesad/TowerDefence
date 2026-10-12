@@ -15,6 +15,7 @@ namespace TowerDefence.UI
         [SerializeField] private Button menuButton;
         [SerializeField] private Button nextLevelButton;
         [SerializeField] private Button restartButton;
+        [SerializeField] private Button closeButton; // Sadece Sweep modunda veya kapatmak için
 
         [Header("Reward UI")]
         [SerializeField] private TextMeshProUGUI rewardText;
@@ -51,6 +52,8 @@ namespace TowerDefence.UI
                 restartButton.onClick.AddListener(OnRestartClicked);
             if (doubleRewardButton != null)
                 doubleRewardButton.onClick.AddListener(OnDoubleRewardClicked);
+            if (closeButton != null)
+                closeButton.onClick.AddListener(() => gameObject.SetActive(false));
         }
 
         public void Show(bool isVictory, int livesRemaining, int totalLives)
@@ -60,7 +63,9 @@ namespace TowerDefence.UI
             titleText.text = isVictory ? "VICTORY!" : "DEFEAT...";
             titleText.color = isVictory ? Color.green : Color.red;
 
+            int difficulty = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
             int stars = 0;
+
             if (isVictory)
             {
                 float lifePercent = (float)livesRemaining / totalLives;
@@ -68,34 +73,30 @@ namespace TowerDefence.UI
                 else if (lifePercent >= 0.5f) stars = 2;
                 else stars = 1;
 
-                // Veriyi Kaydet
-                var currentLevel = CampaignManager.Instance.GetCurrentLevel();
-                if (currentLevel != null)
-                {
-                    MetaProgressionManager.Instance.SaveLevelProgress(currentLevel.levelID, stars);
-                    CampaignManager.Instance.CompleteCurrentLevel();
-                }
-            }
+                // Yıldız sayısına göre ödül (Örn: 3 yıldız -> 75 karma, 1 yıldız -> 25 karma)
+                pendingKarma = 25 * stars * difficulty;
+                pendingCrystals = 5 * stars * difficulty;
 
-            // Ödül miktarlarını hesapla (CompleteCurrentLevel zaten verdi, burada sadece göstermek için)
-            int difficulty = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
-            if (isVictory)
-            {
-                pendingKarma = 50 * difficulty;
-                pendingCrystals = 10 * difficulty;
+                // Bölümü tamamla ve ödülleri oyuncuya ver
+                if (CampaignManager.Instance != null)
+                {
+                    CampaignManager.Instance.CompleteCurrentLevel(stars, pendingKarma, pendingCrystals);
+                }
+
+                if (doubleRewardButton != null)
+                    doubleRewardButton.gameObject.SetActive(true);
             }
             else
             {
-                pendingKarma = 20; // Teselli ödülü (GameManager'da verildi)
+                pendingKarma = 0;
                 pendingCrystals = 0;
+
+                if (doubleRewardButton != null)
+                    doubleRewardButton.gameObject.SetActive(false);
             }
 
             // Ödül metnini güncelle
             UpdateRewardText();
-
-            // 2X butonunu göster
-            if (doubleRewardButton != null)
-                doubleRewardButton.gameObject.SetActive(true);
 
             // Yıldızları Görselleştir
             for (int i = 0; i < starImages.Length; i++)
@@ -105,14 +106,82 @@ namespace TowerDefence.UI
 
             // Next Level Butonu Kontrolü
             if (nextLevelButton != null)
-            {
                 nextLevelButton.gameObject.SetActive(isVictory);
+            
+            // Diğer butonları aç, Close'u kapat
+            if (menuButton != null) 
+            {
+                menuButton.gameObject.SetActive(true);
+                var txt = menuButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (txt != null) txt.text = "MAIN MENU"; // Varsayılan metni geri yükle
+                menuButton.onClick.RemoveAllListeners();
+                menuButton.onClick.AddListener(OnMenuClicked); // Varsayılan metodu geri bağla
+            }
+            if (restartButton != null) restartButton.gameObject.SetActive(true);
+            if (closeButton != null) closeButton.gameObject.SetActive(false);
+        }
+
+        public void ShowSweepResult()
+        {
+            gameObject.SetActive(true);
+            hasDoubled = false;
+            titleText.text = "LEVEL CLEARED!";
+            titleText.color = Color.green;
+
+            int difficulty = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
+            int stars = 3;
+
+            // Oynamadan geçildiği için normalin (75 karma, 15 kristal) çok daha azı verilir. (Örn: 10 karma, 2 kristal * zorluk)
+            pendingKarma = 10 * difficulty;
+            pendingCrystals = 2 * difficulty;
+
+            if (CampaignManager.Instance != null)
+            {
+                CampaignManager.Instance.CompleteCurrentLevel(stars, pendingKarma, pendingCrystals);
+            }
+
+            // Ödül metnini güncelle
+            UpdateRewardText();
+
+            // Yıldızları Görselleştir
+            for (int i = 0; i < starImages.Length; i++)
+            {
+                starImages[i].color = activeStarColor;
+            }
+
+            // Normal butonları gizle, sadece Close butonunu göster
+            if (menuButton != null) menuButton.gameObject.SetActive(false);
+            if (nextLevelButton != null) nextLevelButton.gameObject.SetActive(false);
+            if (restartButton != null) restartButton.gameObject.SetActive(false);
+            if (doubleRewardButton != null) doubleRewardButton.gameObject.SetActive(false);
+
+            if (closeButton != null) 
+            {
+                closeButton.gameObject.SetActive(true);
+            }
+            else 
+            {
+                // Fallback: Eğer kullanıcı Close butonu koymamışsa, Menu butonunu kapatıcı olarak kullan
+                if (menuButton != null)
+                {
+                    menuButton.gameObject.SetActive(true);
+                    var txt = menuButton.GetComponentInChildren<TextMeshProUGUI>();
+                    if (txt != null) txt.text = "CLOSE";
+                    menuButton.onClick.RemoveAllListeners();
+                    menuButton.onClick.AddListener(() => gameObject.SetActive(false));
+                }
             }
         }
 
         private void UpdateRewardText()
         {
             if (rewardText == null) return;
+
+            if (pendingKarma <= 0 && pendingCrystals <= 0)
+            {
+                rewardText.text = "No Rewards";
+                return;
+            }
 
             string text = $"+{pendingKarma} Karma";
             if (pendingCrystals > 0)
@@ -158,20 +227,23 @@ namespace TowerDefence.UI
 
         private void OnMenuClicked()
         {
-            // Zamanı normale döndür
-            Time.timeScale = 1f;
+            // Zamanı GameSpeedManager üzerinden normale döndür
+            if (TowerDefence.Core.GameSpeedManager.Instance != null)
+                TowerDefence.Core.GameSpeedManager.Instance.SetSpeedX1();
+            else
+                Time.timeScale = 1f;
             
             // Interstitial reklam göster, sonra ana menüye dön
-            if (AdManager.Instance != null)
+            if (TowerDefence.Core.AdManager.Instance != null)
             {
-                AdManager.Instance.ShowInterstitialAd(onCompleted: () =>
+                TowerDefence.Core.AdManager.Instance.ShowInterstitialAd(onCompleted: () =>
                 {
-                    SceneManager.LoadScene(1);
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(1);
                 });
             }
             else
             {
-                SceneManager.LoadScene(1);
+                UnityEngine.SceneManagement.SceneManager.LoadScene(1);
             }
         }
 
@@ -184,18 +256,21 @@ namespace TowerDefence.UI
 
         private void OnRestartClicked()
         {
-            // Zamanı normale döndür
-            Time.timeScale = 1f;
+            // Zamanı GameSpeedManager üzerinden normale döndür
+            if (TowerDefence.Core.GameSpeedManager.Instance != null)
+                TowerDefence.Core.GameSpeedManager.Instance.SetSpeedX1();
+            else
+                Time.timeScale = 1f;
             
             // CampaignManager üzerinden temiz bir restart at
-            if (CampaignManager.Instance != null)
+            if (TowerDefence.Core.CampaignManager.Instance != null)
             {
-                CampaignManager.Instance.RestartLevel();
+                TowerDefence.Core.CampaignManager.Instance.RestartLevel();
             }
             else
             {
                 // Fallback: Manager yoksa sahneyi yükle (ama gri ekran riski var)
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
             }
         }
     }

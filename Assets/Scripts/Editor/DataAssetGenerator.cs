@@ -789,6 +789,7 @@ public class DataAssetGenerator : Editor
             case "TrollBrute": rightWeapon = "TreeTrunkClub"; break;
             case "DarkElfSniper": rightWeapon = "HeavyMechanicalCrossbow"; break;
             case "DemonKing": rightWeapon = "FlamingBattleaxe"; break;
+            case "DeathKnight":
             case "DeathKnightCommander": rightWeapon = "KnightsLance"; break;
             case "BloodMage": rightWeapon = "NecromancerStaff"; break;
             // Hero specific weapons
@@ -851,7 +852,7 @@ public class DataAssetGenerator : Editor
                 else if (n == "DarkKnight" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, -0.8f);
                 else if (n == "DemonKing" && boneName == "RightHand") { localPos = new Vector3(-0.00046f, 0.00085f, 0.00012f); localRot = new Vector3(0f, -97.539f, 0f); }
                 else if (n == "CavalryRider" && boneName == "RightHand") localPos = new Vector3(0, 0.2f, 0);
-                else if (n == "DeathKnightCommander" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
+                else if ((n == "DeathKnight" || n == "DeathKnightCommander") && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
                 else if (n == "DwarvenCannoneer" && boneName == "RightHand") localPos = new Vector3(0, 0.9f, 0);
                 else if (n == "ElvenRanger" && boneName == "LeftHand") { localPos = new Vector3(0, 0.1f, 0); localRot = new Vector3(180, 0, 0); }
                 else if (n == "GoblinGrunt" && boneName == "LeftHand") { localPos = new Vector3(0, 0.3f, 0); localRot = new Vector3(180, 0, 0); }
@@ -2510,7 +2511,7 @@ public class DataAssetGenerator : Editor
 
     private static readonly System.Collections.Generic.HashSet<string> bossUnits = new()
     {
-        "Demon_King", "Bone_Dragon", "Abyssal_Behemoth", "Death_Knight_Commander", "Blood_Mage", "Shadow_Leviathan",
+        "Demon_King", "Bone_Dragon", "Abyssal_Behemoth", "Death_Knight", "Death_Knight_Commander", "Blood_Mage", "Shadow_Leviathan",
         "Archangel", "Holy_Colossus", "Grand_Paladin", "Phoenix_Summoner", "Avatar_of_Light", "Dragon_of_the_Sun"
     };
 
@@ -3536,10 +3537,10 @@ public class DataAssetGenerator : Editor
         if (isBossWave)
         {
             // Her levelin son dalgasında sadece 1 boss gelir, yanında başka asker yok
-            string[] forestBosses = { "Demon_King", "Bone_Dragon", "Abyssal_Behemoth", "Death_Knight_Commander", "Blood_Mage", "Shadow_Leviathan" };
-            string[] desertBosses = { "Bone_Dragon", "Death_Knight_Commander", "Shadow_Leviathan", "Blood_Mage", "Abyssal_Behemoth", "Demon_King" };
-            string[] snowBosses = { "Shadow_Leviathan", "Blood_Mage", "Demon_King", "Bone_Dragon", "Death_Knight_Commander", "Abyssal_Behemoth" };
-            string[] underworldBosses = { "Demon_King", "Abyssal_Behemoth", "Shadow_Leviathan", "Bone_Dragon", "Blood_Mage", "Death_Knight_Commander" };
+            string[] forestBosses = { "Demon_King", "Bone_Dragon", "Abyssal_Behemoth", "Death_Knight", "Blood_Mage", "Shadow_Leviathan" };
+            string[] desertBosses = { "Bone_Dragon", "Death_Knight", "Shadow_Leviathan", "Blood_Mage", "Abyssal_Behemoth", "Demon_King" };
+            string[] snowBosses = { "Shadow_Leviathan", "Blood_Mage", "Demon_King", "Bone_Dragon", "Death_Knight", "Abyssal_Behemoth" };
+            string[] underworldBosses = { "Demon_King", "Abyssal_Behemoth", "Shadow_Leviathan", "Bone_Dragon", "Blood_Mage", "Death_Knight" };
 
             string boss;
             if (lvlIdx <= 12) boss = forestBosses[(lvlIdx - 1) % forestBosses.Length];

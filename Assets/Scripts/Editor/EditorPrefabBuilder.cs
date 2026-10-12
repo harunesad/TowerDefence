@@ -1008,6 +1008,7 @@ public class EditorPrefabBuilder : Editor
             case "TrollBrute": rightWeapon = "TreeTrunkClub"; break;
             case "DarkElfSniper": rightWeapon = "HeavyMechanicalCrossbow"; break;
             case "DemonKing": rightWeapon = "FlamingBattleaxe"; break;
+            case "DeathKnight":
             case "DeathKnightCommander": rightWeapon = "KnightsLance"; break;
             case "BloodMage": rightWeapon = "NecromancerStaff"; break;
         }
@@ -1046,7 +1047,7 @@ public class EditorPrefabBuilder : Editor
                 else if (n == "DarkKnight" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, -0.8f);
                 else if (n == "DemonKing" && boneName == "RightHand") { localPos = new Vector3(-0.00046f, 0.00085f, 0.00012f); localRot = new Vector3(0f, -97.539f, 0f); }
                 else if (n == "CavalryRider" && boneName == "RightHand") localPos = new Vector3(0, 0.2f, 0);
-                else if (n == "DeathKnightCommander" && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
+                else if ((n == "DeathKnight" || n == "DeathKnightCommander") && boneName == "RightHand") localPos = new Vector3(0, 0.1f, 0);
                 else if (n == "DwarvenCannoneer" && boneName == "RightHand") localPos = new Vector3(0, 0.9f, 0);
                 else if (n == "ElvenRanger" && boneName == "LeftHand") { localPos = new Vector3(0, 0.1f, 0); localRot = new Vector3(180, 0, 0); }
                 else if (n == "GoblinGrunt" && boneName == "LeftHand") { localPos = new Vector3(0, 0.3f, 0); localRot = new Vector3(180, 0, 0); }

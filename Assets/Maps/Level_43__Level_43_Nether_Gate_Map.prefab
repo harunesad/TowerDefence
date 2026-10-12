@@ -266,6 +266,7 @@ MonoBehaviour:
   - {fileID: 5428605234268434930}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 1.5
   curveHandles:
   - {x: -16.066013, y: 0, z: -1.7174625}
   - {x: -9.3881035, y: 0, z: -3.4504375}
@@ -401,7 +402,7 @@ MonoBehaviour:
   spawnerIndex: 2
   assignedPaths:
   - {fileID: 8858588791449381917}
-  isPlayerSpawner: 1
+  isPlayerSpawner: 0
 --- !u!1 &5734529380880977760
 GameObject:
   m_ObjectHideFlags: 0
@@ -484,6 +485,7 @@ MonoBehaviour:
   - {fileID: 23259126564789042}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 1.5
   curveHandles:
   - {x: -7.5, y: 0, z: 24.03482}
   - {x: 0, y: 0, z: 15}
@@ -757,6 +759,7 @@ MonoBehaviour:
   - {fileID: 8135371194168278735}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 1.5
   curveHandles:
   - {x: 31.171818, y: 0, z: -17.617931}
   - {x: 33.717636, y: 0, z: 5.9268913}
@@ -2257,14 +2260,48 @@ PrefabInstance:
       value: Level43
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 773d6e860e1dd874985b617ad2379611, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 773d6e860e1dd874985b617ad2379611, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 773d6e860e1dd874985b617ad2379611, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8457644324624534413}
   m_SourcePrefab: {fileID: 100100000, guid: 773d6e860e1dd874985b617ad2379611, type: 3}
+--- !u!1 &7161858806784625197 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 773d6e860e1dd874985b617ad2379611, type: 3}
+  m_PrefabInstance: {fileID: 8044943453130045308}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &8457644324624534413
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7161858806784625197}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 5461320835613783329, guid: 773d6e860e1dd874985b617ad2379611, type: 3}
 --- !u!4 &7507456663446016151 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 773d6e860e1dd874985b617ad2379611, type: 3}

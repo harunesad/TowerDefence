@@ -189,7 +189,7 @@ namespace TowerDefence.UI
         }
 
         public static readonly HashSet<string> BossNames = new HashSet<string> {
-            "Abyssal Behemoth", "Blood Mage", "Bone Dragon", "Death Knight Commander", "Demon King", "Shadow Leviathan",
+            "Abyssal Behemoth", "Blood Mage", "Bone Dragon", "Death Knight", "Death Knight Commander", "Demon King", "Shadow Leviathan",
             "Archangel", "Avatar of Light", "Dragon of the Sun", "Grand Paladin", "Holy Colossus", "Phoenix Summoner"
         };
 

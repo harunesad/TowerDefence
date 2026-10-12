@@ -22,6 +22,9 @@ namespace TowerDefence.UI
         [Header("Difficulty Selection")]
         [SerializeField] private Button btnDiffNormal;
         [SerializeField] private Button btnDiffHard;
+
+        [Header("Sweep / Auto-Complete")]
+        [SerializeField] private LevelResultUI sweepResultUI;
         [SerializeField] private Button btnDiffExpert;
 
         private int currentMapIndex = 0;
@@ -203,6 +206,26 @@ namespace TowerDefence.UI
             Transform lockedOverlay = buttonGO.transform.Find("LockedOverlay");
             if (lockedOverlay != null) lockedOverlay.gameObject.SetActive(!isUnlocked);
 
+            // Sweep (Hızlı Geç) Butonu
+            Transform sweepButtonTrans = buttonGO.transform.Find("SweepButton");
+            if (sweepButtonTrans != null)
+            {
+                Button sweepBtn = sweepButtonTrans.GetComponent<Button>();
+                if (sweepBtn != null)
+                {
+                    if (earnedStars >= 3 && isUnlocked)
+                    {
+                        sweepBtn.gameObject.SetActive(true);
+                        sweepBtn.onClick.RemoveAllListeners();
+                        sweepBtn.onClick.AddListener(() => OnSweepButtonClicked(level));
+                    }
+                    else
+                    {
+                        sweepBtn.gameObject.SetActive(false);
+                    }
+                }
+            }
+
             button.interactable = isUnlocked;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => OnLevelSelected(level));
@@ -224,6 +247,46 @@ namespace TowerDefence.UI
             {
                 sideSelectionPanel.SetActive(true);
                 gameObject.SetActive(false);
+            }
+        }
+
+        private void OnSweepButtonClicked(LevelData level)
+        {
+            if (AdManager.Instance != null)
+            {
+                AdManager.Instance.ShowRewardedAd(
+                    onSuccess: () =>
+                    {
+                        if (CampaignManager.Instance != null)
+                        {
+                            CampaignManager.Instance.SelectLevel(level);
+                        }
+
+                        if (sweepResultUI != null)
+                        {
+                            // 3 yıldız ödülünü sweep mantığıyla ver
+                            sweepResultUI.ShowSweepResult();
+                        }
+                        else
+                        {
+                            Debug.LogWarning("SweepResultUI atanmamış! Manuel ödül veriliyor.");
+                            if (CampaignManager.Instance != null)
+                            {
+                                int difficulty = CampaignManager.Instance.CurrentDifficultyLevel;
+                                // Hızlı geçişte manuel olarak düşük ödül ver
+                                CampaignManager.Instance.CompleteCurrentLevel(3, 10 * difficulty, 2 * difficulty);
+                            }
+                        }
+                    },
+                    onFailed: () =>
+                    {
+                        Debug.Log("Sweep rewarded ad failed or skipped.");
+                    }
+                );
+            }
+            else
+            {
+                Debug.LogWarning("AdManager not found!");
             }
         }
     }

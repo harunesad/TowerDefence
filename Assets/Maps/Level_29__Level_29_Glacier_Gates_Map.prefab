@@ -55,6 +55,7 @@ MonoBehaviour:
   - {fileID: 4313263411769889698}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 2
   curveHandles:
   - {x: 45.1084, y: 0, z: 7.251068}
   - {x: 18.045612, y: 0, z: 22.897963}
@@ -422,6 +423,7 @@ MonoBehaviour:
   - {fileID: 6162574383049712654}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 2
   curveHandles:
   - {x: -29.777287, y: 0, z: -20.078358}
   - {x: -24.672163, y: 0, z: 26.43337}
@@ -1496,14 +1498,48 @@ PrefabInstance:
       value: Level29
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 0f20eb52e358e924d9257491544ff042, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 0f20eb52e358e924d9257491544ff042, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0f20eb52e358e924d9257491544ff042, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7903272654284340285}
   m_SourcePrefab: {fileID: 100100000, guid: 0f20eb52e358e924d9257491544ff042, type: 3}
+--- !u!1 &3932616863797639521 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 0f20eb52e358e924d9257491544ff042, type: 3}
+  m_PrefabInstance: {fileID: 4202456458892362800}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &7903272654284340285
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3932616863797639521}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 5461320835613783329, guid: 0f20eb52e358e924d9257491544ff042, type: 3}
 --- !u!4 &4456495034168910811 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 0f20eb52e358e924d9257491544ff042, type: 3}

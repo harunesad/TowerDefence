@@ -99,6 +99,7 @@ MonoBehaviour:
   - {fileID: 7764789026446073400}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 2
   curveHandles:
   - {x: 22.08354, y: 0, z: 4.3770113}
   - {x: -8.39, y: 0, z: -8.41683}
@@ -253,6 +254,7 @@ MonoBehaviour:
   - {fileID: 856940825725874638}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 2
   curveHandles:
   - {x: -13.424651, y: 0, z: -7.349514}
   - {x: -28.685146, y: 0, z: -2.334639}
@@ -484,6 +486,7 @@ MonoBehaviour:
   - {fileID: 4928968117615208175}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 2
   curveHandles:
   - {x: -16.466175, y: 0, z: 6.5543766}
   - {x: -27.52186, y: 0, z: -3.4369245}
@@ -514,7 +517,7 @@ Transform:
   m_GameObject: {fileID: 3822461072520063990}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.6, y: 0, z: 31.8}
+  m_LocalPosition: {x: -45.6, y: 0, z: -23.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -625,7 +628,7 @@ Transform:
   m_GameObject: {fileID: 4736149714939502252}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -35.3, y: 0, z: 0.5}
+  m_LocalPosition: {x: -2.7, y: 0, z: 19.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -705,7 +708,7 @@ Transform:
   m_GameObject: {fileID: 4907331183691758394}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -35.238, y: 0, z: 0.531}
+  m_LocalPosition: {x: 45.7, y: 0, z: -23.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -793,7 +796,7 @@ Transform:
   m_GameObject: {fileID: 5673552536698522009}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -35.238, y: 0, z: 0.531}
+  m_LocalPosition: {x: 43.4, y: 0, z: 0.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1057,6 +1060,7 @@ MonoBehaviour:
   - {fileID: 5523689599088764471}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 2
   curveHandles:
   - {x: -33.627766, y: 0, z: -17.691204}
   - {x: -28.257599, y: 0, z: -2.372365}
@@ -2522,14 +2526,48 @@ PrefabInstance:
       value: Level15
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 639436ee654149744a62269288e60cb1, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 639436ee654149744a62269288e60cb1, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 639436ee654149744a62269288e60cb1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8902706924629178974}
   m_SourcePrefab: {fileID: 100100000, guid: 639436ee654149744a62269288e60cb1, type: 3}
+--- !u!1 &5785416587608353276 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 639436ee654149744a62269288e60cb1, type: 3}
+  m_PrefabInstance: {fileID: 6667724839157060781}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &8902706924629178974
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5785416587608353276}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 7158796146257112550, guid: 639436ee654149744a62269288e60cb1, type: 3}
 --- !u!4 &6557871178491114310 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 639436ee654149744a62269288e60cb1, type: 3}

@@ -18,6 +18,7 @@ public static class AutoWaveBalancer
         }
     }
 
+    [MenuItem("Tower Defence/Run Auto Wave Balancer")]
     public static void Trigger()
     {
         File.WriteAllText("Assets/RunBalancer.txt", "run");
@@ -38,7 +39,7 @@ public static class AutoWaveBalancer
             new string[] { "Wraith", "Bone_Golem", "Lich" }  // 41-50
         };
         // Gerçek Boss'lar (Dosya yapısına göre)
-        string[] bosses = new string[] { "Abyssal_Behemoth", "Blood_Mage", "Bone_Dragon", "Death_Knight_Commander", "Demon_King", "Shadow_Leviathan" };
+        string[] bosses = new string[] { "Abyssal_Behemoth", "Blood_Mage", "Bone_Dragon", "Death_Knight", "Demon_King", "Shadow_Leviathan" };
 
         Dictionary<string, UnitData> unitDict = new Dictionary<string, UnitData>();
         string[] unitGuids = AssetDatabase.FindAssets("t:UnitData", new[] { "Assets/Data/Units" });
@@ -64,7 +65,14 @@ public static class AutoWaveBalancer
 
             int levelSubTier = ((levelNum - 1) % 10) + 1; // 1 ile 10 arası güç eğrisi (Örn: Level 31 -> 1, Level 40 -> 10)
             
-            string[] currentTierUnits = tiers[tierIndex];
+            // Kümülatif (Birikimli) Kademe Sistemi: 
+            // Bulunduğumuz kademeye kadar olan tüm önceki kademelerdeki üniteleri de listeye ekle.
+            List<string> cumulativeUnits = new List<string>();
+            for (int i = 0; i <= tierIndex; i++)
+            {
+                cumulativeUnits.AddRange(tiers[i]);
+            }
+            string[] currentTierUnits = cumulativeUnits.ToArray();
 
             // 1. Path ve Tower analizini yap
             int numPaths = Mathf.Max(1, levelData.paths.Count);
@@ -206,6 +214,21 @@ public static class AutoWaveBalancer
                 levelData.waves.Add(waveData);
             }
             EditorUtility.SetDirty(levelData);
+
+            // Artık (eski çalışmalardan kalma) fazla wave dosyalarını temizle
+            for (int cleanup = totalWaves + 1; cleanup <= 30; cleanup++)
+            {
+                string oldWavePath = $"{levelDir}/Wave{cleanup}.asset";
+                if (AssetDatabase.LoadAssetAtPath<WaveData>(oldWavePath) != null)
+                {
+                    AssetDatabase.DeleteAsset(oldWavePath);
+                    Debug.Log($"[AutoWaveBalancer] Deleted orphaned wave: {oldWavePath}");
+                }
+                else
+                {
+                    break; // Artık dosya yoksa daha yukarı aramaya gerek yok
+                }
+            }
         }
 
         AssetDatabase.SaveAssets();

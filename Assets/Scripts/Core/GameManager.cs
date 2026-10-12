@@ -74,14 +74,14 @@ namespace TowerDefence.Core
                     Debug.Log("Victory!");
                     if (AudioManager.Instance != null && victorySFX != null)
                         AudioManager.Instance.PlaySFX(victorySFX);
-                    CampaignManager.Instance.CompleteCurrentLevel();
+                    // LevelResultUI determines stars and calls CampaignManager.CompleteCurrentLevel
                     TriggerResultUI(true);
                     break;
                 case GameState.Defeat:
                     Debug.Log("Defeat.");
                     if (AudioManager.Instance != null && defeatSFX != null)
                         AudioManager.Instance.PlaySFX(defeatSFX);
-                    MetaProgressionManager.Instance.AddKarma(20); // Teselli ödülü
+                    // No consolation reward
                     TriggerResultUI(false);
                     break;
             }

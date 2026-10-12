@@ -86,7 +86,7 @@ namespace TowerDefence.UI
                 dayRT.sizeDelta = new Vector2(100, 20);
                 dayRT.anchorMin = new Vector2(0.5f, 1f);
                 dayRT.anchorMax = new Vector2(0.5f, 1f);
-                dayRT.anchoredPosition = new Vector2(0, -10);
+                dayRT.anchoredPosition = new Vector2(0, -15);
 
                 GameObject iconGO = new GameObject("RewardIcon", typeof(RectTransform), typeof(Image));
                 iconGO.transform.SetParent(cell.transform, false);
@@ -120,7 +120,7 @@ namespace TowerDefence.UI
                 statusRT.sizeDelta = new Vector2(80, 16);
                 statusRT.anchorMin = new Vector2(0.5f, 0);
                 statusRT.anchorMax = new Vector2(0.5f, 0);
-                statusRT.anchoredPosition = new Vector2(0, -6);
+                statusRT.anchoredPosition = new Vector2(0, -10);
 
                 cells[i] = cell;
             }

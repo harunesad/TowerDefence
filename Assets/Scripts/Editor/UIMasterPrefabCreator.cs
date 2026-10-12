@@ -391,6 +391,7 @@ namespace TowerDefence.Editor
             // Link UI
             CompendiumUI ui = root.GetComponent<CompendiumUI>();
             var so = new SerializedObject(ui);
+            so.FindProperty("compendiumItemPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/CompendiumItem.prefab");
             so.FindProperty("heroContent").objectReferenceValue = content.transform; // Artık tek bir content var
             so.FindProperty("unitContent").objectReferenceValue = null;
             so.FindProperty("detailPanel").objectReferenceValue = detail;

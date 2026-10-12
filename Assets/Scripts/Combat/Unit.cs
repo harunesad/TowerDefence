@@ -119,9 +119,8 @@ namespace TowerDefence.Combat
 
             currentHealth = maxHealth;
             
-            // 4 farklı random şerit (lane) ilerleyişi ata
-            float[] lanes = new float[] { -1.5f, -0.5f, 0.5f, 1.5f };
-            pathOffset = lanes[Random.Range(0, lanes.Length)];
+            // pathOffset will be set when the path is assigned
+            pathOffset = 0f;
 
             // Animasyon hızını hareket hızıyla senkronize et
             // 1.0f = referans hız, animasyon bu hıza göre kalibre edilmiş sayılır
@@ -355,6 +354,7 @@ namespace TowerDefence.Combat
                 if (targetCombatant != null && !targetCombatant.IsDead)
                 {
                     // 1. Hedefi Kovala (Chase Logic)
+                    wasChasing = true;
                     Vector3 chaseTarget = ((MonoBehaviour)targetCombatant).transform.position;
                     float distance = GetFlatDistance(transform.position, chaseTarget);
                     
@@ -375,6 +375,12 @@ namespace TowerDefence.Combat
                 }
                 else if (!isBlocked || (this is HeroUnit && ((HeroUnit)this).IsMovingToManualTarget))
                 {
+                    if (wasChasing)
+                    {
+                        wasChasing = false;
+                        RecalculateWaypointIndex();
+                    }
+
                     if (!ShouldFollowPath())
                     {
                         TryMoveToManualDestination();
@@ -383,11 +389,14 @@ namespace TowerDefence.Combat
                     {
                     // 2. Düşman yoksa ve engellenmemişsek Waypoint Takibi yap
                     Vector3 targetPos = Vector3.zero;
+                    bool hasTarget = false;
 
                     if (currentPath != null && 
                         (walkPathBackward ? currentWaypointIndex >= 0 : currentWaypointIndex < currentPath.GetPathPoints().Count))
                     {
                         targetPos = currentPath.GetPathPoints()[currentWaypointIndex];
+                        hasTarget = true;
+                        
                         Vector3 flatPos = new Vector3(transform.position.x, 0, transform.position.z);
                         Vector3 flatTarget = new Vector3(currentMoveTarget.x, 0, currentMoveTarget.z);
                         
@@ -413,9 +422,10 @@ namespace TowerDefence.Combat
                     else if (targetBase != null && ShouldSeekEnemyBase())
                     {
                         targetPos = targetBase.transform.position;
+                        hasTarget = true;
                     }
 
-                    if (targetPos != Vector3.zero)
+                    if (hasTarget)
                     {
                         MoveTowardsTarget(currentMoveTarget);
                         HandleRotation(currentMoveTarget);
@@ -454,14 +464,39 @@ namespace TowerDefence.Combat
         {
             if (currentPath == null || currentWaypointIndex < 0 || currentWaypointIndex >= currentPath.GetPathPoints().Count) return;
 
-            Vector3 baseTarget = currentPath.GetPathPoints()[currentWaypointIndex];
-            Vector3 targetWithMyY = new Vector3(baseTarget.x, transform.position.y, baseTarget.z);
+            var points = currentPath.GetPathPoints();
+            Vector3 baseTarget = points[currentWaypointIndex];
             
-            // Yanal sapmayı (lane içinde mikro-varyans) waypoint bazlı hesapla ve sabitle
-            Vector3 direction = (targetWithMyY - transform.position).normalized;
-            if (direction.sqrMagnitude > 0.01f)
+            // Yanal sapma için yönü ünitenin nerede olduğuna göre değil, yolun gidişatına (segment) göre hesapla.
+            // Bu sayede ünite hedefe çok yaklaştığında sağ/sol hesaplaması fırıldak gibi dönüp sapmaz.
+            Vector3 pathDirection = Vector3.forward;
+
+            if (points.Count > 1)
             {
-                Vector3 right = Vector3.Cross(Vector3.up, direction);
+                int prevIndex = walkPathBackward ? currentWaypointIndex + 1 : currentWaypointIndex - 1;
+                
+                if (prevIndex >= 0 && prevIndex < points.Count)
+                {
+                    // Önceki noktadan şu anki hedefe doğru olan yön
+                    pathDirection = (baseTarget - points[prevIndex]).normalized;
+                }
+                else
+                {
+                    // İlk nokta için yönü bir sonraki noktaya bakarak al
+                    int nextIndex = walkPathBackward ? currentWaypointIndex - 1 : currentWaypointIndex + 1;
+                    if (nextIndex >= 0 && nextIndex < points.Count)
+                    {
+                        pathDirection = (points[nextIndex] - baseTarget).normalized;
+                    }
+                }
+            }
+
+            pathDirection.y = 0;
+            pathDirection.Normalize();
+
+            if (pathDirection.sqrMagnitude > 0.01f)
+            {
+                Vector3 right = Vector3.Cross(Vector3.up, pathDirection);
                 currentMoveTarget = baseTarget + right * pathOffset;
             }
             else
@@ -563,9 +598,20 @@ namespace TowerDefence.Combat
         protected bool hasDealtDamage = false;
         protected MonoBehaviour currentTargetMB;
 
+        private void CalculateLaneOffset(PathWaypoints path)
+        {
+            if (path == null) return;
+            float hw = path.PathWidth / 2f;
+            // 4 şerit veya sürekli rastgele dağılım. Daha doğal görünmesi için PathWidth üzerinden hesaplıyoruz.
+            // Örneğin width = 3 ise, offset -1.5 ile 1.5 arası.
+            float[] lanes = new float[] { -hw, -hw/3f, hw/3f, hw };
+            pathOffset = lanes[Random.Range(0, lanes.Length)];
+        }
+
         public void SetPath(PathWaypoints path)
         {
             currentPath = path;
+            CalculateLaneOffset(path);
             
             if (currentPath != null && currentPath.GetPathPoints().Count > 0)
             {
@@ -575,9 +621,39 @@ namespace TowerDefence.Combat
             }
         }
 
+        private bool wasChasing = false;
+
+        private void RecalculateWaypointIndex()
+        {
+            if (currentPath == null) return;
+            var wps = currentPath.GetPathPoints();
+            if (wps.Count == 0) return;
+
+            float minDistance = float.PositiveInfinity;
+            int nearestIdx = currentWaypointIndex;
+
+            for (int i = 0; i < wps.Count; i++)
+            {
+                float dist = Vector3.Distance(transform.position, wps[i]);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    nearestIdx = i;
+                }
+            }
+
+            if (walkPathBackward)
+                currentWaypointIndex = Mathf.Max(nearestIdx - 1, 0);
+            else
+                currentWaypointIndex = Mathf.Min(nearestIdx + 1, wps.Count - 1);
+            
+            UpdateMoveTarget();
+        }
+
         public void SetPathAtNearestWaypoint(PathWaypoints path, Vector3 currentPos)
         {
             currentPath = path;
+            CalculateLaneOffset(path);
             if (path == null) return;
 
             var wps = path.GetPathPoints();
@@ -607,6 +683,7 @@ namespace TowerDefence.Combat
         public void SetPathWithExactTarget(PathWaypoints path, int targetIdx, bool walkBackward = false)
         {
             currentPath = path;
+            CalculateLaneOffset(path);
             walkPathBackward = walkBackward;
             if (path == null) return;
 

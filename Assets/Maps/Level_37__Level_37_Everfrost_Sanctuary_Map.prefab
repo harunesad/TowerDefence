@@ -201,6 +201,7 @@ MonoBehaviour:
   - {fileID: 2062255987247305629}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 1.5
   curveHandles:
   - {x: 42.961407, y: 0, z: -6.3025274}
   - {x: 5.240039, y: 0, z: -2.157889}
@@ -342,6 +343,7 @@ MonoBehaviour:
   - {fileID: 6143115257411136093}
   useSpline: 1
   splineResolution: 10
+  pathWidth: 1.5
   curveHandles:
   - {x: 38.96658, y: 0, z: 19.191816}
   - {x: 14.940313, y: 0, z: 19.886774}
@@ -1594,19 +1596,53 @@ PrefabInstance:
       value: Level37
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: baf85b2163984e643a20ffe78782fef0, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: baf85b2163984e643a20ffe78782fef0, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: baf85b2163984e643a20ffe78782fef0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6329143712638496065}
   m_SourcePrefab: {fileID: 100100000, guid: baf85b2163984e643a20ffe78782fef0, type: 3}
 --- !u!4 &7172039970608853735 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: baf85b2163984e643a20ffe78782fef0, type: 3}
   m_PrefabInstance: {fileID: 7206477555974952204}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7549129146450536541 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: baf85b2163984e643a20ffe78782fef0, type: 3}
+  m_PrefabInstance: {fileID: 7206477555974952204}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &6329143712638496065
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7549129146450536541}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 5461320835613783329, guid: baf85b2163984e643a20ffe78782fef0, type: 3}
 --- !u!1001 &7231004797371529005
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -11,6 +11,10 @@ namespace TowerDefence.Combat
         [SerializeField] private bool useSpline = true;
         [SerializeField] private int splineResolution = 10;
         
+        [Header("Path Dimensions")]
+        [SerializeField] private float pathWidth = 3f; // Yürüme yolunun genişliği
+        public float PathWidth => pathWidth;
+
         [HideInInspector] public List<Vector3> curveHandles = new List<Vector3>();
         private List<Vector3> cachedPathPoints;
 

@@ -64,6 +64,13 @@ namespace TowerDefence.Combat
             GameManager.Instance.ChangeState(GameState.Defeat);
         }
 
+        public void ResetLives()
+        {
+            currentLives = maxLives;
+            isGameOver = false;
+            OnLivesChanged?.Invoke(currentLives, maxLives);
+        }
+
         public int GetCurrentLives() => currentLives;
         public int GetMaxLives() => maxLives;
     }

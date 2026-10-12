@@ -9,6 +9,9 @@ namespace TowerDefence.UI
 {
     public class CompendiumUI : MonoBehaviour
     {
+        [Header("Item Prefab")]
+        [SerializeField] private GameObject compendiumItemPrefab;
+
         [Header("UI Elements")]
         [SerializeField] private RectTransform heroContent;
         [SerializeField] private RectTransform unitContent;
@@ -38,22 +41,19 @@ namespace TowerDefence.UI
         {
             if (heroContent == null) return;
 
-            LayoutGroup anyLg = heroContent.GetComponent<LayoutGroup>();
-            if (anyLg != null && anyLg is not GridLayoutGroup)
-                DestroyImmediate(anyLg);
-
             GridLayoutGroup glg = heroContent.GetComponent<GridLayoutGroup>();
-            if (glg == null) glg = heroContent.gameObject.AddComponent<GridLayoutGroup>();
-            if (glg == null) return;
-
-            glg.cellSize = new Vector2(280, 240);
-            glg.spacing = new Vector2(15, 15);
-            glg.padding = new RectOffset(10, 10, 10, 10);
-            glg.childAlignment = TextAnchor.UpperCenter;
-            glg.startAxis = GridLayoutGroup.Axis.Horizontal;
-            glg.startCorner = GridLayoutGroup.Corner.UpperLeft;
-            glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            glg.constraintCount = 3;
+            if (glg == null)
+            {
+                glg = heroContent.gameObject.AddComponent<GridLayoutGroup>();
+                glg.cellSize = new Vector2(240, 240);
+                glg.spacing = new Vector2(15, 15);
+                glg.padding = new RectOffset(10, 10, 10, 10);
+                glg.childAlignment = TextAnchor.UpperCenter;
+                glg.startAxis = GridLayoutGroup.Axis.Horizontal;
+                glg.startCorner = GridLayoutGroup.Corner.UpperLeft;
+                glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                glg.constraintCount = 3;
+            }
 
             ContentSizeFitter csf = heroContent.GetComponent<ContentSizeFitter>();
             if (csf == null) csf = heroContent.gameObject.AddComponent<ContentSizeFitter>();
@@ -85,49 +85,83 @@ namespace TowerDefence.UI
 
         private void CreateItem(ScriptableObject data, Transform parent)
         {
-            // Create a square-ish item (Card look)
-            GameObject item = new GameObject("CompendiumItem", typeof(RectTransform), typeof(Image), typeof(Button));
-            item.transform.SetParent(parent, false);
-            RectTransform itemRT = item.GetComponent<RectTransform>();
-            itemRT.sizeDelta = new Vector2(280, 240);
-            
-            Image bg = item.GetComponent<Image>();
-            bg.color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
-            
+            GameObject item = null;
+            if (compendiumItemPrefab != null)
+            {
+                item = Instantiate(compendiumItemPrefab, parent);
+            }
+#if UNITY_EDITOR
+            else
+            {
+                compendiumItemPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/CompendiumItem.prefab");
+                if (compendiumItemPrefab != null)
+                {
+                    item = Instantiate(compendiumItemPrefab, parent);
+                }
+            }
+#endif
+
+            if (item == null)
+            {
+                Debug.LogError("[CompendiumUI] compendiumItemPrefab bulunamadı veya atanmamış!");
+                return;
+            }
+
+            item.name = "CompendiumItem";
+
+            Image iconImg = item.transform.Find("Icon")?.GetComponent<Image>();
+            TextMeshProUGUI nameTxt = item.transform.Find("Name")?.GetComponent<TextMeshProUGUI>();
             Button btn = item.GetComponent<Button>();
-
-            // Icon on top
-            GameObject iconObj = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-            iconObj.transform.SetParent(item.transform, false);
-            RectTransform iconRT = iconObj.GetComponent<RectTransform>();
-            iconRT.anchorMin = new Vector2(0.5f, 1f);
-            iconRT.anchorMax = new Vector2(0.5f, 1f);
-            iconRT.pivot = new Vector2(0.5f, 1f);
-            iconRT.sizeDelta = new Vector2(100, 160);
-            iconRT.anchoredPosition = new Vector2(0, -18);
-            Image iconImg = iconObj.GetComponent<Image>();
-
-            // Name text at the bottom
-            GameObject nameObj = new GameObject("Name", typeof(RectTransform), typeof(TextMeshProUGUI));
-            nameObj.transform.SetParent(item.transform, false);
-            RectTransform nameRT = nameObj.GetComponent<RectTransform>();
-            nameRT.anchorMin = new Vector2(0, 0);
-            nameRT.anchorMax = new Vector2(1, 0);
-            nameRT.pivot = new Vector2(0.5f, 0);
-            nameRT.sizeDelta = new Vector2(0, 75);
-            nameRT.anchoredPosition = new Vector2(0, 10);
-            
-            TextMeshProUGUI nameTxt = nameObj.GetComponent<TextMeshProUGUI>();
-            nameTxt.fontSize = 16;
-            nameTxt.alignment = TextAlignmentOptions.Center;
-            nameTxt.color = Color.white;
-            nameTxt.enableWordWrapping = true;
 
             if (data is UnitData ud)
             {
-                iconImg.sprite = ud.icon;
-                nameTxt.text = ud.unitName;
-                btn.onClick.AddListener(() => ShowUnitDetail(ud));
+                if (iconImg != null)
+                {
+                    iconImg.sprite = ud.icon;
+                    iconImg.preserveAspect = true;
+                    RectTransform iconRT = iconImg.rectTransform;
+                    if (ud.iconSize != Vector2.zero)
+                    {
+                        iconRT.sizeDelta = ud.iconSize;
+                    }
+                    float scale = (ud.iconScale > 0.001f) ? ud.iconScale : 1f;
+                    if (scale != 1f)
+                    {
+                        iconRT.localScale = Vector3.one * scale;
+                    }
+                    if (ud.iconOffset != Vector2.zero)
+                    {
+                        iconRT.anchoredPosition += ud.iconOffset;
+                    }
+                }
+                if (nameTxt != null) nameTxt.text = ud.unitName;
+                if (btn != null)
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(() => ShowUnitDetail(ud));
+                }
+            }
+            else if (data is HeroData hd)
+            {
+                if (iconImg != null)
+                {
+                    iconImg.sprite = hd.icon;
+                    iconImg.preserveAspect = true;
+                    if (hd.unitData != null)
+                    {
+                        RectTransform iconRT = iconImg.rectTransform;
+                        if (hd.unitData.iconSize != Vector2.zero) iconRT.sizeDelta = hd.unitData.iconSize;
+                        float scale = (hd.unitData.iconScale > 0.001f) ? hd.unitData.iconScale : 1f;
+                        if (scale != 1f) iconRT.localScale = Vector3.one * scale;
+                        if (hd.unitData.iconOffset != Vector2.zero) iconRT.anchoredPosition += hd.unitData.iconOffset;
+                    }
+                }
+                if (nameTxt != null) nameTxt.text = hd.displayName;
+                if (btn != null)
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(() => ShowHeroDetail(hd));
+                }
             }
         }
 

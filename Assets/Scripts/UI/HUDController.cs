@@ -33,6 +33,14 @@ namespace TowerDefence.UI
         private readonly Color speedActiveColor   = new Color(1f,   0.75f, 0.1f); // Sarı - aktif
         private readonly Color speedInactiveColor = new Color(0.2f, 0.2f,  0.2f); // Koyu - pasif
         
+        [Header("Game Control Buttons")]
+        [SerializeField] private Button menuButton;
+        [SerializeField] private Button restartButton;
+        [SerializeField] private Button soundButton;
+        [SerializeField] private Image soundIcon; // Boş bırakılırsa soundButton'ın kendi Image'ı kullanılır
+        [SerializeField] private Sprite soundOnSprite;
+        [SerializeField] private Sprite soundOffSprite;
+        
         [Header("Wave Info")]
         [SerializeField] private WaveInfoUI waveInfoUI;
 
@@ -82,6 +90,12 @@ namespace TowerDefence.UI
                 GameSpeedManager.Instance.OnSpeedChanged += UpdateSpeedButtonHighlights;
                 UpdateSpeedButtonHighlights(GameSpeedManager.Instance.GetCurrentSpeedIndex());
             }
+
+            // Menü, Restart ve Ses butonları
+            if (menuButton != null) menuButton.onClick.AddListener(ReturnToMenu);
+            if (restartButton != null) restartButton.onClick.AddListener(RestartLevel);
+            if (soundButton != null) soundButton.onClick.AddListener(OnSoundButtonClicked);
+            UpdateSoundIcon();
             
             // Başlangıç değerleri
             if (SideController.Instance != null)
@@ -276,12 +290,86 @@ namespace TowerDefence.UI
 
         public void RestartLevel()
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            if (GameSpeedManager.Instance != null)
+                GameSpeedManager.Instance.SetSpeedX1();
+            else
+                Time.timeScale = 1f;
+
+            if (CampaignManager.Instance != null)
+            {
+                CampaignManager.Instance.RestartLevel();
+            }
+            else
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            }
         }
 
         public void ReturnToMenu()
         {
+            if (GameSpeedManager.Instance != null)
+                GameSpeedManager.Instance.SetSpeedX1();
+            else
+                Time.timeScale = 1f;
+
             SceneManager.LoadScene("MainScene");
+        }
+
+        public void OnSoundButtonClicked()
+        {
+            if (AudioManager.Instance != null)
+            {
+                // MasterVolume 0 ise aç (1f veya önceki ses seviyesi), 0'dan büyükse kapat (0f)
+                if (AudioManager.Instance.MasterVolume > 0.01f)
+                {
+                    PlayerPrefs.SetFloat("PreMuteMasterVolume", AudioManager.Instance.MasterVolume);
+                    AudioManager.Instance.SetMasterVolume(0f);
+                }
+                else
+                {
+                    float prevVol = PlayerPrefs.GetFloat("PreMuteMasterVolume", 1f);
+                    if (prevVol <= 0.01f) prevVol = 1f;
+                    AudioManager.Instance.SetMasterVolume(prevVol);
+                }
+            }
+            else
+            {
+                // Fallback: AudioListener
+                AudioListener.pause = !AudioListener.pause;
+            }
+
+            UpdateSoundIcon();
+        }
+
+        private void UpdateSoundIcon()
+        {
+            // Eğer soundIcon ayrıca atanmamışsa, doğrudan soundButton'ın üzerindeki Image bileşenini kullan
+            Image targetImage = soundIcon;
+            if (targetImage == null && soundButton != null)
+            {
+                targetImage = soundButton.image;
+            }
+
+            if (targetImage == null) return;
+
+            bool isMuted = false;
+            if (AudioManager.Instance != null)
+            {
+                isMuted = AudioManager.Instance.MasterVolume <= 0.01f;
+            }
+            else
+            {
+                isMuted = AudioListener.pause;
+            }
+
+            if (isMuted && soundOffSprite != null)
+            {
+                targetImage.sprite = soundOffSprite;
+            }
+            else if (!isMuted && soundOnSprite != null)
+            {
+                targetImage.sprite = soundOnSprite;
+            }
         }
     }
 }

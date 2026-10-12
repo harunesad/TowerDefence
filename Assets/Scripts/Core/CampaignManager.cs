@@ -10,6 +10,10 @@ namespace TowerDefence.Core
 
         [SerializeField] private LevelData currentSelectedLevel;
 
+        [Header("Debug")]
+        [Tooltip("Sadece Editor'de geçerlidir. Tüm bölümlerin kilidini açar.")]
+        [SerializeField] private bool unlockAllLevelsForTesting = false;
+
         private void Awake()
         {
             if (Instance == null)
@@ -107,6 +111,13 @@ namespace TowerDefence.Core
             // 4. Sistem Resetleri
             CurrencyManager.Instance.InitializeFromLevel(currentSelectedLevel);
             PhaseManager.Instance.ResetWaveIndex();
+            
+            if (TowerDefence.Combat.LivesManager.Instance != null)
+                TowerDefence.Combat.LivesManager.Instance.ResetLives();
+
+            if (GameSpeedManager.Instance != null)
+                GameSpeedManager.Instance.SetSpeedX1();
+
             GameManager.Instance.ChangeState(GameState.Playing);
             PhaseManager.Instance.StartPreparationPhase();
 
@@ -132,21 +143,17 @@ namespace TowerDefence.Core
             }
         }
 
-        public void CompleteCurrentLevel()
+        public void CompleteCurrentLevel(int stars, int karmaReward, int crystalReward)
         {
             if (currentSelectedLevel == null) return;
 
-            Debug.Log($"Level Completed: {currentSelectedLevel.levelName} on Difficulty {currentDifficultyLevel}");
-
-            // Seviye bitiş ödülü (Karma ve Kristal)
-            int karmaReward = 50 * currentDifficultyLevel;
-            int crystalReward = 10 * currentDifficultyLevel; // Yeni ikinci para birimi ödülü
+            Debug.Log($"Level Completed: {currentSelectedLevel.levelName} on Difficulty {currentDifficultyLevel} with {stars} Stars");
 
             MetaProgressionManager.Instance.AddKarma(karmaReward);
             MetaProgressionManager.Instance.AddCrystals(crystalReward);
 
             // Bölümü tamamlandı olarak kaydet
-            MetaProgressionManager.Instance.SaveLevelProgress(currentSelectedLevel.levelID, 3, currentDifficultyLevel);
+            MetaProgressionManager.Instance.SaveLevelProgress(currentSelectedLevel.levelID, stars, currentDifficultyLevel);
 
             // Bir sonraki seviyenin kilidini aç (Yazılımsal mantık)
             UnlockNextLevel();
@@ -191,6 +198,10 @@ namespace TowerDefence.Core
 
         public bool IsLevelUnlocked(LevelData level)
         {
+#if UNITY_EDITOR
+            if (unlockAllLevelsForTesting) return true;
+#endif
+
             if (allLevels == null || allLevels.Count == 0) return true;
             
             int index = allLevels.IndexOf(level);
