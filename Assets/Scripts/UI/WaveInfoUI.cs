@@ -12,6 +12,7 @@ namespace TowerDefence.UI
     {
         [SerializeField] private float panelWidth = 175f;
         [SerializeField] private float panelHeight = 350f;
+        [SerializeField] private GameObject unitsRowPrefab;
 
         private GameObject panel;
         private GameObject content;
@@ -19,8 +20,19 @@ namespace TowerDefence.UI
         private GameObject statPopup;
         private UnitData lastPopupUnit;
 
+        public void SetUnitsRowPrefab(GameObject prefab)
+        {
+            unitsRowPrefab = prefab;
+        }
+
         private void Start()
         {
+            if (unitsRowPrefab == null)
+            {
+#if UNITY_EDITOR
+                unitsRowPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/WaveInfoUnitsRow.prefab");
+#endif
+            }
             CreateToggleButton();
             CreatePanel();
 
@@ -195,23 +207,35 @@ namespace TowerDefence.UI
                     merged[g.unitData] = g.count;
             }
 
-            GameObject rowGO = new GameObject("UnitsRow", typeof(RectTransform));
-            rowGO.transform.SetParent(content.transform, false);
-            RectTransform rrt = rowGO.GetComponent<RectTransform>();
-            rrt.sizeDelta = new Vector2(0f, 95f);
+            GameObject rowGO;
+            if (unitsRowPrefab != null)
+            {
+                rowGO = Instantiate(unitsRowPrefab, content.transform, false);
+                rowGO.name = "UnitsRow";
+                // Prefab içindeki şablon/placeholder çocukları temizle
+                for (int i = rowGO.transform.childCount - 1; i >= 0; i--)
+                    Destroy(rowGO.transform.GetChild(i).gameObject);
+            }
+            else
+            {
+                rowGO = new GameObject("UnitsRow", typeof(RectTransform));
+                rowGO.transform.SetParent(content.transform, false);
+                RectTransform rrt = rowGO.GetComponent<RectTransform>();
+                rrt.sizeDelta = new Vector2(0f, 95f);
 
-            LayoutElement rowLe = rowGO.AddComponent<LayoutElement>();
-            rowLe.preferredWidth = -1f;
-            rowLe.preferredHeight = -1f;
-            rowLe.flexibleWidth = 1f;
+                LayoutElement rowLe = rowGO.AddComponent<LayoutElement>();
+                rowLe.preferredWidth = -1f;
+                rowLe.preferredHeight = -1f;
+                rowLe.flexibleWidth = 1f;
 
-            GridLayoutGroup glg = rowGO.AddComponent<GridLayoutGroup>();
-            glg.cellSize = new Vector2(60f, 95f);
-            glg.spacing = new Vector2(6f, 6f);
-            glg.padding = new RectOffset(4, 4, 4, 4);
-            glg.childAlignment = TextAnchor.UpperLeft;
-            glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            glg.constraintCount = 2;
+                GridLayoutGroup glg = rowGO.AddComponent<GridLayoutGroup>();
+                glg.cellSize = new Vector2(60f, 95f);
+                glg.spacing = new Vector2(6f, 6f);
+                glg.padding = new RectOffset(4, 4, 4, 4);
+                glg.childAlignment = TextAnchor.UpperLeft;
+                glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                glg.constraintCount = 2;
+            }
 
             foreach (var kvp in merged)
                 CreateUnitIcon(rowGO.transform, kvp.Key, kvp.Value);
@@ -247,15 +271,19 @@ namespace TowerDefence.UI
             GameObject spriteGO = new GameObject("Sprite", typeof(RectTransform), typeof(Image));
             spriteGO.transform.SetParent(iconGO.transform, false);
             RectTransform srt = spriteGO.GetComponent<RectTransform>();
-            srt.anchorMin = Vector2.zero;
-            srt.anchorMax = Vector2.one;
-            srt.offsetMin = Vector2.zero;
-            srt.offsetMax = Vector2.zero;
+            srt.anchorMin = new Vector2(0.5f, 0.5f);
+            srt.anchorMax = new Vector2(0.5f, 0.5f);
+            srt.pivot = new Vector2(0.5f, 0.5f);
+            srt.anchoredPosition = Vector2.zero;
+            srt.sizeDelta = new Vector2(60f, 96f);
             Image spriteImg = spriteGO.GetComponent<Image>();
             spriteImg.sprite = data.icon;
             spriteImg.preserveAspect = true;
             spriteImg.raycastTarget = false;
             btn.targetGraphic = spriteImg;
+
+            // UnitData'daki bağımsız Wave Info ayarlarını uygula
+            data.waveInfoIcon.ApplyTo(spriteImg);
 
             GameObject countGO = new GameObject("Count", typeof(RectTransform));
             countGO.transform.SetParent(iconGO.transform, false);

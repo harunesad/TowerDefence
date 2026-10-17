@@ -30,20 +30,7 @@ namespace TowerDefence.UI
             if (iconImage != null)
             {
                 iconImage.sprite = data.icon;
-                iconImage.preserveAspect = true;
-                if (data.iconSize != Vector2.zero)
-                {
-                    iconImage.rectTransform.sizeDelta = data.iconSize;
-                }
-                float scale = (data.iconScale > 0.001f) ? data.iconScale : 1f;
-                if (scale != 1f)
-                {
-                    iconImage.rectTransform.localScale = Vector3.one * scale;
-                }
-                if (data.iconOffset != Vector2.zero)
-                {
-                    iconImage.rectTransform.anchoredPosition += data.iconOffset;
-                }
+                data.hudIcon.ApplyTo(iconImage);
             }
             if (costText != null) costText.text = data.spawnCost.ToString();
         }
@@ -98,8 +85,15 @@ namespace TowerDefence.UI
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (!isInteractable) return;
+            if (unitData == null) return;
             
-            if (UnitPlacementManager.Instance != null && CurrencyManager.Instance.CanAfford(unitData.side, unitData.spawnCost))
+            if (CurrencyManager.Instance != null && !CurrencyManager.Instance.CanAfford(unitData.side, unitData.spawnCost))
+            {
+                WarningBannerUI.Show("NOT ENOUGH GOLD!");
+                return;
+            }
+
+            if (UnitPlacementManager.Instance != null)
             {
                 UnitPlacementManager.Instance.StartDragging(unitData);
             }

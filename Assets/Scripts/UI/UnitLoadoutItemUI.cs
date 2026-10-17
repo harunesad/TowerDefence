@@ -25,20 +25,7 @@ namespace TowerDefence.UI
             if (iconImage != null)
             {
                 iconImage.sprite = data.icon;
-                iconImage.preserveAspect = true;
-                if (data.iconSize != Vector2.zero)
-                {
-                    iconImage.rectTransform.sizeDelta = data.iconSize;
-                }
-                float scale = (data.iconScale > 0.001f) ? data.iconScale : 1f;
-                if (scale != 1f)
-                {
-                    iconImage.rectTransform.localScale = Vector3.one * scale;
-                }
-                if (data.iconOffset != Vector2.zero)
-                {
-                    iconImage.rectTransform.anchoredPosition += data.iconOffset;
-                }
+                data.loadoutIcon.ApplyTo(iconImage);
             }
             if (nameText != null) nameText.text = data.unitName;
             if (button != null)

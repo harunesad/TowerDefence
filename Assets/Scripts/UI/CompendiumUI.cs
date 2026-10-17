@@ -118,21 +118,7 @@ namespace TowerDefence.UI
                 if (iconImg != null)
                 {
                     iconImg.sprite = ud.icon;
-                    iconImg.preserveAspect = true;
-                    RectTransform iconRT = iconImg.rectTransform;
-                    if (ud.iconSize != Vector2.zero)
-                    {
-                        iconRT.sizeDelta = ud.iconSize;
-                    }
-                    float scale = (ud.iconScale > 0.001f) ? ud.iconScale : 1f;
-                    if (scale != 1f)
-                    {
-                        iconRT.localScale = Vector3.one * scale;
-                    }
-                    if (ud.iconOffset != Vector2.zero)
-                    {
-                        iconRT.anchoredPosition += ud.iconOffset;
-                    }
+                    ud.compendiumIcon.ApplyTo(iconImg);
                 }
                 if (nameTxt != null) nameTxt.text = ud.unitName;
                 if (btn != null)
@@ -145,16 +131,8 @@ namespace TowerDefence.UI
             {
                 if (iconImg != null)
                 {
-                    iconImg.sprite = hd.icon;
-                    iconImg.preserveAspect = true;
-                    if (hd.unitData != null)
-                    {
-                        RectTransform iconRT = iconImg.rectTransform;
-                        if (hd.unitData.iconSize != Vector2.zero) iconRT.sizeDelta = hd.unitData.iconSize;
-                        float scale = (hd.unitData.iconScale > 0.001f) ? hd.unitData.iconScale : 1f;
-                        if (scale != 1f) iconRT.localScale = Vector3.one * scale;
-                        if (hd.unitData.iconOffset != Vector2.zero) iconRT.anchoredPosition += hd.unitData.iconOffset;
-                    }
+                    iconImg.sprite = hd.GetIcon();
+                    hd.rosterIcon.ApplyTo(iconImg);
                 }
                 if (nameTxt != null) nameTxt.text = hd.displayName;
                 if (btn != null)
@@ -183,7 +161,14 @@ namespace TowerDefence.UI
             if (detailIcon != null) detailIcon.sprite = data.icon;
             detailName.text = data.unitName;
             detailStats.text = $"HP: {data.maxHealth}\nDMG: {data.attackDamage}\nSPD: {data.moveSpeed}\nATK Rate: {data.attackRate:F2}/s";
-            detailLore.text = data.side == Side.Light ? "A brave defender of the light." : "A corrupted creature of the dark.";
+            if (!string.IsNullOrEmpty(data.loreDescription))
+            {
+                detailLore.text = data.loreDescription;
+            }
+            else
+            {
+                detailLore.text = data.side == Side.Light ? "A brave defender of the light." : "A corrupted creature of the dark.";
+            }
         }
     }
 }

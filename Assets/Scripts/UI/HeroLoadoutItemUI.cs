@@ -23,7 +23,11 @@ namespace TowerDefence.UI
         public void Setup(HeroData data)
         {
             heroData = data;
-            if (iconImage != null) iconImage.sprite = data.GetIcon();
+            if (iconImage != null)
+            {
+                iconImage.sprite = data.GetIcon();
+                data.loadoutIcon.ApplyTo(iconImage);
+            }
             if (nameText != null) nameText.text = data.displayName;
             if (button != null)
             {
@@ -87,9 +91,18 @@ namespace TowerDefence.UI
             if (heroData == null || MetaProgressionManager.Instance == null) return;
 
             if (MetaProgressionManager.Instance.GetEquippedHeroIDs().Contains(heroData.heroID))
+            {
                 MetaProgressionManager.Instance.UnequipHero(heroData.heroID);
+            }
             else
+            {
+                if (MetaProgressionManager.Instance.GetEquippedHeroIDs().Count >= 2)
+                {
+                    WarningBannerUI.Show("MAX 2 HEROES ALLOWED!");
+                    return;
+                }
                 MetaProgressionManager.Instance.EquipHero(heroData.heroID);
+            }
 
             RefreshAllLoadoutItems();
         }

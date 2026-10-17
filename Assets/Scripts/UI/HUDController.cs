@@ -43,6 +43,8 @@ namespace TowerDefence.UI
         
         [Header("Wave Info")]
         [SerializeField] private WaveInfoUI waveInfoUI;
+        [Tooltip("WaveInfo panelinde düşman birimlerinin gösterildiği satır prefabı (WaveInfoUnitsRow.prefab)")]
+        [SerializeField] private GameObject waveInfoUnitsRowPrefab;
 
         [Header("Selection UIs")]
         [SerializeField] private UnitSelectionUI unitSelectionUI;
@@ -52,6 +54,8 @@ namespace TowerDefence.UI
 
         [Header("Hero HUD")]
         [SerializeField] private GameObject heroPanel;
+        [SerializeField] private GameObject heroButtonPrefab;
+        [SerializeField] private HeroButtonUI[] preassignedHeroButtons;
         [SerializeField] private HeroStatsPanel heroStatsPanel;
 
         private void Start()
@@ -119,20 +123,75 @@ namespace TowerDefence.UI
 
             SetupHeroButtons();
             SetupWaveInfoUI();
+            SetupWarningBannerUI();
+        }
+
+        private void SetupWarningBannerUI()
+        {
+            if (WarningBannerUI.Instance != null) return;
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            GameObject go = new GameObject("WarningBannerUI", typeof(RectTransform), typeof(WarningBannerUI));
+            go.transform.SetParent(canvas.transform, false);
         }
 
         private void SetupHeroButtons()
         {
             if (HeroManager.Instance == null || heroPanel == null) return;
-            for (int i = heroPanel.transform.childCount - 1; i >= 0; i--)
-                Destroy(heroPanel.transform.GetChild(i).gameObject);
 
             var hlg = heroPanel.GetComponent<HorizontalLayoutGroup>();
             if (hlg != null) hlg.spacing = 100;
 
             int heroCount = HeroManager.Instance.GetEquippedHeroCount();
+
+            // 1. ÖNCELİK: Eğer Inspector'da veya HeroPanel altında zaten yerleştirilmiş butonlar varsa onları kullan
+            HeroButtonUI[] existingButtons = preassignedHeroButtons;
+            if (existingButtons == null || existingButtons.Length == 0)
+            {
+                existingButtons = heroPanel.GetComponentsInChildren<HeroButtonUI>(true);
+            }
+
+            if (existingButtons != null && existingButtons.Length > 0)
+            {
+                for (int i = 0; i < existingButtons.Length; i++)
+                {
+                    if (existingButtons[i] == null) continue;
+                    if (i < heroCount)
+                    {
+                        existingButtons[i].gameObject.SetActive(true);
+                        existingButtons[i].InitializeSlot(i);
+                    }
+                    else
+                    {
+                        // Kuşanılmış hero yoksa bu butonu gizle
+                        existingButtons[i].gameObject.SetActive(false);
+                    }
+                }
+                return;
+            }
+
+            // 2. ÖNCELİK: Sahnedeki eski butonları temizle ve heroButtonPrefab atanmışsa prefab'den oluştur
+            for (int i = heroPanel.transform.childCount - 1; i >= 0; i--)
+                Destroy(heroPanel.transform.GetChild(i).gameObject);
+
             for (int i = 0; i < heroCount; i++)
-                HeroButtonUI.Create(heroPanel.GetComponent<RectTransform>(), i);
+            {
+                if (heroButtonPrefab != null)
+                {
+                    GameObject btnObj = Instantiate(heroButtonPrefab, heroPanel.transform, false);
+                    btnObj.name = $"HeroButton_{i + 1}";
+                    HeroButtonUI btnUI = btnObj.GetComponent<HeroButtonUI>();
+                    if (btnUI == null) btnUI = btnObj.AddComponent<HeroButtonUI>();
+                    btnUI.InitializeSlot(i);
+                }
+                else
+                {
+                    // Fallback: Kod ile oluştur
+                    HeroButtonUI.Create(heroPanel.GetComponent<RectTransform>(), i);
+                }
+            }
         }
 
         private void SetupWaveInfoUI()
@@ -146,6 +205,10 @@ namespace TowerDefence.UI
             GameObject go = new GameObject("WaveInfoUI", typeof(RectTransform));
             go.transform.SetParent(canvas.transform, false);
             waveInfoUI = go.AddComponent<WaveInfoUI>();
+            if (waveInfoUnitsRowPrefab != null)
+            {
+                waveInfoUI.SetUnitsRowPrefab(waveInfoUnitsRowPrefab);
+            }
         }
 
         private void OnDestroy()

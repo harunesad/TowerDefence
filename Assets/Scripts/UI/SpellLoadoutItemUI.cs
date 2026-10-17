@@ -87,6 +87,11 @@ namespace TowerDefence.UI
             }
             else
             {
+                if (MetaProgressionManager.Instance.GetEquippedSpellIDs().Count >= 3)
+                {
+                    WarningBannerUI.Show("MAX 3 SPELLS ALLOWED!");
+                    return;
+                }
                 MetaProgressionManager.Instance.EquipSpell(spellData.spellID);
             }
 

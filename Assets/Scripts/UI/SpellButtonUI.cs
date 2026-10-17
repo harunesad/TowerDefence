@@ -99,6 +99,24 @@ namespace TowerDefence.UI
         {
             if (SpellManager.Instance != null && spellData != null)
             {
+                if (SpellManager.Instance.HasBeenUsed(spellData))
+                {
+                    WarningBannerUI.Show("SPELL ALREADY USED!");
+                    return;
+                }
+
+                if (SpellManager.Instance.GetRemainingCooldown(spellData.spellID) > 0f)
+                {
+                    WarningBannerUI.Show("SPELL IS ON COOLDOWN!");
+                    return;
+                }
+
+                if (!CurrencyManager.Instance.CanAfford(SideController.Instance.GetPlayerSide(), spellData.manaCost))
+                {
+                    WarningBannerUI.Show("NOT ENOUGH MANA!");
+                    return;
+                }
+
                 // Anında cast edilecek büyüler
                 if (spellData.spellType == SpellType.GoldBoost)
                 {

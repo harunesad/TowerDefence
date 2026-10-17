@@ -31,6 +31,18 @@ namespace TowerDefence.Data
         public UnitData unitData;
         public Sprite icon;
 
+        [Header("Hero Roster (Menu) Icon Settings")]
+        [Tooltip("Hero menüsü ve Hero Shop kartlarındaki ikon ayarları.")]
+        public UIIconSettings rosterIcon = new UIIconSettings { scale = 1f };
+
+        [Header("Prepare For Battle (Loadout) Icon Settings")]
+        [Tooltip("Savaş Hazırlık (Prepare for Battle) ekranındaki kahraman ikon ayarları.")]
+        public UIIconSettings loadoutIcon = new UIIconSettings { scale = 1f };
+
+        [Header("In-Game HUD Icon Settings")]
+        [Tooltip("Oyun içi kahraman butonundaki ikon ayarları.")]
+        public UIIconSettings hudIcon = new UIIconSettings { scale = 1f };
+
         [Header("Unique Ability")]
         public HeroAbilityType abilityType;
         public string abilityName;

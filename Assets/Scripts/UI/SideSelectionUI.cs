@@ -306,6 +306,13 @@ namespace TowerDefence.UI
 
             if (normalCount != 4 || bossCount != 1)
             {
+                if (normalCount != 4 && bossCount != 1)
+                    WarningBannerUI.Show("SELECT 4 NORMAL UNITS AND 1 BOSS UNIT!");
+                else if (normalCount != 4)
+                    WarningBannerUI.Show($"SELECT EXACTLY 4 NORMAL UNITS! ({normalCount}/4)");
+                else
+                    WarningBannerUI.Show("SELECT 1 BOSS UNIT!");
+
                 RefreshStartMatchButton();
                 return;
             }

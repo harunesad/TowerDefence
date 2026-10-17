@@ -25,7 +25,11 @@ namespace TowerDefence.UI
             heroData = data;
             shopUI = shop;
 
-            if (iconImage != null) iconImage.sprite = data.GetIcon();
+            if (iconImage != null)
+            {
+                iconImage.sprite = data.GetIcon();
+                data.rosterIcon.ApplyTo(iconImage);
+            }
             if (nameText != null) nameText.text = data.displayName;
 
             if (cardButton != null)

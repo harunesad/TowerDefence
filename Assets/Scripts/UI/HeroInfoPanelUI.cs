@@ -74,7 +74,10 @@ namespace TowerDefence.UI
             CreateImage("Border", Vector2.zero, Vector2.zero, Vector2.one, Vector2.zero, new Color(0.2f, 0.2f, 0.3f, 1f), false);
             CreateImage("InnerBg", Vector2.zero, Vector2.zero, Vector2.one, new Vector2(-4, -4), new Color(0.08f, 0.08f, 0.13f, 1f), false);
 
-            y -= 14;
+            y = -15;
+            CreateText("NameText", data.displayName, new Vector2(0, y), new Vector2(280, 22),
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 18, FontStyles.Bold, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f));
+            y -= 26;
 
             MetaProgressionManager.Instance.GetHeroCombatStats(data,
                 out float hp, out float dmg, out float spd, out float rng, out float rate);

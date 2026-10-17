@@ -203,6 +203,7 @@ namespace TowerDefence.Grid
                     }
                     else
                     {
+                        TowerDefence.UI.WarningBannerUI.Show("RALLY POINT MUST BE ON PATH!");
                         Debug.LogWarning($"<color=cyan>[RALLY-DEBUG]</color> Clicked too far from any path line (>{minPathDist} units). Cancelled.");
                         if (currentRallyBarracks != null) currentRallyBarracks.SetRangeVisible(false);
                         isInRallyMode = false;

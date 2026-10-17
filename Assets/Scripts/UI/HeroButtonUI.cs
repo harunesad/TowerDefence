@@ -17,8 +17,8 @@ namespace TowerDefence.UI
 
         [Header("Button Behavior")]
         [SerializeField] private Button mainButton;
-
-        private int slotIndex = -1;
+        [Tooltip("Hero slot indexi (0: 1. Hero, 1: 2. Hero). -1 bırakılırsa GameObject isminden veya sıra indeksinden otomatik alınır.")]
+        [SerializeField] private int slotIndex = -1;
         private HeroUnit linkedHero;
 
         private static HeroStatsPanel cachedStatsPanel;
@@ -28,12 +28,23 @@ namespace TowerDefence.UI
         private TextMeshProUGUI abilityTimerText;
         private Image abilityCooldownOverlay;
 
+        public void InitializeSlot(int index)
+        {
+            slotIndex = index;
+            EnsureAbilityUI();
+            EnsureClickHandler();
+            RefreshFromManager();
+        }
+
         private void Awake()
         {
             EnsureAbilityUI();
-            if (gameObject.name.Contains("_1")) slotIndex = 0;
-            else if (gameObject.name.Contains("_2")) slotIndex = 1;
-            else slotIndex = transform.GetSiblingIndex();
+            if (slotIndex < 0)
+            {
+                if (gameObject.name.Contains("_1")) slotIndex = 0;
+                else if (gameObject.name.Contains("_2")) slotIndex = 1;
+                else slotIndex = transform.GetSiblingIndex();
+            }
 
             EnsureClickHandler();
         }
@@ -187,12 +198,12 @@ namespace TowerDefence.UI
         private void Start()
         {
             if (HeroManager.Instance == null) return;
-            RefreshHeroData();
             if (!HasEquippedHero())
             {
                 SetEmpty(true);
                 return;
             }
+            RefreshHeroData();
             var hero = HeroManager.Instance.GetActiveHero(slotIndex);
             if (hero != null && !hero.IsDead)
                 OnHeroSpawned(slotIndex, hero);
@@ -218,7 +229,10 @@ namespace TowerDefence.UI
             if (data != null)
             {
                 if (iconImage != null)
+                {
                     iconImage.sprite = data.GetIcon();
+                    data.hudIcon.ApplyTo(iconImage);
+                }
                 if (abilityIconImage != null)
                     abilityIconImage.sprite = data.GetIcon();
             }
@@ -261,6 +275,26 @@ namespace TowerDefence.UI
         private void EnsureAbilityUI()
         {
             if (abilityRoot != null) return;
+
+            Transform existingAbility = transform.Find("AbilityUI");
+            if (existingAbility != null)
+            {
+                abilityRoot = existingAbility.gameObject;
+                Transform iconT = abilityRoot.transform.Find("Icon");
+                if (iconT != null)
+                {
+                    abilityIconImage = iconT.GetComponent<Image>();
+                    Button btn = iconT.GetComponent<Button>();
+                    if (btn == null) btn = iconT.gameObject.AddComponent<Button>();
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(OnAbilityClicked);
+                }
+                Transform overlayT = abilityRoot.transform.Find("CooldownOverlay");
+                if (overlayT != null) abilityCooldownOverlay = overlayT.GetComponent<Image>();
+                Transform timerT = abilityRoot.transform.Find("TimerText");
+                if (timerT != null) abilityTimerText = timerT.GetComponent<TextMeshProUGUI>();
+                return;
+            }
 
             abilityRoot = new GameObject("AbilityUI", typeof(RectTransform));
             abilityRoot.transform.SetParent(transform, false);
@@ -311,10 +345,21 @@ namespace TowerDefence.UI
 
         private void OnAbilityClicked()
         {
-            if (linkedHero != null && !linkedHero.IsDead)
+            if (linkedHero == null) return;
+
+            if (linkedHero.IsDead)
             {
-                linkedHero.CastAbility();
+                WarningBannerUI.Show("HERO IS DEAD!");
+                return;
             }
+
+            if (linkedHero.AbilityCooldownRemaining > 0f)
+            {
+                WarningBannerUI.Show("ABILITY IS ON COOLDOWN!");
+                return;
+            }
+
+            linkedHero.CastAbility();
         }
 
         private void UpdateAbilityUI()
