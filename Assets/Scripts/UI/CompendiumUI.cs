@@ -22,8 +22,18 @@ namespace TowerDefence.UI
         [SerializeField] private TextMeshProUGUI detailLore;
         [SerializeField] private Button backButton;
 
+        [Header("Audio")]
+        [SerializeField] private AudioClip pageSFX;
+
         private void Start()
         {
+            if (pageSFX == null)
+            {
+#if UNITY_EDITOR
+                pageSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/WaveInfo.wav");
+#endif
+            }
+
             if (backButton != null)
             {
                 backButton.onClick.AddListener(() => {
@@ -146,6 +156,7 @@ namespace TowerDefence.UI
         private void ShowHeroDetail(HeroData data)
         {
             detailPanel.SetActive(true);
+            if (AudioManager.Instance != null && pageSFX != null) AudioManager.Instance.PlaySFX(pageSFX);
             if (detailIcon != null) detailIcon.sprite = data.icon;
             detailName.text = data.displayName;
             if (data.unitData != null)
@@ -158,6 +169,7 @@ namespace TowerDefence.UI
         private void ShowUnitDetail(UnitData data)
         {
             detailPanel.SetActive(true);
+            if (AudioManager.Instance != null && pageSFX != null) AudioManager.Instance.PlaySFX(pageSFX);
             if (detailIcon != null) detailIcon.sprite = data.icon;
             detailName.text = data.unitName;
             detailStats.text = $"HP: {data.maxHealth}\nDMG: {data.attackDamage}\nSPD: {data.moveSpeed}\nATK Rate: {data.attackRate:F2}/s";

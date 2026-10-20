@@ -47,20 +47,38 @@ namespace TowerDefence.Combat
 
         private void ResolveLineRenderer()
         {
-            if (lineRenderer != null) return;
+            if (lineRenderer == null)
+            {
+                GameObject beamGO = new GameObject("BeamRenderer");
+                beamGO.transform.SetParent(transform);
+                beamGO.transform.localPosition = Vector3.zero;
+                lineRenderer = beamGO.AddComponent<LineRenderer>();
+                lineRenderer.positionCount = 2;
+                lineRenderer.startWidth = beamWidth;
+                lineRenderer.endWidth = beamWidth * 0.7f;
 
-            GameObject beamGO = new GameObject("BeamRenderer");
-            beamGO.transform.SetParent(transform);
-            beamGO.transform.localPosition = Vector3.zero;
-            lineRenderer = beamGO.AddComponent<LineRenderer>();
-            lineRenderer.positionCount = 2;
-            lineRenderer.startWidth = beamWidth;
-            lineRenderer.endWidth = beamWidth;
-            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            lineRenderer.startColor = Color.cyan;
-            lineRenderer.endColor = Color.cyan;
-            lineRenderer.useWorldSpace = true;
-            lineRenderer.enabled = false;
+                // Parlayan additive shader/materyal kullan
+                Shader beamShader = Shader.Find("Particles/Standard Unlit") ?? Shader.Find("Sprites/Default");
+                Material mat = new Material(beamShader);
+                mat.EnableKeyword("_EMISSION");
+                lineRenderer.material = mat;
+                lineRenderer.startColor = new Color(0.2f, 0.9f, 1f, 1f);
+                lineRenderer.endColor = new Color(0.8f, 0.2f, 1f, 0.9f);
+                lineRenderer.useWorldSpace = true;
+                lineRenderer.enabled = false;
+            }
+
+            if (impactEffect == null)
+            {
+#if UNITY_EDITOR
+                GameObject sparkPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Hovl Studio/Magic effects pack/Prefabs/Sparks/Sparks blue.prefab");
+                if (sparkPrefab != null)
+                {
+                    impactEffect = Instantiate(sparkPrefab, transform);
+                    impactEffect.SetActive(false);
+                }
+#endif
+            }
         }
 
         private void Update()
@@ -102,6 +120,7 @@ namespace TowerDefence.Combat
             // Efektler
             if (impactEffect != null)
             {
+                if (!impactEffect.activeSelf) impactEffect.SetActive(true);
                 impactEffect.transform.position = target.position;
                 impactEffect.transform.LookAt(firePoint.position);
             }
@@ -109,7 +128,8 @@ namespace TowerDefence.Combat
 
         private void DisableBeam()
         {
-            if (lineRenderer.enabled) lineRenderer.enabled = false;
+            if (lineRenderer != null && lineRenderer.enabled) lineRenderer.enabled = false;
+            if (impactEffect != null && impactEffect.activeSelf) impactEffect.SetActive(false);
         }
 
         public void SetTarget(Transform newTarget)

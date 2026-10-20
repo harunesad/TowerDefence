@@ -22,7 +22,7 @@ namespace TowerDefence.Combat
 
         private float maxHealth;
         private float attackDamage;
-        public float GetDamage() => attackDamage;
+        public float GetDamage() => attackDamage * tempDamageMultiplier;
         private float attackRange;
         private float attackRate;
         private Side unitSide;
@@ -311,6 +311,8 @@ namespace TowerDefence.Combat
         protected virtual void Update()
         {
             if (isDead) return;
+
+            UpdateBuffTimers(Time.deltaTime);
 
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
@@ -951,7 +953,7 @@ namespace TowerDefence.Combat
                     if (proj != null)
                     {
                         VFXType projImpactVFX = this is HeroUnit ? VFXType.None : (unitSide == Side.Light) ? VFXType.LightImpact : VFXType.DarkImpact;
-                        proj.Initialize(attackDamage, 0f, projImpactVFX);
+                        proj.Initialize(attackDamage * tempDamageMultiplier, 0f, projImpactVFX);
                         proj.Seek(currentTargetMB.transform);
                     }
                 }
@@ -960,7 +962,7 @@ namespace TowerDefence.Combat
                     // Yakın dövüş: Sadece başka ÜNİTELERE hasar verebilir, KULELERE vuramaz
                     if (!(targetC is Tower))
                     {
-                        targetC.TakeDamage(attackDamage);
+                        targetC.TakeDamage(attackDamage * tempDamageMultiplier);
                     }
                     else
                     {
@@ -973,6 +975,7 @@ namespace TowerDefence.Combat
         public void TakeDamage(float amount)
         {
             if (isDead) return;
+            if (invulnerableTimer > 0f) return;
 
             // Eğer kalkan varsa hasarı kalkan emsin
             Shield shield = GetComponent<Shield>();
@@ -1003,7 +1006,7 @@ namespace TowerDefence.Combat
                 flashCoroutine = StartCoroutine(FlashRoutine());
             }
 
-            if (currentHealth <= 0)
+            if (currentHealth <= 0 && !isDead)
             {
                 Die();
             }
@@ -1039,6 +1042,7 @@ namespace TowerDefence.Combat
 
         protected virtual void Die()
         {
+            if (isDead) return;
             isDead = true;
             
             // Bizi engelleyen varsa onu boşa çıkar
@@ -1116,6 +1120,31 @@ namespace TowerDefence.Combat
                 enemy.Block(this);
                 // Düşmana kilitlen
                 targetCombatant = enemy;
+            }
+        }
+
+        private float invulnerableTimer;
+        private float tempDamageMultiplier = 1f;
+        private float tempBuffTimer;
+
+        public void SetInvulnerable(float duration)
+        {
+            invulnerableTimer = Mathf.Max(invulnerableTimer, duration);
+        }
+
+        public void ApplyTempBuff(float multiplier, float duration)
+        {
+            tempDamageMultiplier = multiplier;
+            tempBuffTimer = Mathf.Max(tempBuffTimer, duration);
+        }
+
+        public void UpdateBuffTimers(float dt)
+        {
+            if (invulnerableTimer > 0f) invulnerableTimer -= dt;
+            if (tempBuffTimer > 0f)
+            {
+                tempBuffTimer -= dt;
+                if (tempBuffTimer <= 0f) tempDamageMultiplier = 1f;
             }
         }
 

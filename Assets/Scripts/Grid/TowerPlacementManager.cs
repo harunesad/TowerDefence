@@ -19,6 +19,7 @@ namespace TowerDefence.Grid
         [Header("Audio")]
         public AudioClip buildSFX;
         public AudioClip menuOpenSFX;
+        public AudioClip rallyPointSFX;
 
         private TowerSlot activeSlot;
 
@@ -26,6 +27,25 @@ namespace TowerDefence.Grid
         {
             if (Instance == null) Instance = this;
             else Destroy(gameObject);
+
+            if (buildSFX == null)
+            {
+#if UNITY_EDITOR
+                buildSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/Construction.mp3");
+#endif
+            }
+            if (menuOpenSFX == null)
+            {
+#if UNITY_EDITOR
+                menuOpenSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/MenuOpen.wav");
+#endif
+            }
+            if (rallyPointSFX == null)
+            {
+#if UNITY_EDITOR
+                rallyPointSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/RallyPointPlacement.wav");
+#endif
+            }
 
             // Eğer liste boşsa, Projedeki tüm TowerData'ları bulmaya çalış (Gelişmiş Başlatma)
             if (allTowers == null || allTowers.Count == 0)
@@ -197,6 +217,9 @@ namespace TowerDefence.Grid
                         if (VFXManager.Instance != null)
                             VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, snappedPos, Quaternion.identity);
 
+                        if (AudioManager.Instance != null && rallyPointSFX != null)
+                            AudioManager.Instance.PlaySFX(rallyPointSFX);
+
                         isInRallyMode = false;
                         currentRallyBarracks = null;
                         Debug.Log("<color=cyan>[RALLY-DEBUG]</color> <color=green>SUCCESS!</color> Rally Point Set at mathematically snapped pos.");
@@ -281,6 +304,9 @@ namespace TowerDefence.Grid
                 
                 if (VFXManager.Instance != null)
                     VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, activeSlot.GetPlacementPosition(), Quaternion.identity);
+
+                if (AudioManager.Instance != null && buildSFX != null)
+                    AudioManager.Instance.PlaySFX(buildSFX);
 
                 CloseSelection();
             }

@@ -46,9 +46,31 @@ namespace TowerDefence.UI
         public Button priorityButton;
         public TextMeshProUGUI priorityText;
 
+        [Header("Audio")]
+        [SerializeField] private AudioClip upgradeSFX;
+        [SerializeField] private AudioClip sellSFX;
+
         private TowerSlot currentSlot;
         private Tower currentTower;
         private TextMeshProUGUI priorityButtonLabel;
+
+        private void Awake()
+        {
+            defaultLocalPos = transform.localPosition;
+
+            if (upgradeSFX == null)
+            {
+#if UNITY_EDITOR
+                upgradeSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/TowerUpgrade.wav");
+#endif
+            }
+            if (sellSFX == null)
+            {
+#if UNITY_EDITOR
+                sellSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/TowerSell.wav");
+#endif
+            }
+        }
 
         private void OnEnable()
         {
@@ -99,11 +121,6 @@ namespace TowerDefence.UI
 
         private static float lastShowTime = -1f;
         private Vector3 defaultLocalPos;
-
-        private void Awake()
-        {
-            defaultLocalPos = transform.localPosition;
-        }
 
         private void LateUpdate()
         {
@@ -258,6 +275,16 @@ namespace TowerDefence.UI
             if (CurrencyManager.Instance.TrySpendCurrency(data.side, data.upgradeCost))
             {
                 currentTower.Upgrade();
+
+                if (VFXManager.Instance != null && currentSlot != null)
+                {
+                    VFXManager.Instance.SpawnVFX(VFXType.UpgradeSparkle, currentSlot.GetPlacementPosition(), Quaternion.identity);
+                }
+
+                if (AudioManager.Instance != null && upgradeSFX != null)
+                {
+                    AudioManager.Instance.PlaySFX(upgradeSFX);
+                }
                 RefreshUI();
             }
         }
@@ -279,6 +306,11 @@ namespace TowerDefence.UI
                 if (VFXManager.Instance != null)
                     VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, currentSlot.GetPlacementPosition(), Quaternion.identity);
 
+                if (AudioManager.Instance != null && upgradeSFX != null)
+                {
+                    AudioManager.Instance.PlaySFX(upgradeSFX);
+                }
+
                 Hide();
             }
         }
@@ -287,6 +319,10 @@ namespace TowerDefence.UI
         {
             TowerData data = currentTower.GetTowerData();
             CurrencyManager.Instance.AddCurrency(data.side, data.cost / 2);
+            if (AudioManager.Instance != null && sellSFX != null)
+            {
+                AudioManager.Instance.PlaySFX(sellSFX);
+            }
             currentSlot.ClearSlot();
             Hide();
         }

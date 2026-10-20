@@ -33,12 +33,22 @@ namespace TowerDefence.UI
         [SerializeField] private Button detailBuyButton;
         [SerializeField] private Button detailCloseButton;
 
+        [Header("Audio")]
+        [SerializeField] private AudioClip unlockSFX;
+
         private SkillNodeData selectedSkill;
 
         private float backgroundScrollOffset;
 
         private void Start()
         {
+            if (unlockSFX == null)
+            {
+#if UNITY_EDITOR
+                unlockSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/HeroUnlock.mp3");
+#endif
+            }
+
             if (backgroundScroller != null)
             {
                 // Use this gameobject's RectTransform so entire panel moves together
@@ -108,6 +118,10 @@ namespace TowerDefence.UI
 
             if (MetaProgressionManager.Instance.TryUnlockSkill(selectedSkill))
             {
+                if (AudioManager.Instance != null && unlockSFX != null)
+                {
+                    AudioManager.Instance.PlaySFX(unlockSFX);
+                }
                 ShowFeedback($"{selectedSkill.skillName} Unlocked!", Color.green);
                 UpdateAllNodes();
                 detailPanel.SetActive(false);

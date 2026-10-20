@@ -36,8 +36,19 @@ namespace TowerDefence.Combat
 
         [SerializeField] private float explosionRadius = 0f;
         [SerializeField] private VFXType impactVFX = VFXType.LightImpact;
+        [SerializeField] private AudioClip hitMarkerSFX;
 
         private Transform target;
+
+        private void Awake()
+        {
+            if (hitMarkerSFX == null)
+            {
+#if UNITY_EDITOR
+                hitMarkerSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/HitMarker.mp3");
+#endif
+            }
+        }
 
         private Vector3 GetTargetCenter()
         {
@@ -123,6 +134,11 @@ namespace TowerDefence.Combat
 
         private void HitTarget()
         {
+            if (impactVFX != VFXType.None && TowerDefence.Core.VFXManager.Instance != null)
+            {
+                TowerDefence.Core.VFXManager.Instance.SpawnVFX(impactVFX, transform.position, Quaternion.identity);
+            }
+
             if (explosionRadius > 0f)
             {
                 Explode();
@@ -169,6 +185,11 @@ namespace TowerDefence.Combat
             if (unit != null && effectType != StatusEffectType.None)
             {
                 unit.AddStatusEffect(effectType, effectDuration, effectPower);
+            }
+
+            if (TowerDefence.Core.AudioManager.Instance != null && hitMarkerSFX != null)
+            {
+                TowerDefence.Core.AudioManager.Instance.PlaySFX(hitMarkerSFX, 0.4f);
             }
         }
     }

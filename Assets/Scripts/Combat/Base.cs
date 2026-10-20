@@ -16,6 +16,13 @@ namespace TowerDefence.Combat
 
         private void Start()
         {
+            if (damageSFX == null)
+            {
+#if UNITY_EDITOR
+                damageSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/BaseDamage.wav");
+#endif
+            }
+
             // Seviye başladığında sahnede bulunan üs oyuncunun tarafına geçer
             if (SideController.Instance != null)
             {

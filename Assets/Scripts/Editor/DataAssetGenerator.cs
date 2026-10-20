@@ -8,8 +8,37 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
+[InitializeOnLoad]
 public class DataAssetGenerator : Editor
 {
+    private const string AUTO_SYNC_KEY = "TD_AutoAudioVFX_Synced_v1";
+
+    static DataAssetGenerator()
+    {
+        EditorApplication.delayCall += CheckAndAutoSync;
+    }
+
+    private static void CheckAndAutoSync()
+    {
+        if (SessionState.GetBool(AUTO_SYNC_KEY, false)) return;
+        SessionState.SetBool(AUTO_SYNC_KEY, true);
+
+        try
+        {
+            TowerDefence.Editor.VFXPrefabGenerator.GenerateVFXPrefabs();
+            GenerateHeroVFX();
+            GenerateDefaultSpells();
+            FixMissingUnitReferences();
+            FixHeroReferences();
+            AssetDatabase.SaveAssets();
+            Debug.Log("<color=green>✔ [Auto-Sync] Tüm VFX ve Ses bağlantıları butona basmaya gerek kalmadan otomatik olarak uygulandı!</color>");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[Auto-Sync Error] {e.Message}");
+        }
+    }
+
     public static void GenerateAllData()
     {
         const string towerPath = "Assets/Data/Towers";
@@ -224,43 +253,58 @@ public class DataAssetGenerator : Editor
     private static void GenerateHeroVFX()
     {
         string heroVfxPath = "Assets/Prefabs/HeroVFX";
-        string sourceVfxPath = "Assets/Prefabs/VFX";
         EnsureDirectory(heroVfxPath);
 
-        var vfxMap = new (HeroAbilityType ability, string sourceVfxName)[]
+        // Her yeteneğe özel, temasına en uygun premium efekt kaynakları
+        var vfxMap = new (HeroAbilityType ability, string sourceAssetPath)[]
         {
-            (HeroAbilityType.RallyHeal,     "VFX_HealingAura"),
-            (HeroAbilityType.HolyShield,    "VFX_HealingAura"),
-            (HeroAbilityType.LifeDrain,     "VFX_HealingAura"),
-            (HeroAbilityType.BoneArmor,     "VFX_HealingAura"),
-            (HeroAbilityType.ArrowRain,     "VFX_SpellPlagueRain"),
-            (HeroAbilityType.SwiftStrike,   "VFX_LightImpact"),
-            (HeroAbilityType.FortifyTaunt,  "VFX_DarkImpact"),
-            (HeroAbilityType.SolarSmite,    "VFX_SpellThunderstrike"),
-            (HeroAbilityType.SoulExecute,   "VFX_DarkImpact"),
-            (HeroAbilityType.GroundSlam,    "VFX_SpellEarthquake"),
-            (HeroAbilityType.PlagueCloud,   "VFX_SpellPlagueRain"),
-            (HeroAbilityType.ShadowStep,    "VFX_DarkImpact"),
+            (HeroAbilityType.RallyHeal,     "Assets/Hovl Studio/Magic effects pack/Prefabs/Magic circles/Healing circle.prefab"),
+            (HeroAbilityType.HolyShield,    "Assets/Hovl Studio/Magic effects pack/Prefabs/Magic shields/Magic shield yellow.prefab"),
+            (HeroAbilityType.LifeDrain,     "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Eerie/CFXR2 Souls Escape.prefab"),
+            (HeroAbilityType.BoneArmor,     "Assets/Hovl Studio/Magic effects pack/Prefabs/Character auras/Plexus.prefab"),
+            (HeroAbilityType.ArrowRain,     "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR2 Poison Cloud.prefab"),
+            (HeroAbilityType.SwiftStrike,   "Assets/Hovl Studio/Magic effects pack/Prefabs/Slash effects/Electro slash.prefab"),
+            (HeroAbilityType.FortifyTaunt,  "Assets/Hovl Studio/Magic effects pack/Prefabs/AoE effects/Ground AOE explosion.prefab"),
+            (HeroAbilityType.SolarSmite,    "Assets/Hovl Studio/Magic effects pack/Prefabs/Hits and explosions/Holy hit.prefab"),
+            (HeroAbilityType.SoulExecute,   "Assets/Hovl Studio/Magic effects pack/Prefabs/AoE effects/Red energy explosion.prefab"),
+            (HeroAbilityType.GroundSlam,    "Assets/Hovl Studio/Magic effects pack/Prefabs/AoE effects/Ground AOE explosion.prefab"),
+            (HeroAbilityType.PlagueCloud,   "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR2 Poison Cloud.prefab"),
+            (HeroAbilityType.ShadowStep,    "Assets/Hovl Studio/Magic effects pack/Prefabs/Slash effects/Charge slash purple.prefab"),
         };
 
-        // VFX prefab'larını kopyala — SADECE yoksa. Delete+copy meta GUID'ini değiştirir ve
-        // hero prefab'ların nested prefab referanslarını kırar. Mevcut GUID korunur; tweak
-        // senkronu kaynak prefab'lar (VFX/... prefab) üzerinde yapılır, hero kopyası sadece
-        // instantiate edilir.
-        foreach (var (ability, sourceName) in vfxMap)
+        foreach (var (ability, sourcePath) in vfxMap)
         {
-            string sourceFile = $"{sourceVfxPath}/{sourceName}.prefab";
             string targetFile = $"{heroVfxPath}/{ability}.prefab";
-
-            if (!File.Exists(sourceFile))
+            if (!File.Exists(sourcePath))
             {
-                Debug.LogWarning($"[HeroVFX] Source not found: {sourceFile}");
+                Debug.LogWarning($"[HeroVFX] Source not found: {sourcePath}");
                 continue;
             }
 
-            if (File.Exists(targetFile))
-                continue; // GUID sabit kalsın — hero prefab referansları bozulmasın
-            AssetDatabase.CopyAsset(sourceFile, targetFile);
+            // Mevcut prefab'ın içeriğini kaynak prefab ile güncelle (GUID bozulmadan kalır)
+            GameObject sourcePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);
+            if (sourcePrefab == null) continue;
+
+            if (!File.Exists(targetFile))
+            {
+                AssetDatabase.CopyAsset(sourcePath, targetFile);
+            }
+            else
+            {
+                // GUID koruyarak içeriği güncelle
+                GameObject root = PrefabUtility.LoadPrefabContents(targetFile);
+                for (int i = root.transform.childCount - 1; i >= 0; i--)
+                {
+                    DestroyImmediate(root.transform.GetChild(i).gameObject);
+                }
+                GameObject inst = (GameObject)PrefabUtility.InstantiatePrefab(sourcePrefab, root.transform);
+                inst.transform.localPosition = Vector3.zero;
+                inst.transform.localRotation = Quaternion.identity;
+                inst.transform.localScale = Vector3.one;
+
+                PrefabUtility.SaveAsPrefabAsset(root, targetFile);
+                PrefabUtility.UnloadPrefabContents(root);
+            }
         }
 
         // PooledVFX component'lerini temizle ve stopAction'ı None yap
@@ -322,6 +366,7 @@ public class DataAssetGenerator : Editor
         data.abilityCooldown = abilityCooldown;
         data.abilityPower = abilityPower;
         data.abilityRadius = abilityRadius;
+        data.abilitySFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/HeroAbility.wav");
 
         EditorUtility.SetDirty(data);
         return data;
@@ -1646,7 +1691,24 @@ public class DataAssetGenerator : Editor
         data.icon = FindIcon($"{safeName}_Icon");
 
         data.spawnSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/SwordClash.wav");
-        data.deathSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/EnemyDeath.mp3");
+
+        // Düşman / Ünite Türüne Göre Ölüm Sesi
+        if (safeName.Contains("Skeleton") || safeName.Contains("Bone"))
+        {
+            data.deathSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/SkeletonBreak.wav");
+        }
+        else if (safeName.Contains("Ghost") || safeName.Contains("Wraith") || safeName.Contains("Shadow"))
+        {
+            data.deathSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/GhostVanish.wav");
+        }
+        else if (safeName.Contains("Golem") || safeName.Contains("Behemoth") || safeName.Contains("Troll") || safeName.Contains("Colossus") || safeName.Contains("Dragon") || safeName.Contains("King"))
+        {
+            data.deathSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/HeavyThud.wav");
+        }
+        else
+        {
+            data.deathSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/EnemyDeath.mp3");
+        }
 
         // TERS BAĞLAMA: Prefab -> Data
         if (data.prefab != null)
@@ -2097,6 +2159,23 @@ public class DataAssetGenerator : Editor
                 if (found != null) { data.icon = found; changed = true; }
             }
 
+            // 2.5 SFX Ataması
+            AudioClip expectedDeathSFX;
+            if (safeName.Contains("Skeleton") || safeName.Contains("Bone"))
+                expectedDeathSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/SkeletonBreak.wav");
+            else if (safeName.Contains("Ghost") || safeName.Contains("Wraith") || safeName.Contains("Shadow"))
+                expectedDeathSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/GhostVanish.wav");
+            else if (safeName.Contains("Golem") || safeName.Contains("Behemoth") || safeName.Contains("Troll") || safeName.Contains("Colossus") || safeName.Contains("Dragon") || safeName.Contains("King"))
+                expectedDeathSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/HeavyThud.wav");
+            else
+                expectedDeathSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/EnemyDeath.mp3");
+
+            if (data.deathSFX != expectedDeathSFX && expectedDeathSFX != null)
+            {
+                data.deathSFX = expectedDeathSFX;
+                changed = true;
+            }
+
             // 3. TERS BAĞLAMA: Prefab -> Data (Kritik Kullanıcı Talebi)
             if (data.prefab != null)
             {
@@ -2229,6 +2308,13 @@ public class DataAssetGenerator : Editor
             if (heroData.unitData != null && heroData.icon != heroData.unitData.icon)
             {
                 heroData.icon = heroData.unitData.icon;
+                EditorUtility.SetDirty(heroData);
+                fixes++;
+            }
+
+            if (heroData.abilitySFX == null)
+            {
+                heroData.abilitySFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/HeroAbility.wav");
                 EditorUtility.SetDirty(heroData);
                 fixes++;
             }
@@ -4057,12 +4143,12 @@ public class DataAssetGenerator : Editor
         if (id.Contains("Rift"))
         {
             vfx = VFXType.SpellRift;
-            prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/Hits and explosions/Explosion.prefab";
+            prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/AoE effects/Red energy explosion.prefab";
         }
         else if (id.Contains("Earthquake"))
         {
             vfx = VFXType.SpellEarthquake;
-            prefabPath = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR2 Ground Hit.prefab";
+            prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/AoE effects/Ground AOE explosion.prefab";
         }
         else if (id.Contains("PlagueRain"))
         {
@@ -4071,11 +4157,16 @@ public class DataAssetGenerator : Editor
         }
         else if (id.Contains("Gold"))
         {
-            vfx = VFXType.None;
-            prefabPath = "";
+            vfx = VFXType.EconomyGold;
+            prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/Sparks/Sparks explode yellow.prefab";
             data.isOneTimeUse = true;
         }
-        else if (id.Contains("Shield") || id.Contains("Blessing"))
+        else if (id.Contains("Shield"))
+        {
+            vfx = VFXType.HealingAura;
+            prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/Magic shields/Magic shield yellow.prefab";
+        }
+        else if (id.Contains("Blessing"))
         {
             vfx = VFXType.HealingAura;
             prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/Magic circles/Healing circle.prefab";
@@ -4083,12 +4174,12 @@ public class DataAssetGenerator : Editor
         else if (id.Contains("Bloodlust"))
         {
             vfx = VFXType.CorruptionPulse;
-            prefabPath = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR2 Poison Cloud.prefab";
+            prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/AoE effects/Red energy explosion.prefab";
         }
         else if (id.Contains("Reinforce"))
         {
             vfx = VFXType.UnitSpawn;
-            prefabPath = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR Magic Poof.prefab";
+            prefabPath = "Assets/Hovl Studio/Magic effects pack/Prefabs/Environment/Teleport.prefab";
         }
         else if (id.Contains("Freeze"))
         {
@@ -4100,8 +4191,14 @@ public class DataAssetGenerator : Editor
         data.spellVFXPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
 
         // Atama: SFX Belirle
-        if (id.Contains("Thunder") || id.Contains("Earthquake") || id.Contains("PlagueRain"))
-            data.castSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/MagicBlast.wav");
+        if (id.Contains("Thunder") || type == SpellType.Thunderstrike)
+            data.castSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/Thunderstrike.wav");
+        else if (type == SpellType.Freeze || id.Contains("Freeze"))
+            data.castSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/Freeze.wav");
+        else if (type == SpellType.Reinforcement || id.Contains("Reinforce"))
+            data.castSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/Reinforcement.wav");
+        else if (type == SpellType.GoldBoost || id.Contains("Gold"))
+            data.castSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/GoldCollect.wav");
         else
             data.castSFX = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/MagicBlast.wav");
 

@@ -105,14 +105,23 @@ namespace TowerDefence.Core
         private void ApplyAoEShield(Vector3 center, float radius, float duration)
         {
             Collider[] colliders = Physics.OverlapSphere(center, radius);
+            Side playerSide = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
             foreach (var col in colliders)
             {
                 Tower tower = col.GetComponent<Tower>();
                 if (tower == null) tower = col.GetComponentInParent<Tower>();
                 
-                if (tower != null && tower.GetSide() == SideController.Instance.GetPlayerSide())
+                if (tower != null && tower.GetSide() == playerSide)
                 {
                     tower.SetInvulnerable(duration);
+                }
+
+                Unit unit = col.GetComponent<Unit>();
+                if (unit == null) unit = col.GetComponentInParent<Unit>();
+
+                if (unit != null && unit.GetSide() == playerSide)
+                {
+                    unit.SetInvulnerable(duration);
                 }
             }
         }
@@ -120,14 +129,23 @@ namespace TowerDefence.Core
         private void ApplyAoEBuff(Vector3 center, float radius, float multiplier, float duration)
         {
             Collider[] colliders = Physics.OverlapSphere(center, radius);
+            Side playerSide = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
             foreach (var col in colliders)
             {
                 Tower tower = col.GetComponent<Tower>();
                 if (tower == null) tower = col.GetComponentInParent<Tower>();
 
-                if (tower != null && tower.GetSide() == SideController.Instance.GetPlayerSide())
+                if (tower != null && tower.GetSide() == playerSide)
                 {
                     tower.ApplyTempBuff(multiplier, duration);
+                }
+
+                Unit unit = col.GetComponent<Unit>();
+                if (unit == null) unit = col.GetComponentInParent<Unit>();
+
+                if (unit != null && unit.GetSide() == playerSide)
+                {
+                    unit.ApplyTempBuff(multiplier, duration);
                 }
             }
         }

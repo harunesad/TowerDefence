@@ -294,6 +294,19 @@ namespace TowerDefence.Combat
             {
                 abilityCooldownTimer = heroConfig.abilityCooldown;
                 CheckAndPlayAbilityAnimation();
+
+                AudioClip sfx = heroConfig.abilitySFX;
+                if (sfx == null)
+                {
+#if UNITY_EDITOR
+                    sfx = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/HeroAbility.wav");
+#endif
+                }
+                if (AudioManager.Instance != null && sfx != null)
+                {
+                    AudioManager.Instance.PlaySFX(sfx);
+                }
+
                 return true;
             }
             
@@ -509,6 +522,9 @@ namespace TowerDefence.Combat
 
         protected override void Die()
         {
+            if (isDead) return;
+            isDead = true;
+
             SetSelectionState(HeroSelectionState.Hidden);
             onDeathCallback?.Invoke(this);
             

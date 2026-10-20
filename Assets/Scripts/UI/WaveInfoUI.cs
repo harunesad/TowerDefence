@@ -13,6 +13,7 @@ namespace TowerDefence.UI
         [SerializeField] private float panelWidth = 175f;
         [SerializeField] private float panelHeight = 350f;
         [SerializeField] private GameObject unitsRowPrefab;
+        [SerializeField] private AudioClip toggleSFX;
 
         private GameObject panel;
         private GameObject content;
@@ -31,6 +32,12 @@ namespace TowerDefence.UI
             {
 #if UNITY_EDITOR
                 unitsRowPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/WaveInfoUnitsRow.prefab");
+#endif
+            }
+            if (toggleSFX == null)
+            {
+#if UNITY_EDITOR
+                toggleSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/WaveInfo.wav");
 #endif
             }
             CreateToggleButton();
@@ -146,6 +153,10 @@ namespace TowerDefence.UI
         {
             isOpen = !isOpen;
             panel.SetActive(isOpen);
+            if (AudioManager.Instance != null && toggleSFX != null)
+            {
+                AudioManager.Instance.PlaySFX(toggleSFX);
+            }
             if (isOpen)
             {
                 Refresh();

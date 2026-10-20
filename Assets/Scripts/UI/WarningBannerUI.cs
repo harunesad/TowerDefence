@@ -13,6 +13,7 @@ namespace TowerDefence.UI
         private CanvasGroup canvasGroup;
         private Coroutine activeRoutine;
         private TMP_FontAsset cinzelFont;
+        private AudioClip warningSFX;
 
         private void Awake()
         {
@@ -23,7 +24,7 @@ namespace TowerDefence.UI
             }
             Instance = this;
 
-            LoadFont();
+            LoadResources();
             BuildUI();
         }
 
@@ -32,10 +33,11 @@ namespace TowerDefence.UI
             if (Instance == this) Instance = null;
         }
 
-        private void LoadFont()
+        private void LoadResources()
         {
 #if UNITY_EDITOR
             cinzelFont = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Cinzel-Black SDF.asset");
+            warningSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/WrongAction.wav");
 #endif
         }
 
@@ -114,6 +116,11 @@ namespace TowerDefence.UI
             transform.SetAsLastSibling(); // Her zaman en önde görünsün
             warningText.text = message;
             warningText.color = textColor ?? new Color(1f, 0.3f, 0.25f, 1f);
+
+            if (TowerDefence.Core.AudioManager.Instance != null && warningSFX != null)
+            {
+                TowerDefence.Core.AudioManager.Instance.PlaySFX(warningSFX);
+            }
 
             if (activeRoutine != null)
             {

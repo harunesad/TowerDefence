@@ -28,8 +28,18 @@ namespace TowerDefence.UI
         private HeroData currentHero;
         private HeroShopUI shopUI;
 
+        [Header("Audio")]
+        [SerializeField] private AudioClip unlockSFX;
+
         private void Awake()
         {
+            if (unlockSFX == null)
+            {
+#if UNITY_EDITOR
+                unlockSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/HeroUnlock.mp3");
+#endif
+            }
+
             if (closeButton != null)
                 closeButton.onClick.AddListener(Hide);
 
@@ -134,10 +144,16 @@ namespace TowerDefence.UI
         {
             if (currentHero == null || MetaProgressionManager.Instance == null) return;
 
+            bool success = false;
             if (!MetaProgressionManager.Instance.IsHeroUnlocked(currentHero.heroID))
-                MetaProgressionManager.Instance.TryUnlockHero(currentHero);
+                success = MetaProgressionManager.Instance.TryUnlockHero(currentHero);
             else
-                MetaProgressionManager.Instance.TryUpgradeHero(currentHero);
+                success = MetaProgressionManager.Instance.TryUpgradeHero(currentHero);
+
+            if (success && AudioManager.Instance != null && unlockSFX != null)
+            {
+                AudioManager.Instance.PlaySFX(unlockSFX);
+            }
 
             RefreshCurrent();
         }

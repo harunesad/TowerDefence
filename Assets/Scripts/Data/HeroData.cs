@@ -50,6 +50,7 @@ namespace TowerDefence.Data
         public float abilityCooldown = 12f;
         public float abilityPower = 1f;
         public float abilityRadius = 3f;
+        public AudioClip abilitySFX;
 
         [Header("Meta Progression")]
         public int unlockKarmaCost = 500;

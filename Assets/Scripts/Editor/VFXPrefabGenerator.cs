@@ -31,33 +31,37 @@ namespace TowerDefence.Editor
             // Eşleştirmeler: Bizim enum adımız -> İndirilen paketteki orijinal Prefab adı
             var map = new Dictionary<string, string>()
             {
-                { "VFX_LightImpact", "Holy hit" }, // Hovl
-                { "VFX_DarkImpact", "Red energy explosion" }, // Hovl
+                { "VFX_LightImpact", "Holy hit" }, // Hovl - Kutsal ışık patlaması
+                { "VFX_DarkImpact", "Red energy explosion" }, // Hovl - Karanlık enerji patlaması
                 
-                { "VFX_HealingAura", "Healing circle" }, // Hovl
-                { "VFX_CorruptionPulse", "CFXR2 Poison Cloud" }, // JMO
-                { "VFX_UnitSpawn", "CFXR Magic Poof" }, // JMO
+                { "VFX_HealingAura", "Healing circle" }, // Hovl - Dönen şifa rünleri
+                { "VFX_CorruptionPulse", "Plexus AoE" }, // Hovl - Alan yozlaşma puls dalgası
+                { "VFX_UnitSpawn", "Teleport" }, // Hovl - Büyülü teleport ışık sütunu
                 
-                { "VFX_UnitDeath", "CFXR Explosion 1" }, // JMO
-                { "VFX_SlowEffect", "Freeze circle" }, // Hovl
+                { "VFX_UnitDeath", "CFXR2 Souls Escape" }, // JMO - Ruhların göğe yükselmesi
+                { "VFX_SlowEffect", "Freeze circle" }, // Hovl - Buz rün çemberi
                 
-                { "VFX_SpellThunderstrike", "Electro hit" }, // Hovl
-                { "VFX_SpellRift", "Explosion" }, // Hovl
-                { "VFX_SpellEarthquake", "CFXR2 Ground Hit" }, // JMO
-                { "VFX_SpellPlagueRain", "CFXR2 Poison Cloud" }, // JMO (Şimdilik zehir bulutu)
+                { "VFX_SpellThunderstrike", "Electro hit" }, // Hovl - Elektrik alan patlaması
+                { "VFX_SpellRift", "Red energy explosion" }, // Hovl - Kızıl boyutsal yarık
+                { "VFX_SpellEarthquake", "Ground AOE explosion" }, // Hovl - Güçlü zemin sarsıntısı
+                { "VFX_SpellPlagueRain", "CFXR2 Poison Cloud" }, // JMO - Zehir bulutu
                 
                 { "VFX_MuzzleFlashLight", "CFXR Flash" }, // JMO
                 { "VFX_MuzzleFlashDark", "CFXR Flash" }, // JMO
                 
-                { "VFX_EconomyGold", "CFXR2 Shiny Item (Loop)" }, // JMO
-                { "VFX_EconomySoul", "CFXR2 Shiny Item (Loop)" }, // JMO 
-                { "VFX_UpgradeSparkle", "CFXR2 Shiny Item (Loop)" } 
+                { "VFX_EconomyGold", "Sparks explode yellow" }, // Hovl - Altın saçılma kıvılcımları
+                { "VFX_EconomySoul", "CFXR2 Souls Escape" }, // JMO - Ruh kaçışı
+                { "VFX_UpgradeSparkle", "Sparks explode yellow" } // Hovl - Yıldız/altın yükselme patlaması
             };
 
             // VFX bazında ölçek / doluluk / disk yayılımı düzeltmeleri (CSR her çalıştığında yeniden uygulanır)
             var vfxTweaks = new Dictionary<string, VFXTweak>
             {
-                { "VFX_SpellThunderstrike", new VFXTweak { scale = 3f, fillMult = 3f, shapeRadius = 1.2f } },
+                { "VFX_SpellThunderstrike", new VFXTweak { scale = 2.5f, fillMult = 2f, shapeRadius = 1.2f } },
+                { "VFX_SpellEarthquake", new VFXTweak { scale = 2.0f, fillMult = 1.5f, shapeRadius = 1.5f } },
+                { "VFX_SpellRift", new VFXTweak { scale = 2.0f, fillMult = 2f, shapeRadius = 1.2f } },
+                { "VFX_UnitSpawn", new VFXTweak { scale = 1.2f, fillMult = 1.2f, shapeRadius = 1.0f } },
+                { "VFX_UpgradeSparkle", new VFXTweak { scale = 1.5f, fillMult = 1.5f, shapeRadius = 1.0f } }
             };
 
             int successCount = 0;

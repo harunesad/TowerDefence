@@ -21,6 +21,7 @@ namespace TowerDefence.Core
 
         [Header("Settings")]
         [SerializeField] private float prepPhaseDuration = 30f;
+        [SerializeField] private AudioClip waveStartSFX;
         
         private GamePhase currentPhase;
         private float timer;
@@ -37,6 +38,13 @@ namespace TowerDefence.Core
                 Instance = this;
                 transform.SetParent(null);
                 DontDestroyOnLoad(gameObject);
+
+                if (waveStartSFX == null)
+                {
+#if UNITY_EDITOR
+                    waveStartSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/Gong.wav");
+#endif
+                }
             }
             else
             {
@@ -85,6 +93,12 @@ namespace TowerDefence.Core
             isTimerActive = false;
             combatStartTime = Time.time;
             OnPhaseChanged?.Invoke(currentPhase);
+
+            if (AudioManager.Instance != null && waveStartSFX != null)
+            {
+                AudioManager.Instance.PlaySFX(waveStartSFX);
+            }
+
             Debug.Log("Combat Phase Started!");
         }
 
