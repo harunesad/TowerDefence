@@ -28,6 +28,10 @@ namespace TowerDefence.Core
             }
         }
 
+        [Header("Environment & Background")]
+        [SerializeField] private LevelThemeEnvironmentConfig environmentConfig;
+        public void SetEnvironmentConfig(LevelThemeEnvironmentConfig config) => environmentConfig = config;
+
         [SerializeField] private System.Collections.Generic.List<LevelData> allLevels;
 
         public void SelectLevel(LevelData level)
@@ -129,6 +133,8 @@ namespace TowerDefence.Core
 
             if (HeroManager.Instance != null)
                 HeroManager.Instance.InitializeForLevel();
+
+            ApplyLevelEnvironment(currentSelectedLevel);
         }
 
         private int currentDifficultyLevel = 1;
@@ -253,6 +259,67 @@ namespace TowerDefence.Core
             if (!cam.orthographic) cam.fieldOfView = 40;
 
             Debug.Log($"[CampaignManager] Camera centering logic skipped as per requirement. Target would be: {center}, Height: {height}");
+        }
+
+
+        public void ApplyLevelEnvironment(LevelData level)
+        {
+            if (level == null) return;
+
+            Camera cam = Camera.main;
+            if (cam == null) cam = FindFirstObjectByType<Camera>();
+
+            // Solid Color Modu (Varsayilan ve hafif mod)
+            if (environmentConfig == null || environmentConfig.backgroundMode == LevelThemeEnvironmentConfig.BackgroundMode.SolidColor)
+            {
+                Color targetColor = Color.clear;
+
+                if (level.customBackgroundColor.a > 0.01f)
+                {
+                    targetColor = level.customBackgroundColor;
+                }
+                else if (environmentConfig != null)
+                {
+                    targetColor = environmentConfig.GetColorForTheme(level.theme);
+                }
+                else
+                {
+                    targetColor = new Color(0.18f, 0.24f, 0.20f, 1f);
+                }
+
+                if (cam != null)
+                {
+                    cam.clearFlags = CameraClearFlags.SolidColor;
+                    cam.backgroundColor = targetColor;
+                }
+
+                Debug.Log($"[CampaignManager] Applied solid background color {targetColor} for theme {level.theme} on {level.levelName}");
+            }
+            else // Skybox Material Modu
+            {
+                Material targetSkybox = null;
+
+                if (level.customSkybox != null)
+                {
+                    targetSkybox = level.customSkybox;
+                }
+                else if (environmentConfig != null)
+                {
+                    targetSkybox = environmentConfig.GetSkyboxForTheme(level.theme);
+                }
+
+                if (cam != null)
+                {
+                    cam.clearFlags = CameraClearFlags.Skybox;
+                }
+
+                if (targetSkybox != null)
+                {
+                    RenderSettings.skybox = targetSkybox;
+                    DynamicGI.UpdateEnvironment();
+                    Debug.Log($"[CampaignManager] Applied skybox '{targetSkybox.name}' for theme {level.theme} on {level.levelName}");
+                }
+            }
         }
 
         public LevelData GetCurrentLevel() => currentSelectedLevel;

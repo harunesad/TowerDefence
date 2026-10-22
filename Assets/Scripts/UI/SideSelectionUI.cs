@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -74,31 +74,9 @@ namespace TowerDefence.UI
 
             if (MetaProgressionManager.Instance != null)
             {
-                MetaProgressionManager.Instance.SanitizeEquippedHeroesForSide(side);
-
-                // Taraf dışındaki üniteleri loadout'tan çıkar (yanlışlıkla kalmasın)
-                var equippedUnits = new List<string>(MetaProgressionManager.Instance.GetEquippedUnitNames());
-                foreach (string uName in equippedUnits)
-                {
-                    UnitData ud = allPossibleUnits.Find(u => u != null && u.unitName == uName);
-                    if (ud != null && ud.side != side)
-                    {
-                        MetaProgressionManager.Instance.UnequipUnit(uName);
-                    }
-                }
-
-                // Taraf dışındaki büyüleri de çıkar
-                var equippedSpells = new List<string>(MetaProgressionManager.Instance.GetEquippedSpellIDs());
-                foreach (string sID in equippedSpells)
-                {
-                    SpellData sd = allPossibleSpells.Find(s => s != null && s.spellID == sID);
-                    if (sd != null && sd.side != side && sd.side != Side.Neutral)
-                    {
-                        MetaProgressionManager.Instance.UnequipSpell(sID);
-                    }
-                }
+                // Taraf deÄŸistiÄŸinde o tarafÄ±n kayÄ±tlÄ± unit, hero ve bÃ¼yÃ¼lerini yÃ¼kle
+                MetaProgressionManager.Instance.SwitchSideLoadout(side);
             }
-
             if (sideSelectionGroup != null) sideSelectionGroup.SetActive(false);
             if (loadoutGroup != null)
             {

@@ -65,7 +65,7 @@ namespace TowerDefence.UI
             rt.anchorMin = new Vector2(0f, 1f);
             rt.anchorMax = new Vector2(0f, 1f);
             rt.pivot = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(10f, -10f);
+            rt.anchoredPosition = new Vector2(100f, -10f);
             rt.sizeDelta = new Vector2(36f, 36f);
 
             Image bg = gameObject.AddComponent<Image>();

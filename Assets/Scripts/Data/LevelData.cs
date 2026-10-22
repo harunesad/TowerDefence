@@ -40,6 +40,10 @@ namespace TowerDefence.Data
 
         [Header("Map Generation Settings")]
         public LevelTheme theme;
+        [Tooltip("Opsiyonel: Tema rengi/skybox'i yerine bu bolume ozel bir renk atamak isterseniz secin.")]
+        public Color customBackgroundColor = Color.clear;
+        [Tooltip("Opsiyonel: Skybox modu aktifse ve bu bolume ozel skybox isteniyorsa atayin.")]
+        public Material customSkybox;
         public List<LevelPath> paths = new List<LevelPath>();
         public List<Vector3> basePoints = new List<Vector3>();
         public List<Vector3> customSlotPositions = new List<Vector3>();

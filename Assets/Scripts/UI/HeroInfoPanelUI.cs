@@ -58,7 +58,7 @@ namespace TowerDefence.UI
             // Pozisyonu tam olarak butonun dünya pozisyonuna eşitleyip
             rt.position = source.position;
             // Canvas ölçeklemesinden bağımsız olarak UI üzerinde sağ üste kaydırıyoruz
-            rt.anchoredPosition += new Vector2(source.rect.width * 0.5f + 10f, source.rect.height * 0.5f + 10f);
+            rt.anchoredPosition = new Vector2(rt.anchoredPosition.x + source.rect.width * 0.5f + 10f, 300f);
 
             Image bgImg = gameObject.GetComponent<Image>();
             if (bgImg == null) bgImg = gameObject.AddComponent<Image>();

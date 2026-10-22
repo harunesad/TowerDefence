@@ -18,6 +18,7 @@ namespace TowerDefence.Combat
         private UnitData currentDraggingUnit;
         private PathWaypoints nearestPath;
         private int targetWaypointIndex = -1;
+        private Vector2 currentScreenPointerPos;
 
         private void Awake()
         {
@@ -25,7 +26,19 @@ namespace TowerDefence.Combat
             else Destroy(gameObject);
         }
 
+        public void StartDragging(UnitData unitData, Vector2 initialScreenPos)
+        {
+            currentScreenPointerPos = initialScreenPos;
+            StartDraggingInternal(unitData);
+        }
+
         public void StartDragging(UnitData unitData)
+        {
+            currentScreenPointerPos = GetFallbackPointerPosition();
+            StartDraggingInternal(unitData);
+        }
+
+        private void StartDraggingInternal(UnitData unitData)
         {
             Debug.Log($"[UnitPlacementManager] StartDragging: {unitData.unitName}");
             currentDraggingUnit = unitData;
@@ -54,26 +67,43 @@ namespace TowerDefence.Combat
             }
         }
 
+        public void UpdateDragPosition(Vector2 screenPos)
+        {
+            currentScreenPointerPos = screenPos;
+            UpdateGhostPosition();
+        }
+
+        private Vector2 GetFallbackPointerPosition()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (UnityEngine.InputSystem.Touchscreen.current != null && UnityEngine.InputSystem.Touchscreen.current.primaryTouch.press.isPressed)
+                return UnityEngine.InputSystem.Touchscreen.current.primaryTouch.position.ReadValue();
+            if (UnityEngine.InputSystem.Mouse.current != null)
+                return UnityEngine.InputSystem.Mouse.current.position.ReadValue();
+            if (UnityEngine.InputSystem.Pointer.current != null)
+                return UnityEngine.InputSystem.Pointer.current.position.ReadValue();
+            return Vector2.zero;
+#else
+            return Input.mousePosition;
+#endif
+        }
+
         private void UpdateGhostPosition()
         {
             if (ghostUnit == null) return;
 
-            Vector2 mousePos = Vector2.zero;
+            Vector2 pointerPos = currentScreenPointerPos;
+            if (pointerPos == Vector2.zero)
+            {
+                pointerPos = GetFallbackPointerPosition();
+            }
 
-#if ENABLE_INPUT_SYSTEM
-            if (UnityEngine.InputSystem.Mouse.current != null)
-                mousePos = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
-            else if (UnityEngine.InputSystem.Pointer.current != null)
-                mousePos = UnityEngine.InputSystem.Pointer.current.position.ReadValue();
-#else
-            mousePos = Input.mousePosition;
-#endif
-
-            Ray ray = Camera.main.ScreenPointToRay(mousePos);
-            // Sadece UI ve Ignore Raycast katmanlarını yoksay, diğer her şeye çarp (zemin, dekorasyon vb.)
+            Ray ray = Camera.main.ScreenPointToRay(pointerPos);
             int layerMask = LayerMask.GetMask("Path");
 
-            if (Physics.Raycast(ray, out RaycastHit hit, 200f, layerMask))
+            bool rayHit = Physics.Raycast(ray, out RaycastHit hit, 200f, layerMask);
+
+            if (rayHit)
             {
                 ghostUnit.SetActive(true);
                 
@@ -90,7 +120,7 @@ namespace TowerDefence.Combat
                 {
                     if (path == null) continue;
                     var wps = path.GetPathPoints();
-                    if (wps.Count < 2) continue;
+                    if (wps == null || wps.Count < 2) continue;
 
                     for (int i = 0; i < wps.Count - 1; i++)
                     {
@@ -110,7 +140,6 @@ namespace TowerDefence.Combat
                         }
                     }
                 }
-
                 if (nearestPath != null)
                 {
                     var wps = nearestPath.GetPathPoints();
@@ -123,8 +152,6 @@ namespace TowerDefence.Combat
                     {
                         targetWaypointIndex = Mathf.Min(nearestWpIdx + 1, wps.Count - 1);
                     }
-                    Debug.Log($"[DROP-DEBUG] nearestPath={nearestPath.name}, nearestWpIdx={nearestWpIdx}, targetWpIdx={targetWaypointIndex}, wpCount={wps.Count}");
-                    Debug.Log($"[DROP-DEBUG] wp[0]={wps[0]}, wp[{wps.Count-1}]={wps[wps.Count-1]}, snappedPos={snappedPos}");
 
                     ghostUnit.transform.position = snappedPos;
                     Vector3 lookPos = wps[targetWaypointIndex];
@@ -180,10 +207,6 @@ namespace TowerDefence.Combat
 
                     if (correctSpawner != null)
                     {
-                        var wps = nearestPath.GetPathPoints();
-                        Debug.Log($"[DROP-DEBUG] SPAWNING: spawner={correctSpawner.gameObject.name}, isPlayerSpawner={correctSpawner.isPlayerSpawner}");
-                        Debug.Log($"[DROP-DEBUG] path={nearestPath.name}, wpCount={wps.Count}, wp[0]={wps[0]}, wp[{wps.Count-1}]={wps[wps.Count-1]}");
-                        Debug.Log($"[DROP-DEBUG] targetWpIdx={targetWaypointIndex}, ghostPos={ghostUnit.transform.position}, walkBackward={isPlayer}");
                         correctSpawner.ManualSpawnAtPosition(currentDraggingUnit, ghostUnit.transform.position, nearestPath, targetWaypointIndex, isPlayer);
                     }
                     else
@@ -206,6 +229,7 @@ namespace TowerDefence.Combat
             currentDraggingUnit = null;
             nearestPath = null;
             targetWaypointIndex = -1;
+            currentScreenPointerPos = Vector2.zero;
         }
 
         private void UpdateGhostVisuals(bool isValid)
@@ -224,4 +248,3 @@ namespace TowerDefence.Combat
         }
     }
 }
-

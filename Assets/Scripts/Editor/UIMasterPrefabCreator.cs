@@ -3163,6 +3163,8 @@ namespace TowerDefence.Editor
             CanvasScaler cs = root.GetComponent<CanvasScaler>();
             cs.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             cs.referenceResolution = new Vector2(1920, 1080);
+            cs.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            cs.matchWidthOrHeight = 0.5f;
             
             return root;
         }

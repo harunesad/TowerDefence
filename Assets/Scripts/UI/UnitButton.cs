@@ -95,18 +95,23 @@ namespace TowerDefence.UI
 
             if (UnitPlacementManager.Instance != null)
             {
-                UnitPlacementManager.Instance.StartDragging(unitData);
+                UnitPlacementManager.Instance.StartDragging(unitData, eventData.position);
             }
         }
 
         public void OnDrag(PointerEventData eventData)
         {
+            if (UnitPlacementManager.Instance != null)
+            {
+                UnitPlacementManager.Instance.UpdateDragPosition(eventData.position);
+            }
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
             if (UnitPlacementManager.Instance != null)
             {
+                UnitPlacementManager.Instance.UpdateDragPosition(eventData.position);
                 UnitPlacementManager.Instance.StopDragging();
             }
             if (activePanel != null)

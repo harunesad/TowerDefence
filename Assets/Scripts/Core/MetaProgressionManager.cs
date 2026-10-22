@@ -34,6 +34,13 @@ namespace TowerDefence.Core
         public List<string> unlockedHeroIDs = new List<string>();
         public List<string> equippedHeroIDs = new List<string>(); // Maksimum 2
         public List<string> equippedUnitNames = new List<string>(); // Maksimum 5
+        // Taraf bazli loadout kayitlari (Light ve Dark ayri saklanir)
+        public List<string> lightEquippedHeroIDs = new List<string>();
+        public List<string> darkEquippedHeroIDs = new List<string>();
+        public List<string> lightEquippedUnitNames = new List<string>();
+        public List<string> darkEquippedUnitNames = new List<string>();
+        public List<string> lightEquippedSpellIDs = new List<string>();
+        public List<string> darkEquippedSpellIDs = new List<string>();
         public List<HeroProgressEntry> heroProgressList = new List<HeroProgressEntry>();
         
         // Geriye dönük uyumluluk için tutuluyor
@@ -174,7 +181,53 @@ namespace TowerDefence.Core
             return false;
         }
 
-        public bool IsSpellUnlocked(string spellID) => saveData.unlockedSpellIDs.Contains(spellID);
+        // Skill ID -> Spell ID eşleşme tablosu (grantedSpell referansı kırıldığında fallback)
+        private static readonly Dictionary<string, string> skillToSpellMap = new Dictionary<string, string>()
+        {
+            { "Skill_Unlock_GoldRush", "Spell_Neutral_Gold" },
+            { "Skill_Unlock_Earthquake", "Spell_Neutral_Earthquake" },
+            { "Skill_Thunder_1", "Spell_Light_Thunder_1" },
+            { "Skill_Thunder_2", "Spell_Light_Thunder_2" },
+            { "Skill_Unlock_Shield", "Spell_Light_Shield" },
+            { "Skill_Unlock_Blessing", "Spell_Light_Blessing" },
+            { "Skill_Unlock_Bloodlust", "Spell_Dark_Bloodlust" },
+            { "Skill_Unlock_PlagueRain", "Spell_Dark_PlagueRain" },
+            { "Skill_Unlock_Rift", "Spell_Dark_Rift" },
+            { "Skill_Unlock_Freeze", "Spell_Dark_Freeze" },
+            { "Skill_Unlock_Reinforce_1", "Spell_Light_Reinforce_1" },
+            { "Skill_Unlock_Reinforce_2", "Spell_Light_Reinforce_2" },
+        };
+
+        public bool IsSpellUnlocked(string spellID)
+        {
+            if (saveData.unlockedSpellIDs.Contains(spellID))
+                return true;
+
+            // Fallback: skill tree'den kontrol et (önce grantedSpell referansı, sonra hardcoded map)
+            foreach (string skillID in saveData.unlockedSkillIDs)
+            {
+                // Yol 1: allAvailableSkills üzerinden grantedSpell referansı
+                if (allAvailableSkills != null)
+                {
+                    SkillNodeData skill = allAvailableSkills.Find(s => s != null && s.skillID == skillID);
+                    if (skill != null && skill.grantedSpell != null && skill.grantedSpell.spellID == spellID)
+                    {
+                        saveData.unlockedSpellIDs.Add(spellID);
+                        SaveGame();
+                        return true;
+                    }
+                }
+
+                // Yol 2: Hardcoded eşleşme tablosu (grantedSpell null geldiğinde)
+                if (skillToSpellMap.TryGetValue(skillID, out string mappedSpellID) && mappedSpellID == spellID)
+                {
+                    saveData.unlockedSpellIDs.Add(spellID);
+                    SaveGame();
+                    return true;
+                }
+            }
+            return false;
+        }
 
         public void EquipSpell(string spellID)
         {
@@ -183,6 +236,7 @@ namespace TowerDefence.Core
                 if (saveData.equippedSpellIDs.Count < 3) // Maksimum 3 büyü sınırı
                 {
                     saveData.equippedSpellIDs.Add(spellID);
+                    SyncActiveToSideList();
                     SaveGame();
                 }
             }
@@ -193,6 +247,7 @@ namespace TowerDefence.Core
             if (saveData.equippedSpellIDs.Contains(spellID))
             {
                 saveData.equippedSpellIDs.Remove(spellID);
+                SyncActiveToSideList();
                 SaveGame();
             }
         }
@@ -210,6 +265,7 @@ namespace TowerDefence.Core
                 if (saveData.equippedUnitNames.Count < 5) // Maksimum 5 unit sınırı
                 {
                     saveData.equippedUnitNames.Add(unitName);
+                    SyncActiveToSideList();
                     SaveGame();
                 }
             }
@@ -220,6 +276,7 @@ namespace TowerDefence.Core
             if (saveData.equippedUnitNames.Contains(unitName))
             {
                 saveData.equippedUnitNames.Remove(unitName);
+                SyncActiveToSideList();
                 SaveGame();
             }
         }
@@ -351,6 +408,7 @@ namespace TowerDefence.Core
             if (saveData.equippedHeroIDs.Count >= 2) return;
 
             saveData.equippedHeroIDs.Add(heroID);
+            SyncActiveToSideList();
             SaveGame();
             OnHeroProgressChanged?.Invoke();
         }
@@ -359,6 +417,7 @@ namespace TowerDefence.Core
         {
             if (saveData.equippedHeroIDs.Remove(heroID))
             {
+                SyncActiveToSideList();
                 SaveGame();
                 OnHeroProgressChanged?.Invoke();
             }
@@ -568,16 +627,76 @@ namespace TowerDefence.Core
 
             // Migration: Büyü listesini skill tree ile senkronize et
             // Sadece unlock edilmiş skill'lerin grant ettiği büyüler kalsın
-            List<string> validSpells = new List<string>();
-            foreach (string skillID in saveData.unlockedSkillIDs)
+            // allAvailableSkills boşsa mevcut listeyi sıfırlama
+            List<SkillNodeData> skillsPool = (allAvailableSkills != null && allAvailableSkills.Count > 0)
+                ? allAvailableSkills
+                : new List<SkillNodeData>(Resources.FindObjectsOfTypeAll<SkillNodeData>());
+
+            if (skillsPool.Count > 0)
             {
-                SkillNodeData skill = allAvailableSkills.Find(s => s != null && s.skillID == skillID);
-                if (skill != null && skill.grantedSpell != null && !validSpells.Contains(skill.grantedSpell.spellID))
-                    validSpells.Add(skill.grantedSpell.spellID);
+                List<string> validSpells = new List<string>();
+                foreach (string skillID in saveData.unlockedSkillIDs)
+                {
+                    SkillNodeData skill = skillsPool.Find(s => s != null && s.skillID == skillID);
+                    if (skill != null && skill.grantedSpell != null && !validSpells.Contains(skill.grantedSpell.spellID))
+                        validSpells.Add(skill.grantedSpell.spellID);
+                }
+
+                if (validSpells.Count > 0 || saveData.unlockedSkillIDs.Count == 0)
+                {
+                    saveData.unlockedSpellIDs = validSpells;
+                }
             }
-            saveData.unlockedSpellIDs = validSpells;
 
             EnsureStarterHeroUnlocked();
+        }
+
+
+        // --- SIDE-SPECIFIC LOADOUT MANAGEMENT ---
+
+        private Side GetCurrentPlayerSide()
+        {
+            if (SideController.Instance != null)
+                return SideController.Instance.GetPlayerSide();
+            return Side.Light;
+        }
+
+        public void SwitchSideLoadout(Side newSide)
+        {
+            // Taraf secildiginde aktif loadout listelerini dogrudan o tarafa ait kaydedilmis listelerle dolduruyoruz.
+            // Hicbir varsayilan eleman eklenmez veya eksiltilmez; kullanici ne sectiyse (veya bos biraktiysa) o gelir.
+            if (newSide == Side.Light)
+            {
+                saveData.equippedHeroIDs = new List<string>(saveData.lightEquippedHeroIDs);
+                saveData.equippedUnitNames = new List<string>(saveData.lightEquippedUnitNames);
+                saveData.equippedSpellIDs = new List<string>(saveData.lightEquippedSpellIDs);
+            }
+            else
+            {
+                saveData.equippedHeroIDs = new List<string>(saveData.darkEquippedHeroIDs);
+                saveData.equippedUnitNames = new List<string>(saveData.darkEquippedUnitNames);
+                saveData.equippedSpellIDs = new List<string>(saveData.darkEquippedSpellIDs);
+            }
+
+            SaveGame();
+            OnHeroProgressChanged?.Invoke();
+        }
+
+        private void SyncActiveToSideList()
+        {
+            Side side = GetCurrentPlayerSide();
+            if (side == Side.Light)
+            {
+                saveData.lightEquippedHeroIDs = new List<string>(saveData.equippedHeroIDs);
+                saveData.lightEquippedUnitNames = new List<string>(saveData.equippedUnitNames);
+                saveData.lightEquippedSpellIDs = new List<string>(saveData.equippedSpellIDs);
+            }
+            else if (side == Side.Dark)
+            {
+                saveData.darkEquippedHeroIDs = new List<string>(saveData.equippedHeroIDs);
+                saveData.darkEquippedUnitNames = new List<string>(saveData.equippedUnitNames);
+                saveData.darkEquippedSpellIDs = new List<string>(saveData.equippedSpellIDs);
+            }
         }
 
         private void EnsureStarterHeroUnlocked()
