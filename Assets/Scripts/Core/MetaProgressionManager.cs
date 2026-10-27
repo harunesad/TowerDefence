@@ -1,7 +1,11 @@
+using System;
+using System.Security.Cryptography;
+using System.Text;
 using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 using TowerDefence.Data;
+using TowerDefence.Core.Security;
 
 namespace TowerDefence.Core
 {
@@ -540,14 +544,152 @@ namespace TowerDefence.Core
             return totalBonus;
         }
 
-        private static readonly string encryptionKey = "TowerDefenceSecretKey123";
+        // --- Secure Storage (AES-256-CBC + HMAC-SHA256 + Device-bound Key) ---
+        private static readonly string LegacyXorKey = "TowerDefenceSecretKey123";
+        private static readonly byte[] SaltBytes = Encoding.UTF8.GetBytes("TowerDefence_AntiTamper_Salt_2026_SecureKey");
+        private const string AES_HEADER = "ENC_V2::";
 
-        private string EncryptDecrypt(string text)
+        private static void DeriveKeys(out byte[] aesKey, out byte[] hmacKey)
         {
-            System.Text.StringBuilder result = new System.Text.StringBuilder();
+            string deviceId = SystemInfo.deviceUniqueIdentifier;
+            if (string.IsNullOrEmpty(deviceId) || deviceId == SystemInfo.unsupportedIdentifier)
+            {
+                deviceId = "Fallback_TowerDefence_Device_Identifier_Secure_Seed";
+            }
+
+            using (var deriveBytes = new Rfc2898DeriveBytes(deviceId, SaltBytes, 1000, HashAlgorithmName.SHA256))
+            {
+                aesKey = deriveBytes.GetBytes(32);  // AES-256 key
+                hmacKey = deriveBytes.GetBytes(32); // HMAC-SHA256 key
+            }
+        }
+
+        private static string EncryptSecure(string plainText)
+        {
+            DeriveKeys(out byte[] aesKey, out byte[] hmacKey);
+
+            byte[] cipherBytes;
+            byte[] iv;
+            using (Aes aes = Aes.Create())
+            {
+                aes.KeySize = 256;
+                aes.Mode = CipherMode.CBC;
+                aes.Padding = PaddingMode.PKCS7;
+                aes.Key = aesKey;
+                aes.GenerateIV();
+                iv = aes.IV;
+
+                using (var ms = new MemoryStream())
+                {
+                    using (var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                    {
+                        byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
+                        cs.Write(plainBytes, 0, plainBytes.Length);
+                        cs.FlushFinalBlock();
+                    }
+                    cipherBytes = ms.ToArray();
+                }
+            }
+
+            // Payload: [IV (16 bytes)] + [Ciphertext]
+            byte[] payload = new byte[iv.Length + cipherBytes.Length];
+            Buffer.BlockCopy(iv, 0, payload, 0, iv.Length);
+            Buffer.BlockCopy(cipherBytes, 0, payload, iv.Length, cipherBytes.Length);
+
+            // Compute HMAC-SHA256 over Payload
+            byte[] hmac;
+            using (var hmacSha256 = new HMACSHA256(hmacKey))
+            {
+                hmac = hmacSha256.ComputeHash(payload);
+            }
+
+            // Final Package: AES_HEADER + Base64(HMAC[32 bytes] + Payload)
+            byte[] finalBytes = new byte[hmac.Length + payload.Length];
+            Buffer.BlockCopy(hmac, 0, finalBytes, 0, hmac.Length);
+            Buffer.BlockCopy(payload, 0, finalBytes, hmac.Length, payload.Length);
+
+            return AES_HEADER + Convert.ToBase64String(finalBytes);
+        }
+
+        private static bool TryDecryptSecure(string cipherString, out string plainText)
+        {
+            plainText = null;
+            if (string.IsNullOrEmpty(cipherString) || !cipherString.StartsWith(AES_HEADER))
+                return false;
+
+            try
+            {
+                string b64 = cipherString.Substring(AES_HEADER.Length);
+                byte[] finalBytes = Convert.FromBase64String(b64);
+
+                if (finalBytes.Length < 32 + 16) return false; // 32 bytes HMAC + 16 bytes IV minimum
+
+                DeriveKeys(out byte[] aesKey, out byte[] hmacKey);
+
+                byte[] receivedHmac = new byte[32];
+                int payloadLength = finalBytes.Length - 32;
+                byte[] payload = new byte[payloadLength];
+
+                Buffer.BlockCopy(finalBytes, 0, receivedHmac, 0, 32);
+                Buffer.BlockCopy(finalBytes, 32, payload, 0, payloadLength);
+
+                // Verify HMAC (Tamper check)
+                using (var hmacSha256 = new HMACSHA256(hmacKey))
+                {
+                    byte[] computedHmac = hmacSha256.ComputeHash(payload);
+                    bool match = true;
+                    for (int i = 0; i < 32; i++)
+                    {
+                        if (receivedHmac[i] != computedHmac[i]) match = false;
+                    }
+                    if (!match)
+                    {
+                        Debug.LogError("[SaveSecurity] Save file tamper or invalid device signature detected!");
+                        return false;
+                    }
+                }
+
+                // Extract IV and Ciphertext
+                byte[] iv = new byte[16];
+                int cipherLength = payloadLength - 16;
+                byte[] cipherBytes = new byte[cipherLength];
+
+                Buffer.BlockCopy(payload, 0, iv, 0, 16);
+                Buffer.BlockCopy(payload, 16, cipherBytes, 0, cipherLength);
+
+                using (Aes aes = Aes.Create())
+                {
+                    aes.KeySize = 256;
+                    aes.Mode = CipherMode.CBC;
+                    aes.Padding = PaddingMode.PKCS7;
+                    aes.Key = aesKey;
+                    aes.IV = iv;
+
+                    using (var ms = new MemoryStream())
+                    {
+                        using (var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write))
+                        {
+                            cs.Write(cipherBytes, 0, cipherBytes.Length);
+                            cs.FlushFinalBlock();
+                        }
+                        plainText = Encoding.UTF8.GetString(ms.ToArray());
+                        return true;
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[SaveSecurity] Decryption failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static string DecryptLegacyXor(string text)
+        {
+            var result = new StringBuilder();
             for (int i = 0; i < text.Length; i++)
             {
-                result.Append((char)(text[i] ^ encryptionKey[i % encryptionKey.Length]));
+                result.Append((char)(text[i] ^ LegacyXorKey[i % LegacyXorKey.Length]));
             }
             return result.ToString();
         }
@@ -557,8 +699,8 @@ namespace TowerDefence.Core
             try
             {
                 string json = JsonUtility.ToJson(saveData);
-                string encrypted = EncryptDecrypt(json);
-                File.WriteAllText(savePath, encrypted);
+                string encrypted = EncryptSecure(json);
+                File.WriteAllText(savePath, encrypted, Encoding.UTF8);
                 Debug.Log($"Game Saved and Encrypted to: {savePath}");
             }
             catch (System.Exception ex)
@@ -573,19 +715,58 @@ namespace TowerDefence.Core
             {
                 try
                 {
-                    string fileContent = File.ReadAllText(savePath);
-                    
-                    // Geriye dönük uyumluluk: Eğer kayıt dosyası şifrelenmemiş düz JSON ise doğrudan oku
-                    if (fileContent.TrimStart().StartsWith("{"))
+                    string fileContent = File.ReadAllText(savePath, Encoding.UTF8);
+                    bool loadSuccess = false;
+
+                    // 1. Yeni Güvenli AES-256 + HMAC formatını dene
+                    if (fileContent.StartsWith(AES_HEADER))
+                    {
+                        if (TryDecryptSecure(fileContent, out string plainText))
+                        {
+                            saveData = JsonUtility.FromJson<SaveData>(plainText);
+                            Debug.Log($"[SaveDebug] Raw Loaded JSON: {plainText}");
+                            Debug.Log($"[SaveDebug] Parsed: Karma={saveData.totalKarma}, Crystals={saveData.totalCrystals}");
+                            loadSuccess = true;
+                            Debug.Log("Game Loaded and Decrypted securely (AES-256 + Device-Bound HMAC).");
+                        }
+                        else
+                        {
+                            Debug.LogError("[SaveSecurity] Failed to decrypt secure save data. Corrupted or tampered.");
+                        }
+                    }
+                    // 2. Geriye dönük uyumluluk: Şifrelenmemiş düz JSON ise
+                    else if (fileContent.TrimStart().StartsWith("{"))
                     {
                         saveData = JsonUtility.FromJson<SaveData>(fileContent);
-                        Debug.Log("Game Loaded from plain-text JSON (Will be encrypted on next save)");
+                        loadSuccess = true;
+                        Debug.Log("Game Loaded from plain-text JSON (Migrating to AES-256 on next save)");
+                        SaveGame();
                     }
+                    // 3. Geriye dönük uyumluluk: Eski Legacy XOR şifreli kayıt ise
                     else
                     {
-                        string decrypted = EncryptDecrypt(fileContent);
-                        saveData = JsonUtility.FromJson<SaveData>(decrypted);
-                        Debug.Log("Game Loaded and Decrypted successfully");
+                        try
+                        {
+                            string decrypted = DecryptLegacyXor(fileContent);
+                            if (decrypted.TrimStart().StartsWith("{"))
+                            {
+                                saveData = JsonUtility.FromJson<SaveData>(decrypted);
+                                loadSuccess = true;
+                                Debug.Log("Game Loaded from legacy XOR format (Migrating to AES-256 on next save)");
+                                SaveGame();
+                            }
+                        }
+                        catch
+                        {
+                            loadSuccess = false;
+                        }
+                    }
+
+                    if (!loadSuccess)
+                    {
+                        Debug.LogError("Error loading save game: Could not parse save data. Resetting progress.");
+                        saveData = new SaveData();
+                        saveData.totalKarma = 200;
                     }
                 }
                 catch (System.Exception ex)

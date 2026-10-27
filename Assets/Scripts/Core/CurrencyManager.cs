@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using TowerDefence.Data;
+using TowerDefence.Core.Security;
 
 namespace TowerDefence.Core
 {
@@ -14,8 +15,8 @@ namespace TowerDefence.Core
         [SerializeField] private int startingGold = 100;
         [SerializeField] private int startingSoul = 100;
 
-        private int gold;
-        private int soul;
+        private ObscuredInt gold;
+        private ObscuredInt soul;
 
         private void Awake()
         {

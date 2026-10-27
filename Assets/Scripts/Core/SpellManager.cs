@@ -91,7 +91,9 @@ namespace TowerDefence.Core
                     SpawnReinforcements(targetPos, spell.unitPrefabToSpawn, spell.unitSpawnCount);
                     break;
                 case Data.SpellType.GoldBoost:
-                    CurrencyManager.Instance.AddCurrency(SideController.Instance.GetPlayerSide(), (int)spell.power);
+                    int goldAmt = (int)spell.power;
+                    CurrencyManager.Instance.AddCurrency(SideController.Instance.GetPlayerSide(), goldAmt);
+                    TowerDefence.UI.WarningBannerUI.Show($"GOLD BOOST! +{goldAmt} GOLD", 2.0f, new Color(1f, 0.85f, 0.2f, 1f), true);
                     break;
                 case Data.SpellType.Shield:
                     ApplyAoEShield(targetPos, spell.radius, spell.duration > 0 ? spell.duration : spell.power);

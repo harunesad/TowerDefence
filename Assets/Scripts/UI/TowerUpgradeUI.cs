@@ -318,11 +318,13 @@ namespace TowerDefence.UI
         public void OnSellClicked()
         {
             TowerData data = currentTower.GetTowerData();
-            CurrencyManager.Instance.AddCurrency(data.side, data.cost / 2);
+            int refund = data.cost / 2;
+            CurrencyManager.Instance.AddCurrency(data.side, refund);
             if (AudioManager.Instance != null && sellSFX != null)
             {
                 AudioManager.Instance.PlaySFX(sellSFX);
             }
+            WarningBannerUI.Show($"TOWER SOLD! +{refund} GOLD", 2.0f, new Color(1f, 0.85f, 0.2f, 1f), true);
             currentSlot.ClearSlot();
             Hide();
         }

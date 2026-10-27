@@ -22,6 +22,7 @@ namespace TowerDefence.UI
         public AudioClip tickSound;
         
         private bool isSpinning = false;
+        private string lastWonRewardMessage = "";
         
         // 8 slices in clockwise order (assuming slice 0 is at top)
         private int[] karmaRewards = { 10, 0, 50, 0, 100, 0, 250, 0 };
@@ -64,7 +65,8 @@ namespace TowerDefence.UI
 
             DateTime lastTime = new DateTime(lastTimeTicks);
             DateTime nextTime = lastTime.AddDays(1).Date; // Ertesi günün başlangıcı
-            return DateTime.Now >= nextTime;
+            DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
+            return now >= nextTime;
         }
 
         public bool IsAdSpinAvailable()
@@ -76,7 +78,8 @@ namespace TowerDefence.UI
 
             DateTime lastTime = new DateTime(lastAdTimeTicks);
             DateTime nextTime = lastTime.AddDays(1).Date;
-            return DateTime.Now >= nextTime;
+            DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
+            return now >= nextTime;
         }
 
         public string GetTimeToNextSpin()
@@ -88,7 +91,8 @@ namespace TowerDefence.UI
 
             DateTime lastTime = new DateTime(lastTimeTicks);
             DateTime nextTime = lastTime.AddDays(1).Date;
-            TimeSpan remaining = nextTime - DateTime.Now;
+            DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
+            TimeSpan remaining = nextTime - now;
 
             if (remaining.Ticks <= 0) return "Available Now!";
 
@@ -101,28 +105,45 @@ namespace TowerDefence.UI
             bool adAvailable = IsAdSpinAvailable();
             TextMeshProUGUI btnText = spinButton != null ? spinButton.GetComponentInChildren<TextMeshProUGUI>() : null;
 
+            string statusMsg = "";
             if (freeAvailable)
             {
                 if (spinButton != null) spinButton.interactable = true;
                 if (btnText != null) btnText.text = "SPIN";
-                if (rewardText != null) rewardText.text = "Spin to Win!";
+                statusMsg = "Spin to Win!";
             }
             else if (adAvailable)
             {
                 // Free hakkı yok ama Reklam izleyerek çevirebilir
                 if (spinButton != null) spinButton.interactable = true;
                 if (btnText != null) btnText.text = "WATCH AD";
-                if (rewardText != null) rewardText.text = "Watch Ad for Extra Spin!";
+                statusMsg = "Watch Ad for Extra Spin!";
             }
             else
             {
                 // İki hak da bitti
                 if (spinButton != null) spinButton.interactable = false;
                 if (btnText != null) btnText.text = "NO SPINS";
-                if (rewardText != null) rewardText.text = "Next Spin: " + GetTimeToNextSpin();
+                statusMsg = "Next Spin: " + GetTimeToNextSpin();
             }
 
+            SetCombinedRewardText(statusMsg);
+
             if (closeButtonObj != null) closeButtonObj.SetActive(true);
+        }
+
+        private void SetCombinedRewardText(string statusMsg)
+        {
+            if (rewardText == null) return;
+
+            if (!string.IsNullOrEmpty(lastWonRewardMessage))
+            {
+                rewardText.text = $"{lastWonRewardMessage}\n<size=80%>{statusMsg}</size>";
+            }
+            else
+            {
+                rewardText.text = statusMsg;
+            }
         }
 
         private void Update()
@@ -130,8 +151,8 @@ namespace TowerDefence.UI
             // Sürekli kalan süreyi güncelle (çark dönmüyorsa ve ne free ne de ad spin yoksa)
             if (!isSpinning && !IsSpinAvailable() && !IsAdSpinAvailable())
             {
-                if (rewardText != null)
-                    rewardText.text = "Next Spin: " + GetTimeToNextSpin();
+                string statusMsg = "Next Spin: " + GetTimeToNextSpin();
+                SetCombinedRewardText(statusMsg);
             }
         }
         
@@ -183,6 +204,7 @@ namespace TowerDefence.UI
         private IEnumerator SpinRoutine(bool isFreeSpin)
         {
             isSpinning = true;
+            lastWonRewardMessage = "";
             if (spinButton != null) spinButton.interactable = false;
             if (closeButtonObj != null) closeButtonObj.SetActive(false);
             if (rewardText != null) rewardText.text = "Spinning...";
@@ -194,7 +216,11 @@ namespace TowerDefence.UI
             // Since the wheel rotates clockwise (angle decreases), to bring slice 'N' to the top,
             // we need to rotate by 360 - (N * 45) - 22.5 degrees.
             float jitter = UnityEngine.Random.Range(-10f, 10f);
-            float targetAngle = 360f - (randomSlice * 45f) - 22.5f;
+            // Slices are laid out clockwise: Slice N is located at (N * 45f + 22.5f) degrees.
+            // When the wheel rotates clockwise (Euler Z decreases), to bring Slice N under the top pointer (0/360 degrees),
+            // the required rotation magnitude is (360f - (randomSlice * 45f + 22.5f)).
+            float sliceAngle = (randomSlice * 45f) + 22.5f;
+            float targetAngle = (360f - sliceAngle) % 360f;
             float totalRotation = (360f * spinRevolutions) + targetAngle + jitter;
             
             float elapsed = 0f;
@@ -239,22 +265,20 @@ namespace TowerDefence.UI
             // Çevirme süresini kaydet.
             if (MetaProgressionManager.Instance != null)
             {
+                DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
                 if (isFreeSpin)
-                    MetaProgressionManager.Instance.SetLastFortuneWheelTime(DateTime.Now.Ticks);
+                    MetaProgressionManager.Instance.SetLastFortuneWheelTime(now.Ticks);
                 else
-                    MetaProgressionManager.Instance.SetLastFortuneWheelAdTime(DateTime.Now.Ticks);
+                    MetaProgressionManager.Instance.SetLastFortuneWheelAdTime(now.Ticks);
             }
             
-            // Ödül metni: Slice numarasına göre sabit metin
-            if (rewardText != null)
-            {
-                if (karmaRewards[randomSlice] > 0)
-                    rewardText.text = "You won " + karmaRewards[randomSlice] + " Karma!";
-                else if (crystalRewards[randomSlice] > 0)
-                    rewardText.text = "You won " + crystalRewards[randomSlice] + " Crystals!";
-                else
-                    rewardText.text = "No reward this spin.";
-            }
+            // Ödül metni
+            if (karmaRewards[randomSlice] > 0)
+                lastWonRewardMessage = $"<color=#FFD700>YOU WON {karmaRewards[randomSlice]} KARMA!</color>";
+            else if (crystalRewards[randomSlice] > 0)
+                lastWonRewardMessage = $"<color=#00FFFF>YOU WON {crystalRewards[randomSlice]} CRYSTALS!</color>";
+            else
+                lastWonRewardMessage = "No reward this spin.";
             
             isSpinning = false;
             

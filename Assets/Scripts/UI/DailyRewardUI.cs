@@ -228,6 +228,10 @@ namespace TowerDefence.UI
             if (drm.ClaimReward(out int karma, out int crystal))
             {
                 RefreshUI();
+                string rewardMsg = "DAILY REWARD CLAIMED! ";
+                if (karma > 0) rewardMsg += $"+{karma} KARMA ";
+                if (crystal > 0) rewardMsg += $"+{crystal} CRYSTALS";
+                WarningBannerUI.Show(rewardMsg.Trim(), 2.5f, new Color(0.2f, 1f, 0.4f, 1f), true);
             }
         }
     }

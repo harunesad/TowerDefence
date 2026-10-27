@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using TowerDefence.Core;
+using TowerDefence.Core.Security;
 
 namespace TowerDefence.Combat
 {
@@ -13,7 +14,7 @@ namespace TowerDefence.Combat
 
         public static event Action<int, int> OnLivesChanged; // current, max
 
-        private int currentLives;
+        private ObscuredInt currentLives;
         private bool isGameOver = false;
 
         private void Awake()

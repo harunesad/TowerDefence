@@ -141,15 +141,45 @@ namespace TowerDefence.UI
 
             // Standart Ölçek
             transform.localScale = new Vector3(0.045f, 0.045f, 0.045f);
-            transform.position = slot.transform.position + new Vector3(0, 3.5f, 0);
+            
+            // İlk açılışta LateUpdate devralacak, burada da tetikleyelim ki anında düzelsin
+            LateUpdate();
         }
 
-        private void Update()
+        private void LateUpdate()
         {
-            if (gameObject.activeSelf && Camera.main != null)
-            {
-                transform.rotation = Camera.main.transform.rotation;
+            if (!gameObject.activeSelf || Camera.main == null || currentActiveSlot == null) return;
+
+            // 1. Slot pozisyonunu al ve Y yüksekliğini en az 15 olacak şekilde ayarla (ağaçların altında kalmasın)
+            Vector3 worldPos = currentActiveSlot.transform.position;
+            worldPos.y = Mathf.Max(worldPos.y + 3.5f, 15f);
+
+            // 2. Rotation X'i 90 dereceye sabitle (TowerUpgradeUI ile uyumlu)
+            transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+
+            // 3. UI'ın dünyadaki güncel Y yüksekliğinde yatay bir zemin (Plane) oluştur
+            Plane plane = new Plane(Vector3.up, new Vector3(0, worldPos.y, 0));
+
+            // 4. Ekranın alt HUD sınırı (%28) için Z koordinatını bul
+            Ray bottomRay = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height * 0.28f, 0));
+            float minZ = float.MinValue;
+            if (plane.Raycast(bottomRay, out float d1)) {
+                minZ = bottomRay.GetPoint(d1).z;
             }
+
+            // 5. Ekranın üst HUD sınırı (%82) için Z koordinatını bul
+            Ray topRay = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height * 0.82f, 0));
+            float maxZ = float.MaxValue;
+            if (plane.Raycast(topRay, out float d2)) {
+                maxZ = topRay.GetPoint(d2).z;
+            }
+
+            // (Güvenlik kontrolü)
+            if (minZ > maxZ) { float temp = minZ; minZ = maxZ; maxZ = temp; }
+
+            // 6. Y yüksekliği (15) arttığı için ekran projeksiyonunda Z koordinatını bu düzlem sınırlarında clamp'le
+            worldPos.z = Mathf.Clamp(worldPos.z, minZ + 3f, maxZ - 4f);
+            transform.position = worldPos;
         }
 
         public void Hide()

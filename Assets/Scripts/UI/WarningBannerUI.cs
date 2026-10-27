@@ -14,6 +14,7 @@ namespace TowerDefence.UI
         private Coroutine activeRoutine;
         private TMP_FontAsset cinzelFont;
         private AudioClip warningSFX;
+        private AudioClip rewardSFX;
 
         private void Awake()
         {
@@ -38,6 +39,7 @@ namespace TowerDefence.UI
 #if UNITY_EDITOR
             cinzelFont = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Cinzel-Black SDF.asset");
             warningSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/WrongAction.wav");
+            rewardSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/GoldCollect.wav");
 #endif
         }
 
@@ -92,7 +94,7 @@ namespace TowerDefence.UI
             warningText.outlineWidth = 0.25f;
         }
 
-        public static void Show(string message, float duration = 2.0f, Color? textColor = null)
+        public static void Show(string message, float duration = 2.0f, Color? textColor = null, bool isReward = false)
         {
             if (Instance == null)
             {
@@ -105,21 +107,22 @@ namespace TowerDefence.UI
 
             if (Instance != null)
             {
-                Instance.DisplayWarning(message, duration, textColor);
+                Instance.DisplayWarning(message, duration, textColor, isReward);
             }
         }
 
-        private void DisplayWarning(string message, float duration, Color? textColor)
+        private void DisplayWarning(string message, float duration, Color? textColor, bool isReward)
         {
             if (warningText == null) return;
 
             transform.SetAsLastSibling(); // Her zaman en önde görünsün
             warningText.text = message;
-            warningText.color = textColor ?? new Color(1f, 0.3f, 0.25f, 1f);
+            warningText.color = textColor ?? (isReward ? new Color(1f, 0.84f, 0f, 1f) : new Color(1f, 0.3f, 0.25f, 1f));
 
-            if (TowerDefence.Core.AudioManager.Instance != null && warningSFX != null)
+            if (TowerDefence.Core.AudioManager.Instance != null)
             {
-                TowerDefence.Core.AudioManager.Instance.PlaySFX(warningSFX);
+                AudioClip sfx = isReward ? (rewardSFX != null ? rewardSFX : warningSFX) : warningSFX;
+                if (sfx != null) TowerDefence.Core.AudioManager.Instance.PlaySFX(sfx);
             }
 
             if (activeRoutine != null)

@@ -123,6 +123,12 @@ namespace TowerDefence.Core
                         MetaProgressionManager.Instance.AddKarma(bonusKarma);
                         Debug.Log($"<color=magenta>[Early Call Bonus]</color> +{bonusKarma} Karma awarded!");
                     }
+
+                    if (bonusGold > 0 || bonusKarma > 0)
+                    {
+                        string msg = $"EARLY CALL BONUS! +{bonusGold} GOLD" + (bonusKarma > 0 ? $" +{bonusKarma} KARMA" : "");
+                        TowerDefence.UI.WarningBannerUI.Show(msg, 2.5f, new Color(1f, 0.85f, 0.2f, 1f), true);
+                    }
                 }
 
                 timer = 0;

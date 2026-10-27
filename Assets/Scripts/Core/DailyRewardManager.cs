@@ -23,6 +23,7 @@ namespace TowerDefence.UI
 
         private void Awake()
         {
+            EnsureNetworkTimeManager();
             if (Instance == null)
             {
                 Instance = this;
@@ -89,7 +90,8 @@ namespace TowerDefence.UI
 
             DateTime lastTime = new DateTime(lastTimeTicks);
             DateTime nextTime = lastTime.AddDays(1).Date;
-            return DateTime.Now >= nextTime;
+            DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
+            return now >= nextTime;
         }
 
         public bool ClaimReward(out int karma, out int crystal)
@@ -108,7 +110,8 @@ namespace TowerDefence.UI
 
             MetaProgressionManager.Instance.AddKarma(karma);
             MetaProgressionManager.Instance.AddCrystals(crystal);
-            MetaProgressionManager.Instance.SetLastDailyRewardTime(DateTime.Now.Ticks);
+            DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
+            MetaProgressionManager.Instance.SetLastDailyRewardTime(now.Ticks);
             MetaProgressionManager.Instance.SetDailyRewardDayIndex(currentDay + 1);
 
             Debug.Log($"[DailyReward] Day {tier.dayNumber} Claimed: {karma} Karma, {crystal} Crystals");
@@ -132,7 +135,8 @@ namespace TowerDefence.UI
 
             DateTime lastTime = new DateTime(lastTimeTicks);
             DateTime nextTime = lastTime.AddDays(1).Date;
-            TimeSpan remaining = nextTime - DateTime.Now;
+            DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
+            TimeSpan remaining = nextTime - now;
 
             if (remaining.Ticks <= 0) return "Available Now!";
 
@@ -146,6 +150,14 @@ namespace TowerDefence.UI
             if (dayIndex == currentDay && IsRewardAvailable()) return "available";
             if (dayIndex == currentDay) return "waiting";
             return "locked";
+        }
+
+        private void EnsureNetworkTimeManager()
+        {
+            if (NetworkTimeManager.Instance == null)
+            {
+                GameObject go = new GameObject("NetworkTimeManager", typeof(NetworkTimeManager));
+            }
         }
     }
 }

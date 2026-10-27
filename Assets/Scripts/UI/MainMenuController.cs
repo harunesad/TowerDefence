@@ -116,7 +116,8 @@ namespace TowerDefence.UI
             {
                 System.DateTime lastTime = new System.DateTime(lastTimeTicks);
                 System.DateTime nextTime = lastTime.AddDays(1).Date;
-                if (System.DateTime.Now < nextTime)
+                System.DateTime now = TowerDefence.Core.NetworkTimeManager.Instance != null ? TowerDefence.Core.NetworkTimeManager.Instance.GetCurrentLocalTime() : System.DateTime.Now;
+                if (now < nextTime)
                     available = false;
             }
 
@@ -129,7 +130,8 @@ namespace TowerDefence.UI
             {
                 System.DateTime lastTime = new System.DateTime(lastTimeTicks);
                 System.DateTime nextTime = lastTime.AddDays(1).Date;
-                System.TimeSpan remaining = nextTime - System.DateTime.Now;
+                System.DateTime now = TowerDefence.Core.NetworkTimeManager.Instance != null ? TowerDefence.Core.NetworkTimeManager.Instance.GetCurrentLocalTime() : System.DateTime.Now;
+                System.TimeSpan remaining = nextTime - now;
                 
                 fortuneWheelTimerText.text = string.Format("{0:D2}h {1:D2}m {2:D2}s", remaining.Hours, remaining.Minutes, remaining.Seconds);
                 fortuneWheelTimerText.color = Color.white;
