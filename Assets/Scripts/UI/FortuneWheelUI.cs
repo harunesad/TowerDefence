@@ -212,20 +212,23 @@ namespace TowerDefence.UI
             // Random slice to land on (0 to 7)
             int randomSlice = UnityEngine.Random.Range(0, 8);
             
-            // +22.5f shifts from bar edge to slice center (bars are at 0,45,90... icons are between them)
-            // Since the wheel rotates clockwise (angle decreases), to bring slice 'N' to the top,
-            // we need to rotate by 360 - (N * 45) - 22.5 degrees.
-            float jitter = UnityEngine.Random.Range(-10f, 10f);
-            // Slices are laid out clockwise: Slice N is located at (N * 45f + 22.5f) degrees.
-            // When the wheel rotates clockwise (Euler Z decreases), to bring Slice N under the top pointer (0/360 degrees),
-            // the required rotation magnitude is (360f - (randomSlice * 45f + 22.5f)).
-            float sliceAngle = (randomSlice * 45f) + 22.5f;
-            float targetAngle = (360f - sliceAngle) % 360f;
-            float totalRotation = (360f * spinRevolutions) + targetAngle + jitter;
+            // Dilim N'in (0..7) tepe ibresinin tam altına gelmesi için durması gereken MUTLAK (absolute) açı:
+            // Dilimler saat yönünde dizilmiştir:
+            // Dilim 0 (10 Karma): +22.5° | Dilim 6 (250 Karma): +292.5° | Dilim 7 (50 Crystal): +337.5°
+            // Çark saat yönünde (Euler Z azalarak) döndüğünde, tepeye tam olarak bu açı gelir.
+            float targetEndAngle = (randomSlice * 45f) + 22.5f;
+            float jitter = UnityEngine.Random.Range(-6f, 6f); // Dilimin içinde hafif rastgele duruş
+            targetEndAngle += jitter;
+
+            float startAngle = wheelTransform.eulerAngles.z;
+            // Mevcut açıdan başlayıp saat yönünde en az 'spinRevolutions' tur dönerek kesin hedef açıya in:
+            // startAngle'ı targetEndAngle'a göre normalize et
+            float delta = Mathf.Repeat(startAngle - targetEndAngle, 360f);
+            float totalRotation = (360f * spinRevolutions) + delta;
+            float endAngle = startAngle - totalRotation;
             
             float elapsed = 0f;
-            float startAngle = wheelTransform.eulerAngles.z;
-            int lastSlice = Mathf.FloorToInt((wheelTransform.eulerAngles.z % 360) / 45f);
+            int lastTickIndex = -1;
             
             // EaseOutQuart
             while (elapsed < spinDuration)
@@ -234,13 +237,13 @@ namespace TowerDefence.UI
                 float t = elapsed / spinDuration;
                 float easeOut = 1 - Mathf.Pow(1 - t, 4);
                 
-                float currentAngle = Mathf.Lerp(startAngle, startAngle - totalRotation, easeOut);
+                float currentAngle = Mathf.Lerp(startAngle, endAngle, easeOut);
                 wheelTransform.rotation = Quaternion.Euler(0, 0, currentAngle);
 
-                int currentSlice = Mathf.FloorToInt((Mathf.Abs(currentAngle) % 360) / 45f);
-                if (currentSlice != lastSlice)
+                int currentTickIndex = Mathf.FloorToInt(Mathf.Abs(currentAngle) / 45f);
+                if (currentTickIndex != lastTickIndex)
                 {
-                    lastSlice = currentSlice;
+                    lastTickIndex = currentTickIndex;
                     if (AudioManager.Instance != null && tickSound != null)
                         AudioManager.Instance.PlaySFX(tickSound, 0.5f, UnityEngine.Random.Range(0.9f, 1.1f));
                 }
@@ -248,7 +251,7 @@ namespace TowerDefence.UI
                 yield return null;
             }
             
-            wheelTransform.rotation = Quaternion.Euler(0, 0, startAngle - totalRotation);
+            wheelTransform.rotation = Quaternion.Euler(0, 0, endAngle);
             
             // Give reward
             if (karmaRewards[randomSlice] > 0)

@@ -24,6 +24,9 @@ namespace TowerDefence.Core
 
         [SerializeField] private GameState currentState;
         
+        [Header("Loading Screen")]
+        [SerializeField] private GameObject loadingScreenPrefab;
+
         [Header("Audio")]
         [SerializeField] private AudioClip battleBGM;
         [SerializeField] private AudioClip victorySFX;
@@ -40,6 +43,10 @@ namespace TowerDefence.Core
                 // Otomatik AdManager ekle
                 if (GetComponent<AdManager>() == null)
                     gameObject.AddComponent<AdManager>();
+
+                // Loading Screen prefab'ını başlat
+                if (loadingScreenPrefab != null && SceneLoader.Instance == null)
+                    Instantiate(loadingScreenPrefab);
             }
             else
             {
@@ -53,7 +60,8 @@ namespace TowerDefence.Core
             if (SceneManager.GetActiveScene().buildIndex == 0)
             {
                 ChangeState(GameState.MainMenu);
-                SceneManager.LoadScene(1); // 1 genelde MainMenu sahnesidir
+                SceneLoader.EnsureInstance();
+                SceneLoader.Instance.LoadScene(1); // 1 genelde MainMenu sahnesidir
             }
         }
 

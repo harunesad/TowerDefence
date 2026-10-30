@@ -364,7 +364,8 @@ namespace TowerDefence.UI
             }
             else
             {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                SceneLoader.EnsureInstance();
+                if (SceneLoader.Instance != null) SceneLoader.Instance.ReloadCurrentScene();
             }
         }
 
@@ -375,7 +376,8 @@ namespace TowerDefence.UI
             else
                 Time.timeScale = 1f;
 
-            SceneManager.LoadScene("MainScene");
+            SceneLoader.EnsureInstance();
+            if (SceneLoader.Instance != null) SceneLoader.Instance.LoadScene("MainScene");
         }
 
         public void OnSoundButtonClicked()

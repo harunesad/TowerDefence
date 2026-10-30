@@ -238,12 +238,14 @@ namespace TowerDefence.UI
             {
                 TowerDefence.Core.AdManager.Instance.ShowInterstitialAd(onCompleted: () =>
                 {
-                    UnityEngine.SceneManagement.SceneManager.LoadScene(1);
+                    TowerDefence.Core.SceneLoader.EnsureInstance();
+                    if (TowerDefence.Core.SceneLoader.Instance != null) TowerDefence.Core.SceneLoader.Instance.LoadScene(1);
                 });
             }
             else
             {
-                UnityEngine.SceneManagement.SceneManager.LoadScene(1);
+                TowerDefence.Core.SceneLoader.EnsureInstance();
+                if (TowerDefence.Core.SceneLoader.Instance != null) TowerDefence.Core.SceneLoader.Instance.LoadScene(1);
             }
         }
 
@@ -270,7 +272,8 @@ namespace TowerDefence.UI
             else
             {
                 // Fallback: Manager yoksa sahneyi yükle (ama gri ekran riski var)
-                UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+                TowerDefence.Core.SceneLoader.EnsureInstance();
+                if (TowerDefence.Core.SceneLoader.Instance != null) TowerDefence.Core.SceneLoader.Instance.ReloadCurrentScene();
             }
         }
     }

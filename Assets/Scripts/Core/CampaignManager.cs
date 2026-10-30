@@ -58,7 +58,8 @@ namespace TowerDefence.Core
                 {
                     // Sahne yüklendiğinde spawn yapmak için event'e abone ol
                     SceneManager.sceneLoaded += OnLevelSceneLoaded;
-                    SceneManager.LoadScene(currentSelectedLevel.sceneIndex);
+                    SceneLoader.EnsureInstance();
+                    if (SceneLoader.Instance != null) SceneLoader.Instance.LoadScene(currentSelectedLevel.sceneIndex);
                 }
                 else
                 {
@@ -81,7 +82,8 @@ namespace TowerDefence.Core
                 
                 // Sahne yüklendiğinde haritayı tekrar kurması için abone ol
                 SceneManager.sceneLoaded += OnLevelSceneLoaded;
-                SceneManager.LoadScene(currentSelectedLevel.sceneIndex);
+                SceneLoader.EnsureInstance();
+                if (SceneLoader.Instance != null) SceneLoader.Instance.LoadScene(currentSelectedLevel.sceneIndex);
                 
                 Debug.Log($"[CampaignManager] Restarting Level: {currentSelectedLevel.levelName}");
             }
