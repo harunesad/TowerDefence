@@ -58,11 +58,10 @@ namespace TowerDefence.Core
             soul = level.startingCurrencyDark;
 
             ApplyMetaBonuses();
+            ApplyDifficultyIncome();
 
             OnCurrencyChanged?.Invoke(Side.Light, gold);
             OnCurrencyChanged?.Invoke(Side.Dark, soul);
-            
-            Debug.Log($"CurrencyManager: Initialized from level {level.levelName}. Gold: {gold}, Soul: {soul}");
         }
 
         private void ApplyMetaBonuses()
@@ -80,6 +79,15 @@ namespace TowerDefence.Core
             }
         }
 
+        private void ApplyDifficultyIncome()
+        {
+            if (CampaignManager.Instance == null) return;
+            float income = CampaignManager.Instance.GetCombatDifficultyMultiplier();
+            if (income <= 1f) return;
+            gold = Mathf.RoundToInt(gold * income);
+            soul = Mathf.RoundToInt(soul * income);
+        }
+
         public bool CanAfford(Side side, int amount)
         {
             return GetCurrency(side) >= amount;
@@ -91,7 +99,6 @@ namespace TowerDefence.Core
             else if (side == Side.Dark) soul += amount;
             
             OnCurrencyChanged?.Invoke(side, GetCurrency(side));
-            Debug.Log($"{side} Currency Added: {amount}. New Total: {GetCurrency(side)}");
         }
 
         public bool TrySpendCurrency(Side side, int amount)
@@ -102,7 +109,6 @@ namespace TowerDefence.Core
                 else if (side == Side.Dark) soul -= amount;
 
                 OnCurrencyChanged?.Invoke(side, GetCurrency(side));
-                Debug.Log($"{side} Currency Spent: {amount}. Remaining: {GetCurrency(side)}");
                 return true;
             }
             

@@ -51,7 +51,7 @@ namespace TowerDefence.Combat
             {
                 case StatusEffectType.Burn:
                 case StatusEffectType.Poison:
-                    unit.TakeHealthDamage(power); // DoT Damage
+                    unit.TakeDamage(power);
                     break;
                 case StatusEffectType.Stun:
                     // Stun mantığı Unit Update'inde NavMeshAgent.isStopped ile kontrol edilecek

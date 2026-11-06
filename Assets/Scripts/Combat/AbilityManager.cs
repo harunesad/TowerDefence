@@ -66,26 +66,26 @@ namespace TowerDefence.Combat
 
         private void ExecuteLightAbility()
         {
-            Debug.Log("Işık Patlaması: Tüm dost birimler iyileşiyor!");
+            if (SideController.Instance == null) return;
+
             Side playerSide = SideController.Instance.GetPlayerSide();
             Unit[] units = FindObjectsByType<Unit>(FindObjectsSortMode.None);
             foreach (Unit u in units)
             {
-                // Birimin tarafını kontrol et (Basitlik için Unit'e bir GetSide() veya public unitSide eklenebilir)
+                if (u == null || u.IsDead || u.GetSide() != playerSide) continue;
                 u.Heal(50f);
             }
         }
 
         private void ExecuteDarkAbility()
         {
-            Debug.Log("Yozlaşma: Rakip kuleler donduruluyor!");
-            Side playerSide = SideController.Instance.GetPlayerSide();
+            if (SideController.Instance == null) return;
+
             Side opponentSide = SideController.Instance.GetOpponentSide();
-            
             Tower[] towers = FindObjectsByType<Tower>(FindObjectsSortMode.None);
             foreach (Tower t in towers)
             {
-                // Kule sadece rakibe aitse dondur (Şimdilik tüm kuleler rakip varsayılıyor veya Tower'a side eklenebilir)
+                if (t == null || t.IsDead || t.GetSide() != opponentSide) continue;
                 t.Disable(5f);
             }
         }

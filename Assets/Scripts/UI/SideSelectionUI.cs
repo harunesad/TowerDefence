@@ -17,6 +17,10 @@ namespace TowerDefence.UI
         [Header("Side Selection")]
         [SerializeField] private GameObject sideSelectionGroup;
         [SerializeField] private GameObject loadoutGroup;
+        [SerializeField] private TextMeshProUGUI levelTitleText;
+        [SerializeField] private TextMeshProUGUI firstStarsRewardText;
+        [SerializeField] private TextMeshProUGUI secondStarsRewardText;
+        [SerializeField] private TextMeshProUGUI thirdStarsRewardText;
 
         [Header("Hero Loadout")]
         [SerializeField] private Transform heroItemContainer;
@@ -38,6 +42,45 @@ namespace TowerDefence.UI
         [SerializeField] private List<SpellData> allPossibleSpells;
 
         private Side currentSelectedSide;
+
+        private void OnEnable()
+        {
+            UpdateLevelInfo();
+        }
+
+        public void UpdateLevelInfo()
+        {
+            if (CampaignManager.Instance == null) return;
+            LevelData level = CampaignManager.Instance.GetCurrentLevel();
+            if (level != null && levelTitleText != null)
+            {
+                string rawName = level.levelName.ToUpper();
+                if (rawName.Contains(":"))
+                {
+                    string[] parts = rawName.Split(new char[] { ':' }, 2);
+                    levelTitleText.text = parts[0].Trim() + "\n" + parts[1].Trim();
+                }
+                else
+                {
+                    levelTitleText.text = rawName;
+                }
+            }
+
+            int globalDifficulty = CampaignManager.Instance.CurrentDifficultyLevel;
+            if (globalDifficulty < 1) globalDifficulty = 1;
+
+            int levelDifficulty = (level != null && level.difficulty > 0) ? level.difficulty : 1;
+            int totalMultiplier = levelDifficulty * globalDifficulty;
+
+            if (firstStarsRewardText != null)
+                firstStarsRewardText.text = $"+{25 * 3 * totalMultiplier} Karma  +{5 * 3 * totalMultiplier} Crystals";
+
+            if (secondStarsRewardText != null)
+                secondStarsRewardText.text = $"+{25 * 2 * totalMultiplier} Karma  +{5 * 2 * totalMultiplier} Crystals";
+
+            if (thirdStarsRewardText != null)
+                thirdStarsRewardText.text = $"+{25 * 1 * totalMultiplier} Karma  +{5 * 1 * totalMultiplier} Crystals";
+        }
 
         private void Start()
         {

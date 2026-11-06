@@ -74,9 +74,6 @@ namespace TowerDefence.UI
             if (AbilityManager.Instance != null)
                 AbilityManager.Instance.OnAbilityCooldownChanged += UpdateAbilityUI;
 
-            if (GameManager.Instance != null)
-                GameManager.Instance.OnGameStateChanged += UpdateGameStateUI;
-
             LivesManager.OnLivesChanged += UpdateLivesUI;
 
             if (skipPrepButton != null) skipPrepButton.onClick.AddListener(OnSkipPrepClicked);
@@ -124,7 +121,23 @@ namespace TowerDefence.UI
             SetupHeroButtons();
             SetupWaveInfoUI();
             SetupWarningBannerUI();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            SetupDebugAutoWinButton();
+#endif
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private void SetupDebugAutoWinButton()
+        {
+            if (FindObjectOfType<DebugAutoWinButton>() != null) return;
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            GameObject go = new GameObject("DebugAutoWinButton", typeof(RectTransform), typeof(DebugAutoWinButton));
+            go.transform.SetParent(canvas.transform, false);
+        }
+#endif
 
         private void SetupWarningBannerUI()
         {
@@ -226,9 +239,6 @@ namespace TowerDefence.UI
             if (AbilityManager.Instance != null)
                 AbilityManager.Instance.OnAbilityCooldownChanged -= UpdateAbilityUI;
 
-            if (GameManager.Instance != null)
-                GameManager.Instance.OnGameStateChanged -= UpdateGameStateUI;
-
             LivesManager.OnLivesChanged -= UpdateLivesUI;
 
             if (GameSpeedManager.Instance != null)
@@ -278,20 +288,6 @@ namespace TowerDefence.UI
             {
                 skipPrepButton.gameObject.SetActive(phase == GamePhase.Preparation);
                 skipPrepButton.interactable = (phase == GamePhase.Preparation);
-            }
-        }
-
-        private void UpdateGameStateUI(GameState state)
-        {
-            if (levelResultUI == null) return;
-
-            if (state == GameState.Victory)
-            {
-                levelResultUI.Show(true, LivesManager.Instance.GetCurrentLives(), LivesManager.Instance.GetMaxLives());
-            }
-            else if (state == GameState.Defeat)
-            {
-                levelResultUI.Show(false, 0, LivesManager.Instance.GetMaxLives());
             }
         }
 

@@ -41,49 +41,36 @@ namespace TowerDefence.Core
         }
 
         private GameObject currentMapInstance;
+        private bool rewardGrantedThisAttempt;
+        private bool grantCrystalsOnSpawn = true;
 
         public void LoadSelectedLevel()
         {
+            grantCrystalsOnSpawn = true;
             if (currentSelectedLevel != null)
             {
-                // 1. Temizlik: Eski harita varsa yok et
-                if (currentMapInstance != null)
+                // Sahne yüklendiğinde yeni haritayı spawn etmek için abone ol
+                SceneManager.sceneLoaded += OnLevelSceneLoaded;
+                SceneLoader.EnsureInstance();
+                if (SceneLoader.Instance != null)
                 {
-                    currentMapInstance.SetActive(false);
-                    Destroy(currentMapInstance);
-                }
-
-                // 2. Sahne Yükleme Kontrolü
-                if (SceneManager.GetActiveScene().buildIndex != currentSelectedLevel.sceneIndex)
-                {
-                    // Sahne yüklendiğinde spawn yapmak için event'e abone ol
-                    SceneManager.sceneLoaded += OnLevelSceneLoaded;
-                    SceneLoader.EnsureInstance();
-                    if (SceneLoader.Instance != null) SceneLoader.Instance.LoadScene(currentSelectedLevel.sceneIndex);
-                }
-                else
-                {
-                    // Zaten sahnedeyiz, direkt spawn et
-                    SpawnMap();
+                    SceneLoader.Instance.LoadScene(currentSelectedLevel.sceneIndex);
                 }
             }
         }
 
         public void RestartLevel()
         {
+            grantCrystalsOnSpawn = false;
             if (currentSelectedLevel != null)
             {
-                // Her şeyi temizle
-                if (currentMapInstance != null) 
-                {
-                    currentMapInstance.SetActive(false);
-                    Destroy(currentMapInstance);
-                }
-                
                 // Sahne yüklendiğinde haritayı tekrar kurması için abone ol
                 SceneManager.sceneLoaded += OnLevelSceneLoaded;
                 SceneLoader.EnsureInstance();
-                if (SceneLoader.Instance != null) SceneLoader.Instance.LoadScene(currentSelectedLevel.sceneIndex);
+                if (SceneLoader.Instance != null)
+                {
+                    SceneLoader.Instance.LoadScene(currentSelectedLevel.sceneIndex);
+                }
                 
                 Debug.Log($"[CampaignManager] Restarting Level: {currentSelectedLevel.levelName}");
             }
@@ -115,7 +102,11 @@ namespace TowerDefence.Core
             }
 
             // 4. Sistem Resetleri
+            rewardGrantedThisAttempt = false;
             CurrencyManager.Instance.InitializeFromLevel(currentSelectedLevel);
+            if (grantCrystalsOnSpawn)
+                GrantLevelStartCrystals();
+            grantCrystalsOnSpawn = true;
             PhaseManager.Instance.ResetWaveIndex();
             
             if (TowerDefence.Combat.LivesManager.Instance != null)
@@ -142,6 +133,13 @@ namespace TowerDefence.Core
         private int currentDifficultyLevel = 1;
         public int CurrentDifficultyLevel => currentDifficultyLevel;
 
+        public float GetCombatDifficultyMultiplier()
+        {
+            if (currentDifficultyLevel == 2) return 1.5f;
+            if (currentDifficultyLevel >= 3) return 2f;
+            return 1f;
+        }
+
         public void SetDifficulty(int difficulty)
         {
             if (difficulty >= 1 && difficulty <= MetaProgressionManager.Instance.GetHighestUnlockedGlobalDifficulty())
@@ -153,21 +151,52 @@ namespace TowerDefence.Core
 
         public void CompleteCurrentLevel(int stars, int karmaReward, int crystalReward)
         {
-            if (currentSelectedLevel == null) return;
+            if (currentSelectedLevel == null || MetaProgressionManager.Instance == null) return;
+            if (rewardGrantedThisAttempt) return;
+            rewardGrantedThisAttempt = true;
 
             Debug.Log($"Level Completed: {currentSelectedLevel.levelName} on Difficulty {currentDifficultyLevel} with {stars} Stars");
 
-            MetaProgressionManager.Instance.AddKarma(karmaReward);
-            MetaProgressionManager.Instance.AddCrystals(crystalReward);
+            int karmaToGrant = karmaReward;
+            int crystalsToGrant = crystalReward;
+            string levelID = currentSelectedLevel.levelID;
+            if (MetaProgressionManager.Instance.IsLevelCompleted(levelID, currentDifficultyLevel))
+            {
+                int previousStars = MetaProgressionManager.Instance.GetLevelStars(levelID, currentDifficultyLevel);
+                if (stars <= previousStars || stars <= 0)
+                {
+                    karmaToGrant = 0;
+                    crystalsToGrant = 0;
+                }
+                else
+                {
+                    float starGain = (stars - previousStars) / (float)stars;
+                    karmaToGrant = Mathf.RoundToInt(karmaReward * starGain);
+                    crystalsToGrant = Mathf.RoundToInt(crystalReward * starGain);
+                }
+            }
+
+            if (karmaToGrant > 0)
+                MetaProgressionManager.Instance.AddKarma(karmaToGrant);
+            if (crystalsToGrant > 0)
+                MetaProgressionManager.Instance.AddCrystals(crystalsToGrant);
 
             // Bölümü tamamlandı olarak kaydet
-            MetaProgressionManager.Instance.SaveLevelProgress(currentSelectedLevel.levelID, stars, currentDifficultyLevel);
+            MetaProgressionManager.Instance.SaveLevelProgress(levelID, stars, currentDifficultyLevel);
 
             // Bir sonraki seviyenin kilidini aç (Yazılımsal mantık)
             UnlockNextLevel();
 
             // Tüm bölümler bittiyse bir sonraki zorluğu aç
             CheckDifficultyUnlock();
+        }
+
+        private void GrantLevelStartCrystals()
+        {
+            if (MetaProgressionManager.Instance == null) return;
+            int crystals = Mathf.RoundToInt(MetaProgressionManager.Instance.GetTotalAdditiveBonus(UpgradeType.CrystalStartFlatBonus, Side.Neutral));
+            if (crystals > 0)
+                MetaProgressionManager.Instance.AddCrystals(crystals);
         }
 
         private void UnlockNextLevel()
@@ -213,7 +242,8 @@ namespace TowerDefence.Core
             if (allLevels == null || allLevels.Count == 0) return true;
             
             int index = allLevels.IndexOf(level);
-            if (index <= 0) return true; // İlk bölüm veya liste dışı (hata koruması) her zaman açık
+            if (index < 0) return false;
+            if (index == 0) return true;
             
             // Kayıtlı en yüksek bölüm indeksinden küçük veya eşitse açıktır
             return index <= MetaProgressionManager.Instance.GetHighestUnlockedLevel(currentDifficultyLevel);
@@ -325,5 +355,25 @@ namespace TowerDefence.Core
         }
 
         public LevelData GetCurrentLevel() => currentSelectedLevel;
+
+        /// <summary>Bir sonraki seviyeyi seç ve yükle. Son seviyedeyse false döner.</summary>
+        public bool LoadNextLevel()
+        {
+            if (allLevels == null || allLevels.Count == 0 || currentSelectedLevel == null)
+                return false;
+
+            int currentIndex = allLevels.IndexOf(currentSelectedLevel);
+            int nextIndex = currentIndex + 1;
+
+            if (nextIndex >= allLevels.Count)
+            {
+                Debug.Log("[CampaignManager] Already at the last level.");
+                return false;
+            }
+
+            SelectLevel(allLevels[nextIndex]);
+            LoadSelectedLevel();
+            return true;
+        }
     }
 }

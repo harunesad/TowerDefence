@@ -99,7 +99,24 @@ namespace TowerDefence.Core
         [SerializeField] private int maxSkillsUnlocked = 10; // Maksimum açılabilir skill sayısı
 
         public int GetMaxSkillsUnlocked() => maxSkillsUnlocked;
-        public int GetCurrentSkillsUnlocked() => saveData.unlockedSkillIDs.Count;
+        public int GetCurrentSkillsUnlocked() => CountCappedSkills();
+
+        private int CountCappedSkills()
+        {
+            if (saveData == null || saveData.unlockedSkillIDs == null) return 0;
+            List<SkillNodeData> pool = (allAvailableSkills != null && allAvailableSkills.Count > 0)
+                ? allAvailableSkills
+                : new List<SkillNodeData>(Resources.FindObjectsOfTypeAll<SkillNodeData>());
+            int count = 0;
+            foreach (string id in saveData.unlockedSkillIDs)
+            {
+                SkillNodeData skill = pool.Find(s => s != null && s.skillID == id);
+                if (skill != null && skill.upgradeType == UpgradeType.UnlockSpell)
+                    continue;
+                count++;
+            }
+            return count;
+        }
 
         public void SetMaxSkillsUnlocked(int value) => maxSkillsUnlocked = value;
 
@@ -160,7 +177,8 @@ namespace TowerDefence.Core
                 }
 
                 // Sınır kontrolü: Maksimum skill sayısı kontrolü
-                if (saveData.unlockedSkillIDs.Count >= maxSkillsUnlocked && maxSkillsUnlocked > 0)
+                bool spellUnlock = skill.upgradeType == UpgradeType.UnlockSpell;
+                if (!spellUnlock && CountCappedSkills() >= maxSkillsUnlocked && maxSkillsUnlocked > 0)
                 {
                     Debug.LogWarning($"[Progression] Skill limit reached! Maximum {maxSkillsUnlocked} skills can be unlocked. Current: {saveData.unlockedSkillIDs.Count}");
                     return false;
@@ -512,7 +530,7 @@ namespace TowerDefence.Core
             foreach (var skillID in saveData.unlockedSkillIDs)
             {
                 SkillNodeData skill = allAvailableSkills.Find(s => s.skillID == skillID);
-                if (skill != null && skill.upgradeType == type)
+                if (skill != null && skill.skillID != "Skill_Neutral_AncientWisdom" && skill.upgradeType == type)
                 {
                     // Taraf kontrolü: Ya genel bir yetenek ya da istenen tarafın yeteneği olmalı
                     if (skill.side == Side.Neutral || skill.side == side)
@@ -547,26 +565,53 @@ namespace TowerDefence.Core
         // --- Secure Storage (AES-256-CBC + HMAC-SHA256 + Device-bound Key) ---
         private static readonly string LegacyXorKey = "TowerDefenceSecretKey123";
         private static readonly byte[] SaltBytes = Encoding.UTF8.GetBytes("TowerDefence_AntiTamper_Salt_2026_SecureKey");
-        private const string AES_HEADER = "ENC_V2::";
+        private const string AES_HEADER_V2 = "ENC_V2::";
+        private const string AES_HEADER_V3 = "ENC_V3::";
+        private const string InstallKeyFileName = "meta_install.key";
 
-        private static void DeriveKeys(out byte[] aesKey, out byte[] hmacKey)
+        private static void DeriveDeviceKeys(out byte[] aesKey, out byte[] hmacKey)
         {
             string deviceId = SystemInfo.deviceUniqueIdentifier;
             if (string.IsNullOrEmpty(deviceId) || deviceId == SystemInfo.unsupportedIdentifier)
-            {
                 deviceId = "Fallback_TowerDefence_Device_Identifier_Secure_Seed";
-            }
 
             using (var deriveBytes = new Rfc2898DeriveBytes(deviceId, SaltBytes, 1000, HashAlgorithmName.SHA256))
             {
-                aesKey = deriveBytes.GetBytes(32);  // AES-256 key
-                hmacKey = deriveBytes.GetBytes(32); // HMAC-SHA256 key
+                aesKey = deriveBytes.GetBytes(32);
+                hmacKey = deriveBytes.GetBytes(32);
+            }
+        }
+
+        private static void DeriveInstallKeys(out byte[] aesKey, out byte[] hmacKey)
+        {
+            string keyPath = Path.Combine(Application.persistentDataPath, InstallKeyFileName);
+            byte[] secret = null;
+            if (File.Exists(keyPath))
+            {
+                byte[] existing = File.ReadAllBytes(keyPath);
+                if (existing != null && existing.Length >= 32)
+                    secret = existing;
+            }
+
+            if (secret == null)
+            {
+                secret = new byte[32];
+                using (var rng = RandomNumberGenerator.Create())
+                    rng.GetBytes(secret);
+                File.WriteAllBytes(keyPath, secret);
+            }
+
+            string secretText = Convert.ToBase64String(secret);
+            using (var deriveBytes = new Rfc2898DeriveBytes(secretText, SaltBytes, 1000, HashAlgorithmName.SHA256))
+            {
+                aesKey = deriveBytes.GetBytes(32);
+                hmacKey = deriveBytes.GetBytes(32);
             }
         }
 
         private static string EncryptSecure(string plainText)
         {
-            DeriveKeys(out byte[] aesKey, out byte[] hmacKey);
+            DeriveInstallKeys(out byte[] aesKey, out byte[] hmacKey);
 
             byte[] cipherBytes;
             byte[] iv;
@@ -603,28 +648,44 @@ namespace TowerDefence.Core
                 hmac = hmacSha256.ComputeHash(payload);
             }
 
-            // Final Package: AES_HEADER + Base64(HMAC[32 bytes] + Payload)
+            // Final Package: ENC_V3 header + Base64(HMAC[32 bytes] + Payload)
             byte[] finalBytes = new byte[hmac.Length + payload.Length];
             Buffer.BlockCopy(hmac, 0, finalBytes, 0, hmac.Length);
             Buffer.BlockCopy(payload, 0, finalBytes, hmac.Length, payload.Length);
 
-            return AES_HEADER + Convert.ToBase64String(finalBytes);
+            return AES_HEADER_V3 + Convert.ToBase64String(finalBytes);
         }
 
         private static bool TryDecryptSecure(string cipherString, out string plainText)
         {
             plainText = null;
-            if (string.IsNullOrEmpty(cipherString) || !cipherString.StartsWith(AES_HEADER))
+            if (string.IsNullOrEmpty(cipherString))
                 return false;
+
+            string header;
+            byte[] aesKey;
+            byte[] hmacKey;
+            if (cipherString.StartsWith(AES_HEADER_V3))
+            {
+                header = AES_HEADER_V3;
+                DeriveInstallKeys(out aesKey, out hmacKey);
+            }
+            else if (cipherString.StartsWith(AES_HEADER_V2))
+            {
+                header = AES_HEADER_V2;
+                DeriveDeviceKeys(out aesKey, out hmacKey);
+            }
+            else
+            {
+                return false;
+            }
 
             try
             {
-                string b64 = cipherString.Substring(AES_HEADER.Length);
+                string b64 = cipherString.Substring(header.Length);
                 byte[] finalBytes = Convert.FromBase64String(b64);
 
-                if (finalBytes.Length < 32 + 16) return false; // 32 bytes HMAC + 16 bytes IV minimum
-
-                DeriveKeys(out byte[] aesKey, out byte[] hmacKey);
+                if (finalBytes.Length < 32 + 16) return false;
 
                 byte[] receivedHmac = new byte[32];
                 int payloadLength = finalBytes.Length - 32;
@@ -700,7 +761,13 @@ namespace TowerDefence.Core
             {
                 string json = JsonUtility.ToJson(saveData);
                 string encrypted = EncryptSecure(json);
-                File.WriteAllText(savePath, encrypted, Encoding.UTF8);
+                string tempPath = savePath + ".tmp";
+                string backupPath = savePath + ".bak";
+                File.WriteAllText(tempPath, encrypted, Encoding.UTF8);
+                if (File.Exists(savePath))
+                    File.Replace(tempPath, savePath, backupPath);
+                else
+                    File.Move(tempPath, savePath);
                 Debug.Log($"Game Saved and Encrypted to: {savePath}");
             }
             catch (System.Exception ex)
@@ -709,8 +776,41 @@ namespace TowerDefence.Core
             }
         }
 
-        private void LoadGame()
+        public void GrantDailyReward(int karma, int crystals, long claimTimeTicks, int nextDayIndex)
         {
+            if (karma > 0) saveData.totalKarma += karma;
+            if (crystals > 0) saveData.totalCrystals += crystals;
+            saveData.lastDailyRewardTime = claimTimeTicks;
+            saveData.dailyRewardDayIndex = nextDayIndex;
+            SaveGame();
+        }
+
+        private bool TryLoadBackup()
+        {
+            string backupPath = savePath + ".bak";
+            if (!File.Exists(backupPath)) return false;
+            try
+            {
+                string fileContent = File.ReadAllText(backupPath, Encoding.UTF8);
+                if (!(fileContent.StartsWith(AES_HEADER_V3) || fileContent.StartsWith(AES_HEADER_V2)))
+                    return false;
+                if (!TryDecryptSecure(fileContent, out string plainText))
+                    return false;
+                SaveData restored = JsonUtility.FromJson<SaveData>(plainText);
+                if (restored == null) return false;
+                saveData = restored;
+                Debug.LogWarning("[SaveSecurity] Primary save was unreadable. Restored the previous save.");
+                SaveGame();
+                return true;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[SaveSecurity] Backup restore failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        private void LoadGame()        {
             if (File.Exists(savePath))
             {
                 try
@@ -719,22 +819,27 @@ namespace TowerDefence.Core
                     bool loadSuccess = false;
 
                     // 1. Yeni Güvenli AES-256 + HMAC formatını dene
-                    if (fileContent.StartsWith(AES_HEADER))
+                    if (fileContent.StartsWith(AES_HEADER_V3) || fileContent.StartsWith(AES_HEADER_V2))
                     {
                         if (TryDecryptSecure(fileContent, out string plainText))
                         {
                             saveData = JsonUtility.FromJson<SaveData>(plainText);
+#if UNITY_EDITOR
                             Debug.Log($"[SaveDebug] Raw Loaded JSON: {plainText}");
                             Debug.Log($"[SaveDebug] Parsed: Karma={saveData.totalKarma}, Crystals={saveData.totalCrystals}");
+#endif
                             loadSuccess = true;
-                            Debug.Log("Game Loaded and Decrypted securely (AES-256 + Device-Bound HMAC).");
+                            if (fileContent.StartsWith(AES_HEADER_V2))
+                                SaveGame();
+                            Debug.Log("Game Loaded and Decrypted securely (AES-256 + HMAC).");
                         }
                         else
                         {
                             Debug.LogError("[SaveSecurity] Failed to decrypt secure save data. Corrupted or tampered.");
                         }
                     }
-                    // 2. Geriye dönük uyumluluk: Şifrelenmemiş düz JSON ise
+#if UNITY_EDITOR
+                    // Editörde eski düz JSON ve XOR kayıtlar bir kez şifreli formata taşınır.
                     else if (fileContent.TrimStart().StartsWith("{"))
                     {
                         saveData = JsonUtility.FromJson<SaveData>(fileContent);
@@ -742,7 +847,6 @@ namespace TowerDefence.Core
                         Debug.Log("Game Loaded from plain-text JSON (Migrating to AES-256 on next save)");
                         SaveGame();
                     }
-                    // 3. Geriye dönük uyumluluk: Eski Legacy XOR şifreli kayıt ise
                     else
                     {
                         try
@@ -761,8 +865,14 @@ namespace TowerDefence.Core
                             loadSuccess = false;
                         }
                     }
+#else
+                    else
+                    {
+                        Debug.LogError("[SaveSecurity] Unsigned save rejected.");
+                    }
+#endif
 
-                    if (!loadSuccess)
+                    if (!loadSuccess && !TryLoadBackup())
                     {
                         Debug.LogError("Error loading save game: Could not parse save data. Resetting progress.");
                         saveData = new SaveData();
@@ -772,11 +882,14 @@ namespace TowerDefence.Core
                 catch (System.Exception ex)
                 {
                     Debug.LogError($"Error loading save game: {ex.Message}. Resetting progress.");
-                    saveData = new SaveData();
-                    saveData.totalKarma = 200;
+                    if (!TryLoadBackup())
+                    {
+                        saveData = new SaveData();
+                        saveData.totalKarma = 200;
+                    }
                 }
             }
-            else
+            else if (!TryLoadBackup())
             {
                 saveData = new SaveData();
                 saveData.totalKarma = 200; // Başlangıç Karma puanı

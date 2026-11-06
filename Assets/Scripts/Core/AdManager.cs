@@ -11,7 +11,11 @@ namespace TowerDefence.Core
         [Header("Ad IDs")]
         [SerializeField] private string androidGameId = "6176639";
         [SerializeField] private string iosGameId = "6176638";
-        [SerializeField] private bool testMode = true; // MUST BE FALSE FOR PRODUCTION
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        [SerializeField] private bool testMode = true;
+#else
+        [SerializeField] private bool testMode = false;
+#endif
 
         [Header("Ad Units")]
         [SerializeField] private string androidRewardedId = "Rewarded_Android";

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using TowerDefence.Core;
 using TowerDefence.Data;
 using TowerDefence.Interfaces;
@@ -242,7 +243,7 @@ namespace TowerDefence.Combat
 
         protected override void Update()
         {
-            if (IsDead) return;
+            if (IsDead || IsLevelFinished()) return;
 
             GamePhase currentPhase = PhaseManager.Instance != null ? PhaseManager.Instance.GetCurrentPhase() : GamePhase.Preparation;
 
@@ -499,18 +500,21 @@ namespace TowerDefence.Combat
             return hitAnyone;
         }
 
+        public override bool CanBlockMore() => blockedEnemies.Count < 3;
+
         private bool PullNearbyEnemies(float radius)
         {
             Collider[] hits = Physics.OverlapSphere(transform.position, radius, GetEnemyLayerMask());
+            HashSet<Unit> seen = new HashSet<Unit>();
             bool pulled = false;
             foreach (var hit in hits)
             {
+                if (!CanBlockMore()) break;
                 Unit enemy = hit.GetComponentInParent<Unit>();
-                if (enemy != null && !enemy.IsDead && enemy.GetSide() != GetSide())
-                {
-                    StartBlocking(enemy);
+                if (enemy == null || enemy.IsDead || enemy.GetSide() == GetSide()) continue;
+                if (!seen.Add(enemy)) continue;
+                if (StartBlocking(enemy))
                     pulled = true;
-                }
             }
             return pulled;
         }
@@ -572,7 +576,9 @@ namespace TowerDefence.Combat
 
             // Ekonomi ödülü
             Side opponentSide = GetSide() == Side.Light ? Side.Dark : Side.Light;
-            CurrencyManager.Instance.AddCurrency(opponentSide, unitData.killReward);
+            int reward = grantKillReward ? GetScaledKillReward() : 0;
+            if (reward > 0 && CurrencyManager.Instance != null)
+                CurrencyManager.Instance.AddCurrency(opponentSide, reward);
         }
 
         public void Respawn(Vector3 position)
@@ -583,7 +589,7 @@ namespace TowerDefence.Combat
             blockedEnemies.Clear();
             isMovingToManualTarget = false;
             hasMoveDestination = false;
-            abilityCooldownTimer = 0f;
+            abilityCooldownTimer = heroConfig != null ? heroConfig.abilityCooldown : abilityCooldownTimer;
 
             currentHealth = GetMaxHealth();
             transform.position = new Vector3(position.x, 0.2f, position.z);

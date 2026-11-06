@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using TowerDefence.Core;
 using TowerDefence.Data;
 
 namespace TowerDefence.Combat
@@ -115,41 +116,40 @@ namespace TowerDefence.Combat
             {
                 currentIndicator.transform.position = currentRallyPoint;
                 currentIndicator.SetActive(false);
-
-                // SpriteRenderer rengini yeşil yap (materyali değiştirmeden)
-                var sr = currentIndicator.GetComponent<SpriteRenderer>();
-                if (sr != null)
-                {
-                    sr.color = Color.green;
-                }
             }
 
             SpawnInitialSoldiers();
         }
 
-        public override void Upgrade()
+        public override bool Upgrade()
         {
-            if (currentLevel >= 3) return;
+            if (currentLevel >= 3) return false;
 
+            float previousPower = soldierStatMultiplier;
             currentLevel++;
 
-            // Kışla tarzı geliştirmeler:
-            // 1. Asker Sayısı Artışı
-            soldierCount++; 
-
-            // 2. Canlanma Süresi Azalışı (Her seviyede %15 daha hızlı)
+            soldierCount++;
             respawnDelay = baseRespawnDelay * (1f - (currentLevel - 1) * 0.15f);
+            soldierStatMultiplier = 1f + (currentLevel - 1) * 0.5f;
 
-            // 3. Asker Gücü Artışı (Seviye başına %20 daha fazla can/hasar)
-            soldierStatMultiplier = 1f + (currentLevel - 1) * 0.2f;
+            for (int i = activeSoldiers.Count - 1; i >= 0; i--)
+            {
+                Soldier soldier = activeSoldiers[i];
+                if (soldier != null && !soldier.IsDead)
+                    soldier.MatchBarracksPower(soldierStatMultiplier);
+            }
 
-            Debug.Log($"[Barracks] Upgraded to Level {currentLevel}! Soldiers: {soldierCount}, Respawn: {respawnDelay:F1}s, Power: x{soldierStatMultiplier}");
+            SpawnSoldier();
+
+            Debug.Log($"[Barracks] Upgraded to Level {currentLevel}! Soldiers: {soldierCount}, Respawn: {respawnDelay:F1}s, Power: x{soldierStatMultiplier} (was x{previousPower})");
+            return true;
         }
 
         private void Update()
         {
             // Tower base'in Update'ini (ateş etme) engellemek için base.Update() ÇAĞIRMIYORUZ
             // Kışla kulesi ateş etmez, asker yönetir.
+            if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded()) return;
 
             // Ölen askerleri kontrol et ve respawn başlat
             for (int i = activeSoldiers.Count - 1; i >= 0; i--)
@@ -160,7 +160,7 @@ namespace TowerDefence.Combat
                 }
             }
 
-            if (activeSoldiers.Count < soldierCount)
+            if (PhaseManager.Instance != null && PhaseManager.Instance.GetCurrentPhase() == GamePhase.Combat && activeSoldiers.Count < soldierCount)
             {
                 respawnTimer += Time.deltaTime;
                 if (respawnTimer >= respawnDelay)
@@ -202,6 +202,7 @@ namespace TowerDefence.Combat
             }
 
             soldier.Initialize(soldierData, soldierStatMultiplier);
+            soldier.SetAppliedStatMultiplier(soldierStatMultiplier);
             soldier.SetBarracks(this);
             
             // Rally point etrafında küçük bir ofset ver (üst üste binmesinler)
@@ -273,13 +274,6 @@ namespace TowerDefence.Combat
             {
                 currentIndicator.transform.position = currentRallyPoint;
                 currentIndicator.transform.rotation = Quaternion.Euler(90, 0, 0);
-
-                // SpriteRenderer rengini yeşil yap (materyali değiştirmeden)
-                var sr = currentIndicator.GetComponent<SpriteRenderer>();
-                if (sr != null)
-                {
-                    sr.color = Color.green;
-                }
             }
 
             foreach (var soldier in activeSoldiers)

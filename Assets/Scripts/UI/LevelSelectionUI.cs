@@ -22,10 +22,12 @@ namespace TowerDefence.UI
         [Header("Difficulty Selection")]
         [SerializeField] private Button btnDiffNormal;
         [SerializeField] private Button btnDiffHard;
+        [SerializeField] private Button btnDiffExpert;
+        [SerializeField] private Sprite diffSelectedSprite;
+        [SerializeField] private Sprite diffUnselectedSprite;
 
         [Header("Sweep / Auto-Complete")]
         [SerializeField] private LevelResultUI sweepResultUI;
-        [SerializeField] private Button btnDiffExpert;
 
         private int currentMapIndex = 0;
         private bool initialized = false;
@@ -52,8 +54,23 @@ namespace TowerDefence.UI
 
         private void OnEnable()
         {
-            // Kullanıcı geri döndüğünde ilk haritadan başlasın
-            if (initialized) ShowMap(0);
+            if (!initialized) return;
+
+            // Her zaman ekranda en son gözüken / kalınan haritayı göster
+            ShowMap(currentMapIndex);
+        }
+
+        public int GetMapIndexForLevel(LevelData level)
+        {
+            if (level == null || maps == null) return -1;
+            for (int i = 0; i < maps.Count; i++)
+            {
+                if (maps[i] != null && maps[i].levels != null && maps[i].levels.Contains(level))
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         private void SetupArrowButtons()
@@ -127,10 +144,42 @@ namespace TowerDefence.UI
         private void RefreshDifficultyButtonsUI()
         {
             int maxDiff = MetaProgressionManager.Instance.GetHighestUnlockedGlobalDifficulty();
+            int currentDiff = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
 
-            if (btnDiffNormal != null) btnDiffNormal.interactable = (1 <= maxDiff);
-            if (btnDiffHard != null) btnDiffHard.interactable = (2 <= maxDiff);
-            if (btnDiffExpert != null) btnDiffExpert.interactable = (3 <= maxDiff);
+            if (btnDiffNormal != null)
+            {
+                btnDiffNormal.interactable = (1 <= maxDiff);
+                UpdateButtonSprite(btnDiffNormal, currentDiff == 1);
+            }
+
+            if (btnDiffHard != null)
+            {
+                btnDiffHard.interactable = (2 <= maxDiff);
+                UpdateButtonSprite(btnDiffHard, currentDiff == 2);
+            }
+
+            if (btnDiffExpert != null)
+            {
+                btnDiffExpert.interactable = (3 <= maxDiff);
+                UpdateButtonSprite(btnDiffExpert, currentDiff == 3);
+            }
+        }
+
+        private void UpdateButtonSprite(Button btn, bool isSelected)
+        {
+            if (btn == null) return;
+            Image img = btn.image;
+            if (img == null) img = btn.GetComponent<Image>();
+            if (img == null) return;
+
+            if (isSelected)
+            {
+                if (diffSelectedSprite != null) img.sprite = diffSelectedSprite;
+            }
+            else
+            {
+                if (diffUnselectedSprite != null) img.sprite = diffUnselectedSprite;
+            }
         }
 
         // Tüm haritaların slot'larına seviye butonu kurar/bağlar

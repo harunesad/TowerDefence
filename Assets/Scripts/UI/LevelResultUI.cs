@@ -63,7 +63,13 @@ namespace TowerDefence.UI
             titleText.text = isVictory ? "VICTORY!" : "DEFEAT...";
             titleText.color = isVictory ? Color.green : Color.red;
 
-            int difficulty = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
+            int globalDifficulty = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
+            if (globalDifficulty < 1) globalDifficulty = 1;
+
+            var currentLvl = CampaignManager.Instance != null ? CampaignManager.Instance.GetCurrentLevel() : null;
+            int levelDifficulty = (currentLvl != null && currentLvl.difficulty > 0) ? currentLvl.difficulty : 1;
+            int totalMultiplier = levelDifficulty * globalDifficulty;
+
             int stars = 0;
 
             if (isVictory)
@@ -73,9 +79,9 @@ namespace TowerDefence.UI
                 else if (lifePercent >= 0.5f) stars = 2;
                 else stars = 1;
 
-                // Yıldız sayısına göre ödül (Örn: 3 yıldız -> 75 karma, 1 yıldız -> 25 karma)
-                pendingKarma = 25 * stars * difficulty;
-                pendingCrystals = 5 * stars * difficulty;
+                // Yıldız sayısına ve çarpanlara göre ödül (Bölüm Zorluğu x Global Zorluk)
+                pendingKarma = 25 * stars * totalMultiplier;
+                pendingCrystals = 5 * stars * totalMultiplier;
 
                 // Bölümü tamamla ve ödülleri oyuncuya ver
                 if (CampaignManager.Instance != null)
@@ -128,12 +134,18 @@ namespace TowerDefence.UI
             titleText.text = "LEVEL CLEARED!";
             titleText.color = Color.green;
 
-            int difficulty = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
+            int globalDifficulty = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
+            if (globalDifficulty < 1) globalDifficulty = 1;
+
+            var currentLvl = CampaignManager.Instance != null ? CampaignManager.Instance.GetCurrentLevel() : null;
+            int levelDifficulty = (currentLvl != null && currentLvl.difficulty > 0) ? currentLvl.difficulty : 1;
+            int totalMultiplier = levelDifficulty * globalDifficulty;
+
             int stars = 3;
 
-            // Oynamadan geçildiği için normalin (75 karma, 15 kristal) çok daha azı verilir. (Örn: 10 karma, 2 kristal * zorluk)
-            pendingKarma = 10 * difficulty;
-            pendingCrystals = 2 * difficulty;
+            // Oynamadan geçildiği için normalin çok daha azı verilir. (Bölüm Zorluğu x Global Zorluk)
+            pendingKarma = 10 * totalMultiplier;
+            pendingCrystals = 2 * totalMultiplier;
 
             if (CampaignManager.Instance != null)
             {
@@ -227,6 +239,8 @@ namespace TowerDefence.UI
 
         private void OnMenuClicked()
         {
+            gameObject.SetActive(false);
+
             // Zamanı GameSpeedManager üzerinden normale döndür
             if (TowerDefence.Core.GameSpeedManager.Instance != null)
                 TowerDefence.Core.GameSpeedManager.Instance.SetSpeedX1();
@@ -251,13 +265,31 @@ namespace TowerDefence.UI
 
         private void OnNextLevelClicked()
         {
-            // CampaignManager üzerinden sıradaki bölümü yükleme mantığı 
-            // Şimdilik sadece menüye dönmek de yeterli olabilir
+            // Paneli kapat
+            gameObject.SetActive(false);
+
+            // Zamanı normale döndür
+            if (TowerDefence.Core.GameSpeedManager.Instance != null)
+                TowerDefence.Core.GameSpeedManager.Instance.SetSpeedX1();
+            else
+                Time.timeScale = 1f;
+
+            // Sıradaki seviyeyi yükle, başarısızsa menüye dön
+            if (TowerDefence.Core.CampaignManager.Instance != null &&
+                TowerDefence.Core.CampaignManager.Instance.LoadNextLevel())
+            {
+                return; // Sonraki seviye yüklendi
+            }
+
+            // Son seviyedeyse veya hata varsa menüye dön
             OnMenuClicked();
         }
 
         private void OnRestartClicked()
         {
+            // Paneli kapat
+            gameObject.SetActive(false);
+
             // Zamanı GameSpeedManager üzerinden normale döndür
             if (TowerDefence.Core.GameSpeedManager.Instance != null)
                 TowerDefence.Core.GameSpeedManager.Instance.SetSpeedX1();

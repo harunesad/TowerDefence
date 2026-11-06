@@ -87,6 +87,7 @@ namespace TowerDefence.Grid
             {
                 towerScript.Initialize(data);
                 towerScript.SetSlot(this);
+                towerScript.SetInvestedGold(data.cost);
             }
 
             isOccupied = true;
@@ -117,22 +118,21 @@ namespace TowerDefence.Grid
             if (visuals != null) visuals.gameObject.SetActive(active);
         }
 
-        public void SpecializeTower(TowerData newData)
+        public void SpecializeTower(TowerData newData, int investedGold = -1)
         {
             if (newData == null || newData.prefab == null) return;
 
-            // Mevcut kuleyi temizle
             if (currentTower != null) Destroy(currentTower);
-            
-            // Yeni kuleyi aynı konuma yerleştir
+
             Vector3 spawnPos = transform.position + towerOffset;
             currentTower = Instantiate(newData.prefab, spawnPos, Quaternion.identity);
-            
+
             var towerScript = currentTower.GetComponent<Combat.Tower>();
             if (towerScript != null)
             {
                 towerScript.Initialize(newData);
                 towerScript.SetSlot(this);
+                towerScript.SetInvestedGold(investedGold >= 0 ? investedGold : newData.cost);
             }
         }
 

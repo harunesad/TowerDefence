@@ -109,25 +109,17 @@ namespace TowerDefence.Core
                 // Erken Çağırma Bonusu (Early Call Bonus)
                 if (timer > 0)
                 {
-                    int bonusGold = Mathf.CeilToInt(timer * 2f); // Saniye başına 2 Altın
-                    int bonusKarma = Mathf.CeilToInt(timer * 0.5f); // 2 Saniyede 1 Karma
+                    int bonusGold = Mathf.CeilToInt(timer * 2f);
 
                     if (CurrencyManager.Instance != null && SideController.Instance != null)
                     {
                         CurrencyManager.Instance.AddCurrency(SideController.Instance.GetPlayerSide(), bonusGold);
                         Debug.Log($"<color=yellow>[Early Call Bonus]</color> +{bonusGold} Gold awarded for calling wave {timer:F1}s early!");
                     }
-                    
-                    if (MetaProgressionManager.Instance != null && bonusKarma > 0)
-                    {
-                        MetaProgressionManager.Instance.AddKarma(bonusKarma);
-                        Debug.Log($"<color=magenta>[Early Call Bonus]</color> +{bonusKarma} Karma awarded!");
-                    }
 
-                    if (bonusGold > 0 || bonusKarma > 0)
+                    if (bonusGold > 0)
                     {
-                        string msg = $"EARLY CALL BONUS! +{bonusGold} GOLD" + (bonusKarma > 0 ? $" +{bonusKarma} KARMA" : "");
-                        TowerDefence.UI.WarningBannerUI.Show(msg, 2.5f, new Color(1f, 0.85f, 0.2f, 1f), true);
+                        TowerDefence.UI.WarningBannerUI.Show($"EARLY CALL BONUS! +{bonusGold} GOLD", 2.5f, new Color(1f, 0.85f, 0.2f, 1f), true);
                     }
                 }
 
@@ -150,11 +142,12 @@ namespace TowerDefence.Core
 
             // Spawner'lar hala üretim yapıyor mu VEYA henüz dalgaya başladılar mı kontrol et
             bool anySpawnerBusy = false;
+            int enemySpawnerCount = 0;
             foreach (var spawner in Spawner.AllSpawners)
             {
                 if (spawner == null || spawner.isPlayerSpawner) continue;
+                enemySpawnerCount++;
 
-                // Spawner henüz PhaseManager'ın dalga index'ine ulaşmamışsa VEYA şu an aktif olarak doğuruyorsa
                 if (spawner.CurrentWaveIndex < currentWaveIndex || spawner.IsSpawning)
                 {
                     anySpawnerBusy = true;
@@ -162,7 +155,7 @@ namespace TowerDefence.Core
                 }
             }
 
-            if (anySpawnerBusy) return;
+            if (enemySpawnerCount == 0 || anySpawnerBusy) return;
 
             // Sadece DÜŞMAN birimlerini kontrol et (Oyuncunun kendi askerleri dalgayı bloklamasın)
             Side playerSide = SideController.Instance.GetPlayerSide();
@@ -194,8 +187,11 @@ namespace TowerDefence.Core
         {
             Debug.Log($"Wave {currentWaveIndex + 1} Completed!");
 
-            LevelData level = CampaignManager.Instance.GetCurrentLevel();
-            if (level != null && currentWaveIndex < level.waves.Count - 1)
+            LevelData level = CampaignManager.Instance != null ? CampaignManager.Instance.GetCurrentLevel() : null;
+            if (level == null || level.waves == null || level.waves.Count == 0)
+                return;
+
+            if (currentWaveIndex < level.waves.Count - 1)
             {
                 currentWaveIndex++;
                 NotifyWaveChanged();

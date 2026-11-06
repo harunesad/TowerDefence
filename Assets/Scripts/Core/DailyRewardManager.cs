@@ -108,11 +108,8 @@ namespace TowerDefence.UI
             karma = tier.karmaReward;
             crystal = tier.crystalReward;
 
-            MetaProgressionManager.Instance.AddKarma(karma);
-            MetaProgressionManager.Instance.AddCrystals(crystal);
             DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
-            MetaProgressionManager.Instance.SetLastDailyRewardTime(now.Ticks);
-            MetaProgressionManager.Instance.SetDailyRewardDayIndex(currentDay + 1);
+            MetaProgressionManager.Instance.GrantDailyReward(karma, crystal, now.Ticks, currentDay + 1);
 
             Debug.Log($"[DailyReward] Day {tier.dayNumber} Claimed: {karma} Karma, {crystal} Crystals");
             return true;

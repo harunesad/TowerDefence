@@ -47,6 +47,7 @@ namespace TowerDefence.Combat
         private void Update()
         {
             if (isPlayerSpawner) return; // Oyuncu spawner'ı dalga beklemek yerine manuel tetiklenir
+            if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded()) return;
 
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat)
             {
@@ -153,14 +154,11 @@ namespace TowerDefence.Combat
             if (unit != null)
             {
                 float diffMultiplier = 1f;
-                if (SideController.Instance != null && unitData.side != SideController.Instance.GetPlayerSide())
-                {
-                    int diff = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
-                    if (diff == 2) diffMultiplier = 1.5f;
-                    else if (diff == 3) diffMultiplier = 2.0f;
-                }
+                if (SideController.Instance != null && unitData.side != SideController.Instance.GetPlayerSide() && CampaignManager.Instance != null)
+                    diffMultiplier = CampaignManager.Instance.GetCombatDifficultyMultiplier();
 
                 unit.Initialize(unitData, diffMultiplier);
+                if (diffMultiplier > 1f) unit.SetKillRewardMultiplier(diffMultiplier);
                 if (targetWpIdx >= 0)
                 {
                     unit.SetPathWithExactTarget(path, targetWpIdx, walkBackward);
@@ -200,8 +198,13 @@ namespace TowerDefence.Combat
             if (!isManual)
             {
                 Side playerSide = SideController.Instance.GetPlayerSide();
-                if (unitData.side == playerSide && unitData.enemyCounterpart != null)
+                if (unitData.side == playerSide)
                 {
+                    if (unitData.enemyCounterpart == null)
+                    {
+                        Debug.LogWarning($"[Spawner] {unitData.name} has no enemy counterpart. Wave unit skipped.");
+                        return;
+                    }
                     finalUnitData = unitData.enemyCounterpart;
                 }
             }
@@ -215,14 +218,11 @@ namespace TowerDefence.Combat
             if (unit != null)
             {
                 float diffMultiplier = 1f;
-                if (SideController.Instance != null && finalUnitData.side != SideController.Instance.GetPlayerSide())
-                {
-                    int diff = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
-                    if (diff == 2) diffMultiplier = 1.5f;
-                    else if (diff == 3) diffMultiplier = 2.0f;
-                }
+                if (SideController.Instance != null && finalUnitData.side != SideController.Instance.GetPlayerSide() && CampaignManager.Instance != null)
+                    diffMultiplier = CampaignManager.Instance.GetCombatDifficultyMultiplier();
 
                 unit.Initialize(finalUnitData, diffMultiplier);
+                if (diffMultiplier > 1f) unit.SetKillRewardMultiplier(diffMultiplier);
                 
                 // Atanan yollardan rastgele birini seç
                 if (assignedPaths != null && assignedPaths.Count > 0)

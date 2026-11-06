@@ -305,11 +305,15 @@ namespace TowerDefence.Core
             if (hero == null)
                 hero = heroGO.AddComponent<HeroUnit>();
 
-            float statMult = MetaProgressionManager.Instance != null
-                ? MetaProgressionManager.Instance.GetHeroStatMultiplier(data.heroID)
-                : 1f;
+            float healthMult = 1f;
+            float damageMult = 1f;
+            if (MetaProgressionManager.Instance != null)
+            {
+                healthMult = MetaProgressionManager.Instance.GetHeroHealthMultiplier(data.heroID);
+                damageMult = MetaProgressionManager.Instance.GetHeroDamageMultiplier(data.heroID);
+            }
 
-            hero.Initialize(data.unitData, statMult);
+            hero.Initialize(data.unitData, healthMult, damageMult);
             hero.SetupHero(data, globalRespawnCooldown, deadHero => OnHeroDiedInScene(slot));
             hero.SetMoveDestination(spawnPos);
 
@@ -319,6 +323,9 @@ namespace TowerDefence.Core
 
         private void OnHeroDiedInScene(int slot)
         {
+            if (activeHeroes[slot] != null)
+                lastMovePoints[slot] = activeHeroes[slot].transform.position;
+
             if (selectedHero == activeHeroes[slot])
                 DeselectHero();
 

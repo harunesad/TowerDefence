@@ -12,8 +12,16 @@ namespace TowerDefence.UI
     public class TowerSelectionUI : MonoBehaviour
     {
         [SerializeField] private GameObject towerButtonPrefab;
-        [SerializeField] private Transform rowUpper; // Üst satır (3 buton için)
-        [SerializeField] private Transform rowLower; // Alt satır (2 buton için)
+        [SerializeField] private Transform buttonRoot;
+        [SerializeField, Range(0.5f, 1f)] private float ringRadiusFactor = 0.927f;
+        [SerializeField] private GameObject statsPanel;
+        [SerializeField] private TextMeshProUGUI statsText;
+        private static readonly Vector2 IconCenterOffset = new Vector2(0f, 10f);
+
+        private TowerData previewedTower;
+
+        private static readonly Color AffordableCostColor = new Color(1f, 0.84f, 0.2f, 1f);
+        private static readonly Color UnaffordableCostColor = new Color(0.9f, 0.22f, 0.18f, 1f);
 
         private TowerSlot currentActiveSlot;
 
@@ -53,9 +61,14 @@ namespace TowerDefence.UI
 
         private void InitializeUI()
         {
-            // Satırları temizle
-            if (rowUpper != null) foreach (Transform child in rowUpper) Destroy(child.gameObject);
-            if (rowLower != null) foreach (Transform child in rowLower) Destroy(child.gameObject);
+            if (buttonRoot == null) return;
+
+            for (int i = buttonRoot.childCount - 1; i >= 0; i--)
+            {
+                Transform child = buttonRoot.GetChild(i);
+                if (child.name == "RowUpper" || child.name == "RowLower" || child.name == "StatsPanel") continue;
+                Destroy(child.gameObject);
+            }
 
             Side playerSide = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
             
@@ -69,12 +82,9 @@ namespace TowerDefence.UI
                 Debug.LogWarning($"[CORE-UI] Manager empty. Local search found {allTowers.Count} towers.");
             }
 
-            Debug.Log($"[CORE-UI] Populating TOWERS ONLY for side: {playerSide}. Pool size: {allTowers.Count}");
-
-            int buttonsCreated = 0;
+            List<TowerData> buildable = new List<TowerData>();
             HashSet<string> addedNames = new HashSet<string>();
 
-            // SADECE KULELERİ GÖSTER
             foreach (TowerData tower in allTowers)
             {
                 if (tower == null) continue;
@@ -83,42 +93,89 @@ namespace TowerDefence.UI
                 if (tower.side == playerSide) chosen = tower;
                 else if (tower.enemyCounterpart != null && tower.enemyCounterpart.side == playerSide) chosen = tower.enemyCounterpart;
 
-                if (chosen != null && chosen.isBaseTower && !addedNames.Contains(chosen.towerName))
-                {
-                    // Her satırda 3 buton olacak şekilde dağıt (Toplam 6 buton desteği)
-                    Transform targetRow = (buttonsCreated < 3) ? rowUpper : rowLower;
-                    CreateSelectionButton(chosen.icon, chosen.cost, () => OnTowerButtonClicked(chosen), targetRow);
-                    
-                    addedNames.Add(chosen.towerName);
-                    buttonsCreated++;
-                    if (buttonsCreated >= 6) break; 
-                }
+                if (chosen != null && chosen.isBaseTower && addedNames.Add(chosen.towerName))
+                    buildable.Add(chosen);
             }
 
-            if (buttonsCreated == 0)
+            buildable.Sort((a, b) =>
+            {
+                int order = a.menuOrder.CompareTo(b.menuOrder);
+                return order != 0 ? order : string.CompareOrdinal(a.towerName, b.towerName);
+            });
+
+            if (buildable.Count == 0)
             {
                 Debug.LogWarning($"[CORE-UI] No TOWERS found for side {playerSide}.");
+                return;
             }
+
+            float step = 360f / buildable.Count;
+            for (int i = 0; i < buildable.Count; i++)
+            {
+                float angle = (90f - i * step) * Mathf.Deg2Rad;
+                Vector2 pos = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * CurrentRingRadius();
+                CreateSelectionButton(buildable[i], pos - IconCenterOffset);
+            }
+
+            if (previewedTower != null && !buildable.Contains(previewedTower))
+                previewedTower = null;
+
+            if (previewedTower != null)
+                ShowStats(previewedTower);
+            else
+                HideStats();
+
+            RefreshSelectionHighlight();
         }
 
-        private void CreateSelectionButton(Sprite icon, int cost, UnityEngine.Events.UnityAction onClick, Transform parent)
+        private float CurrentRingRadius()
         {
-            if (parent == null || towerButtonPrefab == null) return;
+            RectTransform canvasRect = transform as RectTransform;
+            if (canvasRect == null) return 148f;
+            float side = Mathf.Min(canvasRect.rect.width, canvasRect.rect.height);
+            if (side <= 1f) side = Mathf.Min(canvasRect.sizeDelta.x, canvasRect.sizeDelta.y);
+            return side * 0.5f * ringRadiusFactor;
+        }
 
-            GameObject buttonGO = Instantiate(towerButtonPrefab, parent);
+        private void CreateSelectionButton(TowerData tower, Vector2 anchoredPosition)
+        {
+            if (buttonRoot == null || towerButtonPrefab == null || tower == null) return;
+
+            GameObject buttonGO = Instantiate(towerButtonPrefab, buttonRoot);
+            buttonGO.name = tower.towerName;
+            RectTransform rect = buttonGO.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = anchoredPosition;
+            }
+
             Button button = buttonGO.GetComponent<Button>();
-            
+
             Image iconImg = buttonGO.transform.Find("Icon")?.GetComponent<Image>();
-            if (iconImg != null) iconImg.sprite = icon;
+            if (iconImg != null)
+            {
+                iconImg.sprite = tower.icon;
+                iconImg.color = Color.white;
+            }
+
+            Side side = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : tower.side;
+            bool canAfford = CurrencyManager.Instance != null && CurrencyManager.Instance.CanAfford(side, tower.cost);
 
             TextMeshProUGUI costText = buttonGO.transform.Find("Cost")?.GetComponent<TextMeshProUGUI>();
-            if (costText != null) costText.text = cost.ToString();
+            if (costText != null)
+            {
+                costText.text = tower.cost.ToString();
+                costText.color = canAfford ? AffordableCostColor : UnaffordableCostColor;
+            }
 
-            button.onClick.AddListener(onClick);
-
-            // Dinamik altın kontrolü
-            Side side = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
-            button.interactable = CurrencyManager.Instance.CanAfford(side, cost);
+            if (button != null)
+            {
+                button.interactable = true;
+                TowerData chosen = tower;
+                button.onClick.AddListener(() => OnTowerButtonClicked(chosen));
+            }
         }
 
         private static float lastShowTime = -1f;
@@ -128,9 +185,12 @@ namespace TowerDefence.UI
             if (Time.time - lastShowTime < 0.2f) return;
             lastShowTime = Time.time;
 
+            bool closing = gameObject.activeSelf && currentActiveSlot == slot;
+            if (!closing) previewedTower = null;
+
             InitializeUI();
 
-            if (gameObject.activeSelf && currentActiveSlot == slot)
+            if (closing)
             {
                 Hide();
                 return;
@@ -141,61 +201,151 @@ namespace TowerDefence.UI
 
             // Standart Ölçek
             transform.localScale = new Vector3(0.045f, 0.045f, 0.045f);
-            
-            // İlk açılışta LateUpdate devralacak, burada da tetikleyelim ki anında düzelsin
-            LateUpdate();
+            transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            transform.localPosition = DefaultLocalPosition;
         }
+
+        private static readonly Vector3 DefaultLocalPosition = new Vector3(0f, 15f, -8f);
+        private const float ScreenBottom = 0.28f;
+        private const float ScreenTop = 0.82f;
 
         private void LateUpdate()
         {
-            if (!gameObject.activeSelf || Camera.main == null || currentActiveSlot == null) return;
+            if (!isActiveAndEnabled) return;
 
-            // 1. Slot pozisyonunu al ve Y yüksekliğini en az 15 olacak şekilde ayarla (ağaçların altında kalmasın)
-            Vector3 worldPos = currentActiveSlot.transform.position;
-            worldPos.y = Mathf.Max(worldPos.y + 3.5f, 15f);
+            transform.localPosition = DefaultLocalPosition;
 
-            // 2. Rotation X'i 90 dereceye sabitle (TowerUpgradeUI ile uyumlu)
-            transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            Camera cam = Camera.main;
+            RectTransform rect = transform as RectTransform;
+            if (cam == null || rect == null) return;
 
-            // 3. UI'ın dünyadaki güncel Y yüksekliğinde yatay bir zemin (Plane) oluştur
-            Plane plane = new Plane(Vector3.up, new Vector3(0, worldPos.y, 0));
+            Vector3[] corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
 
-            // 4. Ekranın alt HUD sınırı (%28) için Z koordinatını bul
-            Ray bottomRay = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height * 0.28f, 0));
-            float minZ = float.MinValue;
-            if (plane.Raycast(bottomRay, out float d1)) {
-                minZ = bottomRay.GetPoint(d1).z;
+            float minX = float.MaxValue, maxX = float.MinValue;
+            float minY = float.MaxValue, maxY = float.MinValue;
+            bool anyVisible = false;
+            for (int i = 0; i < 4; i++)
+            {
+                Vector3 screen = cam.WorldToScreenPoint(corners[i]);
+                if (screen.z <= 0f) continue;
+                anyVisible = true;
+                minX = Mathf.Min(minX, screen.x);
+                maxX = Mathf.Max(maxX, screen.x);
+                minY = Mathf.Min(minY, screen.y);
+                maxY = Mathf.Max(maxY, screen.y);
             }
 
-            // 5. Ekranın üst HUD sınırı (%82) için Z koordinatını bul
-            Ray topRay = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height * 0.82f, 0));
-            float maxZ = float.MaxValue;
-            if (plane.Raycast(topRay, out float d2)) {
-                maxZ = topRay.GetPoint(d2).z;
-            }
+            if (!anyVisible) return;
 
-            // (Güvenlik kontrolü)
-            if (minZ > maxZ) { float temp = minZ; minZ = maxZ; maxZ = temp; }
+            float shiftX = ScreenShift(minX, maxX, 0f, Screen.width);
+            float shiftY = ScreenShift(minY, maxY, Screen.height * ScreenBottom, Screen.height * ScreenTop);
+            if (shiftX == 0f && shiftY == 0f) return;
 
-            // 6. Y yüksekliği (15) arttığı için ekran projeksiyonunda Z koordinatını bu düzlem sınırlarında clamp'le
-            worldPos.z = Mathf.Clamp(worldPos.z, minZ + 3f, maxZ - 4f);
-            transform.position = worldPos;
+            Plane plane = new Plane(Vector3.up, transform.position);
+            Vector3 centerScreen = cam.WorldToScreenPoint(transform.position);
+            if (centerScreen.z <= 0f) return;
+
+            Ray from = cam.ScreenPointToRay(centerScreen);
+            Ray to = cam.ScreenPointToRay(centerScreen + new Vector3(shiftX, shiftY, 0f));
+            if (plane.Raycast(from, out float d0) && plane.Raycast(to, out float d1))
+                transform.position += to.GetPoint(d1) - from.GetPoint(d0);
+        }
+
+        private static float ScreenShift(float min, float max, float safeMin, float safeMax)
+        {
+            bool below = min < safeMin;
+            bool above = max > safeMax;
+            if (below && above)
+                return (safeMin + safeMax) * 0.5f - (min + max) * 0.5f;
+            if (below) return safeMin - min;
+            if (above) return safeMax - max;
+            return 0f;
         }
 
         public void Hide()
         {
+            previewedTower = null;
             gameObject.SetActive(false);
             currentActiveSlot = null;
         }
 
         private void OnTowerButtonClicked(TowerData tower)
         {
-            if (TowerPlacementManager.Instance != null && currentActiveSlot != null)
+            if (tower == null || currentActiveSlot == null) return;
+
+            if (previewedTower == tower)
             {
-                TowerPlacementManager.Instance.StartPlacementAtSlot(currentActiveSlot);
-                TowerPlacementManager.Instance.SelectTower(tower);
-                Hide();
+                Side side = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : tower.side;
+                if (CurrencyManager.Instance == null || !CurrencyManager.Instance.CanAfford(side, tower.cost))
+                    return;
+
+                if (TowerPlacementManager.Instance != null)
+                {
+                    TowerPlacementManager.Instance.StartPlacementAtSlot(currentActiveSlot);
+                    TowerPlacementManager.Instance.SelectTower(tower);
+                    Hide();
+                }
+                return;
             }
+
+            previewedTower = tower;
+            ShowStats(tower);
+            RefreshSelectionHighlight();
+        }
+
+        private void ShowStats(TowerData tower)
+        {
+            BindStatsPanel();
+            if (statsPanel == null || statsText == null || tower == null) return;
+
+            statsText.text = BuildStatsText(tower);
+            statsPanel.SetActive(true);
+        }
+
+        private void HideStats()
+        {
+            if (statsPanel != null) statsPanel.SetActive(false);
+        }
+
+        private string BuildStatsText(TowerData data)
+        {
+            BarracksTower barracks = data.prefab != null ? data.prefab.GetComponent<BarracksTower>() : null;
+            if (barracks != null)
+                return $"{data.towerName}\nHP {data.health:0}\nAsker {barracks.soldierCount}\nYenilenme {barracks.respawnDelay:0}s";
+
+            string text = $"{data.towerName}\nDMG {data.damage:0}\nRNG {data.range:0.#}\nATK {data.fireRate:0.##}/s\nHP {data.health:0}";
+            if (data.isArtillery && data.explosionRadius > 0f)
+                text += $"\nAOE {data.explosionRadius:0.#}";
+            else if (data.isSlowTower)
+                text += $"\nYavaş {data.effectPower * 100f:0}%";
+            else if (data.isAuraTower)
+                text += $"\nAura +{data.auraDamageBonus * 100f:0}%";
+            return text;
+        }
+
+        private void RefreshSelectionHighlight()
+        {
+            if (buttonRoot == null) return;
+            foreach (Transform child in buttonRoot)
+            {
+                if (child.name == "StatsPanel" || child.name == "RowUpper" || child.name == "RowLower") continue;
+                Transform apply = child.Find("Apply");
+                if (apply == null) continue;
+                apply.gameObject.SetActive(previewedTower != null && child.name == previewedTower.towerName);
+            }
+        }
+
+        private void BindStatsPanel()
+        {
+            if (statsPanel == null)
+            {
+                Transform found = transform.Find("StatsPanel");
+                if (found != null) statsPanel = found.gameObject;
+            }
+
+            if (statsText == null && statsPanel != null)
+                statsText = statsPanel.GetComponentInChildren<TextMeshProUGUI>(true);
         }
 
         private void OnUnitButtonClicked(UnitData unit)

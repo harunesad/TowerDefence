@@ -1,33 +1,35 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TowerDefence.Core.Security
 {
     /// <summary>
-    /// RAM tarayıcılarına (GameGuardian, Cheat Engine vb.) karşı değeri rastgele anahtarla
-    /// maskeleyen ve bütünlük denetimi (canary/checksum) yapan güvenli tamsayı yapısı.
+    /// Değer şifreli durur. Anahtar struct'ın içinde değil, oturum sözlüğündedir.
     /// </summary>
     [Serializable]
     public struct ObscuredInt : IEquatable<ObscuredInt>, IComparable<ObscuredInt>
     {
         private static int cryptoKeySalt = 0x5F3759DF;
+        private static int nextVaultId = 1;
+        private static readonly Dictionary<int, int> keyVault = new Dictionary<int, int>();
 
-        [SerializeField] private int currentCryptoKey;
+        [SerializeField] private int vaultId;
         [SerializeField] private int hiddenValue;
-        [SerializeField] private int fakeHoneyPot; // Taramalara yem olması için rastgele değişen fake değer
+        [SerializeField] private int fakeHoneyPot;
         [SerializeField] private int checksum;
 
         public ObscuredInt(int value)
         {
-            currentCryptoKey = GenerateKey();
-            hiddenValue = Encrypt(value, currentCryptoKey);
-            fakeHoneyPot = unchecked(value + 1337);
-            checksum = CalculateChecksum(value, currentCryptoKey);
+            vaultId = 0;
+            hiddenValue = 0;
+            fakeHoneyPot = 0;
+            checksum = 0;
+            Set(value);
         }
 
         private static int GenerateKey()
         {
-            // Rastgele sıfırdan farklı bir XOR maskesi
             int key = UnityEngine.Random.Range(100000, 2000000000);
             return key != 0 ? key : 123456789;
         }
@@ -47,22 +49,24 @@ namespace TowerDefence.Core.Security
             return unchecked((value * 31) ^ (key * 17) ^ cryptoKeySalt);
         }
 
+        private static int RentVault(int key)
+        {
+            int id = nextVaultId++;
+            if (nextVaultId == int.MaxValue) nextVaultId = 1;
+            keyVault[id] = key;
+            return id;
+        }
+
         public int Get()
         {
-            if (currentCryptoKey == 0)
-            {
-                // İlk boş oluşturulma durumu
+            if (vaultId == 0 || !keyVault.TryGetValue(vaultId, out int key))
                 return 0;
-            }
 
-            int decrypted = Decrypt(hiddenValue, currentCryptoKey);
-            int expectedChecksum = CalculateChecksum(decrypted, currentCryptoKey);
-
-            if (checksum != expectedChecksum)
+            int decrypted = Decrypt(hiddenValue, key);
+            if (checksum != CalculateChecksum(decrypted, key))
             {
-                // Bellek tahrifatı tespit edildi!
-                Debug.LogWarning("[Security] Memory tampering detected in ObscuredInt! Checksum mismatch.");
-                return 0; // Hileyi sıfırla/etkisizleştir
+                Debug.LogWarning("[Security] Memory tampering detected in ObscuredInt.");
+                return 0;
             }
 
             return decrypted;
@@ -70,11 +74,15 @@ namespace TowerDefence.Core.Security
 
         public void Set(int value)
         {
-            // Değer her değiştiğinde anahtar rotasyonu yaparak RAM'deki adresi izlemeyi imkansız kıl
-            currentCryptoKey = GenerateKey();
-            hiddenValue = Encrypt(value, currentCryptoKey);
-            fakeHoneyPot = unchecked(value + UnityEngine.Random.Range(100, 9999));
-            checksum = CalculateChecksum(value, currentCryptoKey);
+            int key = GenerateKey();
+            if (vaultId == 0 || !keyVault.ContainsKey(vaultId))
+                vaultId = RentVault(key);
+            else
+                keyVault[vaultId] = key;
+
+            hiddenValue = Encrypt(value, key);
+            checksum = CalculateChecksum(value, key);
+            fakeHoneyPot = UnityEngine.Random.Range(1, int.MaxValue);
         }
 
         public static implicit operator ObscuredInt(int value) => new ObscuredInt(value);
@@ -92,10 +100,29 @@ namespace TowerDefence.Core.Security
             return a;
         }
 
-        public static ObscuredInt operator +(ObscuredInt a, int b) => new ObscuredInt(a.Get() + b);
-        public static ObscuredInt operator -(ObscuredInt a, int b) => new ObscuredInt(a.Get() - b);
-        public static ObscuredInt operator *(ObscuredInt a, int b) => new ObscuredInt(a.Get() * b);
-        public static ObscuredInt operator /(ObscuredInt a, int b) => new ObscuredInt(a.Get() / b);
+        public static ObscuredInt operator +(ObscuredInt a, int b)
+        {
+            a.Set(a.Get() + b);
+            return a;
+        }
+
+        public static ObscuredInt operator -(ObscuredInt a, int b)
+        {
+            a.Set(a.Get() - b);
+            return a;
+        }
+
+        public static ObscuredInt operator *(ObscuredInt a, int b)
+        {
+            a.Set(a.Get() * b);
+            return a;
+        }
+
+        public static ObscuredInt operator /(ObscuredInt a, int b)
+        {
+            a.Set(b == 0 ? a.Get() : a.Get() / b);
+            return a;
+        }
 
         public override string ToString() => Get().ToString();
 

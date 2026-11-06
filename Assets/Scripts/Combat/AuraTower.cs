@@ -142,11 +142,9 @@ namespace TowerDefence.Combat
                 if (t.GetSide() != mySide) continue;
 
                 currentInRange.Add(t);
-                if (!buffedTowers.Contains(t))
-                {
+                if (!t.IsAuraBuffed)
                     t.ApplyAuraBuff(damageBonus, fireRateBonus);
-                    buffedTowers.Add(t);
-                }
+                buffedTowers.Add(t);
             }
 
             // Aralıktan çıkanların buffını kaldır

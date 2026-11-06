@@ -15,6 +15,7 @@ namespace TowerDefence.UI
         [SerializeField] private GameObject unitsRowPrefab;
         [SerializeField] private AudioClip toggleSFX;
 
+        private GameObject blocker;
         private GameObject panel;
         private GameObject content;
         private bool isOpen;
@@ -51,6 +52,9 @@ namespace TowerDefence.UI
         {
             if (PhaseManager.Instance != null)
                 PhaseManager.Instance.OnPhaseChanged -= OnPhaseChanged;
+
+            if (blocker != null)
+                Destroy(blocker);
         }
 
         private void OnPhaseChanged(GamePhase phase)
@@ -65,8 +69,8 @@ namespace TowerDefence.UI
             rt.anchorMin = new Vector2(0f, 1f);
             rt.anchorMax = new Vector2(0f, 1f);
             rt.pivot = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(100f, -10f);
-            rt.sizeDelta = new Vector2(36f, 36f);
+            rt.anchoredPosition = new Vector2(100f, -30f);
+            rt.sizeDelta = new Vector2(60f, 60f);
 
             Image bg = gameObject.AddComponent<Image>();
             bg.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
@@ -79,11 +83,11 @@ namespace TowerDefence.UI
             GameObject label = new GameObject("Label", typeof(RectTransform));
             label.transform.SetParent(transform, false);
             RectTransform lrt = label.GetComponent<RectTransform>();
-            lrt.sizeDelta = new Vector2(36f, 36f);
+            lrt.sizeDelta = new Vector2(60f, 60f);
 
             TextMeshProUGUI tmp = label.AddComponent<TextMeshProUGUI>();
             tmp.text = "W";
-            tmp.fontSize = 20f;
+            tmp.fontSize = 30f;
             tmp.fontStyle = FontStyles.Bold;
             tmp.color = Color.white;
             tmp.alignment = TextAlignmentOptions.Center;
@@ -91,6 +95,28 @@ namespace TowerDefence.UI
 
         private void CreatePanel()
         {
+            // Arka plan engelleyici (dışarı tıklandığında paneli kapatır)
+            Canvas canvas = GetComponentInParent<Canvas>();
+            Transform canvasTransform = canvas != null ? canvas.transform : transform.parent;
+
+            blocker = new GameObject("WaveInfoBlocker", typeof(RectTransform));
+            blocker.transform.SetParent(canvasTransform, false);
+            RectTransform brt = blocker.GetComponent<RectTransform>();
+            brt.anchorMin = Vector2.zero;
+            brt.anchorMax = Vector2.one;
+            brt.offsetMin = Vector2.zero;
+            brt.offsetMax = Vector2.zero;
+
+            Image bImg = blocker.AddComponent<Image>();
+            bImg.color = new Color(0, 0, 0, 0.001f); // Görünmez ama dış tıklamaları yakalar
+            bImg.raycastTarget = true;
+
+            Button bBtn = blocker.AddComponent<Button>();
+            bBtn.transition = Selectable.Transition.None;
+            bBtn.onClick.AddListener(ClosePanel);
+
+            blocker.SetActive(false);
+
             panel = new GameObject("Panel", typeof(RectTransform));
             panel.transform.SetParent(transform, false);
 
@@ -151,12 +177,43 @@ namespace TowerDefence.UI
 
         public void TogglePanel()
         {
-            isOpen = !isOpen;
-            panel.SetActive(isOpen);
+            SetPanelOpen(!isOpen);
+        }
+
+        public void ClosePanel()
+        {
+            SetPanelOpen(false);
+        }
+
+        public void SetPanelOpen(bool open)
+        {
+            if (isOpen == open) return;
+            isOpen = open;
+
+            if (blocker != null)
+            {
+                if (isOpen)
+                {
+                    // Blocker'ı panelin arkasında ama diğer UI elemanlarının önünde olacak şekilde sırala
+                    blocker.transform.SetSiblingIndex(Mathf.Max(0, transform.GetSiblingIndex()));
+                }
+                blocker.SetActive(isOpen);
+            }
+
+            if (panel != null)
+            {
+                panel.SetActive(isOpen);
+                if (isOpen)
+                {
+                    transform.SetAsLastSibling();
+                }
+            }
+
             if (AudioManager.Instance != null && toggleSFX != null)
             {
                 AudioManager.Instance.PlaySFX(toggleSFX);
             }
+
             if (isOpen)
             {
                 Refresh();
@@ -333,21 +390,25 @@ namespace TowerDefence.UI
 
             lastPopupUnit = data;
 
+            Canvas canvas = GetComponentInParent<Canvas>();
+            Transform canvasTransform = canvas != null ? canvas.transform : transform.parent;
+
             statPopup = new GameObject("StatPopup", typeof(RectTransform));
-            statPopup.transform.SetParent(transform.root, false);
+            statPopup.transform.SetParent(canvasTransform, false);
+            statPopup.transform.SetAsLastSibling();
 
             RectTransform popupRt = statPopup.GetComponent<RectTransform>();
             popupRt.anchorMin = new Vector2(0.5f, 0.5f);
             popupRt.anchorMax = new Vector2(0.5f, 0.5f);
             popupRt.pivot = new Vector2(0.5f, 0.5f);
-            popupRt.sizeDelta = new Vector2(220f, 150f);
+            popupRt.sizeDelta = new Vector2(250f, 180f);
 
             float iconH = sourceRt != null ? sourceRt.rect.height : 0f;
             Vector3 popupPos = sourceRt != null
                 ? sourceRt.position + new Vector3(0f, iconH * 0.5f + 14f, 0f)
                 : transform.position;
 
-            RectTransform canvasRt = transform.root as RectTransform;
+            RectTransform canvasRt = canvasTransform as RectTransform;
             if (canvasRt != null)
             {
                 Vector2 canvasSize = canvasRt.rect.size;
@@ -365,30 +426,56 @@ namespace TowerDefence.UI
             popupRt.position = popupPos;
 
             Image popupBg = statPopup.AddComponent<Image>();
-            popupBg.color = new Color(0.15f, 0.15f, 0.15f, 0.98f);
+            popupBg.color = new Color(0.12f, 0.12f, 0.14f, 0.98f);
+            popupBg.raycastTarget = true;
 
-            Button closeBtn = statPopup.AddComponent<Button>();
-            closeBtn.onClick.AddListener(() => { Destroy(statPopup); statPopup = null; });
+            // Panelin içine tıklanınca kapanmasını engelle
+            Button popupBlocker = statPopup.AddComponent<Button>();
+            popupBlocker.transition = Selectable.Transition.None;
+
+            // Zorluk katsayılarını hesapla (1: Normal, 2: Hard (+50%), 3: Expert (+100%))
+            int diffLevel = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
+            string diffName = "Normal";
+            float diffMult = 1f;
+            if (diffLevel == 2)
+            {
+                diffName = "Hard";
+                diffMult = 1.5f;
+            }
+            else if (diffLevel >= 3)
+            {
+                diffName = "Expert";
+                diffMult = 2.0f;
+            }
+
+            float finalHealth = data.maxHealth * diffMult;
+            float finalDamage = data.attackDamage * diffMult;
+            float finalSpeed = data.moveSpeed;
+            float finalRange = data.attackRange;
 
             float y = -12f;
             float lineH = 24f;
 
-            AddStatText("Title", data.unitName, 16f, FontStyles.Bold, new Vector2(12f, y));
-            y -= lineH + 6f;
-
-            AddStatText("Health", $"Health: {data.maxHealth}", 14f, FontStyles.Normal, new Vector2(12f, y));
+            AddStatText("Title", data.unitName, 16f, FontStyles.Bold, new Vector2(12f, y), Color.white);
             y -= lineH;
 
-            AddStatText("Damage", $"Damage: {data.attackDamage}", 14f, FontStyles.Normal, new Vector2(12f, y));
+            Color diffColor = diffLevel == 1 ? new Color(0.4f, 0.85f, 0.4f) : (diffLevel == 2 ? new Color(1f, 0.8f, 0.2f) : new Color(1f, 0.35f, 0.35f));
+            AddStatText("Difficulty", $"Difficulty: {diffName} (x{diffMult:F1})", 13f, FontStyles.Bold, new Vector2(12f, y), diffColor);
+            y -= lineH + 4f;
+
+            AddStatText("Health", $"Health: {Mathf.RoundToInt(finalHealth)}", 14f, FontStyles.Normal, new Vector2(12f, y), Color.white);
             y -= lineH;
 
-            AddStatText("Speed", $"Speed: {data.moveSpeed}", 14f, FontStyles.Normal, new Vector2(12f, y));
+            AddStatText("Damage", $"Damage: {Mathf.RoundToInt(finalDamage)}", 14f, FontStyles.Normal, new Vector2(12f, y), Color.white);
             y -= lineH;
 
-            AddStatText("Range", $"Range: {data.attackRange}", 14f, FontStyles.Normal, new Vector2(12f, y));
+            AddStatText("Speed", $"Speed: {finalSpeed:F1}", 14f, FontStyles.Normal, new Vector2(12f, y), Color.white);
+            y -= lineH;
+
+            AddStatText("Range", $"Range: {finalRange:F1}", 14f, FontStyles.Normal, new Vector2(12f, y), Color.white);
         }
 
-        private void AddStatText(string name, string text, float fontSize, FontStyles style, Vector2 offset)
+        private void AddStatText(string name, string text, float fontSize, FontStyles style, Vector2 offset, Color color)
         {
             GameObject go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(statPopup.transform, false);
@@ -398,14 +485,15 @@ namespace TowerDefence.UI
             rt.anchorMax = new Vector2(0f, 1f);
             rt.pivot = new Vector2(0f, 1f);
             rt.anchoredPosition = offset;
-            rt.sizeDelta = new Vector2(200f, 24f);
+            rt.sizeDelta = new Vector2(230f, 24f);
 
             TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
             tmp.fontSize = fontSize;
             tmp.fontStyle = style;
-            tmp.color = Color.white;
+            tmp.color = color;
             tmp.alignment = TextAlignmentOptions.Left;
+            tmp.raycastTarget = false;
         }
     }
 }

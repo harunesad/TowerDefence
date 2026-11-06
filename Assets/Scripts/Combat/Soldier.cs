@@ -14,6 +14,20 @@ namespace TowerDefence.Combat
         private bool hasRallyPoint;
         private BarracksTower myBarracks;
 
+        private float appliedStatMultiplier = 1f;
+
+        public void SetAppliedStatMultiplier(float value)
+        {
+            appliedStatMultiplier = Mathf.Max(0.01f, value);
+        }
+
+        public void MatchBarracksPower(float newMultiplier)
+        {
+            float old = appliedStatMultiplier <= 0f ? 1f : appliedStatMultiplier;
+            ScaleCombatStats(newMultiplier / old);
+            appliedStatMultiplier = Mathf.Max(0.01f, newMultiplier);
+        }
+
         public void SetBarracks(BarracksTower barracks)
         {
             myBarracks = barracks;
@@ -27,7 +41,7 @@ namespace TowerDefence.Combat
 
         protected override void Update()
         {
-            if (IsDead) return;
+            if (IsDead || IsLevelFinished()) return;
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
             // 1. Düşman Taraması (Sadece birini engellemiyorsak)

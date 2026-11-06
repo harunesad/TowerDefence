@@ -41,6 +41,8 @@ namespace TowerDefence.Data
 
         [Header("Meta")]
         public bool isBaseTower = false; // Sadece ana kuleler (Archer, Mage vb.) true olur
+        [Tooltip("İnşa halkasında saat yönü. 0 en üstte.")]
+        public int menuOrder;
 
         [Header("Artillery")]
         public bool isArtillery = false; // Mancınık/top kuleleri: mermi yay çizerek balistik düşer

@@ -33,7 +33,6 @@ namespace TowerDefence.Data
     {
         public string levelName;
         public int sceneIndex;
-        public Sprite levelPreview;
         public LevelType levelType;
         [Range(1, 5)] public int difficulty = 1;
         public string levelID; // Kilit takibi için benzersiz ID

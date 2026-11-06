@@ -35,8 +35,8 @@ namespace TowerDefence.Combat
         {
             if (LivesManager.Instance == null) return;
 
-            // Merkezi can sistemine bildir
-            LivesManager.Instance.ReduceLives(baseSide);
+            int livesLost = Mathf.Max(1, Mathf.CeilToInt(amount / 100f));
+            LivesManager.Instance.ReduceLives(baseSide, livesLost);
 
             // Görsel ve İşitsel Geri Bildirim
             if (ScreenShake.Instance != null)

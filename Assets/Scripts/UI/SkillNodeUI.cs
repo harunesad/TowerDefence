@@ -90,9 +90,10 @@ namespace TowerDefence.UI
             bool isUnlocked = MetaProgressionManager.Instance.IsSkillUnlocked(skillData.skillID);
             int maxUnlocked = MetaProgressionManager.Instance.GetMaxSkillsUnlocked();
             int currentUnlocked = MetaProgressionManager.Instance.GetCurrentSkillsUnlocked();
+            bool spellUnlock = skillData.upgradeType == UpgradeType.UnlockSpell;
 
             purchasedOverlay.gameObject.SetActive(isUnlocked);
-            buyButton.interactable = !isUnlocked && (maxUnlocked <= 0 || currentUnlocked < maxUnlocked);
+            buyButton.interactable = !isUnlocked && (spellUnlock || maxUnlocked <= 0 || currentUnlocked < maxUnlocked);
 
             bool requirementsMet = true;
             foreach (var req in skillData.requiredSkills)

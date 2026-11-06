@@ -40,13 +40,19 @@ namespace TowerDefence.Combat
 
         public void ReduceLives(Side side)
         {
-            if (isGameOver) return;
+            ReduceLives(side, 1);
+        }
 
-            // Sadece oyuncunun tarafı için can eksiltir
+        public void ReduceLives(Side side, int amount)
+        {
+            if (isGameOver) return;
+            if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded()) return;
+            if (amount < 1) amount = 1;
+
             if (side == SideController.Instance.GetPlayerSide())
             {
-                currentLives--;
-                Debug.Log($"LivesManager: Unit leaked! Current lives: {currentLives}");
+                currentLives -= amount;
+                Debug.Log($"LivesManager: Unit leaked! Lives lost: {amount}. Current lives: {currentLives}");
 
                 OnLivesChanged?.Invoke(currentLives, maxLives);
 
@@ -69,6 +75,12 @@ namespace TowerDefence.Combat
         {
             currentLives = maxLives;
             isGameOver = false;
+            OnLivesChanged?.Invoke(currentLives, maxLives);
+        }
+
+        public void SetCurrentLivesForDebug(int lives)
+        {
+            currentLives = Mathf.Clamp(lives, 1, maxLives);
             OnLivesChanged?.Invoke(currentLives, maxLives);
         }
 

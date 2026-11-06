@@ -107,5 +107,7 @@ namespace TowerDefence.Core
         }
 
         public GameState GetCurrentState() => currentState;
+
+        public bool HasMatchEnded() => currentState == GameState.Victory || currentState == GameState.Defeat;
     }
 }

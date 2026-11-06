@@ -57,15 +57,16 @@ namespace TowerDefence.Core
 
             // Başlangıçta fallback olarak cihaz UTC saatini güvenli referansla karşılaştır
             DateTime deviceUtc = DateTime.UtcNow;
-            if (deviceUtc.Ticks < lastKnownSafeUtcTicks)
-            {
-                // Cihaz saati geriye alınmış! Güvenli son zamanı temel al.
-                networkBaseUtcTime = new DateTime(lastKnownSafeUtcTicks, DateTimeKind.Utc);
-            }
-            else
+            if (lastKnownSafeUtcTicks <= 0)
             {
                 networkBaseUtcTime = deviceUtc;
                 lastKnownSafeUtcTicks = deviceUtc.Ticks;
+            }
+            else
+            {
+                // Cihaz saati ileri alınsa da oturum, son kayıtlı andan ve gerçek geçen süreden yürür.
+                // Geri alınan saat de bu andın gerisine düşemez.
+                networkBaseUtcTime = new DateTime(lastKnownSafeUtcTicks, DateTimeKind.Utc);
             }
             syncRealtimeSinceStartup = Time.realtimeSinceStartup;
         }
@@ -116,13 +117,9 @@ namespace TowerDefence.Core
                             networkBaseUtcTime = serverTime.ToUniversalTime();
                             syncRealtimeSinceStartup = Time.realtimeSinceStartup;
                             isTimeSynced = true;
-
-                            if (networkBaseUtcTime.Ticks > lastKnownSafeUtcTicks)
-                            {
-                                lastKnownSafeUtcTicks = networkBaseUtcTime.Ticks;
-                                PlayerPrefs.SetString(PREF_SAFE_TIME_KEY, lastKnownSafeUtcTicks.ToString());
-                                PlayerPrefs.Save();
-                            }
+                            lastKnownSafeUtcTicks = networkBaseUtcTime.Ticks;
+                            PlayerPrefs.SetString(PREF_SAFE_TIME_KEY, lastKnownSafeUtcTicks.ToString());
+                            PlayerPrefs.Save();
 
                             Debug.Log($"[NetworkTimeManager] Time synced successfully with {server}: {networkBaseUtcTime} UTC");
                             OnTimeSynced?.Invoke();

@@ -9,6 +9,9 @@ namespace TowerDefence.UI
 {
     public class CompendiumUI : MonoBehaviour
     {
+        [Header("Data")]
+        [SerializeField] private List<UnitData> allUnits = new List<UnitData>();
+
         [Header("Item Prefab")]
         [SerializeField] private GameObject compendiumItemPrefab;
 
@@ -47,14 +50,21 @@ namespace TowerDefence.UI
             if (detailPanel != null) detailPanel.SetActive(false);
         }
 
+        private RectTransform GetContentParent()
+        {
+            if (unitContent != null) return unitContent;
+            return heroContent;
+        }
+
         private void EnsureGridLayout()
         {
-            if (heroContent == null) return;
+            RectTransform contentParent = GetContentParent();
+            if (contentParent == null) return;
 
-            GridLayoutGroup glg = heroContent.GetComponent<GridLayoutGroup>();
+            GridLayoutGroup glg = contentParent.GetComponent<GridLayoutGroup>();
             if (glg == null)
             {
-                glg = heroContent.gameObject.AddComponent<GridLayoutGroup>();
+                glg = contentParent.gameObject.AddComponent<GridLayoutGroup>();
                 glg.cellSize = new Vector2(240, 240);
                 glg.spacing = new Vector2(15, 15);
                 glg.padding = new RectOffset(10, 10, 10, 10);
@@ -65,36 +75,53 @@ namespace TowerDefence.UI
                 glg.constraintCount = 3;
             }
 
-            ContentSizeFitter csf = heroContent.GetComponent<ContentSizeFitter>();
-            if (csf == null) csf = heroContent.gameObject.AddComponent<ContentSizeFitter>();
+            ContentSizeFitter csf = contentParent.GetComponent<ContentSizeFitter>();
+            if (csf == null) csf = contentParent.gameObject.AddComponent<ContentSizeFitter>();
             csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         }
 
         private void PopulateCompendium()
         {
-#if UNITY_EDITOR
-            if (heroContent == null) return;
+            RectTransform contentParent = GetContentParent();
+            if (contentParent == null) return;
 
             // Clear existing
-            foreach (Transform t in heroContent) Destroy(t.gameObject);
+            foreach (Transform t in contentParent) Destroy(t.gameObject);
 
             HashSet<string> seen = new HashSet<string>();
+
+            // 1. Use serialized allUnits if available
+            if (allUnits != null && allUnits.Count > 0)
+            {
+                foreach (UnitData data in allUnits)
+                {
+                    if (data == null) continue;
+                    if (!seen.Add(data.unitName)) continue;
+                    CreateItem(data, contentParent);
+                }
+                return;
+            }
+
+#if UNITY_EDITOR
+            // Editor fallback in case serialized list is empty
             string[] unitGuids = UnityEditor.AssetDatabase.FindAssets("t:UnitData", new string[] { "Assets/Data/Units" });
             foreach (string guid in unitGuids)
             {
                 UnitData data = UnityEditor.AssetDatabase.LoadAssetAtPath<UnitData>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid));
                 if (data == null) continue;
-                if (!seen.Add("U:" + data.unitName)) continue;
-                CreateItem(data, heroContent); // Use the same vertical list
+                if (!seen.Add(data.unitName)) continue;
+                CreateItem(data, contentParent);
             }
 #else
-            Debug.LogWarning("[CompendiumUI] Compendium population is editor-only right now.");
+            Debug.LogWarning("[CompendiumUI] allUnits is empty in runtime build.");
 #endif
         }
 
-        private void CreateItem(ScriptableObject data, Transform parent)
+        private void CreateItem(UnitData data, Transform parent)
         {
+            if (data == null) return;
+
             GameObject item = null;
             if (compendiumItemPrefab != null)
             {
@@ -117,69 +144,46 @@ namespace TowerDefence.UI
                 return;
             }
 
-            item.name = "CompendiumItem";
+            item.name = "CompendiumItem_" + data.unitName;
 
             Image iconImg = item.transform.Find("Icon")?.GetComponent<Image>();
             TextMeshProUGUI nameTxt = item.transform.Find("Name")?.GetComponent<TextMeshProUGUI>();
             Button btn = item.GetComponent<Button>();
 
-            if (data is UnitData ud)
+            if (iconImg != null)
             {
-                if (iconImg != null)
-                {
-                    iconImg.sprite = ud.icon;
-                    ud.compendiumIcon.ApplyTo(iconImg);
-                }
-                if (nameTxt != null) nameTxt.text = ud.unitName;
-                if (btn != null)
-                {
-                    btn.onClick.RemoveAllListeners();
-                    btn.onClick.AddListener(() => ShowUnitDetail(ud));
-                }
+                iconImg.sprite = data.icon;
+                data.compendiumIcon.ApplyTo(iconImg);
             }
-            else if (data is HeroData hd)
+            if (nameTxt != null) nameTxt.text = data.unitName;
+            if (btn != null)
             {
-                if (iconImg != null)
-                {
-                    iconImg.sprite = hd.GetIcon();
-                    hd.rosterIcon.ApplyTo(iconImg);
-                }
-                if (nameTxt != null) nameTxt.text = hd.displayName;
-                if (btn != null)
-                {
-                    btn.onClick.RemoveAllListeners();
-                    btn.onClick.AddListener(() => ShowHeroDetail(hd));
-                }
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(() => ShowUnitDetail(data));
             }
-        }
-
-        private void ShowHeroDetail(HeroData data)
-        {
-            detailPanel.SetActive(true);
-            if (AudioManager.Instance != null && pageSFX != null) AudioManager.Instance.PlaySFX(pageSFX);
-            if (detailIcon != null) detailIcon.sprite = data.icon;
-            detailName.text = data.displayName;
-            if (data.unitData != null)
-            {
-                detailStats.text = $"HP: {data.unitData.maxHealth}\nDMG: {data.unitData.attackDamage}\nSPD: {data.unitData.moveSpeed}";
-            }
-            detailLore.text = data.abilityDescription;
         }
 
         private void ShowUnitDetail(UnitData data)
         {
-            detailPanel.SetActive(true);
+            if (data == null) return;
+            if (detailPanel != null) detailPanel.SetActive(true);
             if (AudioManager.Instance != null && pageSFX != null) AudioManager.Instance.PlaySFX(pageSFX);
             if (detailIcon != null) detailIcon.sprite = data.icon;
-            detailName.text = data.unitName;
-            detailStats.text = $"HP: {data.maxHealth}\nDMG: {data.attackDamage}\nSPD: {data.moveSpeed}\nATK Rate: {data.attackRate:F2}/s";
-            if (!string.IsNullOrEmpty(data.loreDescription))
+            if (detailName != null) detailName.text = data.unitName;
+            if (detailStats != null)
             {
-                detailLore.text = data.loreDescription;
+                detailStats.text = $"HP: {data.maxHealth}\nDMG: {data.attackDamage}\nSPD: {data.moveSpeed}\nATK Rate: {data.attackRate:F2}/s";
             }
-            else
+            if (detailLore != null)
             {
-                detailLore.text = data.side == Side.Light ? "A brave defender of the light." : "A corrupted creature of the dark.";
+                if (!string.IsNullOrEmpty(data.loreDescription))
+                {
+                    detailLore.text = data.loreDescription;
+                }
+                else
+                {
+                    detailLore.text = data.side == Side.Light ? "A brave defender of the light." : "A corrupted creature of the dark.";
+                }
             }
         }
     }

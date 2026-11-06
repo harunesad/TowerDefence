@@ -16,7 +16,7 @@ namespace TowerDefence.Combat
         private static readonly Color ActiveColor = new Color(0.03f, 0.07f, 0.3f, 0.85f);
 
         public Sprite cursorSprite;
-        [SerializeField] private Vector3 indicatorPosition = new Vector3(0f, 0.05f, 0f);
+        [SerializeField] private Vector3 indicatorPosition = new Vector3(0f, 0.2f, 0f);
         private GameObject ringObject;
         private SpriteRenderer ringRenderer;
         private HeroSelectionState currentState = HeroSelectionState.Hidden;

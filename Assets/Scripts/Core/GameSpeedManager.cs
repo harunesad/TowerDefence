@@ -35,10 +35,14 @@ namespace TowerDefence.Core
             SetSpeed(defaultSpeedIndex);
         }
 
+        private const float DefaultFixedDelta = 0.02f;
+
         private void OnDestroy()
         {
-            // Sahne kapanırken timeScale'i sıfırla
+            if (Instance != this) return;
+            Instance = null;
             Time.timeScale = 1f;
+            Time.fixedDeltaTime = DefaultFixedDelta;
         }
 
         /// <summary>0=x1, 1=x2, 2=x3</summary>
@@ -48,7 +52,7 @@ namespace TowerDefence.Core
             currentSpeedIndex = index;
             isPaused = false; // Hız butonuna basılınca duraklatmayı otomatik kapat
             Time.timeScale = speedLevels[index];
-            Time.fixedDeltaTime = 0.02f * Time.timeScale; // Fiziği de senkronize et
+            Time.fixedDeltaTime = DefaultFixedDelta * Time.timeScale;
             OnSpeedChanged?.Invoke(currentSpeedIndex);
         }
 
@@ -63,13 +67,13 @@ namespace TowerDefence.Core
             {
                 savedTimeScale = speedLevels[currentSpeedIndex];
                 Time.timeScale = 0f;
-                Time.fixedDeltaTime = 0f;
-                OnSpeedChanged?.Invoke(-1); // -1: Duraklatıldı
+                Time.fixedDeltaTime = DefaultFixedDelta * savedTimeScale;
+                OnSpeedChanged?.Invoke(-1);
             }
             else
             {
                 Time.timeScale = savedTimeScale;
-                Time.fixedDeltaTime = 0.02f * Time.timeScale;
+                Time.fixedDeltaTime = DefaultFixedDelta * savedTimeScale;
                 OnSpeedChanged?.Invoke(currentSpeedIndex);
             }
         }

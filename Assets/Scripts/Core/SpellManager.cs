@@ -49,9 +49,11 @@ namespace TowerDefence.Core
         public void CastSpell(Data.SpellData spell, Vector3 targetPos)
         {
             if (!CanCast(spell)) return;
+            if (spell.spellType == Data.SpellType.Reinforcement && spell.unitPrefabToSpawn == null)
+                return;
 
-            // Maliyeti düş
-            CurrencyManager.Instance.TrySpendCurrency(SideController.Instance.GetPlayerSide(), spell.manaCost);
+            if (!CurrencyManager.Instance.TrySpendCurrency(SideController.Instance.GetPlayerSide(), spell.manaCost))
+                return;
             
             // Eğer tek seferlikse kaydet
             if (spell.isOneTimeUse)
@@ -83,12 +85,18 @@ namespace TowerDefence.Core
             {
                 case Data.SpellType.Thunderstrike:
                     ApplyAoEDamage(targetPos, spell.radius, spell.power);
+                    if (spell.spellID == "Spell_Neutral_Earthquake")
+                        ApplyAoEStatus(targetPos, spell.radius, StatusEffectType.Stun, spell.duration > 0f ? spell.duration : 2f, 1f);
+                    else if (spell.spellID == "Spell_Dark_PlagueRain")
+                        ApplyAoEStatus(targetPos, spell.radius, StatusEffectType.Poison, spell.duration > 0f ? spell.duration : 5f, spell.power * 0.25f);
                     break;
                 case Data.SpellType.Freeze:
                     ApplyAoEFreeze(targetPos, spell.radius, spell.duration > 0 ? spell.duration : spell.power);
                     break;
                 case Data.SpellType.Reinforcement:
-                    SpawnReinforcements(targetPos, spell.unitPrefabToSpawn, spell.unitSpawnCount);
+                    int spawnCount = Mathf.RoundToInt(spell.power);
+                    if (spawnCount < 1) spawnCount = spell.unitSpawnCount;
+                    SpawnReinforcements(targetPos, spell.unitPrefabToSpawn, spawnCount);
                     break;
                 case Data.SpellType.GoldBoost:
                     int goldAmt = (int)spell.power;
@@ -104,27 +112,34 @@ namespace TowerDefence.Core
             }
         }
 
+        private void ApplyAoEStatus(Vector3 center, float radius, StatusEffectType type, float duration, float power)
+        {
+            Collider[] colliders = Physics.OverlapSphere(center, radius);
+            Side playerSide = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
+            HashSet<Unit> units = new HashSet<Unit>();
+            foreach (var col in colliders)
+            {
+                Unit unit = col.GetComponent<Unit>() ?? col.GetComponentInParent<Unit>();
+                if (unit != null && !unit.IsDead && unit.GetSide() != playerSide && units.Add(unit))
+                    unit.AddStatusEffect(type, duration, power);
+            }
+        }
+
         private void ApplyAoEShield(Vector3 center, float radius, float duration)
         {
             Collider[] colliders = Physics.OverlapSphere(center, radius);
             Side playerSide = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
+            HashSet<Tower> towers = new HashSet<Tower>();
+            HashSet<Unit> units = new HashSet<Unit>();
             foreach (var col in colliders)
             {
-                Tower tower = col.GetComponent<Tower>();
-                if (tower == null) tower = col.GetComponentInParent<Tower>();
-                
-                if (tower != null && tower.GetSide() == playerSide)
-                {
+                Tower tower = col.GetComponent<Tower>() ?? col.GetComponentInParent<Tower>();
+                if (tower != null && tower.GetSide() == playerSide && towers.Add(tower))
                     tower.SetInvulnerable(duration);
-                }
 
-                Unit unit = col.GetComponent<Unit>();
-                if (unit == null) unit = col.GetComponentInParent<Unit>();
-
-                if (unit != null && unit.GetSide() == playerSide)
-                {
+                Unit unit = col.GetComponent<Unit>() ?? col.GetComponentInParent<Unit>();
+                if (unit != null && unit.GetSide() == playerSide && units.Add(unit))
                     unit.SetInvulnerable(duration);
-                }
             }
         }
 
@@ -132,49 +147,61 @@ namespace TowerDefence.Core
         {
             Collider[] colliders = Physics.OverlapSphere(center, radius);
             Side playerSide = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
+            HashSet<Tower> towers = new HashSet<Tower>();
+            HashSet<Unit> units = new HashSet<Unit>();
             foreach (var col in colliders)
             {
-                Tower tower = col.GetComponent<Tower>();
-                if (tower == null) tower = col.GetComponentInParent<Tower>();
-
-                if (tower != null && tower.GetSide() == playerSide)
-                {
+                Tower tower = col.GetComponent<Tower>() ?? col.GetComponentInParent<Tower>();
+                if (tower != null && tower.GetSide() == playerSide && towers.Add(tower))
                     tower.ApplyTempBuff(multiplier, duration);
-                }
 
-                Unit unit = col.GetComponent<Unit>();
-                if (unit == null) unit = col.GetComponentInParent<Unit>();
-
-                if (unit != null && unit.GetSide() == playerSide)
-                {
+                Unit unit = col.GetComponent<Unit>() ?? col.GetComponentInParent<Unit>();
+                if (unit != null && unit.GetSide() == playerSide && units.Add(unit))
                     unit.ApplyTempBuff(multiplier, duration);
-                }
             }
         }
 
         private void ApplyAoEDamage(Vector3 center, float radius, float damage)
         {
             Collider[] colliders = Physics.OverlapSphere(center, radius);
+            Side playerSide = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
+            HashSet<Unit> units = new HashSet<Unit>();
+            HashSet<Tower> towers = new HashSet<Tower>();
+            HashSet<Base> bases = new HashSet<Base>();
             foreach (var col in colliders)
             {
-                IDamageable hit = col.GetComponent<IDamageable>();
-                if (hit != null && hit.GetSide() != SideController.Instance.GetPlayerSide())
+                Unit unit = col.GetComponent<Unit>() ?? col.GetComponentInParent<Unit>();
+                if (unit != null)
                 {
-                    hit.TakeDamage(damage);
+                    if (unit.GetSide() != playerSide && units.Add(unit))
+                        unit.TakeDamage(damage);
+                    continue;
                 }
+
+                Tower tower = col.GetComponent<Tower>() ?? col.GetComponentInParent<Tower>();
+                if (tower != null)
+                {
+                    if (tower.GetSide() != playerSide && towers.Add(tower))
+                        tower.TakeDamage(damage);
+                    continue;
+                }
+
+                Base targetBase = col.GetComponent<Base>() ?? col.GetComponentInParent<Base>();
+                if (targetBase != null && targetBase.GetSide() != playerSide && bases.Add(targetBase))
+                    targetBase.TakeDamage(damage);
             }
         }
 
         private void ApplyAoEFreeze(Vector3 center, float radius, float duration)
         {
             Collider[] colliders = Physics.OverlapSphere(center, radius);
+            Side playerSide = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Light;
+            HashSet<Unit> units = new HashSet<Unit>();
             foreach (var col in colliders)
             {
-                Unit unit = col.GetComponent<Unit>();
-                if (unit != null && unit.GetSide() != SideController.Instance.GetPlayerSide())
-                {
-                    unit.ApplySlow(0f, duration); // 0 hız = Donma
-                }
+                Unit unit = col.GetComponent<Unit>() ?? col.GetComponentInParent<Unit>();
+                if (unit != null && unit.GetSide() != playerSide && units.Add(unit))
+                    unit.ApplySlow(0f, duration);
             }
         }
 
@@ -214,6 +241,7 @@ namespace TowerDefence.Core
                     // StatMultiplier 1f.
                     // unit.Initialize(unit.unitData); // Eğer start'ta initialize olmuyorsa
 
+                    unit.SuppressKillReward();
                     if (nearestPath != null)
                     {
                         unit.SetPathAtNearestWaypoint(nearestPath, spawnPos);

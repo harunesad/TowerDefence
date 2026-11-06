@@ -83,6 +83,12 @@ namespace TowerDefence.Combat
 
         private void Update()
         {
+            if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded())
+            {
+                DisableBeam();
+                return;
+            }
+
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat)
             {
                 DisableBeam();
@@ -105,17 +111,21 @@ namespace TowerDefence.Combat
                 return;
             }
 
+            IDamageable damageable = target.GetComponent<IDamageable>();
+            if (damageable == null) damageable = target.GetComponentInParent<IDamageable>();
+            if (damageable == null || damageable.IsDead)
+            {
+                DisableBeam();
+                return;
+            }
+
             if (!lineRenderer.enabled) lineRenderer.enabled = true;
 
             lineRenderer.SetPosition(0, firePoint.position);
             lineRenderer.SetPosition(1, target.position);
 
-            // Hasar Uygulama
-            IDamageable damageable = target.GetComponent<IDamageable>();
-            if (damageable != null)
-            {
-                damageable.TakeDamage(damagePerSecond * Time.deltaTime);
-            }
+            float dps = baseTower != null ? baseTower.GetCurrentDamage() : damagePerSecond;
+            damageable.TakeDamage(dps * Time.deltaTime);
 
             // Efektler
             if (impactEffect != null)

@@ -17,6 +17,8 @@ namespace TowerDefence.Combat
         [SerializeField] private float moveSpeed = 3f;
         [SerializeField] private float rotationSpeed = 10f;
         private float slowMultiplier = 1f;
+        private float corruptionMultiplier = 1f;
+        private float corruptionTimer;
         [SerializeField] protected HealthBarUI healthBar;
         [SerializeField] private Transform firePoint;
 
@@ -101,21 +103,48 @@ namespace TowerDefence.Combat
                 GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
         }
 
-        public void Initialize(UnitData data, float statMultiplier = 1f)
+        private float killRewardMultiplier = 1f;
+        protected bool grantKillReward = true;
+
+        public void SuppressKillReward() => grantKillReward = false;
+
+        public void SetKillRewardMultiplier(float multiplier)
+        {
+            killRewardMultiplier = Mathf.Max(1f, multiplier);
+        }
+
+        protected int GetScaledKillReward()
+        {
+            if (unitData == null) return 0;
+            return Mathf.Max(0, Mathf.RoundToInt(unitData.killReward * killRewardMultiplier));
+        }
+
+        public void Initialize(UnitData data, float statMultiplier = 1f, float damageStatMultiplier = -1f)
         {
             this.unitData = data;
             unitSide = data.side;
 
+            float healthScale = statMultiplier;
+            float damageScale = damageStatMultiplier < 0f ? statMultiplier : damageStatMultiplier;
+
             // Meta-Gelişim Çarpanlarını Uygula
+            // SpeedBonus kule ateş hızıdır (Rapid Fire). Birim hızı yalnızca UnitSpeedBonus.
             float healthMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.HealthBonus, unitSide);
-            float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.SpeedBonus, unitSide);
+            float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.UnitSpeedBonus, unitSide);
             float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.DamageBonus, unitSide);
 
-            maxHealth = data.maxHealth * healthMult * statMultiplier;
-            moveSpeed = data.moveSpeed * speedMult;
-            attackDamage = data.attackDamage * damageMult * statMultiplier;
-            attackRange = data.attackRange;
-            attackRate = data.attackRate;
+            if (unitSide == Side.Light && MetaProgressionManager.Instance.IsSkillUnlocked("Skill_Light_HolyBlessing"))
+                damageMult *= 1.15f;
+            if (unitSide == Side.Dark && MetaProgressionManager.Instance.IsSkillUnlocked("Skill_Dark_SoulHarvest"))
+                damageMult *= 1.1f;
+
+            float allStatMult = MetaProgressionManager.Instance.IsSkillUnlocked("Skill_Neutral_AncientWisdom") ? 1.1f : 1f;
+
+            maxHealth = data.maxHealth * healthMult * allStatMult * healthScale;
+            moveSpeed = data.moveSpeed * speedMult * allStatMult;
+            attackDamage = data.attackDamage * damageMult * allStatMult * damageScale;
+            attackRange = data.attackRange * allStatMult;
+            attackRate = data.attackRate * allStatMult;
 
             currentHealth = maxHealth;
             
@@ -308,9 +337,14 @@ namespace TowerDefence.Combat
             blockedEnemies.Clear();
         }
 
+        protected bool IsLevelFinished()
+        {
+            return GameManager.Instance != null && GameManager.Instance.HasMatchEnded();
+        }
+
         protected virtual void Update()
         {
-            if (isDead) return;
+            if (isDead || IsLevelFinished()) return;
 
             UpdateBuffTimers(Time.deltaTime);
 
@@ -455,11 +489,20 @@ namespace TowerDefence.Combat
             }
         }
 
+        private float GetCorruptionMultiplier()
+        {
+            if (CorruptionManager.Instance == null) return 1f;
+            corruptionTimer -= Time.deltaTime;
+            if (corruptionTimer > 0f) return corruptionMultiplier;
+            corruptionTimer = 0.25f;
+            corruptionMultiplier = CorruptionManager.Instance.GetSpeedModifier(transform.position);
+            return corruptionMultiplier;
+        }
+
         protected void MoveTowardsTarget(Vector3 targetPos)
         {
-            Vector3 targetWithMyY = new Vector3(targetPos.x, transform.position.y, targetPos.z);
-            // MoveTowards kullanımı, hedefi geçip geri dönme (titreme) sorununu tamamen engeller
-            transform.position = Vector3.MoveTowards(transform.position, targetWithMyY, moveSpeed * slowMultiplier * Time.deltaTime);
+            // MoveTowards kullanımı hem X/Z hem de Y (spline eğim ve yüksekliği) koordinatlarını takip eder
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * slowMultiplier * GetCorruptionMultiplier() * Time.deltaTime);
         }
 
         private void UpdateMoveTarget()
@@ -564,10 +607,6 @@ namespace TowerDefence.Combat
             {
                 IDamageable damageable = col.GetComponentInParent<IDamageable>();
                 if (damageable == null || damageable.IsDead || damageable.GetSide() == unitSide)
-                    continue;
-
-                // Tower hedefleme kontrolü: Sadece ranged birimler kulelere saldırabilir
-                if (damageable is Tower && unitData.projectilePrefab == null)
                     continue;
 
                 // 1'E 1 KURALI: Unit vs Unit, kahramanlar muaftır
@@ -764,10 +803,16 @@ namespace TowerDefence.Combat
             StatusEffect existing = activeEffects.Find(e => e.type == type);
             if (existing != null)
             {
-                if (existing.GetRemainingDuration() < duration)
+                bool stronger = type == StatusEffectType.Slow ? power < existing.power : power > existing.power;
+                bool longer = existing.GetRemainingDuration() < duration;
+                if (stronger || longer)
                 {
+                    float keptPower = stronger ? power : existing.power;
+                    float keptDuration = Mathf.Max(duration, existing.GetRemainingDuration());
                     activeEffects.Remove(existing);
-                    activeEffects.Add(new StatusEffect(type, duration, power));
+                    activeEffects.Add(new StatusEffect(type, keptDuration, keptPower));
+                    if (type == StatusEffectType.Slow)
+                        RefreshSlowFactor();
                 }
             }
             else
@@ -800,6 +845,15 @@ namespace TowerDefence.Combat
             
             activeEffectVisuals[type] = visualObj;
             UpdateStatusVisualPositions();
+        }
+
+        public void ScaleCombatStats(float ratio)
+        {
+            if (ratio <= 0f || Mathf.Approximately(ratio, 1f)) return;
+            maxHealth *= ratio;
+            currentHealth = Mathf.Clamp(currentHealth * ratio, 1f, maxHealth);
+            attackDamage *= ratio;
+            if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
         }
 
         public void Heal(float amount)
@@ -853,7 +907,7 @@ namespace TowerDefence.Combat
             if (targetBase != null && !targetBase.IsDead)
             {
                 // Üsse ulaştığında çarpma hasarı ver ve kendini yok et (Kamikaze)
-                targetBase.TakeDamage(attackDamage * 5f);
+                targetBase.TakeDamage(attackDamage);
                 Debug.Log($"{gameObject.name} reached base and exploded!");
                 
                 // Kamikaze efekti
@@ -959,15 +1013,7 @@ namespace TowerDefence.Combat
                 }
                 else
                 {
-                    // Yakın dövüş: Sadece başka ÜNİTELERE hasar verebilir, KULELERE vuramaz
-                    if (!(targetC is Tower))
-                    {
-                        targetC.TakeDamage(attackDamage * tempDamageMultiplier);
-                    }
-                    else
-                    {
-                        Debug.Log($"[UNIT] {gameObject.name} is Melee and cannot reach tower {currentTargetMB.name}");
-                    }
+                    targetC.TakeDamage(attackDamage * tempDamageMultiplier);
                 }
             }
         }
@@ -1020,10 +1066,12 @@ namespace TowerDefence.Combat
             {
                 if (r == null) continue;
 
+                Material shared = r.sharedMaterial;
+                if (shared == null) continue;
                 r.GetPropertyBlock(flashBlock);
-                if (r.material.HasProperty(BaseColorPropId))
+                if (shared.HasProperty(BaseColorPropId))
                     flashBlock.SetColor(BaseColorPropId, flashColor);
-                if (r.material.HasProperty(ColorPropId))
+                if (shared.HasProperty(ColorPropId))
                     flashBlock.SetColor(ColorPropId, flashColor);
                 r.SetPropertyBlock(flashBlock);
             }
@@ -1079,11 +1127,11 @@ namespace TowerDefence.Combat
                 AudioManager.Instance.PlaySFX(unitData.deathSFX);
             }
 
-            if (unitData.killReward > 0 && CurrencyManager.Instance != null)
+            int reward = grantKillReward ? GetScaledKillReward() : 0;
+            if (reward > 0 && CurrencyManager.Instance != null)
             {
                 Side opponentSide = GetSide() == Side.Light ? Side.Dark : Side.Light;
-                CurrencyManager.Instance.AddCurrency(opponentSide, unitData.killReward);
-                MetaProgressionManager.Instance.AddKarma(1);
+                CurrencyManager.Instance.AddCurrency(opponentSide, reward);
             }
 
             Destroy(gameObject, 2f);
@@ -1110,17 +1158,18 @@ namespace TowerDefence.Combat
             }
         }
 
-        public bool CanBlockMore() => blockedEnemies.Count < 1; // Şimdilik 1 asker 1 düşman
+        public virtual bool CanBlockMore() => blockedEnemies.Count < 1;
 
-        public void StartBlocking(Unit enemy)
+        public bool StartBlocking(Unit enemy)
         {
-            if (!blockedEnemies.Contains(enemy))
-            {
-                blockedEnemies.Add(enemy);
-                enemy.Block(this);
-                // Düşmana kilitlen
-                targetCombatant = enemy;
-            }
+            if (enemy == null || enemy.IsDead) return false;
+            if (blockedEnemies.Contains(enemy)) return true;
+            if (!CanBlockMore()) return false;
+
+            blockedEnemies.Add(enemy);
+            enemy.Block(this);
+            targetCombatant = enemy;
+            return true;
         }
 
         private float invulnerableTimer;

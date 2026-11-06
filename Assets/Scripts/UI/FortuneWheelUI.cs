@@ -25,9 +25,9 @@ namespace TowerDefence.UI
         private string lastWonRewardMessage = "";
         
         // 8 slices in clockwise order (assuming slice 0 is at top)
-        private int[] karmaRewards = { 10, 0, 50, 0, 100, 0, 250, 0 };
-        private int[] crystalRewards = { 0, 5, 0, 10, 0, 25, 0, 50 };
-        private string[] rewardNames = { "10 Karma", "5 Crystals", "50 Karma", "10 Crystals", "100 Karma", "25 Crystals", "250 Karma", "50 Crystals" };
+        private int[] karmaRewards = { 5, 0, 15, 0, 25, 0, 40, 0 };
+        private int[] crystalRewards = { 0, 2, 0, 4, 0, 6, 0, 10 };
+        private string[] rewardNames = { "5 Karma", "2 Crystals", "15 Karma", "4 Crystals", "25 Karma", "6 Crystals", "40 Karma", "10 Crystals" };
         
         private void Awake()
         {
@@ -205,6 +205,16 @@ namespace TowerDefence.UI
         {
             isSpinning = true;
             lastWonRewardMessage = "";
+
+            if (MetaProgressionManager.Instance != null)
+            {
+                DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
+                if (isFreeSpin)
+                    MetaProgressionManager.Instance.SetLastFortuneWheelTime(now.Ticks);
+                else
+                    MetaProgressionManager.Instance.SetLastFortuneWheelAdTime(now.Ticks);
+            }
+
             if (spinButton != null) spinButton.interactable = false;
             if (closeButtonObj != null) closeButtonObj.SetActive(false);
             if (rewardText != null) rewardText.text = "Spinning...";
@@ -214,7 +224,7 @@ namespace TowerDefence.UI
             
             // Dilim N'in (0..7) tepe ibresinin tam altına gelmesi için durması gereken MUTLAK (absolute) açı:
             // Dilimler saat yönünde dizilmiştir:
-            // Dilim 0 (10 Karma): +22.5° | Dilim 6 (250 Karma): +292.5° | Dilim 7 (50 Crystal): +337.5°
+            // Dilim 0 (5 Karma): +22.5° | Dilim 6 (40 Karma): +292.5° | Dilim 7 (10 Crystal): +337.5°
             // Çark saat yönünde (Euler Z azalarak) döndüğünde, tepeye tam olarak bu açı gelir.
             float targetEndAngle = (randomSlice * 45f) + 22.5f;
             float jitter = UnityEngine.Random.Range(-6f, 6f); // Dilimin içinde hafif rastgele duruş
@@ -265,16 +275,6 @@ namespace TowerDefence.UI
                     MetaProgressionManager.Instance.AddCrystals(crystalRewards[randomSlice]);
             }
 
-            // Çevirme süresini kaydet.
-            if (MetaProgressionManager.Instance != null)
-            {
-                DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
-                if (isFreeSpin)
-                    MetaProgressionManager.Instance.SetLastFortuneWheelTime(now.Ticks);
-                else
-                    MetaProgressionManager.Instance.SetLastFortuneWheelAdTime(now.Ticks);
-            }
-            
             // Ödül metni
             if (karmaRewards[randomSlice] > 0)
                 lastWonRewardMessage = $"<color=#FFD700>YOU WON {karmaRewards[randomSlice]} KARMA!</color>";

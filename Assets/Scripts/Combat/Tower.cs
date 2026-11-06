@@ -22,6 +22,7 @@ namespace TowerDefence.Combat
 
         public TowerData GetTowerData() => towerData;
         public int CurrentLevel => currentLevel;
+        public void SetLevel(int level) => currentLevel = Mathf.Max(1, level);
         public List<TowerData> GetSpecializations() => towerData != null ? towerData.specializations : null;
 
         public float GetCurrentDamage() => damage;
@@ -134,6 +135,19 @@ namespace TowerDefence.Combat
 
         public bool IsAuraBuffed => isAuraBuffed;
 
+        /// <summary>
+        /// Statlar taban veriden yeniden yazılmadan önce aura izini siler.
+        /// Çarpan bölünmez; bir sonraki aura taraması taze değerlere yeniden uygulanır.
+        /// </summary>
+        private void ForgetAuraBuff()
+        {
+            if (!isAuraBuffed && auraDamageMultiplier == 1f && auraFireRateMultiplier == 1f) return;
+            isAuraBuffed = false;
+            auraDamageMultiplier = 1f;
+            auraFireRateMultiplier = 1f;
+            SetGlow(false);
+        }
+
         /// <summary>Aura Tower tarafından çağrılır. Buff çarpanlarını uygular.</summary>
         public void ApplyAuraBuff(float damageBonus, float fireRateBonus)
         {
@@ -158,37 +172,60 @@ namespace TowerDefence.Combat
             SetGlow(false);
         }
 
+        private System.Collections.Generic.List<Material> glowMaterials;
+
         private void SetGlow(bool enabled)
         {
-            // Sahnedeki tüm Renderer'lara emission uygula
+            EnsureGlowMaterials();
+            Color color = enabled ? auraGlowColor * 0.6f : Color.black;
+            for (int i = 0; i < glowMaterials.Count; i++)
+            {
+                Material mat = glowMaterials[i];
+                if (mat == null) continue;
+                mat.SetColor("_EmissionColor", color);
+            }
+        }
+
+        private void EnsureGlowMaterials()
+        {
+            if (glowMaterials != null) return;
+            glowMaterials = new System.Collections.Generic.List<Material>();
             foreach (Renderer rend in GetComponentsInChildren<Renderer>())
             {
-                foreach (Material mat in rend.materials)
+                if (rend == null) continue;
+                Material[] mats = rend.materials;
+                foreach (Material mat in mats)
                 {
-                    if (enabled)
-                    {
-                        mat.EnableKeyword("_EMISSION");
-                        mat.SetColor("_EmissionColor", auraGlowColor * 0.6f);
-                    }
-                    else
-                    {
-                        mat.DisableKeyword("_EMISSION");
-                        mat.SetColor("_EmissionColor", Color.black);
-                    }
+                    if (mat == null) continue;
+                    mat.EnableKeyword("_EMISSION");
+                    glowMaterials.Add(mat);
                 }
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (glowMaterials == null) return;
+            for (int i = 0; i < glowMaterials.Count; i++)
+            {
+                if (glowMaterials[i] != null)
+                    Destroy(glowMaterials[i]);
             }
         }
 
 
         public void Initialize(TowerData data)
         {
+            ForgetAuraBuff();
             towerData = data;
             towerSide = data.side;
 
             // Meta-Gelişim Çarpanlarını Uygula
+            // DamageBonus birim hasarıdır. Kule hasarı yalnızca TowerDamageBonus ile gelir.
             float rangeMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.RangeBonus, towerSide);
-            float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.DamageBonus, towerSide);
-            float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.SpeedBonus, towerSide); // Ateş hızı için kullanılabilir
+            float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.TowerDamageBonus, towerSide);
+            float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.SpeedBonus, towerSide);
+            float healthMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.TowerHealthBonus, towerSide);
 
             range = data.range * rangeMult;
             fireRate = data.fireRate * speedMult;
@@ -198,7 +235,7 @@ namespace TowerDefence.Combat
             isBeamTower = data.isBeamTower;
 
             // Health Initialization
-            maxHealth = data.health > 0 ? data.health : 100f; // Fallback
+            maxHealth = (data.health > 0 ? data.health : 100f) * healthMult;
             currentHealth = maxHealth;
             healthBar = GetComponentInChildren<TowerDefence.UI.HealthBarUI>();
             if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
@@ -249,6 +286,8 @@ namespace TowerDefence.Combat
 
         private void Update()
         {
+            if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded()) return;
+
             if (isDisabled)
             {
                 disableTimer -= Time.deltaTime;
@@ -280,6 +319,9 @@ namespace TowerDefence.Combat
                 UpdateTarget();
                 targetScanTimer = TARGET_SCAN_INTERVAL;
             }
+
+            if (target != null && !IsLivingEnemy(target))
+                target = null;
 
             if (target != null)
             {
@@ -397,8 +439,7 @@ namespace TowerDefence.Combat
                     float maxProgress = -1f;
                     foreach (Collider col in colliders)
                     {
-                        Unit unit = col.GetComponent<Unit>();
-                        if (unit == null) continue;
+                        if (!TryGetLivingUnit(col, out Unit unit)) continue;
                         
                         // First: En yüksek waypoint index'i + waypoint'e en yakın olan
                         float progress = CalculateUnitProgress(unit);
@@ -414,8 +455,7 @@ namespace TowerDefence.Combat
                     float minProgress = Mathf.Infinity;
                     foreach (Collider col in colliders)
                     {
-                        Unit unit = col.GetComponent<Unit>();
-                        if (unit == null) continue;
+                        if (!TryGetLivingUnit(col, out Unit unit)) continue;
 
                         float progress = CalculateUnitProgress(unit);
                         if (progress < minProgress)
@@ -430,8 +470,7 @@ namespace TowerDefence.Combat
                     float maxHealth = -1f;
                     foreach (Collider col in colliders)
                     {
-                        Unit unit = col.GetComponent<Unit>();
-                        if (unit == null) continue;
+                        if (!TryGetLivingUnit(col, out Unit unit)) continue;
 
                         float h = unit.GetHealth(); 
                         if (h > maxHealth)
@@ -446,8 +485,7 @@ namespace TowerDefence.Combat
                     float minHealth = Mathf.Infinity;
                     foreach (Collider col in colliders)
                     {
-                        Unit unit = col.GetComponent<Unit>();
-                        if (unit == null) continue;
+                        if (!TryGetLivingUnit(col, out Unit unit)) continue;
 
                         float h = unit.GetHealth();
                         if (h < minHealth)
@@ -469,7 +507,7 @@ namespace TowerDefence.Combat
                     {
                         previousTargetTimer += Time.deltaTime;
                         // Eski target hala range içinde ve alive ise, değişmeyi gecikttik
-                        Unit oldUnit = previousTarget.GetComponent<Unit>();
+                        Unit oldUnit = previousTarget.GetComponent<Unit>() ?? previousTarget.GetComponentInParent<Unit>();
                         if (oldUnit != null && !oldUnit.IsDead && Vector3.Distance(transform.position, oldUnit.transform.position) <= range)
                         {
                             // Eski target hala geçerli, yeni targeti bekle
@@ -492,6 +530,19 @@ namespace TowerDefence.Combat
             {
                 target = null;
             }
+        }
+
+        private static bool TryGetLivingUnit(Collider col, out Unit unit)
+        {
+            unit = col.GetComponent<Unit>() ?? col.GetComponentInParent<Unit>();
+            return unit != null && !unit.IsDead;
+        }
+
+        private static bool IsLivingEnemy(Transform aim)
+        {
+            if (aim == null) return false;
+            Unit unit = aim.GetComponent<Unit>() ?? aim.GetComponentInParent<Unit>();
+            return unit != null && !unit.IsDead;
         }
 
         private float CalculateUnitProgress(Unit unit)
@@ -524,6 +575,15 @@ namespace TowerDefence.Combat
         }
 
         protected int currentLevel = 1;
+        private int investedGold;
+
+        public int GetInvestedGold() => investedGold;
+        public void SetInvestedGold(int amount) => investedGold = Mathf.Max(0, amount);
+        public void AddInvestedGold(int amount)
+        {
+            if (amount > 0) investedGold += amount;
+        }
+        public int GetSellRefund() => investedGold / 2;
 
         public void Disable(float duration)
         {
@@ -532,26 +592,32 @@ namespace TowerDefence.Combat
             Debug.Log($"{gameObject.name} disabled for {duration} seconds.");
         }
 
-        public virtual void Upgrade()
+        public virtual bool Upgrade()
         {
             if (currentLevel >= 3 && GetSpecializations() != null && GetSpecializations().Count > 0)
             {
                 Debug.LogWarning("Tower: Level 3 reached. Use Specialize() instead of normal Upgrade.");
-                return;
+                return false;
             }
 
             currentLevel++;
-            
-            // Seviye başına %20 artış (Basit yazılım mantığı)
-            float levelBonus = 1f + (currentLevel - 1) * 0.2f;
-            
-            float rangeMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.RangeBonus, towerSide);
-            float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.DamageBonus, towerSide);
+            ForgetAuraBuff();
 
-            range = towerData.range * rangeMult * levelBonus;
-            damage = towerData.damage * damageMult * levelBonus;
+            // Hasar, seviye sayısı kadar katlanır: 2. seviye ikinci kuleyle aynı hasar.
+            // Menzil seviye başına %20 artar.
+            float damageLevel = currentLevel;
+            float rangeLevel = 1f + (currentLevel - 1) * 0.2f;
+
+            float rangeMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.RangeBonus, towerSide);
+            float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.TowerDamageBonus, towerSide);
+            float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.SpeedBonus, towerSide);
+
+            range = towerData.range * rangeMult * rangeLevel;
+            damage = towerData.damage * damageMult * damageLevel;
+            fireRate = towerData.fireRate * speedMult;
 
             Debug.Log($"{towerData.towerName} upgraded to Level {currentLevel}! New Damage: {damage}");
+            return true;
         }
 
         public void Specialize(TowerData newData)
