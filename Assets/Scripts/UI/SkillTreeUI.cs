@@ -35,6 +35,7 @@ namespace TowerDefence.UI
 
         [Header("Audio")]
         [SerializeField] private AudioClip unlockSFX;
+        [SerializeField] private AudioClip errorSFX;
 
         private SkillNodeData selectedSkill;
 
@@ -46,6 +47,12 @@ namespace TowerDefence.UI
             {
 #if UNITY_EDITOR
                 unlockSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/HeroUnlock.mp3");
+#endif
+            }
+            if (errorSFX == null)
+            {
+#if UNITY_EDITOR
+                errorSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/WrongAction.wav");
 #endif
             }
 
@@ -101,12 +108,8 @@ namespace TowerDefence.UI
             if (detailDesc != null) detailDesc.text = data.description;
             if (detailCost != null)
             {
-                if (data.crystalCost > 0 && data.karmaCost == 0)
-                    detailCost.text = $"Cost: {data.crystalCost} Crystals";
-                else if (data.crystalCost > 0)
-                    detailCost.text = $"Cost: {data.karmaCost} Karma + {data.crystalCost} Crystals";
-                else
-                    detailCost.text = $"Cost: {data.karmaCost} Karma";
+                detailCost.text = "";
+                CurrencyRowView.Apply(detailCost.transform, data.karmaCost, data.crystalCost, false);
             }
 
             UpdateBuyButtonState();
@@ -155,6 +158,8 @@ namespace TowerDefence.UI
                         msg = "Prerequisites not met!";
                 }
                 
+                if (AudioManager.Instance != null && errorSFX != null)
+                    AudioManager.Instance.PlaySFX(errorSFX);
                 ShowFeedback(msg, Color.red);
             }
         }
@@ -235,11 +240,13 @@ namespace TowerDefence.UI
         {
             if (totalKarmaText != null)
             {
-                totalKarmaText.text = $"Karma: {MetaProgressionManager.Instance.GetTotalKarma()}";
+                totalKarmaText.text = MetaProgressionManager.Instance.GetTotalKarma().ToString();
+                CurrencyRowView.Apply(totalKarmaText.transform, MetaProgressionManager.Instance.GetTotalKarma(), 0, false);
             }
             if (totalCrystalsText != null)
             {
-                totalCrystalsText.text = $"Crystals: {MetaProgressionManager.Instance.GetTotalCrystals()}";
+                totalCrystalsText.text = MetaProgressionManager.Instance.GetTotalCrystals().ToString();
+                CurrencyRowView.Apply(totalCrystalsText.transform, 0, MetaProgressionManager.Instance.GetTotalCrystals(), false);
             }
 
             // Skill limit info gösterimi

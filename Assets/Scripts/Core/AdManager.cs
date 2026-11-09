@@ -128,7 +128,7 @@ namespace TowerDefence.Core
             else
             {
                 Debug.LogWarning("Interstitial Ad not ready!");
-                onInterstitialAdCompleted?.Invoke();
+                FinishInterstitial();
                 LoadAd(interstitialId); // Yeniden yüklemeyi dene
             }
         }
@@ -137,8 +137,8 @@ namespace TowerDefence.Core
         {
             Debug.Log($"Error showing Ad Unit {adUnitId}: {error.ToString()} - {message}");
             
-            if (adUnitId == rewardedId) onRewardedAdFailed?.Invoke();
-            else if (adUnitId == interstitialId) onInterstitialAdCompleted?.Invoke();
+            if (adUnitId == rewardedId) FinishRewarded(false);
+            else if (adUnitId == interstitialId) FinishInterstitial();
             
             LoadAd(adUnitId);
         }
@@ -153,21 +153,36 @@ namespace TowerDefence.Core
                 if (showCompletionState == UnityAdsShowCompletionState.COMPLETED)
                 {
                     Debug.Log("Rewarded Ad completed successfully.");
-                    onRewardedAdSuccess?.Invoke();
+                    FinishRewarded(true);
                 }
                 else
                 {
                     Debug.Log("Rewarded Ad skipped or failed.");
-                    onRewardedAdFailed?.Invoke();
+                    FinishRewarded(false);
                 }
             }
             else if (adUnitId == interstitialId)
             {
                 Debug.Log("Interstitial Ad closed.");
-                onInterstitialAdCompleted?.Invoke();
+                FinishInterstitial();
             }
 
             LoadAd(adUnitId); // Gösterimden sonra yenisini yükle
+        }
+
+        private void FinishRewarded(bool success)
+        {
+            Action callback = success ? onRewardedAdSuccess : onRewardedAdFailed;
+            onRewardedAdSuccess = null;
+            onRewardedAdFailed = null;
+            callback?.Invoke();
+        }
+
+        private void FinishInterstitial()
+        {
+            Action callback = onInterstitialAdCompleted;
+            onInterstitialAdCompleted = null;
+            callback?.Invoke();
         }
     }
 }

@@ -182,7 +182,7 @@ namespace TowerDefence.UI
 
         public void ShowForSlot(TowerSlot slot)
         {
-            if (Time.time - lastShowTime < 0.2f) return;
+            if (slot == currentActiveSlot && Time.time - lastShowTime < 0.2f) return;
             lastShowTime = Time.time;
 
             bool closing = gameObject.activeSelf && currentActiveSlot == slot;
@@ -312,13 +312,13 @@ namespace TowerDefence.UI
         {
             BarracksTower barracks = data.prefab != null ? data.prefab.GetComponent<BarracksTower>() : null;
             if (barracks != null)
-                return $"{data.towerName}\nHP {data.health:0}\nAsker {barracks.soldierCount}\nYenilenme {barracks.respawnDelay:0}s";
+                return $"{data.towerName}\nHP {data.health:0}\nSoldiers {barracks.soldierCount}\nRespawn {barracks.respawnDelay:0}s";
 
             string text = $"{data.towerName}\nDMG {data.damage:0}\nRNG {data.range:0.#}\nATK {data.fireRate:0.##}/s\nHP {data.health:0}";
             if (data.isArtillery && data.explosionRadius > 0f)
                 text += $"\nAOE {data.explosionRadius:0.#}";
             else if (data.isSlowTower)
-                text += $"\nYavaş {data.effectPower * 100f:0}%";
+                text += $"\nSlow {data.effectPower * 100f:0}%";
             else if (data.isAuraTower)
                 text += $"\nAura +{data.auraDamageBonus * 100f:0}%";
             return text;

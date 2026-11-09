@@ -19,7 +19,7 @@ namespace TowerDefence.Combat
         private GameObject currentIndicator;
         private float baseRespawnDelay;
         private float soldierStatMultiplier = 1f;
-        private float respawnTimer;
+        private readonly System.Collections.Generic.List<float> respawnReadyAt = new System.Collections.Generic.List<float>();
         
         [Header("Range Visual")]
         private LineRenderer rangeLine;
@@ -79,13 +79,12 @@ namespace TowerDefence.Combat
 
             float angle = 0f;
             Vector3 center = transform.position;
-            center.y = 0.2f; // Zeminden hafif yukarıda
 
             for (int i = 0; i < 51; i++)
             {
-                float x = Mathf.Sin(Mathf.Deg2Rad * angle) * rallyRadius;
-                float z = Mathf.Cos(Mathf.Deg2Rad * angle) * rallyRadius;
-                rangeLine.SetPosition(i, center + new Vector3(x, 0, z));
+                float x = center.x + Mathf.Sin(Mathf.Deg2Rad * angle) * rallyRadius;
+                float z = center.z + Mathf.Cos(Mathf.Deg2Rad * angle) * rallyRadius;
+                rangeLine.SetPosition(i, new Vector3(x, GroundHeight(x, z), z));
                 angle += (360f / 50);
             }
         }
@@ -99,6 +98,7 @@ namespace TowerDefence.Combat
             }
             if (currentIndicator != null)
             {
+                if (visible) PlaceRallyIndicator();
                 currentIndicator.SetActive(visible);
             }
         }
@@ -112,11 +112,9 @@ namespace TowerDefence.Combat
             {
                 currentIndicator = Instantiate(rallyIndicatorPrefab, currentRallyPoint, Quaternion.Euler(90, 0, 0), transform);
             }
+            PlaceRallyIndicator();
             if (currentIndicator != null)
-            {
-                currentIndicator.transform.position = currentRallyPoint;
                 currentIndicator.SetActive(false);
-            }
 
             SpawnInitialSoldiers();
         }
@@ -150,6 +148,11 @@ namespace TowerDefence.Combat
             // Tower base'in Update'ini (ateş etme) engellemek için base.Update() ÇAĞIRMIYORUZ
             // Kışla kulesi ateş etmez, asker yönetir.
             if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded()) return;
+            if (IsDisabled)
+            {
+                TickDisable();
+                return;
+            }
 
             // Ölen askerleri kontrol et ve respawn başlat
             for (int i = activeSoldiers.Count - 1; i >= 0; i--)
@@ -157,16 +160,22 @@ namespace TowerDefence.Combat
                 if (activeSoldiers[i] == null || activeSoldiers[i].IsDead)
                 {
                     activeSoldiers.RemoveAt(i);
+                    respawnReadyAt.Add(Time.time + respawnDelay);
                 }
             }
 
-            if (PhaseManager.Instance != null && PhaseManager.Instance.GetCurrentPhase() == GamePhase.Combat && activeSoldiers.Count < soldierCount)
+            if (PhaseManager.Instance != null && PhaseManager.Instance.GetCurrentPhase() == GamePhase.Combat)
             {
-                respawnTimer += Time.deltaTime;
-                if (respawnTimer >= respawnDelay)
+                for (int i = respawnReadyAt.Count - 1; i >= 0; i--)
                 {
-                    SpawnSoldier();
-                    respawnTimer = 0;
+                    if (activeSoldiers.Count >= soldierCount)
+                    {
+                        respawnReadyAt.RemoveAt(i);
+                        continue;
+                    }
+                    if (Time.time < respawnReadyAt[i]) continue;
+                    if (!SpawnSoldier()) continue;
+                    respawnReadyAt.RemoveAt(i);
                 }
             }
         }
@@ -179,12 +188,12 @@ namespace TowerDefence.Combat
             }
         }
 
-        private void SpawnSoldier()
+        private bool SpawnSoldier()
         {
             if (soldierData == null || soldierData.prefab == null)
             {
                 Debug.LogWarning($"[Barracks] SoldierData or Prefab missing on {gameObject.name}");
-                return;
+                return false;
             }
 
             // Kulenin etrafında rastgele bir noktada doğur
@@ -211,6 +220,7 @@ namespace TowerDefence.Combat
             soldier.SetRallyPoint(currentRallyPoint + offset);
 
             activeSoldiers.Add(soldier);
+            return true;
         }
 
         private Vector3 FindNearestPathInRange()
@@ -260,6 +270,14 @@ namespace TowerDefence.Combat
             return nearest;
         }
 
+        private void PlaceRallyIndicator()
+        {
+            if (currentIndicator == null) return;
+            float y = GroundHeight(currentRallyPoint.x, currentRallyPoint.z);
+            currentIndicator.transform.position = new Vector3(currentRallyPoint.x, y, currentRallyPoint.z);
+            currentIndicator.transform.rotation = Quaternion.Euler(90, 0, 0);
+        }
+
         public void SetRallyPoint(Vector3 newPoint)
         {
             currentRallyPoint = newPoint;
@@ -269,12 +287,8 @@ namespace TowerDefence.Combat
             {
                 currentIndicator = Instantiate(rallyIndicatorPrefab, currentRallyPoint, Quaternion.Euler(90, 0, 0), transform);
             }
-            
-            if (currentIndicator != null)
-            {
-                currentIndicator.transform.position = currentRallyPoint;
-                currentIndicator.transform.rotation = Quaternion.Euler(90, 0, 0);
-            }
+
+            PlaceRallyIndicator();
 
             foreach (var soldier in activeSoldiers)
             {

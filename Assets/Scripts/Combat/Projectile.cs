@@ -141,6 +141,8 @@ namespace TowerDefence.Combat
 
             if (explosionRadius > 0f)
             {
+                if (VFXManager.Instance != null)
+                    VFXManager.Instance.SpawnAreaSmoke(transform.position, explosionRadius);
                 Explode();
             }
             else

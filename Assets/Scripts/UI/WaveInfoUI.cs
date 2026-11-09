@@ -27,6 +27,11 @@ namespace TowerDefence.UI
             unitsRowPrefab = prefab;
         }
 
+        public void SetToggleSFX(AudioClip clip)
+        {
+            if (clip != null) toggleSFX = clip;
+        }
+
         private void Start()
         {
             if (unitsRowPrefab == null)

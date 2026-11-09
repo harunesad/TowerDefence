@@ -80,17 +80,19 @@ namespace TowerDefence.UI
                 else stars = 1;
 
                 // Yıldız sayısına ve çarpanlara göre ödül (Bölüm Zorluğu x Global Zorluk)
-                pendingKarma = 25 * stars * totalMultiplier;
-                pendingCrystals = 5 * stars * totalMultiplier;
+                int offeredKarma = 25 * stars * totalMultiplier;
+                int offeredCrystals = 5 * stars * totalMultiplier;
+                pendingKarma = offeredKarma;
+                pendingCrystals = offeredCrystals;
 
-                // Bölümü tamamla ve ödülleri oyuncuya ver
+                // Kasaya yazılan tutar, ekranda ve reklam katında kullanılan tutardır.
                 if (CampaignManager.Instance != null)
                 {
-                    CampaignManager.Instance.CompleteCurrentLevel(stars, pendingKarma, pendingCrystals);
+                    (pendingKarma, pendingCrystals) = CampaignManager.Instance.CompleteCurrentLevel(stars, offeredKarma, offeredCrystals);
                 }
 
                 if (doubleRewardButton != null)
-                    doubleRewardButton.gameObject.SetActive(true);
+                    doubleRewardButton.gameObject.SetActive(pendingKarma > 0 || pendingCrystals > 0);
             }
             else
             {
@@ -144,12 +146,14 @@ namespace TowerDefence.UI
             int stars = 3;
 
             // Oynamadan geçildiği için normalin çok daha azı verilir. (Bölüm Zorluğu x Global Zorluk)
-            pendingKarma = 10 * totalMultiplier;
-            pendingCrystals = 2 * totalMultiplier;
+            int offeredKarma = 10 * totalMultiplier;
+            int offeredCrystals = 2 * totalMultiplier;
+            pendingKarma = offeredKarma;
+            pendingCrystals = offeredCrystals;
 
             if (CampaignManager.Instance != null)
             {
-                CampaignManager.Instance.CompleteCurrentLevel(stars, pendingKarma, pendingCrystals);
+                (pendingKarma, pendingCrystals) = CampaignManager.Instance.CompleteCurrentLevel(stars, offeredKarma, offeredCrystals);
             }
 
             // Ödül metnini güncelle
@@ -189,41 +193,45 @@ namespace TowerDefence.UI
         {
             if (rewardText == null) return;
 
+            Transform row = rewardText.transform.Find("CurrencyRow");
             if (pendingKarma <= 0 && pendingCrystals <= 0)
             {
+                if (row != null) row.gameObject.SetActive(false);
                 rewardText.text = "No Rewards";
                 return;
             }
 
-            string text = $"+{pendingKarma} Karma";
-            if (pendingCrystals > 0)
-                text += $"  +{pendingCrystals} Crystals";
-            if (hasDoubled)
-                text += "  (2X!)";
-            rewardText.text = text;
+            if (row != null) row.gameObject.SetActive(true);
+            rewardText.text = hasDoubled ? "2X" : "";
+            CurrencyRowView.Apply(rewardText.transform, pendingKarma, pendingCrystals, true);
         }
 
         private void OnDoubleRewardClicked()
         {
             if (hasDoubled) return;
+            if (pendingKarma <= 0 && pendingCrystals <= 0) return;
 
             if (AdManager.Instance != null)
             {
+                int karmaToAdd = pendingKarma;
+                int crystalsToAdd = pendingCrystals;
                 AdManager.Instance.ShowRewardedAd(
                     onSuccess: () =>
                     {
+                        if (hasDoubled) return;
                         hasDoubled = true;
 
-                        // Ekstra ödül ver (ilk ödüller zaten verilmişti, şimdi bir katını daha ekle)
+                        // Ekstra ödül, kasaya yazılan tutarın bir katıdır.
                         if (MetaProgressionManager.Instance != null)
                         {
-                            MetaProgressionManager.Instance.AddKarma(pendingKarma);
-                            if (pendingCrystals > 0)
-                                MetaProgressionManager.Instance.AddCrystals(pendingCrystals);
+                            if (karmaToAdd > 0)
+                                MetaProgressionManager.Instance.AddKarma(karmaToAdd);
+                            if (crystalsToAdd > 0)
+                                MetaProgressionManager.Instance.AddCrystals(crystalsToAdd);
                         }
 
-                        pendingKarma *= 2;
-                        pendingCrystals *= 2;
+                        pendingKarma = karmaToAdd * 2;
+                        pendingCrystals = crystalsToAdd * 2;
                         UpdateRewardText();
 
                         if (doubleRewardButton != null)

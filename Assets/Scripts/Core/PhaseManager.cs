@@ -77,10 +77,23 @@ namespace TowerDefence.Core
             }
         }
 
+        private float ResolvePreparationDuration()
+        {
+            LevelData level = CampaignManager.Instance != null ? CampaignManager.Instance.GetCurrentLevel() : null;
+            if (level != null && level.waves != null && currentWaveIndex >= 0 && currentWaveIndex < level.waves.Count)
+            {
+                WaveData wave = level.waves[currentWaveIndex];
+                if (wave != null && wave.timeBeforeNextWave > 0.01f)
+                    return wave.timeBeforeNextWave;
+            }
+
+            return prepPhaseDuration;
+        }
+
         public void StartPreparationPhase()
         {
             currentPhase = GamePhase.Preparation;
-            timer = prepPhaseDuration;
+            timer = ResolvePreparationDuration();
             isTimerActive = true;
             OnPhaseChanged?.Invoke(currentPhase);
             NotifyWaveChanged();

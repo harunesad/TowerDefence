@@ -34,6 +34,12 @@ namespace TowerDefence.UI
             if (Instance == this) Instance = null;
         }
 
+        public void SetClips(AudioClip warning, AudioClip reward)
+        {
+            if (warning != null) warningSFX = warning;
+            if (reward != null) rewardSFX = reward;
+        }
+
         private void LoadResources()
         {
 #if UNITY_EDITOR

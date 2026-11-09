@@ -13,8 +13,8 @@ namespace TowerDefence.Combat
 
         private Tower tower;
         private Side towerSide;
-        private float vfxCooldown;
-        private const float VfxInterval = 0.6f;
+        private readonly Dictionary<Unit, float> nextSlowVfx = new Dictionary<Unit, float>();
+        private const float VfxInterval = 1.2f;
 
         private void Start()
         {
@@ -33,6 +33,7 @@ namespace TowerDefence.Combat
         private void Update()
         {
             if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded()) return;
+            if (tower != null && tower.IsDisabled) return;
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
             ApplySlowEffect();
@@ -40,9 +41,6 @@ namespace TowerDefence.Combat
 
         private void ApplySlowEffect()
         {
-            if (vfxCooldown > 0f) vfxCooldown -= Time.deltaTime;
-            bool spawnVfx = vfxCooldown <= 0f;
-
             float radius = tower != null ? tower.GetCurrentRange() : slowRadius;
             Collider[] colliders = Physics.OverlapSphere(transform.position, radius, targetLayer);
             HashSet<Unit> slowed = new HashSet<Unit>();
@@ -55,11 +53,25 @@ namespace TowerDefence.Combat
 
                 unit.ApplySlow(slowPercentage, 0.35f);
 
-                if (spawnVfx && VFXManager.Instance != null)
-                    VFXManager.Instance.SpawnVFX(VFXType.SlowEffect, unit.transform.position, Quaternion.identity);
+                if (VFXManager.Instance == null) continue;
+                if (nextSlowVfx.TryGetValue(unit, out float nextAt) && Time.time < nextAt) continue;
+                nextSlowVfx[unit] = Time.time + VfxInterval;
+                VFXManager.Instance.SpawnVFX(VFXType.SlowEffect, unit.transform.position + Vector3.up, Quaternion.identity);
             }
 
-            if (spawnVfx && slowed.Count > 0) vfxCooldown = VfxInterval;
+            if (nextSlowVfx.Count == 0) return;
+            List<Unit> stale = null;
+            foreach (KeyValuePair<Unit, float> pair in nextSlowVfx)
+            {
+                if (pair.Key == null || pair.Key.IsDead || !slowed.Contains(pair.Key))
+                {
+                    stale ??= new List<Unit>();
+                    stale.Add(pair.Key);
+                }
+            }
+            if (stale == null) return;
+            for (int i = 0; i < stale.Count; i++)
+                nextSlowVfx.Remove(stale[i]);
         }
 
         private void OnDrawGizmosSelected()

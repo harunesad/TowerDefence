@@ -110,7 +110,7 @@ namespace TowerDefence.Combat
 
             // VFX
             if (VFXManager.Instance != null)
-                VFXManager.Instance.SpawnVFX(VFXType.UnitDeath, transform.position, Quaternion.identity);
+                VFXManager.Instance.SpawnVFX(VFXType.SpellEarthquake, transform.position, Quaternion.identity);
 
             // Slotu serbest bırak
             if (mySlot != null) mySlot.ClearSlot();
@@ -143,28 +143,57 @@ namespace TowerDefence.Combat
         {
             if (!isAuraBuffed && auraDamageMultiplier == 1f && auraFireRateMultiplier == 1f) return;
             isAuraBuffed = false;
+            auraOwnerId = 0;
             auraDamageMultiplier = 1f;
             auraFireRateMultiplier = 1f;
             SetGlow(false);
         }
 
-        /// <summary>Aura Tower tarafından çağrılır. Buff çarpanlarını uygular.</summary>
-        public void ApplyAuraBuff(float damageBonus, float fireRateBonus)
+        private int auraOwnerId;
+
+        /// <summary>Aura Tower tarafından çağrılır. Daha güçlü aura zayıf olanın yerine geçer.</summary>
+        public void ApplyAuraBuff(float damageBonus, float fireRateBonus, int ownerId)
         {
-            if (isAuraBuffed) return; // Zaten bufflu, tekrar uygulama
+            float newDamage = 1f + Mathf.Max(0f, damageBonus);
+            float newRate = 1f + Mathf.Max(0f, fireRateBonus);
+
+            if (isAuraBuffed && auraOwnerId == ownerId)
+            {
+                damage /= auraDamageMultiplier;
+                fireRate /= auraFireRateMultiplier;
+                auraDamageMultiplier = newDamage;
+                auraFireRateMultiplier = newRate;
+                damage *= auraDamageMultiplier;
+                fireRate *= auraFireRateMultiplier;
+                return;
+            }
+
+            bool stronger = !isAuraBuffed
+                || newDamage > auraDamageMultiplier + 0.0001f
+                || (Mathf.Approximately(newDamage, auraDamageMultiplier) && newRate > auraFireRateMultiplier + 0.0001f);
+            if (!stronger) return;
+
+            if (isAuraBuffed)
+            {
+                damage /= auraDamageMultiplier;
+                fireRate /= auraFireRateMultiplier;
+            }
+
             isAuraBuffed = true;
-            auraDamageMultiplier = 1f + damageBonus;
-            auraFireRateMultiplier = 1f + fireRateBonus;
+            auraOwnerId = ownerId;
+            auraDamageMultiplier = newDamage;
+            auraFireRateMultiplier = newRate;
             damage *= auraDamageMultiplier;
             fireRate *= auraFireRateMultiplier;
             SetGlow(true);
         }
 
-        /// <summary>Aura alanından çıkıldığında buff kaldırılır.</summary>
-        public void RemoveAuraBuff()
+        /// <summary>Buff'ı yalnız onu veren aura kaldırabilir.</summary>
+        public void RemoveAuraBuff(int ownerId)
         {
-            if (!isAuraBuffed) return;
+            if (!isAuraBuffed || auraOwnerId != ownerId) return;
             isAuraBuffed = false;
+            auraOwnerId = 0;
             damage /= auraDamageMultiplier;
             fireRate /= auraFireRateMultiplier;
             auraDamageMultiplier = 1f;
@@ -224,6 +253,11 @@ namespace TowerDefence.Combat
             // DamageBonus birim hasarıdır. Kule hasarı yalnızca TowerDamageBonus ile gelir.
             float rangeMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.RangeBonus, towerSide);
             float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.TowerDamageBonus, towerSide);
+            if (IsLightArcher(data))
+            {
+                damageMult *= MetaProgressionManager.Instance.GetSkillGroupMultiplier("Skill_Archer_", UpgradeType.TowerDamageBonus, towerSide);
+                rangeMult *= MetaProgressionManager.Instance.GetSkillGroupMultiplier("Skill_Archer_", UpgradeType.RangeBonus, towerSide);
+            }
             float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.SpeedBonus, towerSide);
             float healthMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.TowerHealthBonus, towerSide);
 
@@ -290,8 +324,7 @@ namespace TowerDefence.Combat
 
             if (isDisabled)
             {
-                disableTimer -= Time.deltaTime;
-                if (disableTimer <= 0) isDisabled = false;
+                TickDisable();
                 return;
             }
 
@@ -312,6 +345,16 @@ namespace TowerDefence.Combat
 
             // Aura kuleleri ateş etmez, sadece buff verir
             if (fireRate <= 0f) return;
+
+            if (target != null)
+            {
+                Unit held = target.GetComponent<Unit>() ?? target.GetComponentInParent<Unit>();
+                bool heldValid = held != null && !held.IsDead && Vector3.Distance(transform.position, held.transform.position) <= range;
+                if (heldValid)
+                    previousTargetTimer += Time.deltaTime;
+                else
+                    previousTargetTimer = targetSwitchCooldown;
+            }
 
             targetScanTimer -= Time.deltaTime;
             if (targetScanTimer <= 0)
@@ -499,31 +542,11 @@ namespace TowerDefence.Combat
 
             if (selectedEnemy != null)
             {
-                // Hedef değişiminde gecikme kontrolü
-                if (target != selectedEnemy.transform)
-                {
-                    // Eski target varsa timerı başlat/extend et
-                    if (previousTarget != null)
-                    {
-                        previousTargetTimer += Time.deltaTime;
-                        // Eski target hala range içinde ve alive ise, değişmeyi gecikttik
-                        Unit oldUnit = previousTarget.GetComponent<Unit>() ?? previousTarget.GetComponentInParent<Unit>();
-                        if (oldUnit != null && !oldUnit.IsDead && Vector3.Distance(transform.position, oldUnit.transform.position) <= range)
-                        {
-                            // Eski target hala geçerli, yeni targeti bekle
-                            if (previousTargetTimer < targetSwitchCooldown)
-                            {
-                                // Hedef değişti ama cooldown dolmadı, değişmeyi gecikttik
-                                return;
-                            }
-                        }
-                    }
-                    
-                    // Önceki targeti kaydet ve timerı sıfırla
-                    previousTarget = target;
-                    previousTargetTimer = 0f;
-                }
-                
+                if (target != null && target != selectedEnemy.transform && previousTargetTimer < targetSwitchCooldown)
+                    return;
+
+                previousTarget = target;
+                previousTargetTimer = 0f;
                 target = selectedEnemy.transform;
             }
             else
@@ -547,12 +570,7 @@ namespace TowerDefence.Combat
 
         private float CalculateUnitProgress(Unit unit)
         {
-            // Basit bir ilerleme puanı: Waypoint Index * 1000 + (Waypoint'e olan mesafe tersi)
-            // Bu sayede daha ileri waypoint'teki her zaman "daha önde" sayılır.
-            int wpIndex = unit.GetCurrentWaypointIndex();
-            float distToNext = Vector3.Distance(unit.transform.position, unit.GetCurrentMoveTarget());
-            
-            return (wpIndex * 1000f) - distToNext;
+            return unit != null ? unit.GetPathProgress01() : 0f;
         }
 
         private void Shoot()
@@ -583,13 +601,33 @@ namespace TowerDefence.Combat
         {
             if (amount > 0) investedGold += amount;
         }
-        public int GetSellRefund() => investedGold / 2;
+        public int GetSellRefund() => (investedGold + 1) / 2;
+
+        public bool IsDisabled => isDisabled;
+
+        protected void TickDisable()
+        {
+            if (!isDisabled) return;
+            disableTimer -= Time.deltaTime;
+            if (disableTimer <= 0f) isDisabled = false;
+        }
 
         public void Disable(float duration)
         {
             isDisabled = true;
             disableTimer = duration;
+            target = null;
+            BeamTower beam = GetComponent<BeamTower>();
+            if (beam != null) beam.StopBeam();
             Debug.Log($"{gameObject.name} disabled for {duration} seconds.");
+        }
+
+        private static bool IsLightArcher(TowerData data)
+        {
+            if (data == null || data.side != Side.Light) return false;
+            return data.towerName == "Archer Tower"
+                || data.towerName == "Sniper Tower"
+                || data.towerName == "Ranger Outpost";
         }
 
         public virtual bool Upgrade()
@@ -610,11 +648,22 @@ namespace TowerDefence.Combat
 
             float rangeMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.RangeBonus, towerSide);
             float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.TowerDamageBonus, towerSide);
+            if (IsLightArcher(towerData))
+            {
+                damageMult *= MetaProgressionManager.Instance.GetSkillGroupMultiplier("Skill_Archer_", UpgradeType.TowerDamageBonus, towerSide);
+                rangeMult *= MetaProgressionManager.Instance.GetSkillGroupMultiplier("Skill_Archer_", UpgradeType.RangeBonus, towerSide);
+            }
             float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.SpeedBonus, towerSide);
 
             range = towerData.range * rangeMult * rangeLevel;
             damage = towerData.damage * damageMult * damageLevel;
             fireRate = towerData.fireRate * speedMult;
+
+            AuraTower aura = GetComponent<AuraTower>();
+            if (aura != null) aura.OnTowerUpgraded(currentLevel);
+
+            if (attackRangeLine != null && attackRangeLine.gameObject.activeSelf)
+                DrawRangeCircle();
 
             Debug.Log($"{towerData.towerName} upgraded to Level {currentLevel}! New Damage: {damage}");
             return true;
@@ -643,19 +692,27 @@ namespace TowerDefence.Combat
 
         protected LineRenderer attackRangeLine;
 
+        protected static float GroundHeight(float x, float z)
+        {
+            int mask = LayerMask.GetMask("Default", "Path");
+            Vector3 origin = new Vector3(x, 80f, z);
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 160f, mask, QueryTriggerInteraction.Ignore))
+                return hit.point.y + 0.3f;
+            return 0.2f;
+        }
+
         protected virtual void DrawRangeCircle()
         {
             if (attackRangeLine == null) return;
 
             float angle = 0f;
             Vector3 center = transform.position;
-            center.y = 0.2f;
 
             for (int i = 0; i < 51; i++)
             {
-                float x = Mathf.Sin(Mathf.Deg2Rad * angle) * range;
-                float z = Mathf.Cos(Mathf.Deg2Rad * angle) * range;
-                attackRangeLine.SetPosition(i, center + new Vector3(x, 0, z));
+                float x = center.x + Mathf.Sin(Mathf.Deg2Rad * angle) * range;
+                float z = center.z + Mathf.Cos(Mathf.Deg2Rad * angle) * range;
+                attackRangeLine.SetPosition(i, new Vector3(x, GroundHeight(x, z), z));
                 angle += (360f / 50);
             }
         }

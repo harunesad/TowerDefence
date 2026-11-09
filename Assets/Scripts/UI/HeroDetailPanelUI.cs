@@ -111,7 +111,7 @@ namespace TowerDefence.UI
             if (rangeText != null) rangeText.text = $"Range: {rng:0.0}";
             if (attackRateText != null) attackRateText.text = $"Attack Rate: {rate:0.00}/s";
 
-            if (abilityNameText != null) abilityNameText.text = currentHero.abilityName;
+            if (abilityNameText != null) abilityNameText.text = $"Ability: {currentHero.abilityName}";
             if (abilityDescText != null)
                 abilityDescText.text = $"{currentHero.abilityDescription}\nCooldown: {currentHero.abilityCooldown:0}s";
 
@@ -120,19 +120,20 @@ namespace TowerDefence.UI
 
             if (!unlocked)
             {
-                if (costText != null) costText.text = $"Cost: {currentHero.unlockKarmaCost} Karma & {currentHero.unlockCrystalCost} Crystals";
+                ShowHeroCost(currentHero.unlockKarmaCost, currentHero.unlockCrystalCost);
                 if (actionLabel != null) actionLabel.text = "UNLOCK HERO";
                 if (actionButton != null) actionButton.interactable = karma >= currentHero.unlockKarmaCost && crystals >= currentHero.unlockCrystalCost;
             }
             else if (level >= currentHero.maxUpgradeLevel)
             {
+                ShowHeroCost(0, 0);
                 if (costText != null) costText.text = "Maximum level reached";
                 if (actionLabel != null) actionLabel.text = "MAX LEVEL";
                 if (actionButton != null) actionButton.interactable = false;
             }
             else
             {
-                if (costText != null) costText.text = $"Upgrade: {currentHero.upgradeKarmaCost} Karma & {currentHero.upgradeCrystalCost} Crystals";
+                ShowHeroCost(currentHero.upgradeKarmaCost, currentHero.upgradeCrystalCost);
                 if (actionLabel != null) actionLabel.text = "UPGRADE";
                 if (actionButton != null) actionButton.interactable = karma >= currentHero.upgradeKarmaCost && crystals >= currentHero.upgradeCrystalCost;
             }
@@ -156,6 +157,15 @@ namespace TowerDefence.UI
             }
 
             RefreshCurrent();
+        }
+
+        private void ShowHeroCost(int karma, int crystals)
+        {
+            if (costText == null) return;
+            Transform row = costText.transform.Find("CurrencyRow");
+            if (row != null) row.gameObject.SetActive(karma > 0 || crystals > 0);
+            costText.text = "";
+            CurrencyRowView.Apply(costText.transform, karma, crystals, false);
         }
     }
 }

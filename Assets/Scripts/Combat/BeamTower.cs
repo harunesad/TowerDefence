@@ -11,6 +11,7 @@ namespace TowerDefence.Combat
         [SerializeField] private LineRenderer lineRenderer;
         [SerializeField] private Transform firePoint;
         [SerializeField] private GameObject impactEffect;
+        [SerializeField] private GameObject impactSparkPrefab;
 
         [Header("Beam Settings")]
         [SerializeField] private float damagePerSecond = 50f;
@@ -68,22 +69,22 @@ namespace TowerDefence.Combat
                 lineRenderer.enabled = false;
             }
 
-            if (impactEffect == null)
+            if (impactEffect == null && impactSparkPrefab != null)
             {
-#if UNITY_EDITOR
-                GameObject sparkPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Hovl Studio/Magic effects pack/Prefabs/Sparks/Sparks blue.prefab");
-                if (sparkPrefab != null)
-                {
-                    impactEffect = Instantiate(sparkPrefab, transform);
-                    impactEffect.SetActive(false);
-                }
-#endif
+                impactEffect = Instantiate(impactSparkPrefab, transform);
+                impactEffect.SetActive(false);
             }
         }
 
         private void Update()
         {
             if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded())
+            {
+                DisableBeam();
+                return;
+            }
+
+            if (baseTower != null && baseTower.IsDisabled)
             {
                 DisableBeam();
                 return;
@@ -119,7 +120,10 @@ namespace TowerDefence.Combat
                 return;
             }
 
-            if (!lineRenderer.enabled) lineRenderer.enabled = true;
+            bool beamWasOff = !lineRenderer.enabled;
+            if (beamWasOff) lineRenderer.enabled = true;
+            if (beamWasOff)
+                PlayBeamStart();
 
             lineRenderer.SetPosition(0, firePoint.position);
             lineRenderer.SetPosition(1, target.position);
@@ -134,6 +138,20 @@ namespace TowerDefence.Combat
                 impactEffect.transform.position = target.position;
                 impactEffect.transform.LookAt(firePoint.position);
             }
+        }
+
+        private void PlayBeamStart()
+        {
+            if (baseTower == null || AudioManager.Instance == null) return;
+            TowerDefence.Data.TowerData data = baseTower.GetTowerData();
+            if (data != null && data.shootSFX != null)
+                AudioManager.Instance.PlaySFX(data.shootSFX);
+        }
+
+        public void StopBeam()
+        {
+            target = null;
+            DisableBeam();
         }
 
         private void DisableBeam()

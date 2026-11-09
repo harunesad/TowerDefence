@@ -50,6 +50,29 @@ namespace TowerDefence.Combat
             mySide = myTower.GetSide();
 
             SetupAuraSprite();
+            int level = myTower != null ? myTower.GetLevel() : 1;
+            OnTowerUpgraded(level);
+        }
+
+        public void OnTowerUpgraded(int level)
+        {
+            if (myData == null) return;
+            float levelScale = 1f + Mathf.Max(0, level - 1) * 0.2f;
+            radius = myData.auraRadius * levelScale;
+            damageBonus = myData.auraDamageBonus * levelScale;
+            fireRateBonus = myData.auraFireRateBonus * levelScale;
+            if (auraSprite != null)
+            {
+                float scale = radius * 2f;
+                auraSprite.transform.localScale = new Vector3(scale, scale, 1f);
+            }
+
+            List<Tower> current = new List<Tower>(buffedTowers);
+            foreach (Tower t in current)
+            {
+                if (t != null)
+                    t.ApplyAuraBuff(damageBonus, fireRateBonus, GetInstanceID());
+            }
         }
 
         private void SetupAuraSprite()
@@ -118,6 +141,11 @@ namespace TowerDefence.Combat
         private void Update()
         {
             if (PhaseManager.Instance == null) return;
+            if (myTower != null && myTower.IsDisabled)
+            {
+                ReleaseBuffs();
+                return;
+            }
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
             scanTimer -= Time.deltaTime;
@@ -142,8 +170,7 @@ namespace TowerDefence.Combat
                 if (t.GetSide() != mySide) continue;
 
                 currentInRange.Add(t);
-                if (!t.IsAuraBuffed)
-                    t.ApplyAuraBuff(damageBonus, fireRateBonus);
+                t.ApplyAuraBuff(damageBonus, fireRateBonus, GetInstanceID());
                 buffedTowers.Add(t);
             }
 
@@ -153,7 +180,7 @@ namespace TowerDefence.Combat
             {
                 if (!currentInRange.Contains(t))
                 {
-                    if (t != null) t.RemoveAuraBuff();
+                    if (t != null) t.RemoveAuraBuff(GetInstanceID());
                     toRemove.Add(t);
                 }
             }
@@ -162,10 +189,14 @@ namespace TowerDefence.Combat
 
         private void OnDestroy()
         {
-            // Kule yıkılınca tüm buffly temizle
+            ReleaseBuffs();
+        }
+
+        private void ReleaseBuffs()
+        {
             foreach (Tower t in buffedTowers)
             {
-                if (t != null) t.RemoveAuraBuff();
+                if (t != null) t.RemoveAuraBuff(GetInstanceID());
             }
             buffedTowers.Clear();
         }

@@ -96,13 +96,20 @@ namespace TowerDefence.Core
 
         public void PlayBGM(AudioClip clip, bool loop = true)
         {
-            if (bgmSource == null) return;
-            if (bgmSource.clip == clip) return;
+            if (bgmSource == null || clip == null) return;
+            if (bgmSource.clip == clip && bgmSource.isPlaying) return;
 
             bgmSource.clip = clip;
             bgmSource.loop = loop;
             bgmSource.volume = MusicVolume * MasterVolume;
             bgmSource.Play();
+        }
+
+        public void StopBGM()
+        {
+            if (bgmSource == null) return;
+            bgmSource.Stop();
+            bgmSource.clip = null;
         }
 
         public void PlaySFX(AudioClip clip, float volumeMultiplier = 1f, float pitch = 1f)

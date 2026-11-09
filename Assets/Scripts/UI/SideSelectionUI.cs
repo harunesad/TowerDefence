@@ -72,14 +72,16 @@ namespace TowerDefence.UI
             int levelDifficulty = (level != null && level.difficulty > 0) ? level.difficulty : 1;
             int totalMultiplier = levelDifficulty * globalDifficulty;
 
-            if (firstStarsRewardText != null)
-                firstStarsRewardText.text = $"+{25 * 3 * totalMultiplier} Karma  +{5 * 3 * totalMultiplier} Crystals";
+            ShowStarReward(firstStarsRewardText, 25 * 3 * totalMultiplier, 5 * 3 * totalMultiplier);
+            ShowStarReward(secondStarsRewardText, 25 * 2 * totalMultiplier, 5 * 2 * totalMultiplier);
+            ShowStarReward(thirdStarsRewardText, 25 * 1 * totalMultiplier, 5 * 1 * totalMultiplier);
+        }
 
-            if (secondStarsRewardText != null)
-                secondStarsRewardText.text = $"+{25 * 2 * totalMultiplier} Karma  +{5 * 2 * totalMultiplier} Crystals";
-
-            if (thirdStarsRewardText != null)
-                thirdStarsRewardText.text = $"+{25 * 1 * totalMultiplier} Karma  +{5 * 1 * totalMultiplier} Crystals";
+        private static void ShowStarReward(TextMeshProUGUI label, int karma, int crystals)
+        {
+            if (label == null) return;
+            label.text = "";
+            CurrencyRowView.Apply(label.transform, karma, crystals, true);
         }
 
         private void Start()

@@ -117,8 +117,8 @@ namespace TowerDefence.Combat
                 {
                     if (Time.time >= nextSpawnTime)
                     {
-                        SpawnUnit(group.unitData);
-                        unitsSpawnedInGroup++;
+                        if (SpawnUnit(group.unitData))
+                            unitsSpawnedInGroup++;
                         nextSpawnTime = Time.time + group.spawnInterval;
                     }
                 }
@@ -173,11 +173,6 @@ namespace TowerDefence.Combat
             {
                 VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, position, Quaternion.identity);
             }
-
-            if (AudioManager.Instance != null && unitData.spawnSFX != null)
-            {
-                AudioManager.Instance.PlaySFX(unitData.spawnSFX);
-            }
         }
 
         public void ManualSpawn(UnitData unitData)
@@ -186,9 +181,9 @@ namespace TowerDefence.Combat
             SpawnUnit(unitData, true);
         }
 
-        private void SpawnUnit(UnitData unitData, bool isManual = false)
+        private bool SpawnUnit(UnitData unitData, bool isManual = false)
         {
-            if (unitData == null) return;
+            if (unitData == null) return false;
 
             UnitData finalUnitData = unitData;
 
@@ -203,13 +198,13 @@ namespace TowerDefence.Combat
                     if (unitData.enemyCounterpart == null)
                     {
                         Debug.LogWarning($"[Spawner] {unitData.name} has no enemy counterpart. Wave unit skipped.");
-                        return;
+                        return false;
                     }
                     finalUnitData = unitData.enemyCounterpart;
                 }
             }
 
-            if (finalUnitData.prefab == null) return;
+            if (finalUnitData.prefab == null) return false;
 
             Vector3 spawnPos = spawnPoint.position;
 
@@ -237,10 +232,7 @@ namespace TowerDefence.Combat
                 VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, spawnPoint.position, spawnPoint.rotation);
             }
 
-            if (AudioManager.Instance != null && finalUnitData.spawnSFX != null)
-            {
-                AudioManager.Instance.PlaySFX(finalUnitData.spawnSFX);
-            }
+            return true;
         }
     }
 }

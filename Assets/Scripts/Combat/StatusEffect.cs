@@ -60,5 +60,17 @@ namespace TowerDefence.Combat
         }
 
         public float GetRemainingDuration() => remainingDuration;
+
+        /// <summary>
+        /// Süreyi ve gücü günceller. Tick saatini sıfırlamaz; yenilenen zehir ve yanma işlemeye devam eder.
+        /// </summary>
+        public void Extend(float newDuration, float newPower)
+        {
+            power = newPower;
+            if (newDuration > duration)
+                duration = newDuration;
+            if (newDuration > remainingDuration)
+                remainingDuration = newDuration;
+        }
     }
 }

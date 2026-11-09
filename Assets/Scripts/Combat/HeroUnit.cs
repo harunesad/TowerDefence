@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using CartoonFX;
 using TowerDefence.Core;
 using TowerDefence.Data;
 using TowerDefence.Interfaces;
@@ -181,20 +182,33 @@ namespace TowerDefence.Combat
             if (activeVFXCoroutine != null)
                 StopCoroutine(activeVFXCoroutine);
 
+            bool oneShot = abilityType == HeroAbilityType.SwiftStrike
+                || abilityType == HeroAbilityType.SolarSmite
+                || abilityType == HeroAbilityType.SoulExecute;
             activeVFXInstance = vfxTransform.gameObject;
-            activeVFXCoroutine = StartCoroutine(ActivateAndDeactivate(vfxTransform.gameObject, delay));
+            activeVFXCoroutine = StartCoroutine(PlayAbilityVfx(vfxTransform.gameObject, delay, oneShot));
         }
 
-        private System.Collections.IEnumerator ActivateAndDeactivate(GameObject vfx, float delay)
+        public static System.Collections.IEnumerator PlayAbilityVfx(GameObject vfx, float delay, bool oneShot)
         {
-            vfx.SetActive(true);
-
-            var allPs = vfx.GetComponentsInChildren<ParticleSystem>(true);
+            ParticleSystem[] allPs = vfx.GetComponentsInChildren<ParticleSystem>(true);
             for (int i = 0; i < allPs.Length; i++)
             {
-                allPs[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                allPs[i].Play();
+                ParticleSystem.MainModule main = allPs[i].main;
+                main.playOnAwake = false;
+                if (oneShot)
+                    main.loop = false;
+                allPs[i].Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
+
+            vfx.SetActive(true);
+
+            CFXR_Effect[] clearEffects = vfx.GetComponentsInChildren<CFXR_Effect>(true);
+            for (int c = 0; c < clearEffects.Length; c++)
+                clearEffects[c].clearBehavior = CFXR_Effect.ClearBehavior.None;
+
+            for (int i = 0; i < allPs.Length; i++)
+                allPs[i].Play(false);
 
             yield return new WaitForSeconds(delay);
 
@@ -355,13 +369,11 @@ namespace TowerDefence.Combat
                     return true;
 
                 case HeroAbilityType.HolyShield:
-                    if (GetHealth() / GetMaxHealth() <= 0.35f)
-                    {
+                    if (GetHealth() / Mathf.Max(1f, GetMaxHealth()) <= 0.35f)
                         Heal(GetMaxHealth() * 0.2f * heroConfig.abilityPower);
-                        SpawnHeroVFX(HeroAbilityType.HolyShield, 2f);
-                        return true;
-                    }
-                    return false;
+                    AddAbsorbShield(GetMaxHealth() * 0.35f * heroConfig.abilityPower);
+                    SpawnHeroVFX(HeroAbilityType.HolyShield, 2f);
+                    return true;
 
                 case HeroAbilityType.LifeDrain:
                     if (GetTarget() is Unit target && !target.IsDead)
@@ -375,8 +387,7 @@ namespace TowerDefence.Combat
                     return false;
 
                 case HeroAbilityType.BoneArmor:
-                    if (GetHealth() >= GetMaxHealth()) return false;
-                    Heal(GetMaxHealth() * 0.12f * heroConfig.abilityPower);
+                    AddAbsorbShield(GetMaxHealth() * 0.25f * heroConfig.abilityPower);
                     SpawnHeroVFX(HeroAbilityType.BoneArmor, 2f);
                     return true;
 
@@ -500,7 +511,11 @@ namespace TowerDefence.Combat
             return hitAnyone;
         }
 
-        public override bool CanBlockMore() => blockedEnemies.Count < 3;
+        public override bool CanBlockMore()
+        {
+            PruneBlockedEnemies();
+            return blockedEnemies.Count < 3;
+        }
 
         private bool PullNearbyEnemies(float radius)
         {
@@ -528,6 +543,7 @@ namespace TowerDefence.Combat
         {
             if (isDead) return;
             isDead = true;
+            StopAllCoroutines();
 
             SetSelectionState(HeroSelectionState.Hidden);
             onDeathCallback?.Invoke(this);
@@ -590,6 +606,7 @@ namespace TowerDefence.Combat
             isMovingToManualTarget = false;
             hasMoveDestination = false;
             abilityCooldownTimer = heroConfig != null ? heroConfig.abilityCooldown : abilityCooldownTimer;
+            RefreshSlowFactor();
 
             currentHealth = GetMaxHealth();
             transform.position = new Vector3(position.x, 0.2f, position.z);

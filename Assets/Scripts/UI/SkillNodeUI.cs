@@ -53,10 +53,17 @@ namespace TowerDefence.UI
             skillData = data;
             iconImage.sprite = data.icon;
 
-            if (data.crystalCost > 0 && data.karmaCost == 0)
-                costText.text = $"{data.crystalCost} C";
-            else if (data.crystalCost > 0)
-                costText.text = $"{data.karmaCost}/{data.crystalCost}";
+            bool showKarma = data.karmaCost > 0;
+            bool showCrystal = data.crystalCost > 0;
+            Transform karmaIcon = costText.transform.Find("KarmaIcon");
+            Transform crystalIcon = costText.transform.Find("CrystalIcon");
+            if (karmaIcon != null) karmaIcon.gameObject.SetActive(showKarma);
+            if (crystalIcon != null) crystalIcon.gameObject.SetActive(showCrystal);
+
+            if (showKarma && showCrystal)
+                costText.text = $"{data.karmaCost}   {data.crystalCost}";
+            else if (showCrystal)
+                costText.text = data.crystalCost.ToString();
             else
                 costText.text = data.karmaCost.ToString();
 

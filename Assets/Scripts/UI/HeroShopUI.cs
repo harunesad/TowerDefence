@@ -106,9 +106,11 @@ namespace TowerDefence.UI
         {
             if (MetaProgressionManager.Instance == null) return;
             if (karmaText != null)
-                karmaText.text = $"Karma: {MetaProgressionManager.Instance.GetTotalKarma()}";
+                karmaText.text = MetaProgressionManager.Instance.GetTotalKarma().ToString();
+                CurrencyRowView.Apply(karmaText.transform, MetaProgressionManager.Instance.GetTotalKarma(), 0, false);
             if (crystalText != null)
-                crystalText.text = $"Crystals: {MetaProgressionManager.Instance.GetTotalCrystals()}";
+                crystalText.text = MetaProgressionManager.Instance.GetTotalCrystals().ToString();
+                CurrencyRowView.Apply(crystalText.transform, 0, MetaProgressionManager.Instance.GetTotalCrystals(), false);
         }
 
         public void Populate()

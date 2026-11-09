@@ -11,10 +11,10 @@ namespace TowerDefence.VFX
 
         private void OnEnable()
         {
-            if (autoReturnByTime)
-            {
-                Invoke(nameof(ReturnToPool), lifeTime);
-            }
+            if (!autoReturnByTime) return;
+            if (VFXManager.Instance == null || transform.parent != VFXManager.Instance.transform)
+                return;
+            Invoke(nameof(ReturnToPool), lifeTime);
         }
 
         private void OnDisable()

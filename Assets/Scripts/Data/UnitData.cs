@@ -71,9 +71,12 @@ namespace TowerDefence.Data
         public float attackRange;
         public float attackRate;
         public GameObject projectilePrefab;
+        public GameObject breathVfxPrefab;
+        public float breathVfxScale = 0.55f;
 
         [Header("Audio")]
         public AudioClip spawnSFX;
         public AudioClip deathSFX;
+        public AudioClip attackSFX;
     }
 }

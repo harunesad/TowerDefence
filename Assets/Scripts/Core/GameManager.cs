@@ -80,15 +80,23 @@ namespace TowerDefence.Core
                     break;
                 case GameState.Victory:
                     Debug.Log("Victory!");
-                    if (AudioManager.Instance != null && victorySFX != null)
-                        AudioManager.Instance.PlaySFX(victorySFX);
+                    if (AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.StopBGM();
+                        if (victorySFX != null)
+                            AudioManager.Instance.PlaySFX(victorySFX);
+                    }
                     // LevelResultUI determines stars and calls CampaignManager.CompleteCurrentLevel
                     TriggerResultUI(true);
                     break;
                 case GameState.Defeat:
                     Debug.Log("Defeat.");
-                    if (AudioManager.Instance != null && defeatSFX != null)
-                        AudioManager.Instance.PlaySFX(defeatSFX);
+                    if (AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.StopBGM();
+                        if (defeatSFX != null)
+                            AudioManager.Instance.PlaySFX(defeatSFX);
+                    }
                     // No consolation reward
                     TriggerResultUI(false);
                     break;

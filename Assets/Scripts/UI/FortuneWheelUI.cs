@@ -20,14 +20,15 @@ namespace TowerDefence.UI
         public float spinDuration = 4f;
         public int spinRevolutions = 8;
         public AudioClip tickSound;
+        public AudioClip rewardSound;
         
         private bool isSpinning = false;
-        private string lastWonRewardMessage = "";
+        private int lastWonKarma;
+        private int lastWonCrystals;
         
         // 8 slices in clockwise order (assuming slice 0 is at top)
         private int[] karmaRewards = { 5, 0, 15, 0, 25, 0, 40, 0 };
         private int[] crystalRewards = { 0, 2, 0, 4, 0, 6, 0, 10 };
-        private string[] rewardNames = { "5 Karma", "2 Crystals", "15 Karma", "4 Crystals", "25 Karma", "6 Crystals", "40 Karma", "10 Crystals" };
         
         private void Awake()
         {
@@ -136,14 +137,8 @@ namespace TowerDefence.UI
         {
             if (rewardText == null) return;
 
-            if (!string.IsNullOrEmpty(lastWonRewardMessage))
-            {
-                rewardText.text = $"{lastWonRewardMessage}\n<size=80%>{statusMsg}</size>";
-            }
-            else
-            {
-                rewardText.text = statusMsg;
-            }
+            rewardText.text = statusMsg;
+            CurrencyRowView.Apply(rewardText.transform, lastWonKarma, lastWonCrystals, false);
         }
 
         private void Update()
@@ -173,7 +168,13 @@ namespace TowerDefence.UI
                 // Reklamlı çevirme
                 if (AdManager.Instance != null)
                 {
-                    if (rewardText != null) rewardText.text = "Loading Ad...";
+                    lastWonKarma = 0;
+                    lastWonCrystals = 0;
+                    if (rewardText != null)
+                    {
+                        rewardText.text = "Loading Ad...";
+                        CurrencyRowView.Apply(rewardText.transform, 0, 0, false);
+                    }
                     AdManager.Instance.ShowRewardedAd(
                         onSuccess: () => { StartCoroutine(SpinRoutine(isFreeSpin: false)); },
                         onFailed: () => { 
@@ -204,7 +205,8 @@ namespace TowerDefence.UI
         private IEnumerator SpinRoutine(bool isFreeSpin)
         {
             isSpinning = true;
-            lastWonRewardMessage = "";
+            lastWonKarma = 0;
+            lastWonCrystals = 0;
 
             if (MetaProgressionManager.Instance != null)
             {
@@ -217,7 +219,11 @@ namespace TowerDefence.UI
 
             if (spinButton != null) spinButton.interactable = false;
             if (closeButtonObj != null) closeButtonObj.SetActive(false);
-            if (rewardText != null) rewardText.text = "Spinning...";
+            if (rewardText != null)
+            {
+                rewardText.text = "Spinning...";
+                CurrencyRowView.Apply(rewardText.transform, 0, 0, false);
+            }
             
             // Random slice to land on (0 to 7)
             int randomSlice = UnityEngine.Random.Range(0, 8);
@@ -276,12 +282,10 @@ namespace TowerDefence.UI
             }
 
             // Ödül metni
-            if (karmaRewards[randomSlice] > 0)
-                lastWonRewardMessage = $"<color=#FFD700>YOU WON {karmaRewards[randomSlice]} KARMA!</color>";
-            else if (crystalRewards[randomSlice] > 0)
-                lastWonRewardMessage = $"<color=#00FFFF>YOU WON {crystalRewards[randomSlice]} CRYSTALS!</color>";
-            else
-                lastWonRewardMessage = "No reward this spin.";
+            lastWonKarma = karmaRewards[randomSlice];
+            lastWonCrystals = crystalRewards[randomSlice];
+            if (AudioManager.Instance != null && rewardSound != null)
+                AudioManager.Instance.PlaySFX(rewardSound);
             
             isSpinning = false;
             

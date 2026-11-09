@@ -12,7 +12,15 @@ namespace TowerDefence.Core.Security
     {
         private static int cryptoKeySalt = 0x5F3759DF;
         private static int nextVaultId = 1;
-        private static readonly Dictionary<int, int> keyVault = new Dictionary<int, int>();
+
+        private struct VaultSlot
+        {
+            public int key;
+            public int honeypot;
+            public int committed;
+        }
+
+        private static readonly Dictionary<int, VaultSlot> keyVault = new Dictionary<int, VaultSlot>();
 
         [SerializeField] private int vaultId;
         [SerializeField] private int hiddenValue;
@@ -49,40 +57,40 @@ namespace TowerDefence.Core.Security
             return unchecked((value * 31) ^ (key * 17) ^ cryptoKeySalt);
         }
 
-        private static int RentVault(int key)
+        private static int RentVault(int key, int honeypot, int committed)
         {
             int id = nextVaultId++;
             if (nextVaultId == int.MaxValue) nextVaultId = 1;
-            keyVault[id] = key;
+            keyVault[id] = new VaultSlot { key = key, honeypot = honeypot, committed = committed };
             return id;
         }
 
         public int Get()
         {
-            if (vaultId == 0 || !keyVault.TryGetValue(vaultId, out int key))
+            if (vaultId == 0 || !keyVault.TryGetValue(vaultId, out VaultSlot slot))
                 return 0;
 
-            int decrypted = Decrypt(hiddenValue, key);
-            if (checksum != CalculateChecksum(decrypted, key))
+            int decrypted = Decrypt(hiddenValue, slot.key);
+            bool intact = checksum == CalculateChecksum(decrypted, slot.key) && fakeHoneyPot == slot.honeypot;
+            if (!intact)
             {
                 Debug.LogWarning("[Security] Memory tampering detected in ObscuredInt.");
-                return 0;
+                return slot.committed;
             }
 
+            slot.committed = decrypted;
+            keyVault[vaultId] = slot;
             return decrypted;
         }
 
         public void Set(int value)
         {
             int key = GenerateKey();
-            if (vaultId == 0 || !keyVault.ContainsKey(vaultId))
-                vaultId = RentVault(key);
-            else
-                keyVault[vaultId] = key;
-
+            int honey = UnityEngine.Random.Range(1, int.MaxValue);
+            fakeHoneyPot = honey;
+            vaultId = RentVault(key, honey, value);
             hiddenValue = Encrypt(value, key);
             checksum = CalculateChecksum(value, key);
-            fakeHoneyPot = UnityEngine.Random.Range(1, int.MaxValue);
         }
 
         public static implicit operator ObscuredInt(int value) => new ObscuredInt(value);

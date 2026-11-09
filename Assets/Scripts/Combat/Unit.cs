@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using CartoonFX;
 using TowerDefence.Interfaces;
 using TowerDefence.Core;
 using TowerDefence.Data;
@@ -25,6 +26,37 @@ namespace TowerDefence.Combat
         private float maxHealth;
         private float attackDamage;
         public float GetDamage() => attackDamage * tempDamageMultiplier;
+
+        private float absorbShield;
+
+        public void AddAbsorbShield(float amount)
+        {
+            if (amount <= 0f) return;
+            absorbShield = Mathf.Max(absorbShield, amount);
+        }
+
+        public float GetPathProgress01()
+        {
+            if (currentPath == null) return 0f;
+            var points = currentPath.GetPathPoints();
+            if (points == null || points.Count < 2) return 0f;
+
+            float total = 0f;
+            for (int i = 1; i < points.Count; i++)
+                total += Vector3.Distance(points[i - 1], points[i]);
+            if (total < 0.01f) return 0f;
+
+            int idx = Mathf.Clamp(currentWaypointIndex, 0, points.Count - 1);
+            float traveled = 0f;
+            for (int i = 1; i <= idx; i++)
+                traveled += Vector3.Distance(points[i - 1], points[i]);
+
+            float segment = Vector3.Distance(points[Mathf.Max(0, idx - 1)], points[idx]);
+            float remain = Vector3.Distance(transform.position, points[idx]);
+            traveled -= Mathf.Clamp(remain, 0f, segment);
+            float progress = Mathf.Clamp01(traveled / total);
+            return walkPathBackward ? 1f - progress : progress;
+        }
         private float attackRange;
         private float attackRate;
         private Side unitSide;
@@ -65,7 +97,13 @@ namespace TowerDefence.Combat
         protected Unit currentBlocker;
         protected List<Unit> blockedEnemies = new List<Unit>(); // Bizim engellediğimiz düşmanlar
         public bool IsBlocked => isBlocked;
-        public void Block(Unit blocker) { isBlocked = true; currentBlocker = blocker; }
+        public void Block(Unit blocker)
+        {
+            if (currentBlocker != null && currentBlocker != blocker)
+                currentBlocker.OnBlockedEnemyDied(this);
+            isBlocked = true;
+            currentBlocker = blocker;
+        }
         public void Unblock() { isBlocked = false; currentBlocker = null; }
 
         public static List<Unit> AllUnits = new List<Unit>();
@@ -130,6 +168,8 @@ namespace TowerDefence.Combat
             // Meta-Gelişim Çarpanlarını Uygula
             // SpeedBonus kule ateş hızıdır (Rapid Fire). Birim hızı yalnızca UnitSpeedBonus.
             float healthMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.HealthBonus, unitSide);
+            if (this is HeroUnit)
+                healthMult *= MetaProgressionManager.Instance.GetSkillGroupMultiplier("Skill_Hero_", UpgradeType.HealthBonus, unitSide);
             float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.UnitSpeedBonus, unitSide);
             float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.DamageBonus, unitSide);
 
@@ -790,7 +830,7 @@ namespace TowerDefence.Combat
             }
         }
 
-        private void RefreshSlowFactor()
+        protected void RefreshSlowFactor()
         {
             StatusEffect slow = activeEffects.Find(e => e.type == StatusEffectType.Slow);
             slowMultiplier = (slow != null) ? slow.power : 1f;
@@ -809,8 +849,7 @@ namespace TowerDefence.Combat
                 {
                     float keptPower = stronger ? power : existing.power;
                     float keptDuration = Mathf.Max(duration, existing.GetRemainingDuration());
-                    activeEffects.Remove(existing);
-                    activeEffects.Add(new StatusEffect(type, keptDuration, keptPower));
+                    existing.Extend(keptDuration, keptPower);
                     if (type == StatusEffectType.Slow)
                         RefreshSlowFactor();
                 }
@@ -904,10 +943,13 @@ namespace TowerDefence.Combat
 
         private void OnReachPathEnd()
         {
-            if (targetBase != null && !targetBase.IsDead)
+            if (targetBase == null || targetBase.GetSide() == unitSide)
+                FindTargetBase();
+
+            if (targetBase != null)
             {
-                // Üsse ulaştığında çarpma hasarı ver ve kendini yok et (Kamikaze)
-                targetBase.TakeDamage(attackDamage);
+                // Üsse ulaştığında güncel hasarı ver. Can zaten bitmişse yenilgi yine işler.
+                targetBase.TakeDamage(GetDamage());
                 Debug.Log($"{gameObject.name} reached base and exploded!");
                 
                 // Kamikaze efekti
@@ -984,6 +1026,7 @@ namespace TowerDefence.Combat
 
         private void ExecuteAttackHit()
         {
+            if (isDead) return;
             hasDealtDamage = true;
 
             if (currentTargetMB == null) return;
@@ -992,7 +1035,15 @@ namespace TowerDefence.Combat
             // Phantom Hit Fix (Ölüye vurmayı engelle)
             if (targetC != null && !targetC.IsDead)
             {
-                if (unitData.projectilePrefab != null)
+                if (AudioManager.Instance != null && unitData != null && unitData.attackSFX != null)
+                    AudioManager.Instance.PlaySFX(unitData.attackSFX);
+
+                if (unitData.breathVfxPrefab != null)
+                {
+                    PlayBreath(currentTargetMB.transform);
+                    targetC.TakeDamage(attackDamage * tempDamageMultiplier);
+                }
+                else if (unitData.projectilePrefab != null)
                 {
                     ResolveFirePoint();
                     Vector3 spawnPos = firePoint != null
@@ -1006,7 +1057,7 @@ namespace TowerDefence.Combat
                     Projectile proj = projGO.GetComponent<Projectile>();
                     if (proj != null)
                     {
-                        VFXType projImpactVFX = this is HeroUnit ? VFXType.None : (unitSide == Side.Light) ? VFXType.LightImpact : VFXType.DarkImpact;
+                        VFXType projImpactVFX = unitSide == Side.Light ? VFXType.LightImpact : VFXType.DarkImpact;
                         proj.Initialize(attackDamage * tempDamageMultiplier, 0f, projImpactVFX);
                         proj.Seek(currentTargetMB.transform);
                     }
@@ -1018,10 +1069,51 @@ namespace TowerDefence.Combat
             }
         }
 
+        private void PlayBreath(Transform aim)
+        {
+            ResolveFirePoint();
+            Vector3 origin = firePoint != null
+                ? firePoint.position
+                : transform.position + Vector3.up * 1.2f;
+            Vector3 dir = aim != null ? (aim.position + Vector3.up) - origin : transform.forward;
+            if (dir.sqrMagnitude < 0.0001f)
+                dir = transform.forward;
+
+            float scale = unitData.breathVfxScale > 0.01f ? unitData.breathVfxScale : 0.55f;
+            GameObject vfx = Instantiate(unitData.breathVfxPrefab, origin, Quaternion.LookRotation(dir.normalized));
+            vfx.transform.localScale = Vector3.one * scale;
+
+            ParticleSystem[] systems = vfx.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; i < systems.Length; i++)
+            {
+                ParticleSystem.MainModule main = systems[i].main;
+                main.playOnAwake = false;
+                main.loop = false;
+                systems[i].Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+
+            CFXR_Effect[] clearEffects = vfx.GetComponentsInChildren<CFXR_Effect>(true);
+            for (int i = 0; i < clearEffects.Length; i++)
+                clearEffects[i].clearBehavior = CFXR_Effect.ClearBehavior.None;
+
+            for (int i = 0; i < systems.Length; i++)
+                systems[i].Play(false);
+
+            Destroy(vfx, 1.3f);
+        }
+
         public void TakeDamage(float amount)
         {
             if (isDead) return;
             if (invulnerableTimer > 0f) return;
+
+            if (absorbShield > 0f && amount > 0f)
+            {
+                float absorbed = Mathf.Min(absorbShield, amount);
+                absorbShield -= absorbed;
+                amount -= absorbed;
+                if (amount <= 0f) return;
+            }
 
             // Eğer kalkan varsa hasarı kalkan emsin
             Shield shield = GetComponent<Shield>();
@@ -1092,6 +1184,7 @@ namespace TowerDefence.Combat
         {
             if (isDead) return;
             isDead = true;
+            StopAllCoroutines();
             
             // Bizi engelleyen varsa onu boşa çıkar
             if (currentBlocker != null)
@@ -1145,6 +1238,7 @@ namespace TowerDefence.Combat
                 if (kvp.Value != null) Destroy(kvp.Value);
             }
             activeEffectVisuals.Clear();
+            RefreshSlowFactor();
         }
 
 
@@ -1158,11 +1252,26 @@ namespace TowerDefence.Combat
             }
         }
 
-        public virtual bool CanBlockMore() => blockedEnemies.Count < 1;
+        protected void PruneBlockedEnemies()
+        {
+            for (int i = blockedEnemies.Count - 1; i >= 0; i--)
+            {
+                Unit enemy = blockedEnemies[i];
+                if (enemy == null || enemy.IsDead)
+                    blockedEnemies.RemoveAt(i);
+            }
+        }
+
+        public virtual bool CanBlockMore()
+        {
+            PruneBlockedEnemies();
+            return blockedEnemies.Count < 1;
+        }
 
         public bool StartBlocking(Unit enemy)
         {
             if (enemy == null || enemy.IsDead) return false;
+            PruneBlockedEnemies();
             if (blockedEnemies.Contains(enemy)) return true;
             if (!CanBlockMore()) return false;
 

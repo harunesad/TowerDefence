@@ -29,7 +29,7 @@ namespace TowerDefence.UI
 
         [Header("Stats Panel")]
         public GameObject statsPanel;
-
+        
         [Header("Normal Upgrade")]
         public GameObject normalUpgradeGroup;
         public Button upgradeButton;
@@ -125,26 +125,26 @@ namespace TowerDefence.UI
 
             if (upgradeButton != null)
             {
-                upgradeButton.onClick.RemoveAllListeners();
-                upgradeButton.onClick.AddListener(OnUpgradeClicked);
+            upgradeButton.onClick.RemoveAllListeners();
+            upgradeButton.onClick.AddListener(OnUpgradeClicked);
             }
 
             if (specAButton != null)
             {
-                specAButton.onClick.RemoveAllListeners();
-                specAButton.onClick.AddListener(OnSpecAClicked);
+            specAButton.onClick.RemoveAllListeners();
+            specAButton.onClick.AddListener(OnSpecAClicked);
             }
 
             if (specBButton != null)
             {
-                specBButton.onClick.RemoveAllListeners();
-                specBButton.onClick.AddListener(OnSpecBClicked);
+            specBButton.onClick.RemoveAllListeners();
+            specBButton.onClick.AddListener(OnSpecBClicked);
             }
 
             if (sellButton != null)
             {
-                sellButton.onClick.RemoveAllListeners();
-                sellButton.onClick.AddListener(OnSellClicked);
+            sellButton.onClick.RemoveAllListeners();
+            sellButton.onClick.AddListener(OnSellClicked);
             }
 
             if (priorityButton != null)
@@ -161,7 +161,7 @@ namespace TowerDefence.UI
 
         public void Show(TowerSlot slot, Tower tower)
         {
-            if (Time.time - lastShowTime < 0.2f) return;
+            if (slot == currentSlot && Time.time - lastShowTime < 0.2f) return;
             lastShowTime = Time.time;
 
             if (currentSlot == slot && mainPanel != null && mainPanel.activeSelf)
@@ -177,9 +177,9 @@ namespace TowerDefence.UI
             mainPanel.SetActive(true);
 
             if (currentTower != null)
-                currentTower.SetRangeVisible(true);
+            currentTower.SetRangeVisible(true);
 
-            transform.localScale = new Vector3(0.038f, 0.038f, 0.038f);
+            transform.localScale = new Vector3(0.025f, 0.025f, 0.025f);
             transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             transform.localPosition = DefaultLocalPosition;
 
@@ -219,6 +219,7 @@ namespace TowerDefence.UI
                     return;
                 }
                 currentTower.AddInvestedGold(data.upgradeCost);
+                currentTower.SetRangeVisible(true);
 
                 if (VFXManager.Instance != null && currentSlot != null)
                     VFXManager.Instance.SpawnVFX(VFXType.UpgradeSparkle, currentSlot.GetPlacementPosition(), Quaternion.identity);
@@ -248,14 +249,14 @@ namespace TowerDefence.UI
 
             int invested = currentTower.GetInvestedGold() + specData.cost;
             currentSlot.SpecializeTower(specData, invested);
+                
+                if (VFXManager.Instance != null)
+                VFXManager.Instance.SpawnVFX(VFXType.UpgradeSparkle, currentSlot.GetPlacementPosition(), Quaternion.identity);
 
-            if (VFXManager.Instance != null)
-                VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, currentSlot.GetPlacementPosition(), Quaternion.identity);
+                if (AudioManager.Instance != null && upgradeSFX != null)
+                    AudioManager.Instance.PlaySFX(upgradeSFX);
 
-            if (AudioManager.Instance != null && upgradeSFX != null)
-                AudioManager.Instance.PlaySFX(upgradeSFX);
-
-            Hide();
+                Hide();
         }
 
         public void OnSellClicked()
@@ -264,7 +265,7 @@ namespace TowerDefence.UI
             TowerData data = currentTower.GetTowerData();
             int refund = currentTower.GetSellRefund();
             if (data != null && CurrencyManager.Instance != null)
-                CurrencyManager.Instance.AddCurrency(data.side, refund);
+            CurrencyManager.Instance.AddCurrency(data.side, refund);
             if (AudioManager.Instance != null && sellSFX != null)
                 AudioManager.Instance.PlaySFX(sellSFX);
             WarningBannerUI.Show($"TOWER SOLD! +{refund} GOLD", 2.0f, new Color(1f, 0.85f, 0.2f, 1f), true);
@@ -281,7 +282,7 @@ namespace TowerDefence.UI
                 if (TowerPlacementManager.Instance != null)
                 {
                     BarracksTower tempBarracks = barracks;
-                    Hide();
+                    Hide(); 
                     TowerPlacementManager.Instance.EnterRallyPlacementMode(tempBarracks);
                 }
             }
@@ -295,7 +296,7 @@ namespace TowerDefence.UI
         public void Hide()
         {
             if (currentTower != null) currentTower.SetRangeVisible(false);
-
+            
             selectedAction = RingAction.None;
             infoVisible = false;
             if (statsPanel != null) statsPanel.SetActive(false);

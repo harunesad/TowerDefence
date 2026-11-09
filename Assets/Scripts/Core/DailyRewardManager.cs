@@ -80,18 +80,22 @@ namespace TowerDefence.UI
             return MetaProgressionManager.Instance.GetDailyRewardDayIndex();
         }
 
+        public int GetPendingCount()
+        {
+            if (!TryGetWindow(out int claimed, out int unlocked, out bool closed)) return 0;
+            if (closed || claimed >= 30) return 0;
+            return Mathf.Max(0, unlocked - claimed);
+        }
+
+        public bool IsMonthComplete()
+        {
+            if (GetCurrentDayIndex() >= 30) return true;
+            return TryGetWindow(out _, out _, out bool closed) && closed;
+        }
+
         public bool IsRewardAvailable()
         {
-            int currentDay = GetCurrentDayIndex();
-            if (currentDay >= 30) return false; // All 30 completed
-
-            long lastTimeTicks = MetaProgressionManager.Instance.GetLastDailyRewardTime();
-            if (lastTimeTicks == 0) return true; // First time ever
-
-            DateTime lastTime = new DateTime(lastTimeTicks);
-            DateTime nextTime = lastTime.AddDays(1).Date;
-            DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
-            return now >= nextTime;
+            return GetPendingCount() > 0;
         }
 
         public bool ClaimReward(out int karma, out int crystal)
@@ -99,19 +103,25 @@ namespace TowerDefence.UI
             karma = 0;
             crystal = 0;
 
-            if (!IsRewardAvailable()) return false;
+            if (!TryGetWindow(out int claimed, out int unlocked, out bool closed)) return false;
+            if (closed || claimed >= unlocked || claimed >= 30) return false;
+            if (!TryGetTrustedNow(out DateTime now)) return false;
 
-            int currentDay = GetCurrentDayIndex();
-            if (currentDay >= 30) return false;
+            int lastDay = Mathf.Min(unlocked, 30);
+            for (int i = claimed; i < lastDay; i++)
+            {
+                DailyRewardTier tier = rewardTiers[i];
+                if (tier == null) continue;
+                karma += tier.karmaReward;
+                crystal += tier.crystalReward;
+            }
 
-            DailyRewardTier tier = rewardTiers[currentDay];
-            karma = tier.karmaReward;
-            crystal = tier.crystalReward;
+            long startTicks = MetaProgressionManager.Instance.GetDailyRewardStartTicks();
+            if (startTicks == 0)
+                startTicks = now.Date.Ticks;
 
-            DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
-            MetaProgressionManager.Instance.GrantDailyReward(karma, crystal, now.Ticks, currentDay + 1);
-
-            Debug.Log($"[DailyReward] Day {tier.dayNumber} Claimed: {karma} Karma, {crystal} Crystals");
+            MetaProgressionManager.Instance.GrantDailyReward(karma, crystal, now.Ticks, lastDay, startTicks);
+            Debug.Log($"[DailyReward] Claimed days {claimed + 1}-{lastDay}: {karma} Karma, {crystal} Crystals");
             return true;
         }
 
@@ -124,28 +134,65 @@ namespace TowerDefence.UI
 
         public string GetTimeToNextReward()
         {
-            int currentDay = GetCurrentDayIndex();
-            if (currentDay >= 30) return "Completed!";
+            if (IsMonthComplete()) return "Completed!";
+            if (GetPendingCount() > 0) return "Available Now!";
+            if (!TryGetTrustedNow(out DateTime now)) return "Syncing time...";
 
-            long lastTimeTicks = MetaProgressionManager.Instance.GetLastDailyRewardTime();
-            if (lastTimeTicks == 0) return "Available Now!";
-
-            DateTime lastTime = new DateTime(lastTimeTicks);
-            DateTime nextTime = lastTime.AddDays(1).Date;
-            DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
-            TimeSpan remaining = nextTime - now;
-
+            TimeSpan remaining = now.Date.AddDays(1) - now;
             if (remaining.Ticks <= 0) return "Available Now!";
 
-            return string.Format("{0:D2}h {1:D2}m {2:D2}s", remaining.Hours, remaining.Minutes, remaining.Seconds);
+            int hours = (int)remaining.TotalHours;
+            return string.Format("{0:D2}h {1:D2}m {2:D2}s", hours, remaining.Minutes, remaining.Seconds);
+        }
+
+        private static bool TryGetTrustedNow(out DateTime now)
+        {
+            now = default;
+            if (NetworkTimeManager.Instance == null) return false;
+            now = NetworkTimeManager.Instance.GetCurrentLocalTime();
+            return true;
+        }
+
+        private bool TryGetWindow(out int claimed, out int unlocked, out bool closed)
+        {
+            claimed = 0;
+            unlocked = 0;
+            closed = false;
+            if (MetaProgressionManager.Instance == null) return false;
+
+            claimed = Mathf.Clamp(MetaProgressionManager.Instance.GetDailyRewardDayIndex(), 0, 30);
+            long startTicks = MetaProgressionManager.Instance.GetDailyRewardStartTicks();
+            if (startTicks == 0)
+            {
+                unlocked = claimed > 0 ? claimed : 1;
+                closed = claimed >= 30;
+                return true;
+            }
+
+            if (!TryGetTrustedNow(out DateTime now)) return false;
+
+            DateTime start = new DateTime(startTicks).Date;
+            int elapsed = (now.Date - start).Days;
+            if (elapsed < 0) elapsed = 0;
+            if (elapsed >= 30)
+            {
+                closed = true;
+                unlocked = claimed;
+                return true;
+            }
+
+            unlocked = Mathf.Min(30, elapsed + 1);
+            return true;
         }
 
         public string GetDayStatus(int dayIndex)
         {
-            int currentDay = GetCurrentDayIndex();
-            if (dayIndex < currentDay) return "claimed";
-            if (dayIndex == currentDay && IsRewardAvailable()) return "available";
-            if (dayIndex == currentDay) return "waiting";
+            if (!TryGetWindow(out int claimed, out int unlocked, out bool closed))
+                return dayIndex < GetCurrentDayIndex() ? "claimed" : "locked";
+
+            if (dayIndex < claimed) return "claimed";
+            if (!closed && dayIndex < unlocked) return "available";
+            if (!closed && dayIndex == unlocked && unlocked < 30) return "waiting";
             return "locked";
         }
 

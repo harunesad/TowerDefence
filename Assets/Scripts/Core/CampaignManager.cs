@@ -149,10 +149,17 @@ namespace TowerDefence.Core
             }
         }
 
-        public void CompleteCurrentLevel(int stars, int karmaReward, int crystalReward)
+        public void AllowAnotherCompletionReward()
         {
-            if (currentSelectedLevel == null || MetaProgressionManager.Instance == null) return;
-            if (rewardGrantedThisAttempt) return;
+            rewardGrantedThisAttempt = false;
+        }
+
+        public (int karma, int crystals) CompleteCurrentLevel(int stars, int karmaReward, int crystalReward)
+        {
+            if (currentSelectedLevel == null || MetaProgressionManager.Instance == null)
+                return (0, 0);
+            if (rewardGrantedThisAttempt)
+                return (0, 0);
             rewardGrantedThisAttempt = true;
 
             Debug.Log($"Level Completed: {currentSelectedLevel.levelName} on Difficulty {currentDifficultyLevel} with {stars} Stars");
@@ -160,21 +167,6 @@ namespace TowerDefence.Core
             int karmaToGrant = karmaReward;
             int crystalsToGrant = crystalReward;
             string levelID = currentSelectedLevel.levelID;
-            if (MetaProgressionManager.Instance.IsLevelCompleted(levelID, currentDifficultyLevel))
-            {
-                int previousStars = MetaProgressionManager.Instance.GetLevelStars(levelID, currentDifficultyLevel);
-                if (stars <= previousStars || stars <= 0)
-                {
-                    karmaToGrant = 0;
-                    crystalsToGrant = 0;
-                }
-                else
-                {
-                    float starGain = (stars - previousStars) / (float)stars;
-                    karmaToGrant = Mathf.RoundToInt(karmaReward * starGain);
-                    crystalsToGrant = Mathf.RoundToInt(crystalReward * starGain);
-                }
-            }
 
             if (karmaToGrant > 0)
                 MetaProgressionManager.Instance.AddKarma(karmaToGrant);
@@ -189,14 +181,17 @@ namespace TowerDefence.Core
 
             // Tüm bölümler bittiyse bir sonraki zorluğu aç
             CheckDifficultyUnlock();
+            return (karmaToGrant, crystalsToGrant);
         }
 
         private void GrantLevelStartCrystals()
         {
-            if (MetaProgressionManager.Instance == null) return;
+            if (MetaProgressionManager.Instance == null || currentSelectedLevel == null) return;
             int crystals = Mathf.RoundToInt(MetaProgressionManager.Instance.GetTotalAdditiveBonus(UpgradeType.CrystalStartFlatBonus, Side.Neutral));
-            if (crystals > 0)
-                MetaProgressionManager.Instance.AddCrystals(crystals);
+            if (crystals <= 0) return;
+            if (!MetaProgressionManager.Instance.TryClaimCrystalVault(currentSelectedLevel.levelID, currentDifficultyLevel))
+                return;
+            MetaProgressionManager.Instance.AddCrystals(crystals);
         }
 
         private void UnlockNextLevel()

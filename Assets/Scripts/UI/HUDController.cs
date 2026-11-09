@@ -23,6 +23,7 @@ namespace TowerDefence.UI
         [SerializeField] private Button skipPrepButton;
         [SerializeField] private Button abilityButton;
         [SerializeField] private Image abilityOverlay;
+        private TextMeshProUGUI abilityCooldownText;
 
         [Header("Speed Control")]
         [SerializeField] private Button speedX1Button;
@@ -45,6 +46,9 @@ namespace TowerDefence.UI
         [SerializeField] private WaveInfoUI waveInfoUI;
         [Tooltip("WaveInfo panelinde düşman birimlerinin gösterildiği satır prefabı (WaveInfoUnitsRow.prefab)")]
         [SerializeField] private GameObject waveInfoUnitsRowPrefab;
+        [SerializeField] private AudioClip waveInfoToggleSFX;
+        [SerializeField] private AudioClip warningSFX;
+        [SerializeField] private AudioClip rewardSFX;
 
         [Header("Selection UIs")]
         [SerializeField] private UnitSelectionUI unitSelectionUI;
@@ -60,6 +64,8 @@ namespace TowerDefence.UI
 
         private void Start()
         {
+            EnsureAbilityControls();
+
             // Event abonelikleri
             if (CurrencyManager.Instance != null)
                 CurrencyManager.Instance.OnCurrencyChanged += UpdateCurrencyUI;
@@ -123,6 +129,7 @@ namespace TowerDefence.UI
             SetupWarningBannerUI();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             SetupDebugAutoWinButton();
+            SetupVfxDebugPanel();
 #endif
         }
 
@@ -137,6 +144,17 @@ namespace TowerDefence.UI
             GameObject go = new GameObject("DebugAutoWinButton", typeof(RectTransform), typeof(DebugAutoWinButton));
             go.transform.SetParent(canvas.transform, false);
         }
+
+        private void SetupVfxDebugPanel()
+        {
+            if (FindObjectOfType<VfxDebugPanel>() != null) return;
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) canvas = FindObjectOfType<Canvas>();
+            if (canvas == null) return;
+
+            GameObject go = new GameObject("VfxDebugPanel", typeof(RectTransform), typeof(VfxDebugPanel));
+            go.transform.SetParent(canvas.transform, false);
+        }
 #endif
 
         private void SetupWarningBannerUI()
@@ -148,6 +166,8 @@ namespace TowerDefence.UI
 
             GameObject go = new GameObject("WarningBannerUI", typeof(RectTransform), typeof(WarningBannerUI));
             go.transform.SetParent(canvas.transform, false);
+            WarningBannerUI banner = go.GetComponent<WarningBannerUI>();
+            if (banner != null) banner.SetClips(warningSFX, rewardSFX);
         }
 
         private void SetupHeroButtons()
@@ -209,7 +229,11 @@ namespace TowerDefence.UI
 
         private void SetupWaveInfoUI()
         {
-            if (waveInfoUI != null) return;
+            if (waveInfoUI != null)
+            {
+                waveInfoUI.SetToggleSFX(waveInfoToggleSFX);
+                return;
+            }
 
             Canvas canvas = GetComponentInParent<Canvas>();
             if (canvas == null) canvas = FindObjectOfType<Canvas>();
@@ -218,6 +242,7 @@ namespace TowerDefence.UI
             GameObject go = new GameObject("WaveInfoUI", typeof(RectTransform));
             go.transform.SetParent(canvas.transform, false);
             waveInfoUI = go.AddComponent<WaveInfoUI>();
+            waveInfoUI.SetToggleSFX(waveInfoToggleSFX);
             if (waveInfoUnitsRowPrefab != null)
             {
                 waveInfoUI.SetUnitsRowPrefab(waveInfoUnitsRowPrefab);
@@ -291,13 +316,58 @@ namespace TowerDefence.UI
             }
         }
 
+        private void EnsureAbilityControls()
+        {
+            if (abilityButton == null)
+            {
+                Transform box = FindDeepChild(transform, "AbilityBox");
+                if (box != null)
+                {
+                    abilityButton = box.GetComponent<Button>();
+                    if (abilityButton == null)
+                        abilityButton = box.gameObject.AddComponent<Button>();
+
+                    Image image = box.GetComponent<Image>();
+                    if (image != null)
+                    {
+                        abilityButton.targetGraphic = image;
+                        image.raycastTarget = true;
+                    }
+                }
+            }
+
+            if (abilityCooldownText == null)
+            {
+                Transform label = FindDeepChild(transform, "AbilityCooldown");
+                if (label != null)
+                    abilityCooldownText = label.GetComponent<TextMeshProUGUI>();
+            }
+        }
+
+        private static Transform FindDeepChild(Transform parent, string childName)
+        {
+            if (parent == null) return null;
+            if (parent.name == childName) return parent;
+
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform found = FindDeepChild(parent.GetChild(i), childName);
+                if (found != null) return found;
+            }
+
+            return null;
+        }
+
         private void UpdateAbilityUI(float current, float max)
         {
-            if (abilityOverlay != null)
-            {
+            if (abilityOverlay != null && max > 0f)
                 abilityOverlay.fillAmount = current / max;
-            }
-            abilityButton.interactable = (current <= 0);
+
+            if (abilityButton != null)
+                abilityButton.interactable = current <= 0f;
+
+            if (abilityCooldownText != null)
+                abilityCooldownText.text = current <= 0.05f ? "READY" : $"CD: {current:0.0}s";
         }
 
         private void OnSkipPrepClicked()

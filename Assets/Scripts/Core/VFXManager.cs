@@ -38,6 +38,7 @@ namespace TowerDefence.Core
         public static VFXManager Instance { get; private set; }
 
         [SerializeField] private List<VFXPoolItem> poolConfig;
+        [SerializeField] private GameObject areaSmokePrefab;
         private Dictionary<VFXType, Queue<GameObject>> pools = new Dictionary<VFXType, Queue<GameObject>>();
 
         private void Awake()
@@ -105,21 +106,36 @@ namespace TowerDefence.Core
             {
                 obj.transform.position = position;
                 obj.transform.rotation = rotation;
-                obj.SetActive(true);
-
-                // Eski parçacık kalıntılarını temizle ve baştan başlat (Çift patlama/hayalet efekt sorununu engeller)
-                var pSystems = obj.GetComponentsInChildren<ParticleSystem>(true);
-                for (int i = 0; i < pSystems.Length; i++)
-                {
-                    pSystems[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                    pSystems[i].Play(true);
-                }
-
+                RestartParticles(obj);
                 return obj;
             }
 
             Debug.LogWarning($"[VFXManager] VFX Type {type} prefab not found!");
             return null;
+        }
+
+        public GameObject SpawnAreaSmoke(Vector3 position, float radius)
+        {
+            if (areaSmokePrefab == null) return null;
+
+            float scale = Mathf.Clamp(radius * 0.22f, 0.45f, 1.35f);
+            GameObject vfx = Instantiate(areaSmokePrefab, position, Quaternion.identity);
+            vfx.transform.localScale = Vector3.one * scale;
+
+            ParticleSystem[] systems = vfx.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; i < systems.Length; i++)
+            {
+                ParticleSystem.MainModule main = systems[i].main;
+                main.playOnAwake = false;
+                main.loop = false;
+                systems[i].Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+
+            for (int i = 0; i < systems.Length; i++)
+                systems[i].Play(false);
+
+            Destroy(vfx, 2.4f);
+            return vfx;
         }
 
         public GameObject SpawnVFX(VFXType type, Transform parent, Vector3 localPosition, Quaternion localRotation, float destroyDelay)
@@ -167,6 +183,24 @@ namespace TowerDefence.Core
             }
 #endif
             return null;
+        }
+
+        private static void RestartParticles(GameObject vfx)
+        {
+            ParticleSystem[] systems = vfx.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; i < systems.Length; i++)
+            {
+                ParticleSystem.MainModule main = systems[i].main;
+                main.playOnAwake = false;
+                main.loop = false;
+                systems[i].Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+
+            if (!vfx.activeSelf)
+                vfx.SetActive(true);
+
+            for (int i = 0; i < systems.Length; i++)
+                systems[i].Play(false);
         }
 
         public void ReturnVFX(VFXType type, GameObject obj)

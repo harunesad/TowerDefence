@@ -90,6 +90,7 @@ namespace TowerDefence.Core
 
         public bool CanAfford(Side side, int amount)
         {
+            if (amount < 1) return false;
             return GetCurrency(side) >= amount;
         }
 
@@ -103,6 +104,7 @@ namespace TowerDefence.Core
 
         public bool TrySpendCurrency(Side side, int amount)
         {
+            if (amount < 1) return false;
             if (CanAfford(side, amount))
             {
                 if (side == Side.Light) gold -= amount;

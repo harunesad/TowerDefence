@@ -309,6 +309,7 @@ namespace TowerDefence.UI
                         if (CampaignManager.Instance != null)
                         {
                             CampaignManager.Instance.SelectLevel(level);
+                            CampaignManager.Instance.AllowAnotherCompletionReward();
                         }
 
                         if (sweepResultUI != null)

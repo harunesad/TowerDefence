@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using CartoonFX;
 using TowerDefence.Combat;
 using TowerDefence.Interfaces;
 
@@ -69,14 +70,52 @@ namespace TowerDefence.Core
             // Yazılım Mantığını Uygula
             ExecuteSpellEffect(spell, targetPos);
 
-            // VFX & SFX
-            if (spell.spellVFXPrefab != null)
-            {
-                // Instantiate/Destroy mantığıyla VFX
-                GameObject vfx = Instantiate(spell.spellVFXPrefab, targetPos, Quaternion.identity);
-                Destroy(vfx, 3f); // 3 saniye sonra temizle
-            }
+            PlaySpellVfx(spell, targetPos);
             if (AudioManager.Instance != null && spell.castSFX != null) AudioManager.Instance.PlaySFX(spell.castSFX);
+        }
+
+        public GameObject PlaySpellVfx(Data.SpellData spell, Vector3 targetPos)
+        {
+            if (spell == null || spell.spellVFXPrefab == null) return null;
+
+            Vector3 vfxPos = spell.spellType == Data.SpellType.GoldBoost
+                ? PlayerBasePosition(targetPos)
+                : targetPos;
+            GameObject vfx = Instantiate(spell.spellVFXPrefab, vfxPos, Quaternion.identity);
+            CFXR_Effect[] clearEffects = vfx.GetComponentsInChildren<CFXR_Effect>(true);
+            for (int i = 0; i < clearEffects.Length; i++)
+                clearEffects[i].clearBehavior = CFXR_Effect.ClearBehavior.None;
+            if (IsOneShotSpell(spell))
+                StopLoop(vfx);
+            Destroy(vfx, SpellVfxLifetime(spell));
+            return vfx;
+        }
+
+        public static float SpellVfxLifetime(Data.SpellData spell)
+        {
+            if (spell == null) return 0f;
+            return Mathf.Max(3f, spell.duration + 1f);
+        }
+
+        private static bool IsOneShotSpell(Data.SpellData spell)
+        {
+            if (spell == null) return false;
+            if (spell.spellType == Data.SpellType.GoldBoost || spell.spellType == Data.SpellType.Reinforcement)
+                return true;
+            return spell.spellID == "Spell_Neutral_Earthquake"
+                || spell.spellID == "Spell_Dark_Rift"
+                || spell.spellID == "Spell_Light_Thunder_1"
+                || spell.spellID == "Spell_Light_Thunder_2";
+        }
+
+        private static void StopLoop(GameObject vfx)
+        {
+            ParticleSystem[] systems = vfx.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; i < systems.Length; i++)
+            {
+                ParticleSystem.MainModule main = systems[i].main;
+                main.loop = false;
+            }
         }
 
         private void ExecuteSpellEffect(Data.SpellData spell, Vector3 targetPos)
@@ -231,7 +270,7 @@ namespace TowerDefence.Core
             for (int i = 0; i < count; i++)
             {
                 Vector3 spawnPos = center + Random.insideUnitSphere * 1.5f;
-                spawnPos.y = 0; // Zemine sabitle
+                spawnPos.y = GroundHeight(spawnPos.x, spawnPos.z);
                 GameObject unitGO = Instantiate(prefab, spawnPos, Quaternion.identity);
                 Unit unit = unitGO.GetComponent<Unit>();
                 
@@ -251,6 +290,28 @@ namespace TowerDefence.Core
                     StartCoroutine(KillReinforcementAfterTime(unit, 30f));
                 }
             }
+        }
+
+        private static float GroundHeight(float x, float z)
+        {
+            int mask = LayerMask.GetMask("Default", "Path");
+            Vector3 origin = new Vector3(x, 80f, z);
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 160f, mask, QueryTriggerInteraction.Ignore))
+                return hit.point.y;
+            return 0.2f;
+        }
+
+        private static Vector3 PlayerBasePosition(Vector3 fallback)
+        {
+            if (SideController.Instance == null) return fallback;
+            Side playerSide = SideController.Instance.GetPlayerSide();
+            Base[] bases = FindObjectsByType<Base>(FindObjectsSortMode.None);
+            for (int i = 0; i < bases.Length; i++)
+            {
+                if (bases[i] != null && bases[i].GetSide() == playerSide)
+                    return bases[i].transform.position;
+            }
+            return fallback;
         }
 
         private System.Collections.IEnumerator KillReinforcementAfterTime(Unit unit, float delay)

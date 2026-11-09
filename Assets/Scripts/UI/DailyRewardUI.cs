@@ -16,6 +16,7 @@ namespace TowerDefence.UI
         [SerializeField] private TextMeshProUGUI infoText;
         [SerializeField] private Button claimButton;
         [SerializeField] private Button closeButton;
+        [SerializeField] private GameObject cellPrefab;
 
         [Header("Icons")]
         public Sprite karmaSprite;
@@ -59,69 +60,13 @@ namespace TowerDefence.UI
             if (gridContainer == null) return;
 
             cells = new GameObject[30];
+            if (cellPrefab == null) return;
+
             for (int i = 0; i < 30; i++)
             {
                 int day = i + 1;
-                GameObject cell = new GameObject("DayCell_" + day, typeof(RectTransform), typeof(Image));
-                cell.transform.SetParent(gridContainer, false);
-                RectTransform rt = cell.GetComponent<RectTransform>();
-                rt.sizeDelta = Vector2.zero;
-                rt.anchorMin = Vector2.zero;
-                rt.anchorMax = Vector2.one;
-
-                ColorBlock colors = new ColorBlock
-                {
-                    colorMultiplier = 1,
-                    fadeDuration = 0.1f
-                };
-
-                GameObject dayTextGO = new GameObject("DayText", typeof(RectTransform), typeof(TextMeshProUGUI));
-                dayTextGO.transform.SetParent(cell.transform, false);
-                TextMeshProUGUI dayText = dayTextGO.GetComponent<TextMeshProUGUI>();
-                dayText.fontSize = 14;
-                dayText.alignment = TextAlignmentOptions.Top;
-                dayText.text = "Day " + day;
-                dayText.color = Color.white;
-                RectTransform dayRT = dayTextGO.GetComponent<RectTransform>();
-                dayRT.sizeDelta = new Vector2(100, 20);
-                dayRT.anchorMin = new Vector2(0.5f, 1f);
-                dayRT.anchorMax = new Vector2(0.5f, 1f);
-                dayRT.anchoredPosition = new Vector2(0, -15);
-
-                GameObject iconGO = new GameObject("RewardIcon", typeof(RectTransform), typeof(Image));
-                iconGO.transform.SetParent(cell.transform, false);
-                Image iconImg = iconGO.GetComponent<Image>();
-                RectTransform iconRT = iconGO.GetComponent<RectTransform>();
-                iconRT.sizeDelta = new Vector2(40, 40);
-                iconRT.anchorMin = new Vector2(0.5f, 0.5f);
-                iconRT.anchorMax = new Vector2(0.5f, 0.5f);
-                iconRT.anchoredPosition = new Vector2(0, -2);
-
-                GameObject amountGO = new GameObject("RewardText", typeof(RectTransform), typeof(TextMeshProUGUI));
-                amountGO.transform.SetParent(cell.transform, false);
-                TextMeshProUGUI amountText = amountGO.GetComponent<TextMeshProUGUI>();
-                amountText.fontSize = 14;
-                amountText.alignment = TextAlignmentOptions.Center;
-                amountText.color = Color.yellow;
-                RectTransform amountRT = amountGO.GetComponent<RectTransform>();
-                amountRT.sizeDelta = new Vector2(100, 20);
-                amountRT.anchorMin = new Vector2(0.5f, 0f);
-                amountRT.anchorMax = new Vector2(0.5f, 0f);
-                amountRT.anchoredPosition = new Vector2(0, 14);
-
-                GameObject statusGO = new GameObject("StatusText", typeof(RectTransform), typeof(TextMeshProUGUI));
-                statusGO.transform.SetParent(cell.transform, false);
-                TextMeshProUGUI statusText = statusGO.GetComponent<TextMeshProUGUI>();
-                statusText.fontSize = 10;
-                statusText.alignment = TextAlignmentOptions.Bottom;
-                statusText.text = "";
-                statusText.color = Color.white;
-                RectTransform statusRT = statusGO.GetComponent<RectTransform>();
-                statusRT.sizeDelta = new Vector2(80, 16);
-                statusRT.anchorMin = new Vector2(0.5f, 0);
-                statusRT.anchorMax = new Vector2(0.5f, 0);
-                statusRT.anchoredPosition = new Vector2(0, -10);
-
+                GameObject cell = Instantiate(cellPrefab, gridContainer);
+                cell.name = "DayCell_" + day;
                 cells[i] = cell;
             }
         }
@@ -131,7 +76,8 @@ namespace TowerDefence.UI
             if (drm == null) return;
 
             int currentDay = drm.GetCurrentDayIndex();
-            bool available = drm.IsRewardAvailable();
+            int pending = drm.GetPendingCount();
+            bool monthComplete = drm.IsMonthComplete();
 
             if (cells != null)
             {
@@ -145,7 +91,9 @@ namespace TowerDefence.UI
             {
                 if (currentDay >= 30)
                     timerText.text = "ALL REWARDS COLLECTED!";
-                else if (available)
+                else if (monthComplete)
+                    timerText.text = "30 DAYS OVER";
+                else if (pending > 0)
                     timerText.text = "CLAIM NOW!";
                 else
                     timerText.text = drm.GetTimeToNextReward();
@@ -155,16 +103,18 @@ namespace TowerDefence.UI
             {
                 if (currentDay >= 30)
                     infoText.text = "You have completed all 30 days!";
-                else if (available)
+                else if (monthComplete)
+                    infoText.text = "The 30 days from your first claim are over.";
+                else if (pending > 1)
+                    infoText.text = $"Days {currentDay + 1}-{currentDay + pending} rewards are ready!";
+                else if (pending == 1)
                     infoText.text = $"Day {currentDay + 1} reward is ready!";
                 else
-                    infoText.text = $"Day {currentDay + 1} - Next reward in:";
+                    infoText.text = $"Day {currentDay + 1} - Next reward at midnight:";
             }
 
             if (claimButton != null)
-            {
-                claimButton.interactable = available && currentDay < 30;
-            }
+                claimButton.interactable = pending > 0;
         }
 
         private void UpdateCell(int index, GameObject cell)
@@ -177,23 +127,17 @@ namespace TowerDefence.UI
             TextMeshProUGUI dayText = cell.transform.Find("DayText")?.GetComponent<TextMeshProUGUI>();
             if (dayText != null) dayText.text = $"Day {tier.dayNumber}";
 
-            Image iconImg = cell.transform.Find("RewardIcon")?.GetComponent<Image>();
             TextMeshProUGUI amountText = cell.transform.Find("RewardText")?.GetComponent<TextMeshProUGUI>();
 
-            if (iconImg != null && amountText != null)
+            if (amountText != null)
             {
-                if (tier.crystalReward > 0)
-                {
-                    iconImg.sprite = crystalSprite;
-                    amountText.text = $"{tier.crystalReward} C";
-                    amountText.color = Color.cyan;
-                }
-                else
-                {
-                    iconImg.sprite = karmaSprite;
-                    amountText.text = $"{tier.karmaReward} K";
-                    amountText.color = Color.yellow;
-                }
+                Transform karmaIcon = cell.transform.Find("KarmaIcon");
+                Transform crystalIcon = cell.transform.Find("CrystalIcon");
+                bool crystalReward = tier.crystalReward > 0;
+                if (karmaIcon != null) karmaIcon.gameObject.SetActive(!crystalReward);
+                if (crystalIcon != null) crystalIcon.gameObject.SetActive(crystalReward);
+                amountText.text = crystalReward ? tier.crystalReward.ToString() : tier.karmaReward.ToString();
+                amountText.color = crystalReward ? Color.cyan : Color.yellow;
             }
 
             TextMeshProUGUI statusText = cell.transform.Find("StatusText")?.GetComponent<TextMeshProUGUI>();
@@ -228,10 +172,7 @@ namespace TowerDefence.UI
             if (drm.ClaimReward(out int karma, out int crystal))
             {
                 RefreshUI();
-                string rewardMsg = "DAILY REWARD CLAIMED! ";
-                if (karma > 0) rewardMsg += $"+{karma} KARMA ";
-                if (crystal > 0) rewardMsg += $"+{crystal} CRYSTALS";
-                WarningBannerUI.Show(rewardMsg.Trim(), 2.5f, new Color(0.2f, 1f, 0.4f, 1f), true);
+                WarningBannerUI.Show("DAILY REWARD CLAIMED!", 2.5f, new Color(0.2f, 1f, 0.4f, 1f), true);
             }
         }
     }

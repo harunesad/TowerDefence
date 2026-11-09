@@ -39,7 +39,7 @@ namespace TowerDefence.UI
             float iconSize = 64f;
             float y = -10 - iconSize - 8;
             float descLineCount = string.IsNullOrEmpty(data.description) ? 1 : Mathf.Max(1, data.description.Length / 40 + 1);
-            float contentH = 24 + 2 + 16 + 2 + descLineCount * 16 + 4 + 16 + 12;
+            float contentH = 24 + 2 + 16 + 2 + descLineCount * 16 + 12;
             float panelH = Mathf.Abs(y) + contentH + 12;
 
             RectTransform rt = GetComponent<RectTransform>();
@@ -103,17 +103,6 @@ namespace TowerDefence.UI
 
             CreateText("DescText", data.description, new Vector2(0, y), new Vector2(260, descLineCount * 16),
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 13, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.7f, 0.7f, 0.8f));
-            y -= descLineCount * 16 + 4;
-
-            string costStr;
-            if (data.crystalCost > 0 && data.karmaCost == 0)
-                costStr = $"{data.crystalCost} Crystals";
-            else if (data.crystalCost > 0)
-                costStr = $"{data.karmaCost} Karma + {data.crystalCost} Crystals";
-            else
-                costStr = $"{data.karmaCost} Karma";
-            CreateText("CostText", "Cost: " + costStr, new Vector2(0, y), new Vector2(260, 16),
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 12, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.6f, 1f, 0.6f));
         }
 
         private GameObject CreateImage(string name, Vector2 pos, Vector2 anchorMin, Vector2 anchorMax, Vector2 sizeDelta, Color color, bool raycastTarget)

@@ -31,7 +31,8 @@ namespace TowerDefence.Core
         public int totalKarma;
         public int totalCrystals; // Yeni ikinci para birimi
         public long lastDailyRewardTime; // Son günlük ödül zamanı (Ticks)
-        public int dailyRewardDayIndex; // 0-30 arası, kaçıncı günde olduğu (0=henüz başlamamış, 30=tamamlandı)
+        public long dailyRewardStartTicks; // İlk ödülün alındığı takvim günü
+        public int dailyRewardDayIndex; // Alınmış gün sayısı (0=henüz başlamamış, 30=tamamlandı)
         public List<string> unlockedSkillIDs = new List<string>();
         public List<string> unlockedSpellIDs = new List<string>(); // Açılan aktif büyüler
         public List<string> equippedSpellIDs = new List<string>(); // Kuşatılan büyüler
@@ -57,6 +58,7 @@ namespace TowerDefence.Core
         public List<LevelProgress> levelProgressList = new List<LevelProgress>();
         public long lastFortuneWheelTime; // Son çark çevirme zamanı (Ticks)
         public long lastFortuneWheelAdTime; // Son reklamla çark çevirme zamanı (Ticks)
+        public List<string> crystalVaultClaimedLevels = new List<string>();
     }
 
     public class MetaProgressionManager : MonoBehaviour
@@ -157,6 +159,8 @@ namespace TowerDefence.Core
             saveData.lastDailyRewardTime = ticks;
             SaveGame();
         }
+
+        public long GetDailyRewardStartTicks() => saveData.dailyRewardStartTicks;
 
         public int GetDailyRewardDayIndex() => saveData.dailyRewardDayIndex;
 
@@ -526,21 +530,47 @@ namespace TowerDefence.Core
         public float GetMultiplierForType(UpgradeType type, Side side)
         {
             float totalMultiplier = 1f;
+            if (saveData.unlockedSkillIDs == null) return totalMultiplier;
 
             foreach (var skillID in saveData.unlockedSkillIDs)
             {
                 SkillNodeData skill = allAvailableSkills.Find(s => s.skillID == skillID);
-                if (skill != null && skill.skillID != "Skill_Neutral_AncientWisdom" && skill.upgradeType == type)
-                {
-                    // Taraf kontrolü: Ya genel bir yetenek ya da istenen tarafın yeteneği olmalı
-                    if (skill.side == Side.Neutral || skill.side == side)
-                    {
-                        totalMultiplier *= skill.multiplier;
-                    }
-                }
+                if (skill == null || skill.upgradeType != type) continue;
+                if (skill.skillID == "Skill_Neutral_AncientWisdom") continue;
+                // Kahraman ve okçu düğümleri genel çarpana girmez.
+                if (skill.skillID.StartsWith("Skill_Hero_") || skill.skillID.StartsWith("Skill_Archer_")) continue;
+                if (skill.side == Side.Neutral || skill.side == side)
+                    totalMultiplier *= skill.multiplier;
             }
 
             return totalMultiplier; 
+        }
+
+        public float GetSkillGroupMultiplier(string idPrefix, UpgradeType type, Side side)
+        {
+            float totalMultiplier = 1f;
+            if (saveData.unlockedSkillIDs == null || string.IsNullOrEmpty(idPrefix)) return totalMultiplier;
+
+            foreach (var skillID in saveData.unlockedSkillIDs)
+            {
+                if (skillID == null || !skillID.StartsWith(idPrefix)) continue;
+                SkillNodeData skill = allAvailableSkills.Find(s => s.skillID == skillID);
+                if (skill == null || skill.upgradeType != type) continue;
+                if (skill.side == Side.Neutral || skill.side == side)
+                    totalMultiplier *= skill.multiplier;
+            }
+
+            return totalMultiplier;
+        }
+
+        public bool TryClaimCrystalVault(string levelID, int difficulty)
+        {
+            EnsureSaveCollections();
+            if (string.IsNullOrEmpty(levelID)) return false;
+            string key = levelID + "|" + difficulty;
+            if (saveData.crystalVaultClaimedLevels.Contains(key)) return false;
+            saveData.crystalVaultClaimedLevels.Add(key);
+            return true;
         }
 
         public float GetTotalAdditiveBonus(UpgradeType type, Side side)
@@ -582,24 +612,73 @@ namespace TowerDefence.Core
             }
         }
 
-        private static void DeriveInstallKeys(out byte[] aesKey, out byte[] hmacKey)
+        private void EnsureSaveCollections()
+        {
+            if (saveData == null) saveData = new SaveData();
+            if (saveData.unlockedSkillIDs == null) saveData.unlockedSkillIDs = new List<string>();
+            if (saveData.unlockedSpellIDs == null) saveData.unlockedSpellIDs = new List<string>();
+            if (saveData.equippedSpellIDs == null) saveData.equippedSpellIDs = new List<string>();
+            if (saveData.unlockedHeroIDs == null) saveData.unlockedHeroIDs = new List<string>();
+            if (saveData.equippedHeroIDs == null) saveData.equippedHeroIDs = new List<string>();
+            if (saveData.equippedUnitNames == null) saveData.equippedUnitNames = new List<string>();
+            if (saveData.lightEquippedHeroIDs == null) saveData.lightEquippedHeroIDs = new List<string>();
+            if (saveData.darkEquippedHeroIDs == null) saveData.darkEquippedHeroIDs = new List<string>();
+            if (saveData.lightEquippedUnitNames == null) saveData.lightEquippedUnitNames = new List<string>();
+            if (saveData.darkEquippedUnitNames == null) saveData.darkEquippedUnitNames = new List<string>();
+            if (saveData.lightEquippedSpellIDs == null) saveData.lightEquippedSpellIDs = new List<string>();
+            if (saveData.darkEquippedSpellIDs == null) saveData.darkEquippedSpellIDs = new List<string>();
+            if (saveData.heroProgressList == null) saveData.heroProgressList = new List<HeroProgressEntry>();
+            if (saveData.highestUnlockedLevelIndexPerDifficulty == null)
+                saveData.highestUnlockedLevelIndexPerDifficulty = new List<int> { 0, 0, 0, 0 };
+            if (saveData.levelProgressList == null) saveData.levelProgressList = new List<LevelProgress>();
+            if (saveData.crystalVaultClaimedLevels == null) saveData.crystalVaultClaimedLevels = new List<string>();
+        }
+
+        private static readonly byte[] KeyMask = Encoding.UTF8.GetBytes("TowerDefenceInstallKeyMask_v1");
+
+        private static byte[] ReadInstallSecret()
         {
             string keyPath = Path.Combine(Application.persistentDataPath, InstallKeyFileName);
-            byte[] secret = null;
             if (File.Exists(keyPath))
             {
-                byte[] existing = File.ReadAllBytes(keyPath);
-                if (existing != null && existing.Length >= 32)
-                    secret = existing;
+                byte[] stored = File.ReadAllBytes(keyPath);
+                if (stored != null && stored.Length >= 34 && stored[0] == 0x4F && stored[1] == 0x42)
+                {
+                    byte[] decoded = new byte[32];
+                    for (int i = 0; i < 32; i++)
+                        decoded[i] = (byte)(stored[2 + i] ^ KeyMask[i % KeyMask.Length]);
+                    return decoded;
+                }
+
+                if (stored != null && stored.Length >= 32)
+                {
+                    byte[] raw = new byte[32];
+                    System.Buffer.BlockCopy(stored, 0, raw, 0, 32);
+                    WriteInstallSecret(keyPath, raw);
+                    return raw;
+                }
             }
 
-            if (secret == null)
-            {
-                secret = new byte[32];
-                using (var rng = RandomNumberGenerator.Create())
-                    rng.GetBytes(secret);
-                File.WriteAllBytes(keyPath, secret);
-            }
+            byte[] secret = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+                rng.GetBytes(secret);
+            WriteInstallSecret(keyPath, secret);
+            return secret;
+        }
+
+        private static void WriteInstallSecret(string keyPath, byte[] secret)
+        {
+            byte[] stored = new byte[34];
+            stored[0] = 0x4F;
+            stored[1] = 0x42;
+            for (int i = 0; i < 32; i++)
+                stored[2 + i] = (byte)(secret[i] ^ KeyMask[i % KeyMask.Length]);
+            File.WriteAllBytes(keyPath, stored);
+        }
+
+        private static void DeriveInstallKeys(out byte[] aesKey, out byte[] hmacKey)
+        {
+            byte[] secret = ReadInstallSecret();
 
             string secretText = Convert.ToBase64String(secret);
             using (var deriveBytes = new Rfc2898DeriveBytes(secretText, SaltBytes, 1000, HashAlgorithmName.SHA256))
@@ -776,12 +855,14 @@ namespace TowerDefence.Core
             }
         }
 
-        public void GrantDailyReward(int karma, int crystals, long claimTimeTicks, int nextDayIndex)
+        public void GrantDailyReward(int karma, int crystals, long claimTimeTicks, int nextDayIndex, long startTicks)
         {
             if (karma > 0) saveData.totalKarma += karma;
             if (crystals > 0) saveData.totalCrystals += crystals;
             saveData.lastDailyRewardTime = claimTimeTicks;
             saveData.dailyRewardDayIndex = nextDayIndex;
+            if (saveData.dailyRewardStartTicks == 0 && startTicks != 0)
+                saveData.dailyRewardStartTicks = startTicks;
             SaveGame();
         }
 
@@ -895,6 +976,8 @@ namespace TowerDefence.Core
                 saveData.totalKarma = 200; // Başlangıç Karma puanı
             }
 
+            EnsureSaveCollections();
+
             // Migration: Yeni array sistemi için eksik eleman varsa doldur
             while (saveData.highestUnlockedLevelIndexPerDifficulty.Count <= 3)
             {
@@ -917,6 +1000,13 @@ namespace TowerDefence.Core
             if (saveData.lastDailyRewardTime != 0 && saveData.dailyRewardDayIndex == 0)
             {
                 saveData.dailyRewardDayIndex = 1;
+            }
+
+            if (saveData.dailyRewardDayIndex > 0 && saveData.dailyRewardStartTicks == 0 && saveData.lastDailyRewardTime != 0)
+            {
+                System.DateTime lastClaim = new System.DateTime(saveData.lastDailyRewardTime);
+                int claimedDays = Mathf.Clamp(saveData.dailyRewardDayIndex, 1, 30);
+                saveData.dailyRewardStartTicks = lastClaim.Date.AddDays(-(claimedDays - 1)).Ticks;
             }
 
             // Migration: Büyü listesini skill tree ile senkronize et
@@ -1014,16 +1104,18 @@ namespace TowerDefence.Core
 
         public void ResetSave()
         {
-            if (File.Exists(savePath))
-            {
-                File.Delete(savePath);
-            }
+            string backupPath = savePath + ".bak";
+            string tempPath = savePath + ".tmp";
+            if (File.Exists(savePath)) File.Delete(savePath);
+            if (File.Exists(backupPath)) File.Delete(backupPath);
+            if (File.Exists(tempPath)) File.Delete(tempPath);
+
             saveData = new SaveData();
             saveData.totalKarma = 200;
+            EnsureSaveCollections();
+            EnsureStarterHeroUnlocked();
+            SaveGame();
             Debug.Log("Game Progress Reset Successfully!");
-            
-            // Başlangıç ayarlarını tekrar yükle
-            LoadGame();
         }
     }
 }
