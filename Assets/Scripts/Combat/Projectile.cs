@@ -166,6 +166,7 @@ namespace TowerDefence.Combat
 
             foreach (Collider collider in colliders)
             {
+                if (collider.GetComponent<TowerObstacle>() != null) continue;
                 IDamageable dmg = collider.GetComponentInParent<IDamageable>();
                 if (dmg != null && dmg.GetSide() == targetSide && !damagedEntities.Contains(dmg))
                 {

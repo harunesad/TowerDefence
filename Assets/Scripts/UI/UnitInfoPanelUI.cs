@@ -20,7 +20,7 @@ namespace TowerDefence.UI
             float panelW = 300;
             int statCount = showCost ? 4 : 3;
             float iconArea = 15; // İkon kaldırıldığı için sadece üst boşluk
-            float panelH = iconArea + 14 + 2 + statCount * 20 + 12;
+            float panelH = iconArea + 14 + 2 + statCount * 22 + 12;
 
             // Overlay (en üste, panelin arkasında kalacak)
             overlayRef = new GameObject("UnitInfoOverlay", typeof(RectTransform), typeof(Image));
@@ -72,15 +72,15 @@ namespace TowerDefence.UI
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 18, FontStyles.Bold, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f));
             y -= 26;
 
-            CreateStatRow("HealthRow", "Health", data.maxHealth.ToString("0"), new Vector2(0, y), false);
-            y -= 20;
-            CreateStatRow("AttackRow", "Attack", data.attackDamage.ToString("0"), new Vector2(0, y), false);
-            y -= 20;
-            CreateStatRow("AtkSpeedRow", "Attack Speed", data.attackRate.ToString("0.00") + "/s", new Vector2(0, y), false);
+            CreateStatRow("HealthRow", StatIcons.Health, data.maxHealth.ToString("0"), new Vector2(0, y), false);
+            y -= 22;
+            CreateStatRow("AttackRow", StatIcons.Damage, data.attackDamage.ToString("0"), new Vector2(0, y), false);
+            y -= 22;
+            CreateStatRow("AtkSpeedRow", StatIcons.Attack, data.attackRate.ToString("0.00") + "/s", new Vector2(0, y), false);
             if (showCost)
             {
-                y -= 20;
-                CreateStatRow("CostRow", "Cost", data.spawnCost.ToString(), new Vector2(0, y), true);
+                y -= 22;
+                CreateStatRow("CostRow", StatIcons.Gold, data.spawnCost.ToString(), new Vector2(0, y), true);
             }
         }
 
@@ -128,7 +128,7 @@ namespace TowerDefence.UI
             rowRT.anchorMax = new Vector2(0.5f, 1f);
             rowRT.pivot = new Vector2(0.5f, 1f);
             rowRT.anchoredPosition = offset;
-            rowRT.sizeDelta = new Vector2(260, 18);
+            rowRT.sizeDelta = new Vector2(260, 20);
 
             GameObject lGO = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             lGO.transform.SetParent(row.transform, false);
@@ -137,9 +137,9 @@ namespace TowerDefence.UI
             lRT.anchorMax = new Vector2(1, 1);
             lRT.pivot = new Vector2(0, 0.5f);
             lRT.anchoredPosition = new Vector2(16, 0);
-            lRT.sizeDelta = new Vector2(140, 18);
+            lRT.sizeDelta = new Vector2(140, 20);
             TextMeshProUGUI lTmp = lGO.GetComponent<TextMeshProUGUI>();
-            lTmp.text = label;
+            StatIcons.Set(lTmp, label);
             lTmp.fontSize = 14;
             lTmp.alignment = TextAlignmentOptions.Left;
             lTmp.color = new Color(0.7f, 0.7f, 0.8f);
@@ -152,10 +152,10 @@ namespace TowerDefence.UI
             vRT.anchorMax = new Vector2(1, 1);
             vRT.pivot = new Vector2(1, 0.5f);
             vRT.anchoredPosition = new Vector2(-16, 0);
-            vRT.sizeDelta = new Vector2(100, 18);
+            vRT.sizeDelta = new Vector2(100, 20);
             TextMeshProUGUI vTmp = vGO.GetComponent<TextMeshProUGUI>();
             vTmp.text = value;
-            vTmp.fontSize = 14;
+            vTmp.fontSize = 16;
             vTmp.fontStyle = FontStyles.Bold;
             vTmp.alignment = TextAlignmentOptions.Right;
             vTmp.color = goldValue ? new Color(1f, 0.85f, 0.2f) : Color.white;

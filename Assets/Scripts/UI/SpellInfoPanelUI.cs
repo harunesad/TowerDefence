@@ -39,7 +39,7 @@ namespace TowerDefence.UI
             float iconSize = 64f;
             float y = -10 - iconSize - 8;
             float descLineCount = string.IsNullOrEmpty(data.description) ? 1 : Mathf.Max(1, data.description.Length / 40 + 1);
-            float contentH = 24 + 2 + 16 + 2 + descLineCount * 16 + 4 + 32 + 12;
+            float contentH = 24 + 2 + 16 + 2 + descLineCount * 16 + 4 + 40 + 12;
             float panelH = Mathf.Abs(y) + contentH + 12;
 
             RectTransform rt = GetComponent<RectTransform>();
@@ -101,14 +101,14 @@ namespace TowerDefence.UI
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 13, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.7f, 0.7f, 0.8f));
             y -= descLineCount * 16 + 4;
 
-            string statsText = $"Power: {data.power}  |  Radius: {data.radius}";
-            CreateText("StatsText", statsText, new Vector2(0, y), new Vector2(260, 16),
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 12, FontStyles.Normal, TextAlignmentOptions.Center, Color.white);
-            y -= 18;
+            string statsText = $"Power {data.power}  |  {StatIcons.Range} {data.radius}";
+            CreateText("StatsText", statsText, new Vector2(0, y), new Vector2(260, 20),
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 14, FontStyles.Normal, TextAlignmentOptions.Center, Color.white);
+            y -= 22;
 
-            string costText = $"Mana: {data.manaCost}  |  Cooldown: {data.cooldown}s";
-            CreateText("CostText", costText, new Vector2(0, y), new Vector2(260, 16),
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 12, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.6f, 1f, 0.6f));
+            string costText = $"{StatIcons.Price(data.side)} {data.manaCost}  |  {StatIcons.Time} {data.cooldown}s";
+            CreateText("CostText", costText, new Vector2(0, y), new Vector2(260, 20),
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 14, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.6f, 1f, 0.6f));
         }
 
         private GameObject CreateImage(string name, Vector2 pos, Vector2 anchorMin, Vector2 anchorMax, Vector2 sizeDelta, Color color, bool raycastTarget)
@@ -138,7 +138,7 @@ namespace TowerDefence.UI
             rt.anchoredPosition = pos;
             rt.sizeDelta = size;
             TextMeshProUGUI tmp = go.GetComponent<TextMeshProUGUI>();
-            tmp.text = text;
+            StatIcons.Set(tmp, text);
             tmp.fontSize = fontSize;
             tmp.fontStyle = style;
             tmp.alignment = align;

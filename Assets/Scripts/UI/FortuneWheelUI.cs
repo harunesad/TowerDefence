@@ -208,15 +208,6 @@ namespace TowerDefence.UI
             lastWonKarma = 0;
             lastWonCrystals = 0;
 
-            if (MetaProgressionManager.Instance != null)
-            {
-                DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
-                if (isFreeSpin)
-                    MetaProgressionManager.Instance.SetLastFortuneWheelTime(now.Ticks);
-                else
-                    MetaProgressionManager.Instance.SetLastFortuneWheelAdTime(now.Ticks);
-            }
-
             if (spinButton != null) spinButton.interactable = false;
             if (closeButtonObj != null) closeButtonObj.SetActive(false);
             if (rewardText != null)
@@ -268,17 +259,23 @@ namespace TowerDefence.UI
             }
             
             wheelTransform.rotation = Quaternion.Euler(0, 0, endAngle);
-            
-            // Give reward
-            if (karmaRewards[randomSlice] > 0)
+
+            // Hak, ödülle aynı kayıtta yazılır. Dönüş bitmeden uygulama kapanırsa hak durur.
+            if (MetaProgressionManager.Instance != null)
             {
-                if (MetaProgressionManager.Instance != null)
-                    MetaProgressionManager.Instance.AddKarma(karmaRewards[randomSlice]);
-            }
-            if (crystalRewards[randomSlice] > 0)
-            {
-                if (MetaProgressionManager.Instance != null)
-                    MetaProgressionManager.Instance.AddCrystals(crystalRewards[randomSlice]);
+                DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
+                int karma = karmaRewards[randomSlice];
+                int crystals = crystalRewards[randomSlice];
+                bool persistWithReward = karma > 0 || crystals > 0;
+                if (isFreeSpin)
+                    MetaProgressionManager.Instance.SetLastFortuneWheelTime(now.Ticks, !persistWithReward);
+                else
+                    MetaProgressionManager.Instance.SetLastFortuneWheelAdTime(now.Ticks, !persistWithReward);
+
+                if (karma > 0)
+                    MetaProgressionManager.Instance.AddKarma(karma);
+                if (crystals > 0)
+                    MetaProgressionManager.Instance.AddCrystals(crystals);
             }
 
             // Ödül metni

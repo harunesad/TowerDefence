@@ -322,9 +322,12 @@ namespace TowerDefence.UI
                             Debug.LogWarning("SweepResultUI atanmamış! Manuel ödül veriliyor.");
                             if (CampaignManager.Instance != null)
                             {
-                                int difficulty = CampaignManager.Instance.CurrentDifficultyLevel;
-                                // Hızlı geçişte manuel olarak düşük ödül ver
-                                CampaignManager.Instance.CompleteCurrentLevel(3, 10 * difficulty, 2 * difficulty);
+                                int globalDifficulty = CampaignManager.Instance.CurrentDifficultyLevel;
+                                if (globalDifficulty < 1) globalDifficulty = 1;
+                                LevelData currentLvl = CampaignManager.Instance.GetCurrentLevel();
+                                int levelDifficulty = (currentLvl != null && currentLvl.difficulty > 0) ? currentLvl.difficulty : 1;
+                                int totalMultiplier = levelDifficulty * globalDifficulty;
+                                CampaignManager.Instance.CompleteCurrentLevel(3, 10 * totalMultiplier, 2 * totalMultiplier);
                             }
                         }
                     },

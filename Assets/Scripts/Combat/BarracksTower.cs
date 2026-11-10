@@ -27,6 +27,7 @@ namespace TowerDefence.Combat
 
         private void Awake()
         {
+            EnsureTowerObstacle();
             baseRespawnDelay = respawnDelay;
             
             // Eğer inspector/kod tarafında değer girilmişse onu kullan
@@ -196,8 +197,11 @@ namespace TowerDefence.Combat
                 return false;
             }
 
-            // Kulenin etrafında rastgele bir noktada doğur
-            Vector3 spawnPos = transform.position + Random.insideUnitSphere * 1.5f;
+            Vector2 spawnDir = Random.insideUnitCircle;
+            if (spawnDir.sqrMagnitude < 0.0001f) spawnDir = Vector2.right;
+            else spawnDir.Normalize();
+            float spawnRadius = ObstacleRadius + 0.6f;
+            Vector3 spawnPos = transform.position + new Vector3(spawnDir.x, 0f, spawnDir.y) * spawnRadius;
             spawnPos.y = transform.position.y;
 
             GameObject soldierGO = Instantiate(soldierData.prefab, spawnPos, Quaternion.identity);

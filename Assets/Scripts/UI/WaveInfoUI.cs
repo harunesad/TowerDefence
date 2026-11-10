@@ -468,16 +468,16 @@ namespace TowerDefence.UI
             AddStatText("Difficulty", $"Difficulty: {diffName} (x{diffMult:F1})", 13f, FontStyles.Bold, new Vector2(12f, y), diffColor);
             y -= lineH + 4f;
 
-            AddStatText("Health", $"Health: {Mathf.RoundToInt(finalHealth)}", 14f, FontStyles.Normal, new Vector2(12f, y), Color.white);
+            AddStatText("Health", $"{StatIcons.Health} {Mathf.RoundToInt(finalHealth)}", 16f, FontStyles.Normal, new Vector2(12f, y), Color.white);
             y -= lineH;
 
-            AddStatText("Damage", $"Damage: {Mathf.RoundToInt(finalDamage)}", 14f, FontStyles.Normal, new Vector2(12f, y), Color.white);
+            AddStatText("Damage", $"{StatIcons.Damage} {Mathf.RoundToInt(finalDamage)}", 16f, FontStyles.Normal, new Vector2(12f, y), Color.white);
             y -= lineH;
 
-            AddStatText("Speed", $"Speed: {finalSpeed:F1}", 14f, FontStyles.Normal, new Vector2(12f, y), Color.white);
+            AddStatText("Speed", $"{StatIcons.Move} {finalSpeed:F1}", 16f, FontStyles.Normal, new Vector2(12f, y), Color.white);
             y -= lineH;
 
-            AddStatText("Range", $"Range: {finalRange:F1}", 14f, FontStyles.Normal, new Vector2(12f, y), Color.white);
+            AddStatText("Range", $"{StatIcons.Range} {finalRange:F1}", 16f, FontStyles.Normal, new Vector2(12f, y), Color.white);
         }
 
         private void AddStatText(string name, string text, float fontSize, FontStyles style, Vector2 offset, Color color)
@@ -493,7 +493,7 @@ namespace TowerDefence.UI
             rt.sizeDelta = new Vector2(230f, 24f);
 
             TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
+            StatIcons.Set(tmp, text);
             tmp.fontSize = fontSize;
             tmp.fontStyle = style;
             tmp.color = color;

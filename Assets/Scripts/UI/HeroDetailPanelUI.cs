@@ -105,15 +105,16 @@ namespace TowerDefence.UI
 
             MetaProgressionManager.Instance.GetHeroCombatStats(currentHero, out float hp, out float dmg, out float spd, out float rng, out float rate);
 
-            if (healthText != null) healthText.text = $"Health: {hp:0}";
-            if (damageText != null) damageText.text = $"Damage: {dmg:0}";
-            if (speedText != null) speedText.text = $"Speed: {spd:0.00}";
-            if (rangeText != null) rangeText.text = $"Range: {rng:0.0}";
-            if (attackRateText != null) attackRateText.text = $"Attack Rate: {rate:0.00}/s";
+            if (healthText != null) StatIcons.Set(healthText, $"{StatIcons.Health} {hp:0}");
+            if (damageText != null) StatIcons.Set(damageText, $"{StatIcons.Damage} {dmg:0}");
+            if (speedText != null) StatIcons.Set(speedText, $"{StatIcons.Move} {spd:0.00}");
+            if (rangeText != null) StatIcons.Set(rangeText, $"{StatIcons.Range} {rng:0.0}");
+            if (attackRateText != null) StatIcons.Set(attackRateText, $"{StatIcons.Attack} {rate:0.00}/s");
 
             if (abilityNameText != null) abilityNameText.text = $"Ability: {currentHero.abilityName}";
             if (abilityDescText != null)
-                abilityDescText.text = $"{currentHero.abilityDescription}\nCooldown: {currentHero.abilityCooldown:0}s";
+                abilityDescText.text = $"{currentHero.abilityDescription}\n{StatIcons.Time} {currentHero.abilityCooldown:0}s";
+                StatIcons.Set(abilityDescText, abilityDescText.text);
 
             int karma = MetaProgressionManager.Instance.GetTotalKarma();
             int crystals = MetaProgressionManager.Instance.GetTotalCrystals();

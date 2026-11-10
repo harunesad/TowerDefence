@@ -138,18 +138,18 @@ namespace TowerDefence.Core
 
         public long GetLastFortuneWheelTime() => saveData.lastFortuneWheelTime;
 
-        public void SetLastFortuneWheelTime(long ticks)
+        public void SetLastFortuneWheelTime(long ticks, bool save = true)
         {
             saveData.lastFortuneWheelTime = ticks;
-            SaveGame();
+            if (save) SaveGame();
         }
 
         public long GetLastFortuneWheelAdTime() => saveData.lastFortuneWheelAdTime;
 
-        public void SetLastFortuneWheelAdTime(long ticks)
+        public void SetLastFortuneWheelAdTime(long ticks, bool save = true)
         {
             saveData.lastFortuneWheelAdTime = ticks;
-            SaveGame();
+            if (save) SaveGame();
         }
 
         public long GetLastDailyRewardTime() => saveData.lastDailyRewardTime;
@@ -563,13 +563,15 @@ namespace TowerDefence.Core
             return totalMultiplier;
         }
 
-        public bool TryClaimCrystalVault(string levelID, int difficulty)
+        public bool TryGrantCrystalVault(string levelID, int difficulty, int crystals)
         {
             EnsureSaveCollections();
-            if (string.IsNullOrEmpty(levelID)) return false;
+            if (string.IsNullOrEmpty(levelID) || crystals <= 0) return false;
             string key = levelID + "|" + difficulty;
             if (saveData.crystalVaultClaimedLevels.Contains(key)) return false;
             saveData.crystalVaultClaimedLevels.Add(key);
+            saveData.totalCrystals += crystals;
+            SaveGame();
             return true;
         }
 

@@ -132,18 +132,19 @@ namespace TowerDefence.UI
                     dmg = currentHero.GetDamage();
                     statsText.text =
                         $"<color=#FFD24D>{tier}</color>\n" +
-                        $"HP: {currentHero.GetHealth():F0}/{hp:F0}\n" +
-                        $"DMG: {dmg:F0}   ATK: {atkSpd:F2}/s\n" +
-                        $"RNG: {atkR:F1}   SPD: {mSpd:F1}";
+                        $"{StatIcons.Health} {currentHero.GetHealth():F0}/{hp:F0}\n" +
+                        $"{StatIcons.Damage} {dmg:F0}   {StatIcons.Attack} {atkSpd:F2}/s\n" +
+                        $"{StatIcons.Range} {atkR:F1}   {StatIcons.Move} {mSpd:F1}";
                 }
                 else
                 {
                     statsText.text =
                         $"<color=#FFD24D>{tier}</color>\n" +
-                        $"HP: {hp:F0}\n" +
-                        $"DMG: {dmg:F0}   ATK: {atkSpd:F2}/s\n" +
-                        $"RNG: {atkR:F1}   SPD: {mSpd:F1}";
+                        $"{StatIcons.Health} {hp:F0}\n" +
+                        $"{StatIcons.Damage} {dmg:F0}   {StatIcons.Attack} {atkSpd:F2}/s\n" +
+                        $"{StatIcons.Range} {atkR:F1}   {StatIcons.Move} {mSpd:F1}";
                 }
+                StatIcons.Set(statsText, statsText.text);
             }
 
             if (abilityNameText != null)
@@ -159,11 +160,13 @@ namespace TowerDefence.UI
                     float rem = currentHero.AbilityCooldownRemaining;
                     abilityCooldownText.text = rem <= 0f
                         ? "<color=#4DFF85>READY</color>"
-                        : $"<color=#FF8080>CD: {rem:F1}s / {currentData.abilityCooldown:F1}s</color>";
+                        : $"<color=#FF8080>{StatIcons.Time} {rem:F1}s / {currentData.abilityCooldown:F1}s</color>";
+                    StatIcons.Set(abilityCooldownText, abilityCooldownText.text);
                 }
                 else
                 {
-                    abilityCooldownText.text = $"CD: {currentData.abilityCooldown:F1}s";
+                    abilityCooldownText.text = $"{StatIcons.Time} {currentData.abilityCooldown:F1}s";
+                    StatIcons.Set(abilityCooldownText, abilityCooldownText.text);
                 }
             }
         }

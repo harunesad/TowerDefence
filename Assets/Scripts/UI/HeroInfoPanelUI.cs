@@ -44,8 +44,8 @@ namespace TowerDefence.UI
 
             float y = -10 - 8;
             float contentH = 24 + 2; // name + its bottom gap
-            contentH += 5 * 18 + 4; // 5 stat rows
-            contentH += 2 + 18 + 28; // sep2 + ability name + ability desc
+            contentH += 5 * 20 + 4; // 5 stat rows
+            contentH += 2 + 18 + 32; // sep2 + ability name + ability desc
             float panelH = Mathf.Abs(y) + contentH + 10;
 
             RectTransform rt = GetComponent<RectTransform>();
@@ -82,15 +82,15 @@ namespace TowerDefence.UI
             MetaProgressionManager.Instance.GetHeroCombatStats(data,
                 out float hp, out float dmg, out float spd, out float rng, out float rate);
 
-            CreateStatRow("HealthRow", "Health", hp.ToString("0"), new Vector2(0, y), false);
-            y -= 18;
-            CreateStatRow("DamageRow", "Damage", dmg.ToString("0"), new Vector2(0, y), false);
-            y -= 18;
-            CreateStatRow("SpeedRow", "Speed", spd.ToString("0.00"), new Vector2(0, y), false);
-            y -= 18;
-            CreateStatRow("RangeRow", "Range", rng.ToString("0.0"), new Vector2(0, y), false);
-            y -= 18;
-            CreateStatRow("AtkRateRow", "Attack Rate", rate.ToString("0.00") + "/s", new Vector2(0, y), false);
+            CreateStatRow("HealthRow", StatIcons.Health, hp.ToString("0"), new Vector2(0, y), false);
+            y -= 20;
+            CreateStatRow("DamageRow", StatIcons.Damage, dmg.ToString("0"), new Vector2(0, y), false);
+            y -= 20;
+            CreateStatRow("SpeedRow", StatIcons.Move, spd.ToString("0.00"), new Vector2(0, y), false);
+            y -= 20;
+            CreateStatRow("RangeRow", StatIcons.Range, rng.ToString("0.0"), new Vector2(0, y), false);
+            y -= 20;
+            CreateStatRow("AtkRateRow", StatIcons.Attack, rate.ToString("0.00") + "/s", new Vector2(0, y), false);
 
             y -= 14;
             CreateImage("Sep2", new Vector2(0, y), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -103,10 +103,10 @@ namespace TowerDefence.UI
                 14, FontStyles.Bold, TextAlignmentOptions.Center, new Color(0.6f, 0.8f, 1f));
 
             y -= 22;
-            CreateText("AbilityDescText", $"{data.abilityDescription}  (CD: {data.abilityCooldown}s)",
-                new Vector2(0, y), new Vector2(290, 28),
+            CreateText("AbilityDescText", $"{data.abilityDescription}  {StatIcons.Time} {data.abilityCooldown}s",
+                new Vector2(0, y), new Vector2(290, 32),
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                12, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.7f, 0.7f, 0.8f));
+                14, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.7f, 0.7f, 0.8f));
         }
 
         private GameObject CreateImage(string name, Vector2 pos, Vector2 anchorMin, Vector2 anchorMax, Vector2 sizeDelta, Color color, bool raycastTarget)
@@ -136,7 +136,7 @@ namespace TowerDefence.UI
             rt.anchoredPosition = pos;
             rt.sizeDelta = size;
             TextMeshProUGUI tmp = go.GetComponent<TextMeshProUGUI>();
-            tmp.text = text;
+            StatIcons.Set(tmp, text);
             tmp.fontSize = fontSize;
             tmp.fontStyle = style;
             tmp.alignment = align;
@@ -153,7 +153,7 @@ namespace TowerDefence.UI
             rowRT.anchorMax = new Vector2(0.5f, 1f);
             rowRT.pivot = new Vector2(0.5f, 1f);
             rowRT.anchoredPosition = offset;
-            rowRT.sizeDelta = new Vector2(290, 16);
+            rowRT.sizeDelta = new Vector2(290, 18);
 
             GameObject lGO = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             lGO.transform.SetParent(row.transform, false);
@@ -162,9 +162,9 @@ namespace TowerDefence.UI
             lRT.anchorMax = new Vector2(1, 1);
             lRT.pivot = new Vector2(0, 0.5f);
             lRT.anchoredPosition = new Vector2(16, 0);
-            lRT.sizeDelta = new Vector2(160, 16);
+            lRT.sizeDelta = new Vector2(160, 18);
             TextMeshProUGUI lTmp = lGO.GetComponent<TextMeshProUGUI>();
-            lTmp.text = label;
+            StatIcons.Set(lTmp, label);
             lTmp.fontSize = 13;
             lTmp.alignment = TextAlignmentOptions.Left;
             lTmp.color = new Color(0.7f, 0.7f, 0.8f);
@@ -177,10 +177,10 @@ namespace TowerDefence.UI
             vRT.anchorMax = new Vector2(1, 1);
             vRT.pivot = new Vector2(1, 0.5f);
             vRT.anchoredPosition = new Vector2(-16, 0);
-            vRT.sizeDelta = new Vector2(120, 16);
+            vRT.sizeDelta = new Vector2(120, 18);
             TextMeshProUGUI vTmp = vGO.GetComponent<TextMeshProUGUI>();
             vTmp.text = value;
-            vTmp.fontSize = 13;
+            vTmp.fontSize = 15;
             vTmp.fontStyle = FontStyles.Bold;
             vTmp.alignment = TextAlignmentOptions.Right;
             vTmp.color = goldValue ? new Color(1f, 0.85f, 0.2f) : Color.white;

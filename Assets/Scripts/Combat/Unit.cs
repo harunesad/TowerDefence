@@ -223,7 +223,7 @@ namespace TowerDefence.Combat
         /// <summary>Animator hızını verilen hareket hızına göre ayarlar.</summary>
         private void SyncAnimatorSpeed(float speed)
         {
-            if (animator == null) return;
+            if (animator == null || isAttacking) return;
             // Referans hızı: 1.0f. Animasyonlar bu hıza göre çekilmiş sayılır.
             // Kısmi çarpım (0.85f) aşırı hızlı görünmeyi engeller.
             const float baseSpeed = 1.0f;
@@ -407,7 +407,8 @@ namespace TowerDefence.Combat
             bool isFighting = false;
             if (!isStunned && targetCombatant != null && !targetCombatant.IsDead)
             {
-                float distance = GetFlatDistance(transform.position, ((MonoBehaviour)targetCombatant).transform.position);
+                Vector3 fightPos = ((MonoBehaviour)targetCombatant).transform.position;
+                float distance = GetCombatDistance(targetCombatant, fightPos);
                 
                 // Saldırı menziline küçük bir tolerans ekle (+0.5f)
                 if (distance <= attackRange + 0.5f)
@@ -432,7 +433,7 @@ namespace TowerDefence.Combat
                     // 1. Hedefi Kovala (Chase Logic)
                     wasChasing = true;
                     Vector3 chaseTarget = ((MonoBehaviour)targetCombatant).transform.position;
-                    float distance = GetFlatDistance(transform.position, chaseTarget);
+                    float distance = GetCombatDistance(targetCombatant, chaseTarget);
                     
                     // Yakın dövüşçü ise (Projectile yoksa) iyice dibine (1.2f) gir
                     float stopDistance = (unitData.projectilePrefab == null) ? 1.2f : attackRange * 0.8f;
@@ -541,8 +542,73 @@ namespace TowerDefence.Combat
 
         protected void MoveTowardsTarget(Vector3 targetPos)
         {
-            // MoveTowards kullanımı hem X/Z hem de Y (spline eğim ve yüksekliği) koordinatlarını takip eder
-            transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * slowMultiplier * GetCorruptionMultiplier() * Time.deltaTime);
+            float step = moveSpeed * slowMultiplier * GetCorruptionMultiplier() * Time.deltaTime;
+            Vector3 from = transform.position;
+            Vector3 next = Vector3.MoveTowards(from, targetPos, step);
+            transform.position = SlideAroundTowers(from, next);
+        }
+
+        private static Vector3 SlideAroundTowers(Vector3 from, Vector3 to)
+        {
+            const float skin = 0.4f;
+            Vector3 pos = to;
+            List<TowerObstacle> obstacles = TowerObstacle.All;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                for (int i = 0; i < obstacles.Count; i++)
+                {
+                    TowerObstacle obstacle = obstacles[i];
+                    if (obstacle == null) continue;
+
+                    Vector3 center = obstacle.Center;
+                    float limit = obstacle.Radius + skin;
+                    float dx = pos.x - center.x;
+                    float dz = pos.z - center.z;
+                    float distSq = dx * dx + dz * dz;
+                    if (distSq >= limit * limit) continue;
+
+                    float ox = from.x - center.x;
+                    float oz = from.z - center.z;
+                    float outside = Mathf.Sqrt(ox * ox + oz * oz);
+                    Vector3 normal;
+                    if (outside > 0.001f)
+                        normal = new Vector3(ox / outside, 0f, oz / outside);
+                    else if (distSq > 0.0001f)
+                        normal = new Vector3(dx, 0f, dz).normalized;
+                    else
+                        normal = Vector3.right;
+
+                    Vector3 move = new Vector3(to.x - from.x, 0f, to.z - from.z);
+                    Vector3 tangent = new Vector3(-normal.z, 0f, normal.x);
+                    if (Vector3.Dot(tangent, move) < 0f)
+                        tangent = -tangent;
+
+                    Vector3 slid = from + tangent * move.magnitude;
+                    float sx = slid.x - center.x;
+                    float sz = slid.z - center.z;
+                    float slidDist = Mathf.Sqrt(sx * sx + sz * sz);
+                    if (slidDist < limit)
+                    {
+                        if (slidDist < 0.001f)
+                        {
+                            slid.x = center.x + normal.x * limit;
+                            slid.z = center.z + normal.z * limit;
+                        }
+                        else
+                        {
+                            float scale = limit / slidDist;
+                            slid.x = center.x + sx * scale;
+                            slid.z = center.z + sz * scale;
+                        }
+                    }
+
+                    slid.y = to.y;
+                    pos = slid;
+                    from = pos;
+                }
+            }
+
+            return pos;
         }
 
         private void UpdateMoveTarget()
@@ -973,43 +1039,72 @@ namespace TowerDefence.Combat
             currentTargetMB = targetMB;
 
             IDamageable targetC = targetMB as IDamageable;
+            float attackDuration = 1f / Mathf.Max(0.01f, attackRate);
 
             if (targetC != null && !targetC.IsDead)
             {
-                if (animator != null) 
+                if (animator != null)
                 {
-                    animator.speed = Mathf.Max(1f, attackRate / 1.5f);
-                    animator.SetTrigger("Attack");
+                    float clipLength = GetAttackClipLength();
+                    animator.speed = clipLength > 0.05f ? clipLength / attackDuration : 1f;
+                    animator.ResetTrigger("Attack");
                     animator.SetBool("IsMoving", false);
+                    animator.SetTrigger("Attack");
                 }
 
-                // Animasyonun "vurma anı" için bekleme (Saldırı döngüsünün %50'si)
-                float attackDuration = 1f / attackRate;
-                float hitTime = attackDuration * 0.5f;
+                yield return new WaitForSeconds(attackDuration);
 
-                yield return new WaitForSeconds(hitTime);
-
-                // Kahraman bu bekleme süresinde hareket emri aldıysa vurmayı iptal et
                 if (this is HeroUnit && ((HeroUnit)this).IsMovingToManualTarget)
                 {
-                    isAttacking = false;
-                    if (animator != null) animator.speed = 1f;
+                    EndAttackSwing();
                     yield break;
                 }
 
-                // Fallback: Eğer animasyon event'i yoksa (hasDealtDamage hala false ise), hasarı uygula.
                 if (!hasDealtDamage)
-                {
                     ExecuteAttackHit();
-                }
-
-                // Geri kalan attack animasyon süresini (Recoil) bitirmesini bekle ki hemen kaymaya başlamasın
-                yield return new WaitForSeconds(attackDuration - hitTime);
             }
-            
-            if (animator != null) animator.speed = 1f; // Animator hızını normale çek
-            isAttacking = false;
+
+            EndAttackSwing();
             if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} PerformAttack finished. isAttacking reset to false.");
+        }
+
+        private float GetAttackClipLength()
+        {
+            if (animator == null || animator.runtimeAnimatorController == null) return 0f;
+
+            AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+            float longest = 0f;
+            for (int i = 0; i < clips.Length; i++)
+            {
+                AnimationClip clip = clips[i];
+                if (clip == null) continue;
+                AnimationEvent[] events = clip.events;
+                for (int e = 0; e < events.Length; e++)
+                {
+                    if (events[e].functionName != "OnAttackHit") continue;
+                    if (clip.length > longest) longest = clip.length;
+                }
+            }
+            return longest;
+        }
+
+        private void EndAttackSwing()
+        {
+            if (animator != null)
+            {
+                animator.speed = 1f;
+                animator.ResetTrigger("Attack");
+                if (!isDead && IsInAttackState())
+                    animator.Play("Idle", 0, 0f);
+            }
+            isAttacking = false;
+        }
+
+        private bool IsInAttackState()
+        {
+            if (animator == null) return false;
+            if (animator.GetCurrentAnimatorStateInfo(0).IsName("Attack")) return true;
+            return animator.IsInTransition(0) && animator.GetNextAnimatorStateInfo(0).IsName("Attack");
         }
 
         // Animation Event'ten çağrılacak metod
@@ -1309,6 +1404,14 @@ namespace TowerDefence.Combat
         private float GetFlatDistance(Vector3 a, Vector3 b)
         {
             return Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
+        }
+
+        private float GetCombatDistance(IDamageable target, Vector3 targetPos)
+        {
+            float distance = GetFlatDistance(transform.position, targetPos);
+            if (target is Tower tower)
+                distance = Mathf.Max(0f, distance - tower.ObstacleRadius);
+            return distance;
         }
     }
 }

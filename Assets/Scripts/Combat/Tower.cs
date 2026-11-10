@@ -232,6 +232,92 @@ namespace TowerDefence.Combat
             }
         }
 
+        private TowerObstacle towerObstacle;
+
+        public float ObstacleRadius => towerObstacle != null ? towerObstacle.Radius : 1.5f;
+
+        protected void EnsureTowerObstacle()
+        {
+            if (towerObstacle != null) return;
+
+            float radius = MeasureVisualRadius();
+
+            int layer = LayerMask.NameToLayer("TowerObstacle");
+            if (layer < 0) layer = 10;
+
+            GameObject obstacleObject = new GameObject("TowerObstacle");
+            obstacleObject.layer = layer;
+            obstacleObject.transform.SetParent(transform, false);
+            obstacleObject.transform.localPosition = Vector3.zero;
+            SphereCollider sphere = obstacleObject.AddComponent<SphereCollider>();
+            sphere.isTrigger = true;
+            sphere.radius = radius;
+            sphere.center = new Vector3(0f, radius * 0.5f, 0f);
+            towerObstacle = obstacleObject.AddComponent<TowerObstacle>();
+            towerObstacle.Radius = radius;
+        }
+
+        private float MeasureVisualRadius()
+        {
+            Transform visuals = transform.Find("Visuals");
+            Renderer[] renderers = visuals != null
+                ? visuals.GetComponentsInChildren<Renderer>(true)
+                : GetComponentsInChildren<Renderer>(true);
+
+            Vector3 origin = transform.position;
+            float reach = 0f;
+            bool found = false;
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer rend = renderers[i];
+                if (rend == null) continue;
+
+                Mesh mesh = null;
+                if (rend is MeshRenderer)
+                {
+                    MeshFilter filter = rend.GetComponent<MeshFilter>();
+                    if (filter != null) mesh = filter.sharedMesh;
+                }
+                else if (rend is SkinnedMeshRenderer skinned)
+                {
+                    mesh = skinned.sharedMesh;
+                }
+
+                if (mesh == null) continue;
+
+                Bounds local = mesh.bounds;
+                Vector3 ext = local.extents;
+                Vector3 center = local.center;
+                for (int xi = -1; xi <= 1; xi += 2)
+                {
+                    for (int zi = -1; zi <= 1; zi += 2)
+                    {
+                        Vector3 world = rend.transform.TransformPoint(center + new Vector3(ext.x * xi, 0f, ext.z * zi));
+                        float dx = world.x - origin.x;
+                        float dz = world.z - origin.z;
+                        reach = Mathf.Max(reach, Mathf.Sqrt(dx * dx + dz * dz));
+                    }
+                }
+                found = true;
+            }
+
+            if (!found)
+            {
+                Collider[] cols = GetComponents<Collider>();
+                for (int i = 0; i < cols.Length; i++)
+                {
+                    if (cols[i] == null || !cols[i].enabled) continue;
+                    Vector3 ext = cols[i].bounds.extents;
+                    reach = Mathf.Max(reach, ext.x, ext.z);
+                    found = true;
+                }
+            }
+
+            if (!found) return 1.5f;
+            return Mathf.Max(0.8f, reach + 0.35f);
+        }
+
         private void OnDestroy()
         {
             if (glowMaterials == null) return;
@@ -275,6 +361,7 @@ namespace TowerDefence.Combat
             if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
             
             if (firePoint == null) firePoint = transform.Find("FirePoint");
+            EnsureTowerObstacle();
             
             // 3D Kuleler için Weapon nesnesini kaldırdık, kule modelinin kendisi dönecek
             if (partToRotate == null)

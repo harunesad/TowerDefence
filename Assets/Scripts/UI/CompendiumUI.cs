@@ -172,7 +172,8 @@ namespace TowerDefence.UI
             if (detailName != null) detailName.text = data.unitName;
             if (detailStats != null)
             {
-                detailStats.text = $"HP: {data.maxHealth}\nDMG: {data.attackDamage}\nSPD: {data.moveSpeed}\nATK Rate: {data.attackRate:F2}/s";
+                detailStats.text = $"{StatIcons.Health} {data.maxHealth}\n{StatIcons.Damage} {data.attackDamage}\n{StatIcons.Move} {data.moveSpeed}\n{StatIcons.Attack} {data.attackRate:F2}/s";
+                StatIcons.Set(detailStats, detailStats.text);
             }
             if (detailLore != null)
             {

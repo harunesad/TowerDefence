@@ -299,7 +299,7 @@ namespace TowerDefence.UI
             BindStatsPanel();
             if (statsPanel == null || statsText == null || tower == null) return;
 
-            statsText.text = BuildStatsText(tower);
+            StatIcons.Set(statsText, BuildStatsText(tower));
             statsPanel.SetActive(true);
         }
 
@@ -312,15 +312,15 @@ namespace TowerDefence.UI
         {
             BarracksTower barracks = data.prefab != null ? data.prefab.GetComponent<BarracksTower>() : null;
             if (barracks != null)
-                return $"{data.towerName}\nHP {data.health:0}\nSoldiers {barracks.soldierCount}\nRespawn {barracks.respawnDelay:0}s";
+                return $"{data.towerName}\n{StatIcons.Health} {data.health:0}\n{StatIcons.Soldiers} {barracks.soldierCount}\n{StatIcons.Time} {barracks.respawnDelay:0}s";
 
-            string text = $"{data.towerName}\nDMG {data.damage:0}\nRNG {data.range:0.#}\nATK {data.fireRate:0.##}/s\nHP {data.health:0}";
+            string text = $"{data.towerName}\n{StatIcons.Damage} {data.damage:0}\n{StatIcons.Range} {data.range:0.#}\n{StatIcons.Attack} {data.fireRate:0.##}/s\n{StatIcons.Health} {data.health:0}";
             if (data.isArtillery && data.explosionRadius > 0f)
-                text += $"\nAOE {data.explosionRadius:0.#}";
+                text += $"\n{StatIcons.Area} {data.explosionRadius:0.#}";
             else if (data.isSlowTower)
-                text += $"\nSlow {data.effectPower * 100f:0}%";
+                text += $"\n{StatIcons.Slow} {data.effectPower * 100f:0}%";
             else if (data.isAuraTower)
-                text += $"\nAura +{data.auraDamageBonus * 100f:0}%";
+                text += $"\n{StatIcons.Aura} +{data.auraDamageBonus * 100f:0}%";
             return text;
         }
 

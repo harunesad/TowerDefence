@@ -1,5 +1,4 @@
 using UnityEngine;
-using TowerDefence.Core;
 using TowerDefence.UI;
 using TowerDefence.Data;
 
@@ -97,9 +96,6 @@ namespace TowerDefence.Grid
 
             // Slot görselini gizle (kule inşa edildi)
             SetSlotVisualsActive(false);
-
-            if (TowerPlacementManager.Instance != null && TowerPlacementManager.Instance.buildSFX != null)
-                AudioManager.Instance.PlaySFX(TowerPlacementManager.Instance.buildSFX);
         }
 
         public void ClearSlot()

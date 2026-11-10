@@ -634,7 +634,7 @@ namespace TowerDefence.UI
             }
             if (statsText == null) return;
 
-            statsText.text = BuildActionText(action);
+            StatIcons.Set(statsText, BuildActionText(action));
             statsPanel.SetActive(true);
             statsPanel.transform.SetAsLastSibling();
         }
@@ -660,7 +660,7 @@ namespace TowerDefence.UI
                 case RingAction.SpecB:
                     return BuildSpecText(1);
                 case RingAction.Sell:
-                    return $"{name}\nSell\n+{currentTower.GetSellRefund()}";
+                    return $"{name}\nSell\n{StatIcons.Gold} {currentTower.GetSellRefund()}";
                 case RingAction.Priority:
                     if (currentTower is BarracksTower)
                         return $"{name}\nMove\nChoose a rally point";
@@ -672,22 +672,22 @@ namespace TowerDefence.UI
 
         private string BuildInfoText(string name, TowerData data)
         {
-            string text = $"{name}\nLv {currentTower.CurrentLevel}\nHP {currentTower.GetCurrentHealth():0}/{currentTower.GetMaxHealth():0}";
+            string text = $"{name}\nLv {currentTower.CurrentLevel}\n{StatIcons.Health} {currentTower.GetCurrentHealth():0}/{currentTower.GetMaxHealth():0}";
 
             if (currentTower is BarracksTower barracks)
             {
-                text += $"\nSoldiers {barracks.soldierCount}\nRespawn {barracks.respawnDelay:0}s";
+                text += $"\n{StatIcons.Soldiers} {barracks.soldierCount}\n{StatIcons.Time} {barracks.respawnDelay:0}s";
                 return text;
             }
 
-            text += $"\nDMG {currentTower.GetCurrentDamage():0}\nRNG {currentTower.GetCurrentRange():0.#}\nATK {currentTower.GetCurrentFireRate():0.##}/s";
+            text += $"\n{StatIcons.Damage} {currentTower.GetCurrentDamage():0}\n{StatIcons.Range} {currentTower.GetCurrentRange():0.#}\n{StatIcons.Attack} {currentTower.GetCurrentFireRate():0.##}/s";
             if (data == null) return text;
             if (data.isArtillery && data.explosionRadius > 0f)
-                text += $"\nAOE {data.explosionRadius:0.#}";
+                text += $"\n{StatIcons.Area} {data.explosionRadius:0.#}";
             else if (data.isSlowTower)
-                text += $"\nSlow {data.effectPower * 100f:0}%";
+                text += $"\n{StatIcons.Slow} {data.effectPower * 100f:0}%";
             else if (data.isAuraTower)
-                text += $"\nAura +{data.auraDamageBonus * 100f:0}%";
+                text += $"\n{StatIcons.Aura} +{data.auraDamageBonus * 100f:0}%";
             return text;
         }
 
@@ -700,7 +700,7 @@ namespace TowerDefence.UI
             float nextDamage = currentTower.GetCurrentDamage() / Mathf.Max(1, currentTower.CurrentLevel) * next;
             float rangeLevel = 1f + (currentTower.CurrentLevel - 1) * 0.2f;
             float nextRange = currentTower.GetCurrentRange() / Mathf.Max(0.01f, rangeLevel) * (1f + (next - 1) * 0.2f);
-            return $"{name}\nUpgrade {data.upgradeCost}\nLv {currentTower.CurrentLevel} > {next}\nDMG {nextDamage:0}\nRNG {nextRange:0.#}";
+            return $"{name}\n{StatIcons.Gold} {data.upgradeCost}\nLv {currentTower.CurrentLevel} > {next}\n{StatIcons.Damage} {nextDamage:0}\n{StatIcons.Range} {nextRange:0.#}";
         }
 
         private string BuildSpecText(int index)
@@ -710,15 +710,15 @@ namespace TowerDefence.UI
             TowerData spec = specs[index];
             BarracksTower barracks = spec.prefab != null ? spec.prefab.GetComponent<BarracksTower>() : null;
             if (barracks != null)
-                return $"{spec.towerName}\n{spec.cost}\nHP {spec.health:0}\nSoldiers {barracks.soldierCount}\nRespawn {barracks.respawnDelay:0}s";
+                return $"{spec.towerName}\n{StatIcons.Gold} {spec.cost}\n{StatIcons.Health} {spec.health:0}\n{StatIcons.Soldiers} {barracks.soldierCount}\n{StatIcons.Time} {barracks.respawnDelay:0}s";
 
-            string text = $"{spec.towerName}\n{spec.cost}\nDMG {spec.damage:0}\nRNG {spec.range:0.#}\nATK {spec.fireRate:0.##}/s\nHP {spec.health:0}";
+            string text = $"{spec.towerName}\n{StatIcons.Gold} {spec.cost}\n{StatIcons.Damage} {spec.damage:0}\n{StatIcons.Range} {spec.range:0.#}\n{StatIcons.Attack} {spec.fireRate:0.##}/s\n{StatIcons.Health} {spec.health:0}";
             if (spec.isArtillery && spec.explosionRadius > 0f)
-                text += $"\nAOE {spec.explosionRadius:0.#}";
+                text += $"\n{StatIcons.Area} {spec.explosionRadius:0.#}";
             else if (spec.isSlowTower)
-                text += $"\nSlow {spec.effectPower * 100f:0}%";
+                text += $"\n{StatIcons.Slow} {spec.effectPower * 100f:0}%";
             else if (spec.isAuraTower)
-                text += $"\nAura +{spec.auraDamageBonus * 100f:0}%";
+                text += $"\n{StatIcons.Aura} +{spec.auraDamageBonus * 100f:0}%";
             return text;
         }
 

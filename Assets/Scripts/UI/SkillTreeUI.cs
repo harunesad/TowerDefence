@@ -93,19 +93,32 @@ namespace TowerDefence.UI
 
         public void OnNodeClicked(SkillNodeData data)
         {
-            if (detailPanel.activeSelf)
+            if (data == null) return;
+
+            if (detailPanel != null && detailPanel.activeSelf && selectedSkill == data)
             {
-                detailPanel.SetActive(false);
-                selectedSkill = null;
+                CloseDetailPanel();
                 return;
             }
 
             selectedSkill = data;
-            detailPanel.SetActive(true);
+            if (detailPanel != null) detailPanel.SetActive(true);
             
             if (detailIcon != null) detailIcon.sprite = data.icon;
             if (detailName != null) detailName.text = data.skillName;
-            if (detailDesc != null) detailDesc.text = data.description;
+            if (detailDesc != null)
+            {
+                string body = data.description ?? "";
+                SpellData spell = data.grantedSpell;
+                if (spell != null)
+                {
+                    if (body.Length > 0) body += "\n";
+                    body += $"Power {spell.power}  |  {StatIcons.Range} {spell.radius}\n";
+                    body += $"{StatIcons.Price(spell.side)} {spell.manaCost}  |  {StatIcons.Time} {spell.cooldown}s";
+                }
+                detailDesc.color = new Color(0.22f, 0.13f, 0.06f, 1f);
+                StatIcons.Set(detailDesc, body);
+            }
             if (detailCost != null)
             {
                 detailCost.text = "";

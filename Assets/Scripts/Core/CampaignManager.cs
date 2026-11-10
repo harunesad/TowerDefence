@@ -189,9 +189,7 @@ namespace TowerDefence.Core
             if (MetaProgressionManager.Instance == null || currentSelectedLevel == null) return;
             int crystals = Mathf.RoundToInt(MetaProgressionManager.Instance.GetTotalAdditiveBonus(UpgradeType.CrystalStartFlatBonus, Side.Neutral));
             if (crystals <= 0) return;
-            if (!MetaProgressionManager.Instance.TryClaimCrystalVault(currentSelectedLevel.levelID, currentDifficultyLevel))
-                return;
-            MetaProgressionManager.Instance.AddCrystals(crystals);
+            MetaProgressionManager.Instance.TryGrantCrystalVault(currentSelectedLevel.levelID, currentDifficultyLevel, crystals);
         }
 
         private void UnlockNextLevel()
