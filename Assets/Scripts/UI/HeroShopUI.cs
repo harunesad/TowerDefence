@@ -16,6 +16,11 @@ namespace TowerDefence.UI
         [SerializeField] private Button backButton;
         [SerializeField] private HeroDetailPanelUI detailPanel;
 
+        public RectTransform BackTarget => backButton != null ? backButton.transform as RectTransform : null;
+        public RectTransform BuyTarget => detailPanel != null ? detailPanel.ActionTarget : null;
+
+        bool scrolledDark;
+
         private readonly List<HeroShopItemUI> spawnedItems = new List<HeroShopItemUI>();
         private HeroData selectedHero;
 
@@ -28,6 +33,10 @@ namespace TowerDefence.UI
             {
                 backButton.onClick.AddListener(() =>
                 {
+                    if (TutorialDirector.Instance != null && TutorialDirector.Instance.BlocksHeroShopBack())
+                        return;
+                    if (TutorialDirector.Instance != null)
+                        TutorialDirector.Instance.OnHeroShopBack();
                     MainMenuController mc = GetComponentInParent<MainMenuController>();
                     if (mc != null) mc.ShowMainMenu();
                 });
@@ -68,6 +77,7 @@ namespace TowerDefence.UI
 
             RefreshKarma();
             Populate();
+            scrolledDark = false;
         }
 
         private void OnDisable()
@@ -106,11 +116,15 @@ namespace TowerDefence.UI
         {
             if (MetaProgressionManager.Instance == null) return;
             if (karmaText != null)
+            {
                 karmaText.text = MetaProgressionManager.Instance.GetTotalKarma().ToString();
                 CurrencyRowView.Apply(karmaText.transform, MetaProgressionManager.Instance.GetTotalKarma(), 0, false);
+            }
             if (crystalText != null)
+            {
                 crystalText.text = MetaProgressionManager.Instance.GetTotalCrystals().ToString();
                 CurrencyRowView.Apply(crystalText.transform, 0, MetaProgressionManager.Instance.GetTotalCrystals(), false);
+            }
         }
 
         public void Populate()
@@ -134,6 +148,51 @@ namespace TowerDefence.UI
 
             RefreshKarma();
             RefreshListHighlights();
+        }
+
+        public RectTransform DarkHeroTarget(string heroId)
+        {
+            if (string.IsNullOrEmpty(heroId)) return null;
+            foreach (HeroShopItemUI item in spawnedItems)
+            {
+                if (item == null || item.HeroData == null) continue;
+                if (item.HeroData.heroID == heroId)
+                    return item.transform as RectTransform;
+            }
+            return null;
+        }
+
+        private void LateUpdate()
+        {
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            bool lesson = tutorial != null && tutorial.Current() == "heroes_tell";
+            int page = lesson ? tutorial.HeroShopPage : -1;
+            string targetId = lesson ? tutorial.TaughtDarkHeroId() : null;
+
+            if (backButton != null)
+                backButton.interactable = !lesson || page >= 2;
+
+            foreach (HeroShopItemUI item in spawnedItems)
+            {
+                if (item == null) continue;
+                bool allowed = !lesson || (page == 0 && item.HeroData != null && item.HeroData.heroID == targetId);
+                item.SetCardInteractable(allowed);
+            }
+
+            if (!lesson)
+            {
+                scrolledDark = false;
+                return;
+            }
+            if (page != 0 || scrolledDark) return;
+            RectTransform target = DarkHeroTarget(targetId);
+            RectTransform content = itemContainer as RectTransform;
+            if (target == null || content == null) return;
+            Canvas.ForceUpdateCanvases();
+            if (Mathf.Abs(target.anchoredPosition.y) < 1f && target.GetSiblingIndex() > 0)
+                return;
+            content.anchoredPosition = new Vector2(content.anchoredPosition.x, -target.anchoredPosition.y);
+            scrolledDark = true;
         }
     }
 }

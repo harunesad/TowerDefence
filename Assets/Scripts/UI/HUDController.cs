@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using TMPro;
 using TowerDefence.Core;
 using TowerDefence.Combat;
@@ -62,6 +63,42 @@ namespace TowerDefence.UI
         [SerializeField] private HeroButtonUI[] preassignedHeroButtons;
         [SerializeField] private HeroStatsPanel heroStatsPanel;
 
+        public RectTransform CurrencyTarget => currencyText != null ? currencyText.transform.parent as RectTransform : null;
+        public RectTransform LivesTarget => livesText != null ? livesText.transform.parent as RectTransform : null;
+        public RectTransform WaveTarget => waveText != null ? waveText.transform.parent as RectTransform : null;
+        public RectTransform TimerTarget => timerText != null ? timerText.rectTransform : null;
+        public RectTransform SkipTarget => skipPrepButton != null ? skipPrepButton.transform as RectTransform : null;
+
+        public RectTransform AbilityTarget => abilityButton != null ? abilityButton.transform as RectTransform : null;
+
+        public RectTransform[] SpeedTargets()
+        {
+            List<RectTransform> speeds = new List<RectTransform>();
+            if (speedX1Button != null && speedX1Button.transform.parent is RectTransform panel)
+                speeds.Add(panel);
+            if (pauseButton != null) speeds.Add(pauseButton.transform as RectTransform);
+            return speeds.ToArray();
+        }
+
+        RectTransform spellTarget;
+        public RectTransform SpellTarget
+        {
+            get
+            {
+                if (spellTarget == null)
+                {
+                    Transform[] all = GetComponentsInChildren<Transform>(true);
+                    for (int i = 0; i < all.Length; i++)
+                    {
+                        if (all[i].name != "SpellPanel") continue;
+                        spellTarget = all[i] as RectTransform;
+                        break;
+                    }
+                }
+                return spellTarget;
+            }
+        }
+
         private void Start()
         {
             EnsureAbilityControls();
@@ -103,6 +140,7 @@ namespace TowerDefence.UI
             if (restartButton != null) restartButton.onClick.AddListener(RestartLevel);
             if (soundButton != null) soundButton.onClick.AddListener(OnSoundButtonClicked);
             UpdateSoundIcon();
+            ApplyPauseMenuLock();
             
             // Başlangıç değerleri
             if (SideController.Instance != null)
@@ -117,7 +155,8 @@ namespace TowerDefence.UI
                 UpdatePhaseUI(PhaseManager.Instance.GetCurrentPhase());
                 int total = 0;
                 var lvl = CampaignManager.Instance?.GetCurrentLevel();
-                if (lvl != null) total = lvl.waves.Count;
+                if (lvl != null && CampaignManager.Instance != null)
+                    total = CampaignManager.Instance.GetPlannedWaveCount(lvl);
                 UpdateWaveUI(PhaseManager.Instance.GetCurrentWaveIndex() + 1, total);
             }
             
@@ -270,6 +309,19 @@ namespace TowerDefence.UI
                 GameSpeedManager.Instance.OnSpeedChanged -= UpdateSpeedButtonHighlights;
         }
 
+        private void LateUpdate()
+        {
+            ApplyPauseMenuLock();
+        }
+
+        void ApplyPauseMenuLock()
+        {
+            bool locked = TutorialDirector.Instance != null && TutorialDirector.Instance.LocksPauseMenu();
+            if (menuButton != null) menuButton.interactable = !locked;
+            if (restartButton != null) restartButton.interactable = !locked;
+            if (soundButton != null) soundButton.interactable = !locked;
+        }
+
         private void UpdateLivesUI(int current, int max)
         {
             if (livesText != null)
@@ -419,6 +471,7 @@ namespace TowerDefence.UI
 
         public void RestartLevel()
         {
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.LocksPauseMenu()) return;
             if (GameSpeedManager.Instance != null)
                 GameSpeedManager.Instance.SetSpeedX1();
             else
@@ -437,6 +490,7 @@ namespace TowerDefence.UI
 
         public void ReturnToMenu()
         {
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.LocksPauseMenu()) return;
             if (GameSpeedManager.Instance != null)
                 GameSpeedManager.Instance.SetSpeedX1();
             else
@@ -448,6 +502,7 @@ namespace TowerDefence.UI
 
         public void OnSoundButtonClicked()
         {
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.LocksPauseMenu()) return;
             if (AudioManager.Instance != null)
             {
                 // MasterVolume 0 ise aç (1f veya önceki ses seviyesi), 0'dan büyükse kapat (0f)

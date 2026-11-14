@@ -16,6 +16,7 @@ namespace TowerDefence.UI
         [SerializeField] private Button button;
 
         private HeroData heroData;
+        public string ItemId => heroData != null ? heroData.heroID : null;
         private GameObject activePanel;
         private float lastClickTime;
         private const float DoubleClickThreshold = 0.3f;
@@ -39,6 +40,7 @@ namespace TowerDefence.UI
         public void OnPointerClick(PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left) return;
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.BlocksLoadoutClick("hero", ItemId)) return;
 
             float timeSinceLastClick = Time.unscaledTime - lastClickTime;
             lastClickTime = Time.unscaledTime;
@@ -76,6 +78,9 @@ namespace TowerDefence.UI
                 return;
             }
 
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnLoadoutRead("hero", ItemId);
+
             Canvas canvas = GetComponentInParent<Canvas>();
             if (canvas == null) canvas = FindObjectOfType<Canvas>();
             if (canvas == null) return;
@@ -89,6 +94,16 @@ namespace TowerDefence.UI
         private void ToggleSelection()
         {
             if (heroData == null || MetaProgressionManager.Instance == null) return;
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            if (tutorial != null && tutorial.IsDarkLoadoutLesson())
+            {
+                if (tutorial.BlocksLoadoutSelect("hero", ItemId)) return;
+                if (!MetaProgressionManager.Instance.GetEquippedHeroIDs().Contains(heroData.heroID))
+                    MetaProgressionManager.Instance.EquipHero(heroData.heroID);
+                RefreshAllLoadoutItems();
+                tutorial.OnLoadoutPicked("hero", ItemId);
+                return;
+            }
 
             if (MetaProgressionManager.Instance.GetEquippedHeroIDs().Contains(heroData.heroID))
             {

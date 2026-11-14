@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
+using TowerDefence.Core;
 using TowerDefence.Data;
 
 namespace TowerDefence.UI
@@ -122,6 +123,17 @@ namespace TowerDefence.UI
                 CreateText("CastText", castText, new Vector2(0, y), new Vector2(260, 20),
                     new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 14, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.6f, 1f, 0.6f));
             }
+
+            RaiseAboveShade(gameObject);
+            if (overlayRef != null) RaiseAboveShade(overlayRef);
+        }
+
+        static void RaiseAboveShade(GameObject go)
+        {
+            Canvas canvas = go.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 520;
+            go.AddComponent<GraphicRaycaster>();
         }
 
         private GameObject CreateImage(string name, Vector2 pos, Vector2 anchorMin, Vector2 anchorMax, Vector2 sizeDelta, Color color, bool raycastTarget)

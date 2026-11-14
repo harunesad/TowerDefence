@@ -34,6 +34,45 @@ namespace TowerDefence.Core
 
         [SerializeField] private System.Collections.Generic.List<LevelData> allLevels;
 
+        public bool AllLevelsCleared(int difficulty)
+        {
+            if (allLevels == null || allLevels.Count == 0 || MetaProgressionManager.Instance == null) return false;
+            bool any = false;
+            for (int i = 0; i < allLevels.Count; i++)
+            {
+                LevelData level = allLevels[i];
+                if (level == null || string.IsNullOrEmpty(level.levelID)) continue;
+                any = true;
+                if (!MetaProgressionManager.Instance.IsLevelCompleted(level.levelID, difficulty)) return false;
+            }
+            return any;
+        }
+
+        public LevelData FindLevel(string levelID)
+        {
+            if (allLevels == null || string.IsNullOrEmpty(levelID)) return null;
+            return allLevels.Find(level => level != null && level.levelID == levelID);
+        }
+
+        public int GetPlannedWaveCount(LevelData level)
+        {
+            if (level == null || level.waves == null) return 0;
+            int count = level.waves.Count;
+            if (currentDifficultyLevel != 1) return count;
+            if (level.levelID == "Level1") return Mathf.Min(3, count);
+            if (level.levelID == "Level2") return Mathf.Min(4, count);
+            return count;
+        }
+
+        public static int ScaleGroupCount(string levelID, int count)
+        {
+            if (count <= 1) return Mathf.Max(0, count);
+            if (Instance == null || Instance.currentDifficultyLevel != 1) return count;
+            if (levelID == "Level1") return Mathf.Max(1, count / 2);
+            if (levelID == "Level2") return Mathf.Max(1, Mathf.RoundToInt(count * 0.7f));
+            return count;
+        }
+
         public void SelectLevel(LevelData level)
         {
             currentSelectedLevel = level;
@@ -46,6 +85,11 @@ namespace TowerDefence.Core
 
         public void LoadSelectedLevel()
         {
+            if (currentSelectedLevel != null
+                && TutorialDirector.Instance != null
+                && TutorialDirector.Instance.LevelClosed(currentSelectedLevel.levelID))
+                return;
+
             grantCrystalsOnSpawn = true;
             if (currentSelectedLevel != null)
             {
@@ -357,6 +401,10 @@ namespace TowerDefence.Core
 
             int currentIndex = allLevels.IndexOf(currentSelectedLevel);
             int nextIndex = currentIndex + 1;
+            while (nextIndex < allLevels.Count
+                && TutorialDirector.Instance != null
+                && TutorialDirector.Instance.LevelClosed(allLevels[nextIndex].levelID))
+                nextIndex++;
 
             if (nextIndex >= allLevels.Count)
             {

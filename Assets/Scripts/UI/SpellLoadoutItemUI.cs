@@ -13,6 +13,7 @@ namespace TowerDefence.UI
         [SerializeField] private Button button;
 
         private SpellData spellData;
+        public string ItemId => spellData != null ? spellData.spellID : null;
         private GameObject activePanel;
         private float lastClickTime;
         private const float DoubleClickThreshold = 0.3f;
@@ -32,6 +33,7 @@ namespace TowerDefence.UI
         public void OnPointerClick(PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left) return;
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.BlocksLoadoutClick("spell", ItemId)) return;
 
             float timeSinceLastClick = Time.unscaledTime - lastClickTime;
             lastClickTime = Time.unscaledTime;
@@ -69,6 +71,9 @@ namespace TowerDefence.UI
                 return;
             }
 
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnLoadoutRead("spell", ItemId);
+
             Canvas canvas = GetComponentInParent<Canvas>();
             if (canvas == null) canvas = FindObjectOfType<Canvas>();
             if (canvas == null) return;
@@ -81,6 +86,17 @@ namespace TowerDefence.UI
 
         private void ToggleSelection()
         {
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            if (tutorial != null && tutorial.IsDarkLoadoutLesson())
+            {
+                if (spellData == null || tutorial.BlocksLoadoutSelect("spell", ItemId)) return;
+                if (!MetaProgressionManager.Instance.GetEquippedSpellIDs().Contains(spellData.spellID))
+                    MetaProgressionManager.Instance.EquipSpell(spellData.spellID);
+                RefreshUI();
+                tutorial.OnLoadoutPicked("spell", ItemId);
+                return;
+            }
+
             if (MetaProgressionManager.Instance.GetEquippedSpellIDs().Contains(spellData.spellID))
             {
                 MetaProgressionManager.Instance.UnequipSpell(spellData.spellID);

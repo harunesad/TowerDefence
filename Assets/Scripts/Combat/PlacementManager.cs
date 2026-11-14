@@ -46,6 +46,7 @@ namespace TowerDefence.Combat
                     if (CurrencyManager.Instance.TrySpendCurrency(selectedTower.side, selectedTower.cost))
                     {
                         Instantiate(selectedTower.prefab, gridPos, Quaternion.identity);
+                        TowerDefence.UI.CurrencyFloatUI.Show(gridPos, -selectedTower.cost, selectedTower.side);
                         Debug.Log("Tower Placed!");
                         // selectedTower = null; // Sürekli yerleştirme için kapalı tutulabilir
                     }

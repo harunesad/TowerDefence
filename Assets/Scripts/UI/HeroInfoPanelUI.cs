@@ -107,6 +107,16 @@ namespace TowerDefence.UI
                 new Vector2(0, y), new Vector2(290, 32),
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 14, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.7f, 0.7f, 0.8f));
+            RaiseAboveShade(gameObject);
+            if (overlayRef != null) RaiseAboveShade(overlayRef);
+        }
+
+        static void RaiseAboveShade(GameObject go)
+        {
+            Canvas canvas = go.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 520;
+            go.AddComponent<GraphicRaycaster>();
         }
 
         private GameObject CreateImage(string name, Vector2 pos, Vector2 anchorMin, Vector2 anchorMax, Vector2 sizeDelta, Color color, bool raycastTarget)

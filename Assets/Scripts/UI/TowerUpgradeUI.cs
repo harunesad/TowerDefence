@@ -172,6 +172,8 @@ namespace TowerDefence.UI
 
             currentSlot = slot;
             currentTower = tower;
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.Notify("tower_menu");
             selectedAction = RingAction.None;
             infoVisible = false;
             mainPanel.SetActive(true);
@@ -218,6 +220,8 @@ namespace TowerDefence.UI
                     CurrencyManager.Instance.AddCurrency(data.side, data.upgradeCost);
                     return;
                 }
+                if (currentSlot != null)
+                    CurrencyFloatUI.Show(currentSlot.GetPlacementPosition(), -data.upgradeCost, data.side);
                 currentTower.AddInvestedGold(data.upgradeCost);
                 currentTower.SetRangeVisible(true);
 
@@ -247,6 +251,7 @@ namespace TowerDefence.UI
             if (!CurrencyManager.Instance.TrySpendCurrency(specData.side, specData.cost))
                 return;
 
+            CurrencyFloatUI.Show(currentSlot.GetPlacementPosition(), -specData.cost, specData.side);
             int invested = currentTower.GetInvestedGold() + specData.cost;
             currentSlot.SpecializeTower(specData, invested);
                 
@@ -261,14 +266,16 @@ namespace TowerDefence.UI
 
         public void OnSellClicked()
         {
+            if (BlocksSell()) return;
             if (currentTower == null || currentSlot == null) return;
             TowerData data = currentTower.GetTowerData();
             int refund = currentTower.GetSellRefund();
             if (data != null && CurrencyManager.Instance != null)
-            CurrencyManager.Instance.AddCurrency(data.side, refund);
+                CurrencyManager.Instance.AddCurrency(data.side, refund);
+            if (currentSlot != null && data != null)
+                CurrencyFloatUI.Show(currentSlot.GetPlacementPosition(), refund, data.side);
             if (AudioManager.Instance != null && sellSFX != null)
                 AudioManager.Instance.PlaySFX(sellSFX);
-            WarningBannerUI.Show($"TOWER SOLD! +{refund} GOLD", 2.0f, new Color(1f, 0.85f, 0.2f, 1f), true);
             currentSlot.ClearSlot();
             Hide();
         }
@@ -306,9 +313,33 @@ namespace TowerDefence.UI
             currentTower = null;
         }
 
+        bool BlocksSell()
+        {
+            if (CampaignManager.Instance == null || CampaignManager.Instance.CurrentDifficultyLevel != 1) return false;
+            LevelData level = CampaignManager.Instance.GetCurrentLevel();
+            return level != null && level.levelID == "Level1";
+        }
+
+        public RectTransform LessonButton(string actionName)
+        {
+            if (mainPanel == null || !mainPanel.activeInHierarchy || string.IsNullOrEmpty(actionName)) return null;
+            Transform root = mainPanel.transform.Find("RingButtons");
+            if (root == null) return null;
+            return root.Find(actionName) as RectTransform;
+        }
+
         private void LateUpdate()
         {
             if (mainPanel == null || !mainPanel.activeSelf) return;
+
+            Transform sell = FindRingButton(RingAction.Sell);
+            if (sell != null)
+            {
+                bool allowSell = !BlocksSell()
+                    && (TutorialDirector.Instance == null || TutorialDirector.Instance.Current() != "tower_menu");
+                Button sellButtonOnRing = sell.GetComponent<Button>();
+                if (sellButtonOnRing != null) sellButtonOnRing.interactable = allowSell;
+            }
 
             transform.localPosition = DefaultLocalPosition;
 
@@ -558,6 +589,7 @@ namespace TowerDefence.UI
         private void OnRingAction(RingAction action)
         {
             if (currentTower == null) return;
+            if (action == RingAction.Sell && BlocksSell()) return;
 
             if (action == RingAction.Info)
             {

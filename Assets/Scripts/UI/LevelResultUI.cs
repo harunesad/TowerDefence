@@ -53,7 +53,7 @@ namespace TowerDefence.UI
             if (doubleRewardButton != null)
                 doubleRewardButton.onClick.AddListener(OnDoubleRewardClicked);
             if (closeButton != null)
-                closeButton.onClick.AddListener(() => gameObject.SetActive(false));
+                closeButton.onClick.AddListener(CloseResult);
         }
 
         public void Show(bool isVictory, int livesRemaining, int totalLives)
@@ -67,6 +67,8 @@ namespace TowerDefence.UI
             if (globalDifficulty < 1) globalDifficulty = 1;
 
             var currentLvl = CampaignManager.Instance != null ? CampaignManager.Instance.GetCurrentLevel() : null;
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnLevelResult(isVictory, currentLvl != null ? currentLvl.levelID : null);
             int levelDifficulty = (currentLvl != null && currentLvl.difficulty > 0) ? currentLvl.difficulty : 1;
             int totalMultiplier = levelDifficulty * globalDifficulty;
 
@@ -90,6 +92,11 @@ namespace TowerDefence.UI
                 {
                     (pendingKarma, pendingCrystals) = CampaignManager.Instance.CompleteCurrentLevel(stars, offeredKarma, offeredCrystals);
                 }
+
+                if (currentLvl != null && currentLvl.levelID == "Level1"
+                    && MetaProgressionManager.Instance != null
+                    && MetaProgressionManager.Instance.HasClearedLevel("Level1"))
+                    MetaProgressionManager.Instance.CommitTutorialCheckpoint();
 
                 if (doubleRewardButton != null)
                     doubleRewardButton.gameObject.SetActive(pendingKarma > 0 || pendingCrystals > 0);
@@ -127,10 +134,59 @@ namespace TowerDefence.UI
             }
             if (restartButton != null) restartButton.gameObject.SetActive(true);
             if (closeButton != null) closeButton.gameObject.SetActive(false);
+
+            if (!isVictory && TutorialDirector.Instance != null && TutorialDirector.Instance.WantsRestart())
+                LockToRestart();
+            if (isVictory && TutorialDirector.Instance != null && TutorialDirector.Instance.WantsMenuReturn())
+                LockToMenu();
+            if (isVictory && TutorialDirector.Instance != null && TutorialDirector.Instance.WantsMapReturn())
+                LockToNext();
         }
 
-        public void ShowSweepResult()
+        public RectTransform RestartTarget => restartButton != null ? restartButton.transform as RectTransform : null;
+        public RectTransform MenuTarget => menuButton != null ? menuButton.transform as RectTransform : null;
+        public RectTransform NextTarget => nextLevelButton != null ? nextLevelButton.transform as RectTransform : null;
+
+        public void LockToNext()
         {
+            if (menuButton != null) menuButton.interactable = false;
+            if (restartButton != null) restartButton.interactable = false;
+            if (closeButton != null) closeButton.interactable = false;
+            if (doubleRewardButton != null) doubleRewardButton.interactable = false;
+            if (nextLevelButton != null)
+            {
+                nextLevelButton.gameObject.SetActive(true);
+                nextLevelButton.interactable = true;
+            }
+        }
+
+        public void LockToMenu()
+        {
+            if (nextLevelButton != null) nextLevelButton.interactable = false;
+            if (restartButton != null) restartButton.interactable = false;
+            if (closeButton != null) closeButton.interactable = false;
+            if (doubleRewardButton != null) doubleRewardButton.interactable = false;
+            if (menuButton != null) menuButton.interactable = true;
+        }
+
+        public void LockToRestart()
+        {
+            if (menuButton != null) menuButton.interactable = false;
+            if (nextLevelButton != null)
+            {
+                nextLevelButton.interactable = false;
+                nextLevelButton.gameObject.SetActive(false);
+            }
+            if (closeButton != null) closeButton.interactable = false;
+            if (doubleRewardButton != null) doubleRewardButton.interactable = false;
+            if (restartButton != null) restartButton.interactable = true;
+        }
+
+        bool tutorialSweep;
+
+        public void ShowSweepResult(bool tutorialSweep = false)
+        {
+            this.tutorialSweep = tutorialSweep;
             gameObject.SetActive(true);
             hasDoubled = false;
             titleText.text = "LEVEL CLEARED!";
@@ -174,6 +230,7 @@ namespace TowerDefence.UI
             if (closeButton != null) 
             {
                 closeButton.gameObject.SetActive(true);
+                closeButton.interactable = true;
             }
             else 
             {
@@ -184,9 +241,29 @@ namespace TowerDefence.UI
                     var txt = menuButton.GetComponentInChildren<TextMeshProUGUI>();
                     if (txt != null) txt.text = "CLOSE";
                     menuButton.onClick.RemoveAllListeners();
-                    menuButton.onClick.AddListener(() => gameObject.SetActive(false));
+                    menuButton.onClick.AddListener(CloseResult);
                 }
             }
+            RaiseAboveShade();
+        }
+
+        void RaiseAboveShade()
+        {
+            Canvas canvas = GetComponent<Canvas>();
+            if (canvas == null) canvas = gameObject.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 560;
+            if (GetComponent<GraphicRaycaster>() == null)
+                gameObject.AddComponent<GraphicRaycaster>();
+        }
+
+        void CloseResult()
+        {
+            gameObject.SetActive(false);
+            if (!tutorialSweep) return;
+            tutorialSweep = false;
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.Notify("sweep_1");
         }
 
         private void UpdateRewardText()
@@ -247,6 +324,8 @@ namespace TowerDefence.UI
 
         private void OnMenuClicked()
         {
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.ClearMenuReturn();
             gameObject.SetActive(false);
 
             // Zamanı GameSpeedManager üzerinden normale döndür
@@ -273,6 +352,12 @@ namespace TowerDefence.UI
 
         private void OnNextLevelClicked()
         {
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.WantsMapReturn())
+            {
+                OnMenuClicked();
+                return;
+            }
+
             // Paneli kapat
             gameObject.SetActive(false);
 
@@ -295,7 +380,8 @@ namespace TowerDefence.UI
 
         private void OnRestartClicked()
         {
-            // Paneli kapat
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.ClearDefeatRetry();
             gameObject.SetActive(false);
 
             // Zamanı GameSpeedManager üzerinden normale döndür

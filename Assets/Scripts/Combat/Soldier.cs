@@ -42,6 +42,7 @@ namespace TowerDefence.Combat
         protected override void Update()
         {
             if (IsDead || IsLevelFinished()) return;
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.HoldsUnitMarch()) return;
             if (myBarracks != null && myBarracks.IsDisabled) return;
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 

@@ -41,7 +41,7 @@ namespace TowerDefence.UI
         private System.Collections.IEnumerator DeferredInit()
         {
             // Bekle ki SideController vs iyice yerleşsin
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSecondsRealtime(0.1f);
             InitializeUI();
             
             // Eğer hala (yanlışlıkla) aydınlık gelmişse veya boşsa birkaç kez daha dene
@@ -51,7 +51,7 @@ namespace TowerDefence.UI
                 {
                     InitializeUI();
                 }
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSecondsRealtime(0.5f);
             }
         }
 
@@ -74,17 +74,33 @@ namespace TowerDefence.UI
             UpdateButtonsInteractability();
         }
 
+        private bool trayLocked;
+
+        private void LateUpdate()
+        {
+            bool locked = TutorialDirector.Instance != null && TutorialDirector.Instance.LocksUnitTray();
+            if (locked == trayLocked) return;
+            trayLocked = locked;
+            UpdateButtonsInteractability();
+        }
+
         private void UpdateButtonsInteractability()
         {
             if (PhaseManager.Instance == null || CampaignManager.Instance == null || CampaignManager.Instance.GetCurrentLevel() == null) 
                 return;
 
+            bool lessonLock = TutorialDirector.Instance != null && TutorialDirector.Instance.LocksUnitTray();
             int totalWaves = CampaignManager.Instance.GetCurrentLevel().waves.Count;
             bool isBossWave = PhaseManager.Instance.GetCurrentWaveIndex() >= totalWaves - 1;
 
             foreach (var btn in spawnedButtons)
             {
                 if (btn == null || btn.UnitData == null) continue;
+                if (lessonLock)
+                {
+                    btn.SetInteractable(false);
+                    continue;
+                }
                 
                 bool isBoss = SideSelectionUI.BossNames.Contains(btn.UnitData.unitName);
                 

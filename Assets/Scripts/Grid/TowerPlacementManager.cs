@@ -153,7 +153,7 @@ namespace TowerDefence.Grid
             if (isInRallyMode)
                 hitSomething = Physics.Raycast(ray, out hit, 150f, groundMask, QueryTriggerInteraction.Ignore);
             else
-                hitSomething = Physics.Raycast(ray, out hit, 150f, Physics.AllLayers, QueryTriggerInteraction.Collide);
+                hitSomething = RaycastIgnoringTowerObstacle(ray, out hit);
             
             // --- RALLY MODE HANDLING ---
             if (isInRallyMode && currentRallyBarracks != null)
@@ -198,9 +198,18 @@ namespace TowerDefence.Grid
                 // ÖNCELİK: Eğer bir büyü seçiliyse kule işlemlerini yapma, büyüyü at
                 if (SpellManager.Instance != null && SpellManager.Instance.SelectedSpell != null)
                 {
+                    if (TutorialDirector.Instance != null && TutorialDirector.Instance.WaitsBossCast())
+                    {
+                        if (!TutorialDirector.Instance.BossCastHits(hit.point))
+                            return;
+                        SpellManager.Instance.CastSpell(SpellManager.Instance.SelectedSpell, hit.point);
+                        SpellManager.Instance.ClearSelectedSpell();
+                        TutorialDirector.Instance.OnBossSpellCast();
+                        return;
+                    }
                     SpellManager.Instance.CastSpell(SpellManager.Instance.SelectedSpell, hit.point);
                     SpellManager.Instance.ClearSelectedSpell();
-                    return; // İşlemi bitir
+                    return;
                 }
 
                 TowerSlot slot = hit.collider.GetComponentInParent<TowerSlot>();
@@ -217,7 +226,7 @@ namespace TowerDefence.Grid
                         AudioManager.Instance.PlaySFX(menuOpenSFX);
                     slot.HandleClick();
                 }
-                else
+                else if (TutorialDirector.Instance == null || !TutorialDirector.Instance.OnlyArcher())
                 {
                     // Boş bir yere veya slot olmayan bir yere tıklandığında tüm menüleri kapat
                     CloseAllTowerUI();
@@ -230,8 +239,27 @@ namespace TowerDefence.Grid
                 {
                     SpellManager.Instance.ClearSelectedSpell();
                 }
-                CloseAllTowerUI();
+                if (TutorialDirector.Instance == null || !TutorialDirector.Instance.OnlyArcher())
+                    CloseAllTowerUI();
             }
+        }
+
+        bool RaycastIgnoringTowerObstacle(Ray ray, out RaycastHit chosen)
+        {
+            RaycastHit[] hits = Physics.RaycastAll(ray, 150f, Physics.AllLayers, QueryTriggerInteraction.Collide);
+            float nearest = float.MaxValue;
+            chosen = default;
+            bool found = false;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Collider collider = hits[i].collider;
+                if (collider == null || collider.GetComponentInParent<TowerObstacle>() != null) continue;
+                if (hits[i].distance >= nearest) continue;
+                nearest = hits[i].distance;
+                chosen = hits[i];
+                found = true;
+            }
+            return found;
         }
 
         public void StartPlacementAtSlot(TowerSlot slot)
@@ -246,13 +274,24 @@ namespace TowerDefence.Grid
 
             if (CurrencyManager.Instance.TrySpendCurrency(data.side, data.cost))
             {
+                Vector3 builtAt = activeSlot.GetPlacementPosition();
                 activeSlot.PlaceTower(data.prefab, data);
+                CurrencyFloatUI.Show(builtAt, -data.cost, data.side);
                 
                 if (VFXManager.Instance != null)
                     VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, activeSlot.GetPlacementPosition(), Quaternion.identity);
 
                 if (AudioManager.Instance != null && buildSFX != null)
                     AudioManager.Instance.PlaySFX(buildSFX);
+
+                if (TutorialDirector.Instance != null)
+                {
+                    string levelId = CampaignManager.Instance != null && CampaignManager.Instance.GetCurrentLevel() != null
+                        ? CampaignManager.Instance.GetCurrentLevel().levelID
+                        : null;
+                    if (levelId == "Level2") TutorialDirector.Instance.Notify("place_tower_2");
+                    else TutorialDirector.Instance.Notify("place_tower");
+                }
 
                 CloseSelection();
             }

@@ -31,6 +31,7 @@ namespace TowerDefence.UI
 
         private int currentMapIndex = 0;
         private bool initialized = false;
+        private readonly Dictionary<string, RectTransform> levelTargets = new Dictionary<string, RectTransform>();
 
         private void Start()
         {
@@ -56,8 +57,120 @@ namespace TowerDefence.UI
         {
             if (!initialized) return;
 
-            // Her zaman ekranda en son gözüken / kalınan haritayı göster
+            BuildAllMaps();
             ShowMap(currentMapIndex);
+        }
+
+        private void LateUpdate()
+        {
+            ApplyLessonAccess();
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            bool locked = tutorial != null && tutorial.LocksLevelBack();
+            if (backButton != null) backButton.interactable = !locked;
+            if (!locked) return;
+
+            if (leftArrowButton != null) leftArrowButton.interactable = false;
+            if (rightArrowButton != null) rightArrowButton.interactable = false;
+            int mapIndex = MapIndexForId(tutorial.ForcedMapLevel());
+            if (mapIndex >= 0 && mapIndex != currentMapIndex) ShowMap(mapIndex);
+            if (leftArrowButton != null) leftArrowButton.interactable = false;
+            if (rightArrowButton != null) rightArrowButton.interactable = false;
+            EnsureLessonSweep();
+        }
+
+        void ApplyLessonAccess()
+        {
+            if (levelTargets.Count == 0) return;
+            foreach (var pair in levelTargets)
+            {
+                RectTransform rect = pair.Value;
+                if (rect == null) continue;
+                Button button = rect.GetComponent<Button>();
+                LevelData level = FindLevelData(pair.Key);
+                if (button == null || level == null) continue;
+                bool isUnlocked = CampaignManager.Instance != null && CampaignManager.Instance.IsLevelUnlocked(level);
+                bool closed = TutorialDirector.Instance != null && TutorialDirector.Instance.LevelClosed(level.levelID);
+                Transform lockedOverlay = rect.Find("LockedOverlay");
+                if (lockedOverlay != null) lockedOverlay.gameObject.SetActive(!isUnlocked || closed);
+                bool lessonOk = TutorialDirector.Instance == null || TutorialDirector.Instance.LevelAllowed(level.levelID);
+                button.interactable = isUnlocked && lessonOk;
+            }
+        }
+
+        void EnsureLessonSweep()
+        {
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            if (tutorial == null || !tutorial.SweepAllowed("Level1")) return;
+            if (!levelTargets.TryGetValue("Level1", out RectTransform level) || level == null) return;
+            Transform sweep = level.Find("SweepButton");
+            if (sweep == null) return;
+            if (sweep.gameObject.activeSelf) return;
+            LevelData data = FindLevelData("Level1");
+            if (data == null) return;
+            sweep.gameObject.SetActive(true);
+            Button sweepBtn = sweep.GetComponent<Button>();
+            if (sweepBtn == null) return;
+            sweepBtn.onClick.RemoveAllListeners();
+            sweepBtn.onClick.AddListener(() => OnSweepButtonClicked(data));
+        }
+
+        LevelData FindLevelData(string levelId)
+        {
+            if (maps == null) return null;
+            for (int i = 0; i < maps.Count; i++)
+            {
+                LevelMapData map = maps[i];
+                if (map == null || map.levels == null) continue;
+                for (int n = 0; n < map.levels.Count; n++)
+                {
+                    if (map.levels[n] != null && map.levels[n].levelID == levelId)
+                        return map.levels[n];
+                }
+            }
+            return null;
+        }
+
+        public RectTransform FindLevelTarget(string levelId)
+        {
+            if (string.IsNullOrEmpty(levelId)) return null;
+            levelTargets.TryGetValue(levelId, out RectTransform rect);
+            return rect;
+        }
+
+        public RectTransform RightArrowTarget => rightArrowButton != null ? rightArrowButton.transform as RectTransform : null;
+        public RectTransform HardTarget => btnDiffHard != null ? btnDiffHard.transform as RectTransform : null;
+        public RectTransform ExpertTarget => btnDiffExpert != null ? btnDiffExpert.transform as RectTransform : null;
+
+        public void ShowMapFor(string levelId)
+        {
+            int mapIndex = MapIndexForId(levelId);
+            if (mapIndex >= 0 && mapIndex != currentMapIndex) ShowMap(mapIndex);
+        }
+
+        public RectTransform FindSweepTarget(string levelId)
+        {
+            RectTransform level = FindLevelTarget(levelId);
+            if (level == null) return null;
+            Transform sweep = level.Find("SweepButton");
+            if (sweep != null && sweep.gameObject.activeInHierarchy)
+                return sweep as RectTransform;
+            return null;
+        }
+
+        int MapIndexForId(string levelId)
+        {
+            if (string.IsNullOrEmpty(levelId) || maps == null) return -1;
+            for (int i = 0; i < maps.Count; i++)
+            {
+                LevelMapData map = maps[i];
+                if (map == null || map.levels == null) continue;
+                for (int n = 0; n < map.levels.Count; n++)
+                {
+                    if (map.levels[n] != null && map.levels[n].levelID == levelId)
+                        return i;
+                }
+            }
+            return -1;
         }
 
         public int GetMapIndexForLevel(LevelData level)
@@ -81,9 +194,13 @@ namespace TowerDefence.UI
 
         private void OnNavigateMap(int direction)
         {
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.LocksLevelBack()) return;
             if (maps == null || maps.Count == 0) return;
             int next = Mathf.Clamp(currentMapIndex + direction, 0, maps.Count - 1);
-            if (next != currentMapIndex) ShowMap(next);
+            if (next == currentMapIndex) return;
+            ShowMap(next);
+            if (direction > 0 && TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnNextMap();
         }
 
         private void ShowMap(int index)
@@ -139,6 +256,8 @@ namespace TowerDefence.UI
             CampaignManager.Instance.SetDifficulty(difficulty);
             RefreshDifficultyButtonsUI();
             BuildAllMaps();
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnDifficultyPicked(difficulty);
         }
 
         private void RefreshDifficultyButtonsUI()
@@ -185,6 +304,7 @@ namespace TowerDefence.UI
         // Tüm haritaların slot'larına seviye butonu kurar/bağlar
         private void BuildAllMaps()
         {
+            levelTargets.Clear();
             if (maps == null || slotContainers == null) return;
 
             int count = Mathf.Min(maps.Count, slotContainers.Count);
@@ -253,7 +373,8 @@ namespace TowerDefence.UI
             // Kilit durumunu kontrol et
             bool isUnlocked = CampaignManager.Instance != null && CampaignManager.Instance.IsLevelUnlocked(level);
             Transform lockedOverlay = buttonGO.transform.Find("LockedOverlay");
-            if (lockedOverlay != null) lockedOverlay.gameObject.SetActive(!isUnlocked);
+            bool closed = TutorialDirector.Instance != null && TutorialDirector.Instance.LevelClosed(level.levelID);
+            if (lockedOverlay != null) lockedOverlay.gameObject.SetActive(!isUnlocked || closed);
 
             // Sweep (Hızlı Geç) Butonu
             Transform sweepButtonTrans = buttonGO.transform.Find("SweepButton");
@@ -262,7 +383,8 @@ namespace TowerDefence.UI
                 Button sweepBtn = sweepButtonTrans.GetComponent<Button>();
                 if (sweepBtn != null)
                 {
-                    if (earnedStars >= 3 && isUnlocked)
+                    bool sweepLesson = TutorialDirector.Instance != null && TutorialDirector.Instance.SweepAllowed(level.levelID);
+                    if ((earnedStars >= 3 && isUnlocked && !closed) || sweepLesson)
                     {
                         sweepBtn.gameObject.SetActive(true);
                         sweepBtn.onClick.RemoveAllListeners();
@@ -275,7 +397,9 @@ namespace TowerDefence.UI
                 }
             }
 
-            button.interactable = isUnlocked;
+            bool lessonOk = TutorialDirector.Instance == null || TutorialDirector.Instance.LevelAllowed(level.levelID);
+            button.interactable = isUnlocked && lessonOk;
+            levelTargets[level.levelID] = button.transform as RectTransform;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => OnLevelSelected(level));
         }
@@ -283,6 +407,7 @@ namespace TowerDefence.UI
         private void OnLevelSelected(LevelData level)
         {
             if (CampaignManager.Instance == null || !CampaignManager.Instance.IsLevelUnlocked(level)) return;
+            if (TutorialDirector.Instance != null && !TutorialDirector.Instance.LevelAllowed(level.levelID)) return;
 
             CampaignManager.Instance.SelectLevel(level);
             Debug.Log($"LevelSelectionUI: {level.levelName} selected.");
@@ -301,6 +426,33 @@ namespace TowerDefence.UI
 
         private void OnSweepButtonClicked(LevelData level)
         {
+            if (level == null) return;
+            bool lesson = TutorialDirector.Instance != null && TutorialDirector.Instance.SweepAllowed(level.levelID);
+            if (!lesson && TutorialDirector.Instance != null && !TutorialDirector.Instance.LevelAllowed(level.levelID)) return;
+            if (lesson)
+            {
+                if (CampaignManager.Instance != null)
+                    CampaignManager.Instance.SelectLevel(level);
+                if (AdManager.Instance == null)
+                {
+                    Debug.LogWarning("AdManager not found!");
+                    return;
+                }
+                AdManager.Instance.ShowRewardedAd(
+                    onSuccess: () =>
+                    {
+                        if (CampaignManager.Instance != null)
+                        {
+                            CampaignManager.Instance.SelectLevel(level);
+                            CampaignManager.Instance.AllowAnotherCompletionReward();
+                        }
+                        if (sweepResultUI != null)
+                            sweepResultUI.ShowSweepResult(true);
+                        else if (TutorialDirector.Instance != null)
+                            TutorialDirector.Instance.Notify("sweep_1");
+                    });
+                return;
+            }
             if (AdManager.Instance != null)
             {
                 AdManager.Instance.ShowRewardedAd(

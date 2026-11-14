@@ -24,7 +24,7 @@ namespace TowerDefence.UI
 
         [Header("Cell Colors")]
         [SerializeField] private Color claimedColor = new Color(0.3f, 0.3f, 0.3f, 0.8f);
-        [SerializeField] private Color availableColor = new Color(0.2f, 0.6f, 0.2f, 0.9f);
+        [SerializeField] private Color availableColor = new Color(0.55f, 0.42f, 0.12f, 0.95f);
         [SerializeField] private Color waitingColor = new Color(0.4f, 0.4f, 0.2f, 0.8f);
         [SerializeField] private Color lockedColor = new Color(0.15f, 0.15f, 0.15f, 0.7f);
 
@@ -49,8 +49,37 @@ namespace TowerDefence.UI
             RefreshUI();
         }
 
+        private void LateUpdate()
+        {
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            if (tutorial == null || tutorial.Current() != "daily_tell") return;
+            bool closing = tutorial.WaitsDailyClose();
+            if (claimButton != null && closing)
+                claimButton.interactable = false;
+            Button target = closing ? closeButton : claimButton;
+            if (target == null) return;
+            target.interactable = true;
+            RaiseAboveShade(target.gameObject);
+        }
+
+        static void RaiseAboveShade(GameObject go)
+        {
+            Canvas canvas = go.GetComponent<Canvas>();
+            if (canvas == null) canvas = go.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 560;
+            if (go.GetComponent<GraphicRaycaster>() == null)
+                go.AddComponent<GraphicRaycaster>();
+        }
+
         private void ClosePanel()
         {
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.Current() == "daily_tell")
+            {
+                if (!TutorialDirector.Instance.WaitsDailyClose()) return;
+                TutorialDirector.Instance.OnDailyClosed();
+                return;
+            }
             gameObject.SetActive(false);
             if (backdrop != null) backdrop.SetActive(false);
         }
@@ -70,6 +99,9 @@ namespace TowerDefence.UI
                 cells[i] = cell;
             }
         }
+
+        public RectTransform ClaimTarget => claimButton != null ? claimButton.transform as RectTransform : null;
+        public RectTransform CloseTarget => closeButton != null ? closeButton.transform as RectTransform : null;
 
         public void RefreshUI()
         {
@@ -146,7 +178,7 @@ namespace TowerDefence.UI
                 switch (status)
                 {
                     case "claimed":   statusText.text = "DONE"; break;
-                    case "available": statusText.text = "CLAIM"; break;
+                    case "available": statusText.text = "TODAY"; break;
                     case "waiting":   statusText.text = "WAIT"; break;
                     default:          statusText.text = "LOCK"; break;
                 }
@@ -168,11 +200,16 @@ namespace TowerDefence.UI
         private void ClaimReward()
         {
             if (drm == null) return;
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            if (tutorial != null && tutorial.Current() == "daily_tell" && tutorial.WaitsDailyClose())
+                return;
 
             if (drm.ClaimReward(out int karma, out int crystal))
             {
                 RefreshUI();
                 WarningBannerUI.Show("DAILY REWARD CLAIMED!", 2.5f, new Color(0.2f, 1f, 0.4f, 1f), true);
+                if (TutorialDirector.Instance != null)
+                    TutorialDirector.Instance.OnDailyClaimed();
             }
         }
     }

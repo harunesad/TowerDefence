@@ -75,6 +75,18 @@ namespace TowerDefence.UI
             UpdateCurrencyUI();
             UpdateDailyRewardUI();
             UpdateFortuneWheelUI();
+            ApplyTutorialButtons();
+            ReleaseCoveredMenuButton(dailyRewardPanel, dailyRewardButton);
+            ReleaseCoveredMenuButton(fortuneWheelPanel, fortuneWheelButton);
+        }
+
+        static void ReleaseCoveredMenuButton(GameObject panel, Button button)
+        {
+            if (button == null) return;
+            bool covered = panel != null && panel.activeInHierarchy;
+            if (covered) button.interactable = false;
+            if (button.targetGraphic != null)
+                button.targetGraphic.raycastTarget = !covered;
         }
 
         private void UpdateCurrencyUI()
@@ -202,7 +214,9 @@ namespace TowerDefence.UI
             if (settingsBackdrop != null) settingsBackdrop.SetActive(false);
 
             // Buton olaylarını bağla
-            if (playButton != null) playButton.onClick.AddListener(ShowLevelSelect);
+            if (playButton != null)
+                playButton.onClick.AddListener(ShowLevelSelect);
+            ApplyTutorialButtons();
             if (skillTreeButton != null) skillTreeButton.onClick.AddListener(ShowSkillTree);
             if (heroesButton != null) heroesButton.onClick.AddListener(ShowHeroShop);
             if (compendiumButton != null) compendiumButton.onClick.AddListener(ShowCompendium);
@@ -256,8 +270,32 @@ namespace TowerDefence.UI
             panel.transform.localScale = startScale;
         }
 
+        void ApplyTutorialButtons()
+        {
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            bool finished = tutorial == null;
+            SetLessonButton(playButton, finished || tutorial.MenuButtonAllowed("play"));
+            SetLessonButton(skillTreeButton, finished || tutorial.MenuButtonAllowed("skill"));
+            SetLessonButton(heroesButton, finished || tutorial.MenuButtonAllowed("heroes"));
+            SetLessonButton(compendiumButton, finished || tutorial.MenuButtonAllowed("compendium"));
+            SetLessonButton(fortuneWheelButton, finished || tutorial.MenuButtonAllowed("fortune"));
+            SetLessonButton(dailyRewardButton, finished || tutorial.MenuButtonAllowed("daily"));
+            SetLessonButton(settingsButton, finished || !tutorial.SettingsLocked());
+            SetLessonButton(quitButton, finished || tutorial.MenuButtonAllowed("quit"));
+        }
+
+        static void SetLessonButton(Button button, bool allowed)
+        {
+            if (button != null) button.interactable = allowed;
+        }
+
         public void ShowMainMenu() => TransitionToPanel(mainMenuPanel);
-        public void ShowLevelSelect() => TransitionToPanel(levelSelectPanel);
+        public void ShowLevelSelect()
+        {
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.Notify("war_intro");
+            TransitionToPanel(levelSelectPanel);
+        }
         public void ShowSkillTree() => TransitionToPanel(skillTreePanel);
         public void ShowHeroShop() => TransitionToPanel(heroShopPanel);
         public void ShowSideSelection() => TransitionToPanel(sideSelectionPanel);
@@ -305,8 +343,46 @@ namespace TowerDefence.UI
 
         public void QuitGame()
         {
+            if (TutorialDirector.Instance != null && !TutorialDirector.Instance.MenuButtonAllowed("quit"))
+                return;
             Application.Quit();
             Debug.Log("Quit Game");
         }
+
+        public bool IsRootMenu()
+        {
+            return mainMenuPanel != null && currentActivePanel == mainMenuPanel && mainMenuPanel.activeInHierarchy;
+        }
+
+        public RectTransform ButtonTarget(string key)
+        {
+            Button button = null;
+            switch (key)
+            {
+                case "play": button = playButton; break;
+                case "skill": button = skillTreeButton; break;
+                case "heroes": button = heroesButton; break;
+                case "compendium": button = compendiumButton; break;
+                case "fortune": button = fortuneWheelButton; break;
+                case "daily": button = dailyRewardButton; break;
+            }
+            return button != null ? button.transform as RectTransform : null;
+        }
+
+        public bool IsPanelOpen(string key)
+        {
+            switch (key)
+            {
+                case "skill": return skillTreePanel != null && skillTreePanel.activeInHierarchy;
+                case "fortune": return fortuneWheelPanel != null && fortuneWheelPanel.activeInHierarchy;
+                case "daily": return dailyRewardPanel != null && dailyRewardPanel.activeInHierarchy;
+                case "compendium": return compendiumPanel != null && compendiumPanel.activeInHierarchy;
+                case "heroes": return heroShopPanel != null && heroShopPanel.activeInHierarchy;
+                case "side": return sideSelectionPanel != null && sideSelectionPanel.activeInHierarchy;
+                case "level": return levelSelectPanel != null && levelSelectPanel.activeInHierarchy;
+                default: return false;
+            }
+        }
+
     }
 }

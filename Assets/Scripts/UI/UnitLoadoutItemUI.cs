@@ -15,6 +15,7 @@ namespace TowerDefence.UI
         [SerializeField] private Button button;
 
         private UnitData unitData;
+        public string ItemId => unitData != null ? unitData.unitName : null;
         private UnitInfoPanelUI activePanel;
         private float lastClickTime;
         private const float DoubleClickThreshold = 0.3f;
@@ -38,6 +39,7 @@ namespace TowerDefence.UI
         public void OnPointerClick(PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left) return;
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.BlocksLoadoutClick("unit", ItemId)) return;
 
             float timeSinceLastClick = Time.unscaledTime - lastClickTime;
             lastClickTime = Time.unscaledTime;
@@ -70,6 +72,9 @@ namespace TowerDefence.UI
             var existing = FindObjectOfType<UnitInfoPanelUI>();
             if (existing != null) Destroy(existing.gameObject);
 
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnLoadoutRead("unit", ItemId);
+
             Canvas canvas = GetComponentInParent<Canvas>();
             if (canvas == null) canvas = FindObjectOfType<Canvas>();
             if (canvas == null) return;
@@ -89,6 +94,18 @@ namespace TowerDefence.UI
         private void ToggleSelection()
         {
             if (unitData == null || MetaProgressionManager.Instance == null) return;
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            if (tutorial != null && tutorial.IsDarkLoadoutLesson())
+            {
+                if (tutorial.BlocksLoadoutSelect("unit", ItemId)) return;
+                if (!MetaProgressionManager.Instance.IsUnitEquipped(unitData.unitName))
+                    MetaProgressionManager.Instance.EquipUnit(unitData.unitName);
+                RefreshAllLoadoutItems();
+                SideSelectionUI lessonUi = GetComponentInParent<SideSelectionUI>();
+                if (lessonUi != null) lessonUi.RefreshStartMatchButton();
+                tutorial.OnLoadoutPicked("unit", ItemId);
+                return;
+            }
 
             if (MetaProgressionManager.Instance.IsUnitEquipped(unitData.unitName))
                 MetaProgressionManager.Instance.UnequipUnit(unitData.unitName);

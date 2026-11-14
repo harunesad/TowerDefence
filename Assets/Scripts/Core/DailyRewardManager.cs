@@ -98,6 +98,20 @@ namespace TowerDefence.UI
             return GetPendingCount() > 0;
         }
 
+        public void PrepareLessonClaim()
+        {
+            if (MetaProgressionManager.Instance == null) return;
+            if (!TryGetTrustedNow(out DateTime now)) return;
+            int claimed = GetCurrentDayIndex();
+            if (claimed <= 0 || claimed >= 30) return;
+            long lastTicks = MetaProgressionManager.Instance.GetLastDailyRewardTime();
+            if (lastTicks == 0 || new DateTime(lastTicks).Date != now.Date) return;
+            if (GetPendingCount() <= 0) return;
+            long pinned = now.Date.AddDays(1 - claimed).Ticks;
+            if (MetaProgressionManager.Instance.GetDailyRewardStartTicks() == pinned) return;
+            MetaProgressionManager.Instance.SetDailyRewardStartTicks(pinned);
+        }
+
         public bool ClaimReward(out int karma, out int crystal)
         {
             karma = 0;

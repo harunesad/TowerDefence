@@ -25,6 +25,12 @@ namespace TowerDefence.UI
         [SerializeField] private TextMeshProUGUI detailLore;
         [SerializeField] private Button backButton;
 
+        public RectTransform FirstUnitTarget => firstUnit;
+        public string FirstUnitName { get; private set; }
+        public RectTransform BackTarget => backButton != null ? backButton.transform as RectTransform : null;
+
+        RectTransform firstUnit;
+
         [Header("Audio")]
         [SerializeField] private AudioClip pageSFX;
 
@@ -40,6 +46,10 @@ namespace TowerDefence.UI
             if (backButton != null)
             {
                 backButton.onClick.AddListener(() => {
+                    if (TutorialDirector.Instance != null && TutorialDirector.Instance.BlocksCompendiumBack())
+                        return;
+                    if (TutorialDirector.Instance != null)
+                        TutorialDirector.Instance.OnCompendiumBack();
                     MainMenuController mc = GetComponentInParent<MainMenuController>();
                     if (mc != null) mc.ShowMainMenu();
                 });
@@ -48,6 +58,25 @@ namespace TowerDefence.UI
             EnsureGridLayout();
             PopulateCompendium();
             if (detailPanel != null) detailPanel.SetActive(false);
+        }
+
+        private void LateUpdate()
+        {
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            bool lesson = tutorial != null && tutorial.Current() == "compendium_tell";
+            int page = lesson ? tutorial.CompendiumPage : -1;
+            if (backButton != null)
+                backButton.interactable = !lesson || page >= 1;
+
+            RectTransform contentParent = GetContentParent();
+            if (contentParent == null) return;
+            foreach (Transform child in contentParent)
+            {
+                Button button = child.GetComponent<Button>();
+                if (button == null) continue;
+                bool first = firstUnit != null && child == firstUnit;
+                button.interactable = !lesson || (page == 0 && first);
+            }
         }
 
         private RectTransform GetContentParent()
@@ -90,6 +119,8 @@ namespace TowerDefence.UI
             foreach (Transform t in contentParent) Destroy(t.gameObject);
 
             HashSet<string> seen = new HashSet<string>();
+            firstUnit = null;
+            FirstUnitName = null;
 
             // 1. Use serialized allUnits if available
             if (allUnits != null && allUnits.Count > 0)
@@ -145,6 +176,11 @@ namespace TowerDefence.UI
             }
 
             item.name = "CompendiumItem_" + data.unitName;
+            if (firstUnit == null)
+            {
+                firstUnit = item.transform as RectTransform;
+                FirstUnitName = data.unitName;
+            }
 
             Image iconImg = item.transform.Find("Icon")?.GetComponent<Image>();
             TextMeshProUGUI nameTxt = item.transform.Find("Name")?.GetComponent<TextMeshProUGUI>();
@@ -186,6 +222,8 @@ namespace TowerDefence.UI
                     detailLore.text = data.side == Side.Light ? "A brave defender of the light." : "A corrupted creature of the dark.";
                 }
             }
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnCompendiumUnit(data.unitName);
         }
     }
 }

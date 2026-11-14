@@ -258,6 +258,7 @@ namespace TowerDefence.Combat
         protected override void Update()
         {
             if (IsDead || IsLevelFinished()) return;
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.HoldsUnitMarch()) return;
 
             GamePhase currentPhase = PhaseManager.Instance != null ? PhaseManager.Instance.GetCurrentPhase() : GamePhase.Preparation;
 
@@ -321,6 +322,9 @@ namespace TowerDefence.Combat
                 {
                     AudioManager.Instance.PlaySFX(sfx);
                 }
+
+                if (TutorialDirector.Instance != null)
+                    TutorialDirector.Instance.Notify("hero_skill");
 
                 return true;
             }
@@ -594,7 +598,11 @@ namespace TowerDefence.Combat
             Side opponentSide = GetSide() == Side.Light ? Side.Dark : Side.Light;
             int reward = grantKillReward ? GetScaledKillReward() : 0;
             if (reward > 0 && CurrencyManager.Instance != null)
+            {
                 CurrencyManager.Instance.AddCurrency(opponentSide, reward);
+                if (SideController.Instance != null && opponentSide == SideController.Instance.GetPlayerSide())
+                    TowerDefence.UI.CurrencyFloatUI.Show(transform.position, reward, opponentSide);
+            }
         }
 
         public void Respawn(Vector3 position)

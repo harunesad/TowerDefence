@@ -76,6 +76,19 @@ namespace TowerDefence.UI
             }
 
             PopulateData();
+            RaiseAboveShade(panelRoot);
+            if (blockerPanel != null) RaiseAboveShade(blockerPanel);
+        }
+
+        static void RaiseAboveShade(GameObject go)
+        {
+            if (go == null) return;
+            Canvas canvas = go.GetComponent<Canvas>();
+            if (canvas == null) canvas = go.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 560;
+            if (go.GetComponent<GraphicRaycaster>() == null)
+                go.AddComponent<GraphicRaycaster>();
         }
 
         private void ClampToScreen(Canvas canvas, RectTransform rt)
@@ -181,10 +194,13 @@ namespace TowerDefence.UI
 
         public void Hide()
         {
+            bool wasOpen = panelRoot != null && panelRoot.activeSelf;
             if (blockerPanel != null) blockerPanel.SetActive(false);
             if (panelRoot != null) panelRoot.SetActive(false);
             currentData = null;
             currentHero = null;
+            if (wasOpen && TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnBattleHeroInfoClosed();
         }
 
         public bool IsVisible => panelRoot != null && panelRoot.activeSelf;

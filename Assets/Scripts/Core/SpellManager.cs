@@ -53,8 +53,10 @@ namespace TowerDefence.Core
             if (spell.spellType == Data.SpellType.Reinforcement && spell.unitPrefabToSpawn == null)
                 return;
 
-            if (!CurrencyManager.Instance.TrySpendCurrency(SideController.Instance.GetPlayerSide(), spell.manaCost))
+            Side payer = SideController.Instance.GetPlayerSide();
+            if (!CurrencyManager.Instance.TrySpendCurrency(payer, spell.manaCost))
                 return;
+            TowerDefence.UI.CurrencyFloatUI.Show(targetPos, -spell.manaCost, payer);
             
             // Eğer tek seferlikse kaydet
             if (spell.isOneTimeUse)
@@ -139,8 +141,9 @@ namespace TowerDefence.Core
                     break;
                 case Data.SpellType.GoldBoost:
                     int goldAmt = (int)spell.power;
-                    CurrencyManager.Instance.AddCurrency(SideController.Instance.GetPlayerSide(), goldAmt);
-                    TowerDefence.UI.WarningBannerUI.Show($"GOLD BOOST! +{goldAmt} GOLD", 2.0f, new Color(1f, 0.85f, 0.2f, 1f), true);
+                    Side boosted = SideController.Instance.GetPlayerSide();
+                    CurrencyManager.Instance.AddCurrency(boosted, goldAmt);
+                    TowerDefence.UI.CurrencyFloatUI.Show(PlayerBasePosition(targetPos), goldAmt, boosted);
                     break;
                 case Data.SpellType.Shield:
                     ApplyAoEShield(targetPos, spell.radius, spell.duration > 0 ? spell.duration : spell.power);

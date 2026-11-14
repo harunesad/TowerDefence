@@ -152,12 +152,13 @@ namespace TowerDefence.UI
             }
 
             Button button = buttonGO.GetComponent<Button>();
+            bool lessonLock = TutorialDirector.Instance != null && TutorialDirector.Instance.OnlyArcher() && tower.towerName != "Archer Tower";
 
             Image iconImg = buttonGO.transform.Find("Icon")?.GetComponent<Image>();
             if (iconImg != null)
             {
                 iconImg.sprite = tower.icon;
-                iconImg.color = Color.white;
+                iconImg.color = lessonLock ? new Color(0.35f, 0.35f, 0.35f, 0.4f) : Color.white;
             }
 
             Side side = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : tower.side;
@@ -167,12 +168,14 @@ namespace TowerDefence.UI
             if (costText != null)
             {
                 costText.text = tower.cost.ToString();
-                costText.color = canAfford ? AffordableCostColor : UnaffordableCostColor;
+                costText.color = lessonLock
+                    ? new Color(0.35f, 0.35f, 0.35f, 0.4f)
+                    : (canAfford ? AffordableCostColor : UnaffordableCostColor);
             }
 
             if (button != null)
             {
-                button.interactable = true;
+                button.interactable = !lessonLock;
                 TowerData chosen = tower;
                 button.onClick.AddListener(() => OnTowerButtonClicked(chosen));
             }
@@ -185,7 +188,8 @@ namespace TowerDefence.UI
             if (slot == currentActiveSlot && Time.time - lastShowTime < 0.2f) return;
             lastShowTime = Time.time;
 
-            bool closing = gameObject.activeSelf && currentActiveSlot == slot;
+            bool lessonOpen = TutorialDirector.Instance != null && TutorialDirector.Instance.OnlyArcher();
+            bool closing = gameObject.activeSelf && currentActiveSlot == slot && !lessonOpen;
             if (!closing) previewedTower = null;
 
             InitializeUI();
@@ -273,6 +277,8 @@ namespace TowerDefence.UI
         private void OnTowerButtonClicked(TowerData tower)
         {
             if (tower == null || currentActiveSlot == null) return;
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.OnlyArcher() && tower.towerName != "Archer Tower")
+                return;
 
             if (previewedTower == tower)
             {

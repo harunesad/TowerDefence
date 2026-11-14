@@ -62,6 +62,8 @@ namespace TowerDefence.Combat
 
             isReady = false;
             currentCooldown = abilityCooldown;
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.Notify("hero_skill");
         }
 
         private void ExecuteLightAbility()

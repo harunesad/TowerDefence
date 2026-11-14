@@ -82,6 +82,16 @@ namespace TowerDefence.UI
                 y -= 22;
                 CreateStatRow("CostRow", StatIcons.Gold, data.spawnCost.ToString(), new Vector2(0, y), true);
             }
+            RaiseAboveShade(gameObject);
+            if (overlayRef != null) RaiseAboveShade(overlayRef);
+        }
+
+        static void RaiseAboveShade(GameObject go)
+        {
+            Canvas canvas = go.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 520;
+            go.AddComponent<GraphicRaycaster>();
         }
 
         private GameObject CreateImage(string name, Vector2 pos, Vector2 anchorMin, Vector2 anchorMax, Vector2 sizeDelta, Color color, bool raycastTarget)

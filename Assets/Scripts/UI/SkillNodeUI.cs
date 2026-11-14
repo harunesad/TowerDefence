@@ -7,7 +7,7 @@ using TowerDefence.Core;
 
 namespace TowerDefence.UI
 {
-    public class SkillNodeUI : MonoBehaviour
+    public class SkillNodeUI : MonoBehaviour, IPointerClickHandler
     {
         [Header("Data")]
         [SerializeField] private SkillNodeData skillData;
@@ -26,6 +26,23 @@ namespace TowerDefence.UI
 
         private float lastClickTime;
         private const float DoubleClickThreshold = 0.3f;
+        Selectable.Transition restingTransition;
+        bool transitionCaptured;
+
+        private void LateUpdate()
+        {
+            if (buyButton == null) return;
+            if (!transitionCaptured)
+            {
+                restingTransition = buyButton.transition;
+                transitionCaptured = true;
+            }
+            bool lesson = TutorialDirector.Instance != null && TutorialDirector.Instance.SkillHoverLocked();
+            bool lessonTarget = lesson && skillData != null && skillData.skillID == TutorialDirector.Instance.CurrentSkillId();
+            buyButton.transition = lesson ? Selectable.Transition.None : restingTransition;
+            if (lessonTarget && MetaProgressionManager.Instance != null && !MetaProgressionManager.Instance.IsSkillUnlocked(skillData.skillID))
+                buyButton.interactable = true;
+        }
 
         private void Start()
         {
@@ -38,14 +55,11 @@ namespace TowerDefence.UI
             SetupUI(skillData);
 
             buyButton.onClick.RemoveAllListeners();
+        }
 
-            EventTrigger trigger = buyButton.gameObject.GetComponent<EventTrigger>();
-            if (trigger == null) trigger = buyButton.gameObject.AddComponent<EventTrigger>();
-
-            EventTrigger.Entry entry = new EventTrigger.Entry();
-            entry.eventID = EventTriggerType.PointerClick;
-            entry.callback.AddListener(OnNodePointerClick);
-            trigger.triggers.Add(entry);
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            OnNodePointerClick(eventData);
         }
 
         public void SetupUI(SkillNodeData data)
@@ -100,7 +114,15 @@ namespace TowerDefence.UI
             bool spellUnlock = skillData.upgradeType == UpgradeType.UnlockSpell;
 
             purchasedOverlay.gameObject.SetActive(isUnlocked);
-            buyButton.interactable = !isUnlocked && (spellUnlock || maxUnlocked <= 0 || currentUnlocked < maxUnlocked);
+            if (iconImage != null)
+            {
+                bool choiceLocked = TutorialDirector.Instance != null && TutorialDirector.Instance.SkillChoiceLocked(skillData.skillID);
+                iconImage.color = choiceLocked ? new Color(1f, 1f, 1f, 0.35f) : Color.white;
+            }
+            bool lessonTarget = TutorialDirector.Instance != null
+                && TutorialDirector.Instance.SkillHoverLocked()
+                && skillData.skillID == TutorialDirector.Instance.CurrentSkillId();
+            buyButton.interactable = !isUnlocked && (lessonTarget || spellUnlock || maxUnlocked <= 0 || currentUnlocked < maxUnlocked);
 
             bool requirementsMet = true;
             foreach (var req in skillData.requiredSkills)
@@ -130,6 +152,8 @@ namespace TowerDefence.UI
         private void OnNodePointerClick(BaseEventData eventData)
         {
             if (eventData is PointerEventData pointerData && pointerData.button != PointerEventData.InputButton.Left) return;
+            if (skillData != null && TutorialDirector.Instance != null && TutorialDirector.Instance.SkillChoiceLocked(skillData.skillID))
+                return;
 
             float timeSinceLastClick = Time.unscaledTime - lastClickTime;
             lastClickTime = Time.unscaledTime;
@@ -157,15 +181,23 @@ namespace TowerDefence.UI
         private void ShowInfoPanel()
         {
             Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas == null) canvas = FindObjectOfType<Canvas>();
             if (canvas == null) return;
+            if (canvas.GetComponentInChildren<SkillInfoPanelUI>(true) != null) return;
 
             GameObject go = new GameObject("SkillInfoPanelUI", typeof(RectTransform), typeof(SkillInfoPanelUI));
             go.transform.SetParent(canvas.transform, false);
             go.GetComponent<SkillInfoPanelUI>().Setup(skillData, GetComponent<RectTransform>());
+            if (TutorialDirector.Instance != null)
+            {
+                string step = TutorialDirector.Instance.Current();
+                if ((step == "skill_info" || step == "skill_info_top")
+                    && skillData != null && skillData.skillID == TutorialDirector.Instance.CurrentSkillId())
+                    TutorialDirector.Instance.Notify(step);
+            }
         }
 
         public SkillNodeData GetSkillData() => skillData;
+        public RectTransform IconRect => iconImage != null ? iconImage.rectTransform : transform as RectTransform;
 
         private void OnDisable()
         {

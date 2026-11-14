@@ -168,6 +168,17 @@ namespace TowerDefence.Core
             }
         }
 
+        public bool HasMoveSelection => selectedHero != null && awaitingMoveCommand && !selectedHero.IsDead;
+
+        public void FocusFirstHero()
+        {
+            if (activeHeroes == null || activeHeroes.Length == 0) return;
+            HeroUnit hero = activeHeroes[0];
+            if (hero == null || hero.IsDead) return;
+            if (selectedHero == hero && awaitingMoveCommand) return;
+            SelectHeroInstance(hero, 0);
+        }
+
         public void SelectHeroSlot(int slotIndex)
         {
             if (slotIndex < 0 || slotIndex >= 2) return;
@@ -239,6 +250,8 @@ namespace TowerDefence.Core
 
             lastMovePoints[selectedSlotIndex] = point;
             selectedHero.SetMoveDestination(point);
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.Notify("hero_move");
 
             if (VFXManager.Instance != null)
                 VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, point, Quaternion.identity);

@@ -60,6 +60,7 @@ namespace TowerDefence.Core
             Debug.Log("Unity Ads initialization complete.");
             LoadAd(rewardedId);
             LoadAd(interstitialId);
+            TryPresentRewarded();
         }
 
         public void OnInitializationFailed(UnityAdsInitializationError error, string message)
@@ -69,6 +70,9 @@ namespace TowerDefence.Core
 
         private bool isRewardedLoaded = false;
         private bool isInterstitialLoaded = false;
+        private bool rewardShowPending;
+        private int rewardLoadAttempts;
+        const int RewardLoadLimit = 8;
 
         private void LoadAd(string adUnitId)
         {
@@ -79,14 +83,34 @@ namespace TowerDefence.Core
         public void OnUnityAdsAdLoaded(string adUnitId)
         {
             Debug.Log($"Ad Loaded: {adUnitId}");
-            if (adUnitId == rewardedId) isRewardedLoaded = true;
+            if (adUnitId == rewardedId)
+            {
+                isRewardedLoaded = true;
+                TryPresentRewarded();
+            }
             else if (adUnitId == interstitialId) isInterstitialLoaded = true;
         }
 
         public void OnUnityAdsFailedToLoad(string adUnitId, UnityAdsLoadError error, string message)
         {
             Debug.Log($"Error loading Ad Unit: {adUnitId} - {error.ToString()} - {message}");
-            if (adUnitId == rewardedId) isRewardedLoaded = false;
+            if (adUnitId == rewardedId)
+            {
+                isRewardedLoaded = false;
+                if (!rewardShowPending) return;
+                rewardLoadAttempts++;
+                if (rewardLoadAttempts >= RewardLoadLimit)
+                {
+                    rewardShowPending = false;
+                    Action failed = onRewardedAdFailed;
+                    onRewardedAdSuccess = null;
+                    onRewardedAdFailed = null;
+                    failed?.Invoke();
+                    return;
+                }
+                CancelInvoke(nameof(ReloadRewarded));
+                Invoke(nameof(ReloadRewarded), 1.5f);
+            }
             else if (adUnitId == interstitialId) isInterstitialLoaded = false;
         }
 
@@ -97,19 +121,30 @@ namespace TowerDefence.Core
         {
             onRewardedAdSuccess = onSuccess;
             onRewardedAdFailed = onFailed;
+            rewardShowPending = true;
+            rewardLoadAttempts = 0;
+            CancelInvoke(nameof(ReloadRewarded));
+            TryPresentRewarded();
+        }
 
-            if (isRewardedLoaded)
+        void TryPresentRewarded()
+        {
+            if (!rewardShowPending) return;
+            if (!Advertisement.isInitialized) return;
+            if (!isRewardedLoaded)
             {
-                Debug.Log("Showing Rewarded Ad.");
-                isRewardedLoaded = false; // Kullanıldı
-                Advertisement.Show(rewardedId, this);
+                LoadAd(rewardedId);
+                return;
             }
-            else
-            {
-                Debug.LogWarning("Rewarded Ad not ready!");
-                onRewardedAdFailed?.Invoke();
-                LoadAd(rewardedId); // Yeniden yüklemeyi dene
-            }
+            rewardShowPending = false;
+            isRewardedLoaded = false;
+            Debug.Log("Showing Rewarded Ad.");
+            Advertisement.Show(rewardedId, this);
+        }
+
+        void ReloadRewarded()
+        {
+            if (rewardShowPending) LoadAd(rewardedId);
         }
 
         /// <summary>

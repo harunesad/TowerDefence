@@ -59,6 +59,7 @@ namespace TowerDefence.Core
         public long lastFortuneWheelTime; // Son çark çevirme zamanı (Ticks)
         public long lastFortuneWheelAdTime; // Son reklamla çark çevirme zamanı (Ticks)
         public List<string> crystalVaultClaimedLevels = new List<string>();
+        public List<string> completedTutorialSteps;
     }
 
     public class MetaProgressionManager : MonoBehaviour
@@ -67,6 +68,7 @@ namespace TowerDefence.Core
 
         [Header("State")]
         [SerializeField] private SaveData saveData = new SaveData();
+        readonly List<string> sessionTutorialSteps = new List<string>();
         
         private string savePath;
 
@@ -162,6 +164,12 @@ namespace TowerDefence.Core
 
         public long GetDailyRewardStartTicks() => saveData.dailyRewardStartTicks;
 
+        public void SetDailyRewardStartTicks(long ticks)
+        {
+            saveData.dailyRewardStartTicks = ticks;
+            SaveGame();
+        }
+
         public int GetDailyRewardDayIndex() => saveData.dailyRewardDayIndex;
 
         public void SetDailyRewardDayIndex(int index)
@@ -182,7 +190,10 @@ namespace TowerDefence.Core
 
                 // Sınır kontrolü: Maksimum skill sayısı kontrolü
                 bool spellUnlock = skill.upgradeType == UpgradeType.UnlockSpell;
-                if (!spellUnlock && CountCappedSkills() >= maxSkillsUnlocked && maxSkillsUnlocked > 0)
+                bool lessonTarget = TutorialDirector.Instance != null
+                    && TutorialDirector.Instance.SkillHoverLocked()
+                    && skill.skillID == TutorialDirector.Instance.CurrentSkillId();
+                if (!lessonTarget && !spellUnlock && CountCappedSkills() >= maxSkillsUnlocked && maxSkillsUnlocked > 0)
                 {
                     Debug.LogWarning($"[Progression] Skill limit reached! Maximum {maxSkillsUnlocked} skills can be unlocked. Current: {saveData.unlockedSkillIDs.Count}");
                     return false;
@@ -205,6 +216,34 @@ namespace TowerDefence.Core
                 return true;
             }
             return false;
+        }
+
+        public void GrantSkillFree(SkillNodeData skill)
+        {
+            if (skill == null || IsSkillUnlocked(skill.skillID)) return;
+            if (saveData.unlockedSkillIDs == null)
+                saveData.unlockedSkillIDs = new List<string>();
+            saveData.unlockedSkillIDs.Add(skill.skillID);
+            SaveGame();
+        }
+
+        public void RevokeSkill(string skillId)
+        {
+            if (string.IsNullOrEmpty(skillId) || saveData.unlockedSkillIDs == null) return;
+            if (!saveData.unlockedSkillIDs.Remove(skillId)) return;
+
+            List<SkillNodeData> pool = (allAvailableSkills != null && allAvailableSkills.Count > 0)
+                ? allAvailableSkills
+                : new List<SkillNodeData>(Resources.FindObjectsOfTypeAll<SkillNodeData>());
+            SkillNodeData skill = pool.Find(s => s != null && s.skillID == skillId);
+            if (skill != null)
+            {
+                saveData.totalKarma += skill.karmaCost;
+                saveData.totalCrystals += skill.crystalCost;
+                if (skill.upgradeType == UpgradeType.UnlockSpell && skill.grantedSpell != null && saveData.unlockedSpellIDs != null)
+                    saveData.unlockedSpellIDs.Remove(skill.grantedSpell.spellID);
+            }
+            SaveGame();
         }
 
         // Skill ID -> Spell ID eşleşme tablosu (grantedSpell referansı kırıldığında fallback)
@@ -328,6 +367,37 @@ namespace TowerDefence.Core
 
         public bool IsHeroUnlocked(string heroID) => saveData.unlockedHeroIDs.Contains(heroID);
 
+        public void GrantUnlockedHero(string heroID)
+        {
+            if (string.IsNullOrEmpty(heroID) || IsHeroUnlocked(heroID)) return;
+            if (saveData.unlockedHeroIDs == null) saveData.unlockedHeroIDs = new List<string>();
+            if (saveData.heroProgressList == null) saveData.heroProgressList = new List<HeroProgressEntry>();
+            saveData.unlockedHeroIDs.Add(heroID);
+            saveData.heroProgressList.Add(new HeroProgressEntry { heroID = heroID, level = 1 });
+            SaveGame();
+            OnHeroProgressChanged?.Invoke();
+        }
+
+        public void GrantUnlockedSpell(string spellID)
+        {
+            if (string.IsNullOrEmpty(spellID)) return;
+            if (saveData.unlockedSpellIDs == null) saveData.unlockedSpellIDs = new List<string>();
+            if (saveData.unlockedSpellIDs.Contains(spellID)) return;
+            saveData.unlockedSpellIDs.Add(spellID);
+            SaveGame();
+        }
+
+        public void RevokeUnlockedSpell(string spellID)
+        {
+            if (string.IsNullOrEmpty(spellID)) return;
+            bool changed = false;
+            if (saveData.unlockedSpellIDs != null && saveData.unlockedSpellIDs.Remove(spellID)) changed = true;
+            if (saveData.equippedSpellIDs != null && saveData.equippedSpellIDs.Remove(spellID)) changed = true;
+            if (saveData.lightEquippedSpellIDs != null && saveData.lightEquippedSpellIDs.Remove(spellID)) changed = true;
+            if (saveData.darkEquippedSpellIDs != null && saveData.darkEquippedSpellIDs.Remove(spellID)) changed = true;
+            if (changed) SaveGame();
+        }
+
         public int GetHeroLevel(string heroID)
         {
             if (!IsHeroUnlocked(heroID)) return 0;
@@ -449,6 +519,19 @@ namespace TowerDefence.Core
             }
         }
 
+        public void RevokeUnlockedHero(string heroID)
+        {
+            if (string.IsNullOrEmpty(heroID) || saveData.unlockedHeroIDs == null) return;
+            if (!saveData.unlockedHeroIDs.Remove(heroID)) return;
+            if (saveData.heroProgressList != null)
+                saveData.heroProgressList.RemoveAll(entry => entry != null && entry.heroID == heroID);
+            if (saveData.equippedHeroIDs != null) saveData.equippedHeroIDs.Remove(heroID);
+            if (saveData.lightEquippedHeroIDs != null) saveData.lightEquippedHeroIDs.Remove(heroID);
+            if (saveData.darkEquippedHeroIDs != null) saveData.darkEquippedHeroIDs.Remove(heroID);
+            SaveGame();
+            OnHeroProgressChanged?.Invoke();
+        }
+
         public List<string> GetEquippedHeroIDs() => saveData.equippedHeroIDs;
 
         public void SanitizeEquippedHeroesForSide(Side side)
@@ -464,6 +547,21 @@ namespace TowerDefence.Core
         public bool IsSkillUnlocked(string skillID)
         {
             return saveData.unlockedSkillIDs.Contains(skillID);
+        }
+
+        public bool OwnsActiveDarkSkill()
+        {
+            List<SkillNodeData> pool = (allAvailableSkills != null && allAvailableSkills.Count > 0)
+                ? allAvailableSkills
+                : new List<SkillNodeData>(Resources.FindObjectsOfTypeAll<SkillNodeData>());
+            for (int i = 0; i < pool.Count; i++)
+            {
+                SkillNodeData skill = pool[i];
+                if (skill == null || skill.side != Side.Dark) continue;
+                if (skill.upgradeType != UpgradeType.UnlockSpell) continue;
+                if (IsSkillUnlocked(skill.skillID)) return true;
+            }
+            return false;
         }
 
         public int GetHighestUnlockedLevel(int difficulty = 1)
@@ -511,6 +609,105 @@ namespace TowerDefence.Core
         {
             LevelProgress progress = saveData.levelProgressList.Find(p => p.levelID == levelID && p.difficultyLevel == difficulty);
             return progress != null && progress.isCompleted;
+        }
+
+        public bool HasClearedLevel(string levelID)
+        {
+            if (saveData.levelProgressList == null || string.IsNullOrEmpty(levelID)) return false;
+            return saveData.levelProgressList.Exists(p => p != null && p.levelID == levelID && p.isCompleted);
+        }
+
+        public bool IsTutorialStepDone(string stepId)
+        {
+            if (sessionTutorialSteps.Contains(stepId)) return true;
+            return saveData.completedTutorialSteps != null && saveData.completedTutorialSteps.Contains(stepId);
+        }
+
+        public void CompleteTutorialStep(string stepId)
+        {
+            if (string.IsNullOrEmpty(stepId) || IsTutorialStepDone(stepId)) return;
+            if (stepId == "tutorial_rest")
+            {
+                PersistTutorialFinish();
+                return;
+            }
+            if (IsOpenTutorialStep(stepId))
+            {
+                sessionTutorialSteps.Add(stepId);
+                return;
+            }
+            if (saveData.completedTutorialSteps == null)
+                saveData.completedTutorialSteps = new List<string>();
+            saveData.completedTutorialSteps.Add(stepId);
+            SaveGame();
+        }
+
+        bool IsOpenTutorialStep(string stepId)
+        {
+            bool afterCheckpoint = false;
+            for (int i = 0; i < TutorialDirector.Required.Length; i++)
+            {
+                string id = TutorialDirector.Required[i];
+                if (id == "daily_go") afterCheckpoint = true;
+                if (id == "tutorial_rest") return false;
+                if (afterCheckpoint && id == stepId) return true;
+            }
+            return false;
+        }
+
+        void PersistTutorialFinish()
+        {
+            if (saveData.completedTutorialSteps == null)
+                saveData.completedTutorialSteps = new List<string>();
+            for (int i = 0; i < TutorialDirector.Required.Length; i++)
+            {
+                string id = TutorialDirector.Required[i];
+                if (!saveData.completedTutorialSteps.Contains(id))
+                    saveData.completedTutorialSteps.Add(id);
+                if (id == "tutorial_rest") break;
+            }
+            sessionTutorialSteps.Clear();
+            SaveGame();
+        }
+
+        void TrimOpenTutorial()
+        {
+            if (saveData.completedTutorialSteps == null) return;
+            if (saveData.completedTutorialSteps.Contains("tutorial_rest")) return;
+            if (saveData.completedTutorialSteps.RemoveAll(IsOpenTutorialStep) > 0)
+                SaveGame();
+        }
+
+        public void CommitTutorialCheckpoint()
+        {
+            if (saveData.completedTutorialSteps == null)
+                saveData.completedTutorialSteps = new List<string>();
+            bool changed = false;
+            for (int i = 0; i < TutorialDirector.Required.Length; i++)
+            {
+                string stepId = TutorialDirector.Required[i];
+                if (stepId == "daily_go") break;
+                if (saveData.completedTutorialSteps.Contains(stepId)) continue;
+                saveData.completedTutorialSteps.Add(stepId);
+                changed = true;
+            }
+            if (changed) SaveGame();
+        }
+
+        public void ResetTutorialProgress()
+        {
+            sessionTutorialSteps.Clear();
+            saveData.completedTutorialSteps = new List<string>();
+            string flag = TutorialResetFlagPath();
+            if (File.Exists(flag)) File.Delete(flag);
+            SaveGame();
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnProgressReset();
+        }
+
+        public static string TutorialResetFlagPath()
+        {
+            return Path.Combine(Application.persistentDataPath, "tutorial_reset.flag");
         }
 
         public void UnlockNextGlobalDifficulty()
@@ -1034,7 +1231,66 @@ namespace TowerDefence.Core
                 }
             }
 
+            sessionTutorialSteps.Clear();
+            ApplyTutorialResetFlag();
+            MigrateTutorialProgress();
+            DiscardUncheckpointedTutorial();
+            TrimOpenTutorial();
             EnsureStarterHeroUnlocked();
+            EnsureTutorialDirector();
+        }
+
+        private void ApplyTutorialResetFlag()
+        {
+            string flag = TutorialResetFlagPath();
+            if (!File.Exists(flag)) return;
+            saveData.completedTutorialSteps = new List<string>();
+            try { File.Delete(flag); } catch { }
+            SaveGame();
+        }
+
+        private void MigrateTutorialProgress()
+        {
+            if (saveData.completedTutorialSteps != null) return;
+
+            saveData.completedTutorialSteps = new List<string>();
+            if (!HasExistingCampaignProgress()) return;
+
+            foreach (string stepId in TutorialDirector.AllSavedIds)
+                saveData.completedTutorialSteps.Add(stepId);
+            SaveGame();
+        }
+
+        private void DiscardUncheckpointedTutorial()
+        {
+            if (saveData.completedTutorialSteps == null || saveData.completedTutorialSteps.Count == 0) return;
+            if (saveData.completedTutorialSteps.Contains("tutorial_rest")) return;
+            if (HasClearedLevel("Level1")) return;
+            saveData.completedTutorialSteps.Clear();
+            SaveGame();
+        }
+
+        private bool HasExistingCampaignProgress()
+        {
+            if (saveData.highestUnlockedLevelIndex > 0) return true;
+            if (saveData.unlockedSkillIDs != null && saveData.unlockedSkillIDs.Count > 0) return true;
+            if (saveData.levelProgressList != null && saveData.levelProgressList.Exists(p => p != null && p.isCompleted))
+                return true;
+            if (saveData.highestUnlockedLevelIndexPerDifficulty != null)
+            {
+                for (int i = 0; i < saveData.highestUnlockedLevelIndexPerDifficulty.Count; i++)
+                {
+                    if (saveData.highestUnlockedLevelIndexPerDifficulty[i] > 0) return true;
+                }
+            }
+            return false;
+        }
+
+        private void EnsureTutorialDirector()
+        {
+            if (TutorialDirector.Instance != null) return;
+            GameObject director = new GameObject("TutorialDirector");
+            director.AddComponent<TutorialDirector>();
         }
 
 

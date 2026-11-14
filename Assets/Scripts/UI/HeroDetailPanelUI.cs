@@ -27,6 +27,9 @@ namespace TowerDefence.UI
 
         private HeroData currentHero;
         private HeroShopUI shopUI;
+        bool opening;
+
+        public RectTransform ActionTarget => actionButton != null ? actionButton.transform as RectTransform : null;
 
         [Header("Audio")]
         [SerializeField] private AudioClip unlockSFX;
@@ -46,7 +49,15 @@ namespace TowerDefence.UI
             if (actionButton != null)
                 actionButton.onClick.AddListener(OnActionClicked);
 
-            Hide();
+            if (!opening)
+                Hide();
+        }
+
+        private void LateUpdate()
+        {
+            if (closeButton == null || TutorialDirector.Instance == null) return;
+            bool buying = TutorialDirector.Instance.Current() == "heroes_tell" && TutorialDirector.Instance.HeroShopPage == 1;
+            closeButton.interactable = !buying;
         }
 
         private void OnEnable()
@@ -66,7 +77,9 @@ namespace TowerDefence.UI
         public void Show(HeroData hero)
         {
             currentHero = hero;
+            opening = true;
             if (panelRoot != null) panelRoot.SetActive(true);
+            opening = false;
             
             // Hero icon'ı info panelde gösterme - kullanıcı istediği gibi gizle
             // Sprite'ı null yap + toggle state'i koru (Repair sonrası da gizli kalması için)
@@ -146,8 +159,9 @@ namespace TowerDefence.UI
         {
             if (currentHero == null || MetaProgressionManager.Instance == null) return;
 
+            bool wasLocked = !MetaProgressionManager.Instance.IsHeroUnlocked(currentHero.heroID);
             bool success = false;
-            if (!MetaProgressionManager.Instance.IsHeroUnlocked(currentHero.heroID))
+            if (wasLocked)
                 success = MetaProgressionManager.Instance.TryUnlockHero(currentHero);
             else
                 success = MetaProgressionManager.Instance.TryUpgradeHero(currentHero);
@@ -155,6 +169,16 @@ namespace TowerDefence.UI
             if (success && AudioManager.Instance != null && unlockSFX != null)
             {
                 AudioManager.Instance.PlaySFX(unlockSFX);
+            }
+
+            if (success && wasLocked && TutorialDirector.Instance != null)
+            {
+                TutorialDirector.Instance.OnHeroUnlocked(currentHero.heroID);
+                if (TutorialDirector.Instance.HeroShopPage >= 2)
+                {
+                    Hide();
+                    return;
+                }
             }
 
             RefreshCurrent();

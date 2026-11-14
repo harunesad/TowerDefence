@@ -33,11 +33,38 @@ namespace TowerDefence.UI
             selectionOutline.enabled = false;
         }
 
+        public string SpellId => spellData != null ? spellData.spellID : null;
+        public int ManaCost => spellData != null ? spellData.manaCost : 0;
+
         public void Setup(SpellData data)
         {
             spellData = data;
             iconImage.sprite = data.icon;
             costText.text = data.manaCost.ToString();
+        }
+
+        void LateUpdate()
+        {
+            bool focus = TutorialDirector.Instance != null && TutorialDirector.Instance.FocusesSpellButton(this);
+            if (focus) RaiseAboveShade(gameObject);
+            else DropShade(gameObject);
+        }
+
+        static void RaiseAboveShade(GameObject go)
+        {
+            Canvas canvas = go.GetComponent<Canvas>();
+            if (canvas == null) canvas = go.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 560;
+            if (go.GetComponent<GraphicRaycaster>() == null)
+                go.AddComponent<GraphicRaycaster>();
+        }
+
+        static void DropShade(GameObject go)
+        {
+            Canvas canvas = go.GetComponent<Canvas>();
+            if (canvas == null) return;
+            canvas.overrideSorting = false;
         }
 
         private void Update()
@@ -132,6 +159,8 @@ namespace TowerDefence.UI
                 else
                 {
                     SpellManager.Instance.SelectSpell(spellData);
+                    if (TutorialDirector.Instance != null)
+                        TutorialDirector.Instance.Notify("spell_cast");
                 }
             }
         }

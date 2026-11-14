@@ -57,6 +57,59 @@ namespace TowerDefence.UI
             isSpinning = false;
         }
 
+        public RectTransform SpinTarget => spinButton != null ? spinButton.transform as RectTransform : null;
+        public RectTransform CloseTarget => closeButtonObj != null ? closeButtonObj.transform as RectTransform : null;
+
+        private void LateUpdate()
+        {
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            if (tutorial == null || tutorial.Current() != "fortune_tell") return;
+            if (tutorial.WaitsFortuneClose())
+            {
+                if (spinButton != null)
+                {
+                    spinButton.interactable = false;
+                    DropShade(spinButton.gameObject);
+                }
+                if (closeButtonObj == null) return;
+                closeButtonObj.SetActive(true);
+                Button close = closeButtonObj.GetComponent<Button>();
+                if (close != null) close.interactable = true;
+                RaiseAboveShade(closeButtonObj);
+                return;
+            }
+            if (spinButton == null) return;
+            if (!isSpinning) spinButton.interactable = true;
+            RaiseAboveShade(spinButton.gameObject);
+        }
+
+        static void RaiseAboveShade(GameObject go)
+        {
+            Canvas canvas = go.GetComponent<Canvas>();
+            if (canvas == null) canvas = go.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 560;
+            if (go.GetComponent<GraphicRaycaster>() == null)
+                go.AddComponent<GraphicRaycaster>();
+        }
+
+        static void DropShade(GameObject go)
+        {
+            Canvas canvas = go.GetComponent<Canvas>();
+            if (canvas == null) return;
+            canvas.overrideSorting = false;
+        }
+
+        public void PrepareLessonSpin()
+        {
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.WaitsFortuneClose())
+                return;
+            if (IsSpinAvailable()) return;
+            if (MetaProgressionManager.Instance != null)
+                MetaProgressionManager.Instance.SetLastFortuneWheelTime(0, true);
+            UpdateUI();
+        }
+
         public bool IsSpinAvailable()
         {
             if (MetaProgressionManager.Instance == null) return true;
@@ -154,6 +207,8 @@ namespace TowerDefence.UI
         public void Spin()
         {
             if (isSpinning) return;
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.WaitsFortuneClose())
+                return;
 
             bool isFreeSpin = IsSpinAvailable();
             bool isAdSpin = IsAdSpinAvailable();
@@ -198,6 +253,13 @@ namespace TowerDefence.UI
         private void ClosePanel()
         {
             if (isSpinning) return;
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            if (tutorial != null && tutorial.Current() == "fortune_tell")
+            {
+                if (!tutorial.WaitsFortuneClose()) return;
+                tutorial.OnFortuneClosed();
+                return;
+            }
             gameObject.SetActive(false);
             if (backdrop != null) backdrop.SetActive(false);
         }
@@ -285,7 +347,10 @@ namespace TowerDefence.UI
                 AudioManager.Instance.PlaySFX(rewardSound);
             
             isSpinning = false;
-            
+
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnFortuneReward();
+
             // UI'ı mevcut duruma göre (reklamlı çevirmeye uygun şekilde) geri yükle
             UpdateUI();
             if (closeButtonObj != null) closeButtonObj.SetActive(true);

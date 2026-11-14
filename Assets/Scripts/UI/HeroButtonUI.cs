@@ -28,6 +28,16 @@ namespace TowerDefence.UI
         private TextMeshProUGUI abilityTimerText;
         private Image abilityCooldownOverlay;
 
+        public RectTransform AbilityRect
+        {
+            get
+            {
+                EnsureAbilityUI();
+                if (abilityRoot == null || !abilityRoot.activeInHierarchy) return null;
+                return abilityRoot.transform as RectTransform;
+            }
+        }
+
         public void InitializeSlot(int index)
         {
             slotIndex = index;
@@ -103,6 +113,8 @@ namespace TowerDefence.UI
             }
             cachedStatsPanel = panel;
             panel.Show(selfRT, data, linkedHero);
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnBattleHeroInfo();
         }
 
         private HeroStatsPanel GetStatsPanel()

@@ -84,6 +84,7 @@ namespace TowerDefence.Combat
         private const float TARGET_SEARCH_INTERVAL = 0.15f;
 
         public bool IsDead => isDead;
+        public bool IsBoss => unitData != null && SideSelectionUI.BossNames.Contains(unitData.unitName);
         public Side GetSide() => unitSide;
         public float GetHealth() => currentHealth;
         public float GetMaxHealth() => maxHealth;
@@ -385,6 +386,7 @@ namespace TowerDefence.Combat
         protected virtual void Update()
         {
             if (isDead || IsLevelFinished()) return;
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.HoldsUnitMarch()) return;
 
             UpdateBuffTimers(Time.deltaTime);
 
@@ -1320,6 +1322,8 @@ namespace TowerDefence.Combat
             {
                 Side opponentSide = GetSide() == Side.Light ? Side.Dark : Side.Light;
                 CurrencyManager.Instance.AddCurrency(opponentSide, reward);
+                if (SideController.Instance != null && opponentSide == SideController.Instance.GetPlayerSide())
+                    CurrencyFloatUI.Show(transform.position, reward, opponentSide);
             }
 
             Destroy(gameObject, 2f);

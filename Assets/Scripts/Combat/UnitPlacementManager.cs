@@ -191,6 +191,8 @@ namespace TowerDefence.Combat
             {
                 if (CurrencyManager.Instance.TrySpendCurrency(currentDraggingUnit.side, currentDraggingUnit.spawnCost))
                 {
+                    if (ghostUnit != null)
+                        TowerDefence.UI.CurrencyFloatUI.Show(ghostUnit.transform.position, -currentDraggingUnit.spawnCost, currentDraggingUnit.side);
                     bool isPlayer = (currentDraggingUnit.side == SideController.Instance.GetPlayerSide());
                     Spawner correctSpawner = null;
                     foreach (var s in Spawner.AllSpawners)
@@ -208,6 +210,8 @@ namespace TowerDefence.Combat
                     if (correctSpawner != null)
                     {
                         correctSpawner.ManualSpawnAtPosition(currentDraggingUnit, ghostUnit.transform.position, nearestPath, targetWaypointIndex, isPlayer);
+                        if (TutorialDirector.Instance != null)
+                            TutorialDirector.Instance.Notify("unit_drop");
                     }
                     else
                     {

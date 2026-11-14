@@ -27,6 +27,38 @@ namespace TowerDefence.UI
             unitsRowPrefab = prefab;
         }
 
+        public RectTransform ToggleTarget => transform as RectTransform;
+        public bool IsOpen => isOpen;
+        public RectTransform FirstUnitTarget =>
+            firstUnit != null && firstUnit.gameObject.activeInHierarchy ? firstUnit : null;
+
+        RectTransform firstUnit;
+
+        void LateUpdate()
+        {
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            bool lesson = tutorial != null && tutorial.WaveUnitReady && isOpen && firstUnit != null;
+            if (lesson) RaiseAboveShade(firstUnit.gameObject);
+            else if (firstUnit != null) DropShade(firstUnit.gameObject);
+        }
+
+        static void RaiseAboveShade(GameObject go)
+        {
+            Canvas canvas = go.GetComponent<Canvas>();
+            if (canvas == null) canvas = go.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 560;
+            if (go.GetComponent<GraphicRaycaster>() == null)
+                go.AddComponent<GraphicRaycaster>();
+        }
+
+        static void DropShade(GameObject go)
+        {
+            Canvas canvas = go.GetComponent<Canvas>();
+            if (canvas == null) return;
+            canvas.overrideSorting = false;
+        }
+
         public void SetToggleSFX(AudioClip clip)
         {
             if (clip != null) toggleSFX = clip;
@@ -222,6 +254,8 @@ namespace TowerDefence.UI
             if (isOpen)
             {
                 Refresh();
+                if (TutorialDirector.Instance != null)
+                    TutorialDirector.Instance.OnWaveInfoOpened();
             }
             else if (statPopup != null)
             {
@@ -233,6 +267,7 @@ namespace TowerDefence.UI
 
         public void Refresh()
         {
+            firstUnit = null;
             for (int i = content.transform.childCount - 1; i >= 0; i--)
                 Destroy(content.transform.GetChild(i).gameObject);
 
@@ -243,8 +278,11 @@ namespace TowerDefence.UI
 
             AddWaveSection($"Wave {waveIndex + 1} (Current)", waveIndex < level.waves.Count ? level.waves[waveIndex] : null);
 
+            int plannedWaves = CampaignManager.Instance != null
+                ? CampaignManager.Instance.GetPlannedWaveCount(level)
+                : level.waves.Count;
             int nextIndex = waveIndex + 1;
-            if (nextIndex < level.waves.Count)
+            if (nextIndex < plannedWaves && nextIndex < level.waves.Count)
                 AddWaveSection($"Wave {nextIndex + 1} (Next)", level.waves[nextIndex]);
 
             RectTransform crt = content.GetComponent<RectTransform>();
@@ -321,6 +359,7 @@ namespace TowerDefence.UI
 
             RectTransform rt = iconGO.GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(60f, 95f);
+            if (firstUnit == null) firstUnit = rt;
 
             LayoutElement le = iconGO.AddComponent<LayoutElement>();
             le.minWidth = 60f;
@@ -394,6 +433,7 @@ namespace TowerDefence.UI
             }
 
             lastPopupUnit = data;
+            bool lessonUnit = TutorialDirector.Instance != null && TutorialDirector.Instance.WaveUnitReady;
 
             Canvas canvas = GetComponentInParent<Canvas>();
             Transform canvasTransform = canvas != null ? canvas.transform : transform.parent;
@@ -478,6 +518,10 @@ namespace TowerDefence.UI
             y -= lineH;
 
             AddStatText("Range", $"{StatIcons.Range} {finalRange:F1}", 16f, FontStyles.Normal, new Vector2(12f, y), Color.white);
+
+            if (!lessonUnit) return;
+            RaiseAboveShade(statPopup);
+            TutorialDirector.Instance.OnWaveUnitInfo();
         }
 
         private void AddStatText(string name, string text, float fontSize, FontStyles style, Vector2 offset, Color color)

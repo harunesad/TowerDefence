@@ -60,6 +60,8 @@ namespace TowerDefence.UI
             UnitInfoPanelUI panel = go.GetComponent<UnitInfoPanelUI>();
             panel.Setup(unitData, GetComponent<RectTransform>(), false);
             activePanel = panel;
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnBattleUnitInfo();
 
             PositionAboveButton(go.GetComponent<RectTransform>());
         }

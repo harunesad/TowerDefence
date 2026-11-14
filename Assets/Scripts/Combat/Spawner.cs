@@ -47,6 +47,7 @@ namespace TowerDefence.Combat
         private void Update()
         {
             if (isPlayerSpawner) return; // Oyuncu spawner'ı dalga beklemek yerine manuel tetiklenir
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.HoldsUnitMarch()) return;
             if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded()) return;
 
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat)
@@ -76,6 +77,25 @@ namespace TowerDefence.Combat
             activeWaveGroups.Clear();
 
             LevelData currentLevel = CampaignManager.Instance.GetCurrentLevel();
+            if (TutorialDirector.Instance != null && TutorialDirector.Instance.ReplaceWithOneBoss(waveIndex))
+            {
+                UnitData boss = TutorialDirector.Instance.LessonBossData();
+                if (boss != null)
+                {
+                    if (spawnerIndex != 0) return;
+                    activeWaveGroups.Add(new WaveUnitGroup
+                    {
+                        unitData = boss,
+                        count = 1,
+                        spawnInterval = 0.5f,
+                        groupDelay = 0.4f,
+                        spawnerIndex = 0
+                    });
+                    isSpawning = true;
+                    nextSpawnTime = Time.time + 0.4f;
+                    return;
+                }
+            }
             if (currentLevel != null && waveIndex < currentLevel.waves.Count)
             {
                 WaveData wave = currentLevel.waves[waveIndex];
@@ -85,7 +105,14 @@ namespace TowerDefence.Combat
                 {
                     if (group.spawnerIndex == spawnerIndex)
                     {
-                        activeWaveGroups.Add(group);
+                        activeWaveGroups.Add(new WaveUnitGroup
+                        {
+                            unitData = group.unitData,
+                            count = CampaignManager.ScaleGroupCount(currentLevel.levelID, group.count),
+                            spawnInterval = group.spawnInterval,
+                            groupDelay = group.groupDelay,
+                            spawnerIndex = group.spawnerIndex
+                        });
                     }
                 }
 

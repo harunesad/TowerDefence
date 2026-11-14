@@ -122,7 +122,7 @@ namespace TowerDefence.UI
             if (warningText == null) return;
 
             transform.SetAsLastSibling(); // Her zaman en önde görünsün
-            warningText.text = message;
+            StatIcons.Set(warningText, message);
             warningText.color = textColor ?? (isReward ? new Color(1f, 0.84f, 0f, 1f) : new Color(1f, 0.3f, 0.25f, 1f));
 
             if (TowerDefence.Core.AudioManager.Instance != null)

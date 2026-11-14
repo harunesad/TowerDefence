@@ -362,6 +362,8 @@ namespace TowerDefence.Combat
             
             if (firePoint == null) firePoint = transform.Find("FirePoint");
             EnsureTowerObstacle();
+            if (this is BarracksTower && TutorialDirector.Instance != null)
+                TutorialDirector.Instance.Notify("barracks");
             
             // 3D Kuleler için Weapon nesnesini kaldırdık, kule modelinin kendisi dönecek
             if (partToRotate == null)

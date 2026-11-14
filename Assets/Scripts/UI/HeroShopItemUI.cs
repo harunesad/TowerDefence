@@ -44,6 +44,8 @@ namespace TowerDefence.UI
         private void OnCardClicked()
         {
             if (heroData == null || shopUI == null) return;
+            if (TutorialDirector.Instance != null)
+                TutorialDirector.Instance.OnHeroCardChosen(heroData.heroID);
             shopUI.ShowHeroDetail(heroData);
         }
 
@@ -67,6 +69,12 @@ namespace TowerDefence.UI
         {
             if (highlightFrame != null)
                 highlightFrame.gameObject.SetActive(highlighted);
+        }
+
+        public void SetCardInteractable(bool interactable)
+        {
+            if (cardButton != null)
+                cardButton.interactable = interactable;
         }
     }
 }
