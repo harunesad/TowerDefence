@@ -36,6 +36,7 @@ namespace TowerDefence.UI
             {
                 cardButton.onClick.RemoveAllListeners();
                 cardButton.onClick.AddListener(OnCardClicked);
+                UIButtonSound.Attach(cardButton);
             }
 
             RefreshUI();

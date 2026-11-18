@@ -17,14 +17,14 @@ public class LevelMapConfigurator : EditorWindow
 
     private void OnGUI()
     {
-        GUILayout.Label("Level Harita Konfigüratörü (Sürükle-Bırak)", EditorStyles.boldLabel);
+        GUILayout.Label("Level Map Configurator (Drag & Drop)", EditorStyles.boldLabel);
         EditorGUILayout.Space();
 
         EditorGUILayout.HelpBox(
-            "1. Düzenlediğiniz LevelData dosyasını aşağıya sürükleyin.\n" +
-            "2. Hiyerarşide açık olan Harita (Map) kök objesini sürükleyin.\n" +
-            "3. Sahnedeki Spawner_X, Base_X, WP_X ve Slot_X objelerini sürükleyerek yerleştirin.\n" +
-            "4. Kaydet butonuna basın.", 
+            "1. Drag the LevelData asset you want to edit below.\n" +
+            "2. Drag the active Map root object from the hierarchy.\n" +
+            "3. Drag and position Spawner_X, Base_X, WP_X, and Slot_X objects in scene.\n" +
+            "4. Click Save.", 
             MessageType.Info);
 
         EditorGUILayout.Space();
@@ -39,7 +39,7 @@ public class LevelMapConfigurator : EditorWindow
         {
             if (targetLevel == null || mapRoot == null)
             {
-                EditorUtility.DisplayDialog("Hata", "Lütfen hem Level Data dosyasını hem de sahnedeki Harita objesini seçin.", "Tamam");
+                EditorUtility.DisplayDialog("Error", "Please assign both Level Data asset and the Map object from scene.", "OK");
                 return;
             }
 
@@ -64,7 +64,7 @@ public class LevelMapConfigurator : EditorWindow
             }
         }
 
-        // 2. Tower Slots'ları Bul
+        // 2. Tower Slots'lari Bul
         Transform towerSlotsRoot = null;
         foreach (Transform t in allTransforms)
         {
@@ -87,7 +87,7 @@ public class LevelMapConfigurator : EditorWindow
         }
         else
         {
-            // Eğer "TowerSlots" objesi yoksa, isminde Slot_ geçen her şeyi alalım
+            // Eger "TowerSlots" objesi yoksa, isminde Slot_ gecen her seyi alalim
             foreach (Transform t in allTransforms)
             {
                 if (t.name.StartsWith("Slot_"))
@@ -108,13 +108,13 @@ public class LevelMapConfigurator : EditorWindow
             }
         }
 
-        // Her Path için WP_'leri topla ve sıraya diz
+        // Her Path icin WP_'leri topla ve siraya diz
         for (int i = 0; i < pathRoots.Count; i++)
         {
             LevelPath newLevelPath = new LevelPath();
             newLevelPath.points = new List<Vector3>();
             
-            // İsmin sonundaki sayıyı spawnerIndex yapalım (Path_0 -> 0)
+            // ismin sonundaki sayiyi spawnerIndex yapalim (Path_0 -> 0)
             int spawnerIndex = 0;
             string[] parts = pathRoots[i].name.Split('_');
             if (parts.Length > 1 && int.TryParse(parts[1], out int parsedIndex))
@@ -133,7 +133,7 @@ public class LevelMapConfigurator : EditorWindow
                 }
             }
 
-            // WP_0, WP_1 ismine göre sırala
+            // WP_0, WP_1 ismine gore sirala
             waypoints.Sort((a, b) => 
             {
                 int aIndex = GetWaypointIndex(a.name);
@@ -157,16 +157,16 @@ public class LevelMapConfigurator : EditorWindow
         EditorUtility.SetDirty(targetLevel);
         AssetDatabase.SaveAssets();
 
-        Debug.Log($"<color=cyan>[Map Configurator]</color> Başarıyla okundu ve {targetLevel.name} içine kaydedildi!\n" +
-                  $"Base Sayısı: {newBasePoints.Count} | Kule Slotu: {newTowerSlots.Count} | Yol(Path) Sayısı: {newPaths.Count}");
+        Debug.Log($"<color=cyan>[Map Configurator]</color> Successfully read and saved into {targetLevel.name}!\n" +
+                  $"Base Count: {newBasePoints.Count} | Tower Slots: {newTowerSlots.Count} | Path Count: {newPaths.Count}");
         
-        EditorUtility.DisplayDialog("Başarılı", $"{targetLevel.name} güncellendi!\n" +
-                  $"Base Noktaları: {newBasePoints.Count}\nKule Slotları: {newTowerSlots.Count}\nYol Sayısı: {newPaths.Count}", "Tamam");
+        EditorUtility.DisplayDialog("Success", $"{targetLevel.name} updated!\n" +
+                  $"Base Points: {newBasePoints.Count}\nTower Slots: {newTowerSlots.Count}\nPaths: {newPaths.Count}", "OK");
     }
 
     private int GetWaypointIndex(string wpName)
     {
-        // Örn: "WP_5" veya "WP_0_5" (Eski sistemde alt WP'ler)
+        // orn: "WP_5" veya "WP_0_5" (Eski sistemde alt WP'ler)
         string[] parts = wpName.Split('_');
         if (parts.Length > 0 && int.TryParse(parts[parts.Length - 1], out int val))
         {

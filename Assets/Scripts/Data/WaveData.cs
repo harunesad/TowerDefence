@@ -9,8 +9,8 @@ namespace TowerDefence.Data
         public UnitData unitData;
         public int count;
         public float spawnInterval = 1f;
-        public float groupDelay = 0f; // Gruba başlamadan önceki bekleme süresi
-        public int spawnerIndex = 0; // Hangi spawner bu grubu çıkaracak?
+        public float groupDelay = 0f; // Delay before starting the group
+        public int spawnerIndex = 0; // Which spawner will spawn this group?
     }
 
     [CreateAssetMenu(fileName = "New Wave Data", menuName = "Tower Defence/Level/Wave Data")]

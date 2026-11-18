@@ -129,7 +129,7 @@ namespace TowerDefence.Core
             Vector2 pointerPos = Pointer.current.position.ReadValue();
             Ray ray = Camera.main.ScreenPointToRay(pointerPos);
 
-            // 1. ÖNCELİK: 3D dünyada Hero tıklamasını kontrol et
+            // 1. oNCELiK: 3D dunyada Hero tiklamasini kontrol et
             RaycastHit[] hits = Physics.RaycastAll(ray, 250f);
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
             foreach (var hit in hits)
@@ -150,7 +150,7 @@ namespace TowerDefence.Core
                 }
             }
 
-            // 2. Seçili hero varsa zemine tıklayarak hareket ettir
+            // 2. Secili hero varsa zemine tiklayarak hareket ettir
             if (awaitingMoveCommand && selectedHero != null && !selectedHero.IsDead)
             {
                 if (TryGetGroundPoint(ray, out Vector3 groundPoint))
@@ -161,7 +161,7 @@ namespace TowerDefence.Core
                 }
             }
 
-            // 3. Boş alana tıklandıysa seçimi kaldır
+            // 3. Bos alana tiklandiysa secimi kaldir
             if (selectedHero != null)
             {
                 DeselectHero();
@@ -301,7 +301,7 @@ namespace TowerDefence.Core
                 ? lastMovePoints[slot]
                 : GetDefaultSpawnPoint() + GetSpawnOffset(slot);
 
-            // Eğer kahraman zaten sahnedeyse yeniden oluşturma, respawn et
+            // Eger kahraman zaten sahnedeyse yeniden olusturma, respawn et
             if (activeHeroes[slot] != null)
             {
                 activeHeroes[slot].Respawn(spawnPos);
@@ -354,7 +354,7 @@ namespace TowerDefence.Core
 
         private Vector3 GetDefaultSpawnPoint()
         {
-            // Tüm yolları bul ve en uzun (en çok waypoint'e sahip) olanı seç
+            // Tum yollari bul ve en uzun (en cok waypoint'e sahip) olani sec
             PathWaypoints[] allPaths = Object.FindObjectsByType<PathWaypoints>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             
             PathWaypoints mainPath = null;
@@ -375,14 +375,14 @@ namespace TowerDefence.Core
                 var waypoints = mainPath.GetWaypoints();
                 if (waypoints != null && waypoints.Count > 0)
                 {
-                    // Özel Durum: Sadece 2 waypoint varsa, ikisinin tam ortasını hesapla
+                    // ozel Durum: Sadece 2 waypoint varsa, ikisinin tam ortasini hesapla
                     if (waypoints.Count == 2 && waypoints[0] != null && waypoints[1] != null)
                     {
                         Debug.Log($"[HeroManager] Spawning heroes at mathematical middle of 2-point path '{mainPath.name}'");
                         return (waypoints[0].position + waypoints[1].position) * 0.5f;
                     }
 
-                    // Genel Durum: 2'den fazla waypoint varsa, orta noktadaki waypoint'i seç
+                    // Genel Durum: 2'den fazla waypoint varsa, orta noktadaki waypoint'i sec
                     int midIndex = waypoints.Count / 2;
                     if (waypoints[midIndex] != null)
                     {
@@ -392,14 +392,14 @@ namespace TowerDefence.Core
                 }
             }
 
-            // Yedek: Eğer yol bulunamazsa player spawner'ı kullan
+            // Yedek: Eger yol bulunamazsa player spawner'i kullan
             foreach (var spawner in Spawner.AllSpawners)
             {
                 if (spawner != null && spawner.isPlayerSpawner)
                     return spawner.transform.position;
             }
 
-            // Son çare: Sahne merkezi veya sıfır noktası
+            // Son care: Sahne merkezi veya sifir noktasi
             return Vector3.zero;
         }
 

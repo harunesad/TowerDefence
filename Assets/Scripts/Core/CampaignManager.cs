@@ -11,7 +11,7 @@ namespace TowerDefence.Core
         [SerializeField] private LevelData currentSelectedLevel;
 
         [Header("Debug")]
-        [Tooltip("Sadece Editor'de geçerlidir. Tüm bölümlerin kilidini açar.")]
+        [Tooltip("Editor only. Unlocks all levels.")]
         [SerializeField] private bool unlockAllLevelsForTesting = false;
 
         private void Awake()
@@ -93,7 +93,7 @@ namespace TowerDefence.Core
             grantCrystalsOnSpawn = true;
             if (currentSelectedLevel != null)
             {
-                // Sahne yüklendiğinde yeni haritayı spawn etmek için abone ol
+                // Sahne yuklendiginde yeni haritayi spawn etmek icin abone ol
                 SceneManager.sceneLoaded += OnLevelSceneLoaded;
                 SceneLoader.EnsureInstance();
                 if (SceneLoader.Instance != null)
@@ -108,7 +108,7 @@ namespace TowerDefence.Core
             grantCrystalsOnSpawn = false;
             if (currentSelectedLevel != null)
             {
-                // Sahne yüklendiğinde haritayı tekrar kurması için abone ol
+                // Sahne yuklendiginde haritayi tekrar kurmasi icin abone ol
                 SceneManager.sceneLoaded += OnLevelSceneLoaded;
                 SceneLoader.EnsureInstance();
                 if (SceneLoader.Instance != null)
@@ -122,10 +122,10 @@ namespace TowerDefence.Core
 
         private void OnLevelSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            // Sadece bir kez çalışması için çıkar
+            // Sadece bir kez calismasi icin cikar
             SceneManager.sceneLoaded -= OnLevelSceneLoaded;
             
-            // Sahne yükleme bitince spawn et
+            // Sahne yukleme bitince spawn et
             SpawnMap();
         }
 
@@ -133,7 +133,7 @@ namespace TowerDefence.Core
         {
             if (currentSelectedLevel == null) return;
 
-            // 3. Spawning: Haritayı oluştur
+            // 3. Spawning: Generate map
             if (currentSelectedLevel.mapPrefab != null)
             {
                 currentMapInstance = Instantiate(currentSelectedLevel.mapPrefab, currentSelectedLevel.mapPrefab.transform.position, currentSelectedLevel.mapPrefab.transform.rotation);
@@ -162,7 +162,7 @@ namespace TowerDefence.Core
             GameManager.Instance.ChangeState(GameState.Playing);
             PhaseManager.Instance.StartPreparationPhase();
 
-            // Yeni: Haritayı ekrana tam ortala (HUD payı dahil)
+            // Yeni: Haritayi ekrana tam ortala (HUD payi dahil)
             if (currentMapInstance != null)
             {
                 CenterCameraAtRuntime(currentMapInstance);
@@ -217,13 +217,13 @@ namespace TowerDefence.Core
             if (crystalsToGrant > 0)
                 MetaProgressionManager.Instance.AddCrystals(crystalsToGrant);
 
-            // Bölümü tamamlandı olarak kaydet
+            // Bolumu tamamlandi olarak kaydet
             MetaProgressionManager.Instance.SaveLevelProgress(levelID, stars, currentDifficultyLevel);
 
-            // Bir sonraki seviyenin kilidini aç (Yazılımsal mantık)
+            // Bir sonraki seviyenin kilidini ac (Yazilimsal mantik)
             UnlockNextLevel();
 
-            // Tüm bölümler bittiyse bir sonraki zorluğu aç
+            // Tum bolumler bittiyse bir sonraki zorlugu ac
             CheckDifficultyUnlock();
             return (karmaToGrant, crystalsToGrant);
         }
@@ -243,7 +243,7 @@ namespace TowerDefence.Core
             
             if (nextIndex < allLevels.Count)
             {
-                // Eğer açılan yeni bölüm, kayıttaki en yüksek bölümden büyükse kaydı güncelle
+                // Eger acilan yeni bolum, kayittaki en yuksek bolumden buyukse kaydi guncelle
                 if (nextIndex > MetaProgressionManager.Instance.GetHighestUnlockedLevel(currentDifficultyLevel))
                 {
                     MetaProgressionManager.Instance.UpdateHighestLevel(nextIndex, currentDifficultyLevel);
@@ -282,7 +282,7 @@ namespace TowerDefence.Core
             if (index < 0) return false;
             if (index == 0) return true;
             
-            // Kayıtlı en yüksek bölüm indeksinden küçük veya eşitse açıktır
+            // Kayitli en yuksek bolum indeksinden kucuk veya esitse aciktir
             return index <= MetaProgressionManager.Instance.GetHighestUnlockedLevel(currentDifficultyLevel);
         }
 
@@ -291,7 +291,7 @@ namespace TowerDefence.Core
             Camera cam = Camera.main;
             if (cam == null) return;
 
-            // Harita sınırlarını tam oynanabilir alana göre hesapla (Waypointler üzerinden)
+            // Harita sinirlarini tam oynanabilir alana gore hesapla (Waypointler uzerinden)
             Bounds bounds = new Bounds();
             bool first = true;
             PathWaypoints[] allPaths = mapInstance.GetComponentsInChildren<PathWaypoints>();
@@ -313,18 +313,18 @@ namespace TowerDefence.Core
             float maxDim = Mathf.Max(bounds.size.x, bounds.size.z);
             
             float camAngle = 65f;
-            // Dinamik yükseklik: Harita boyutuna göre mesafeyi ayarla
+            // Dinamik yukseklik: Harita boyutuna gore mesafeyi ayarla
             float height = Mathf.Max(30, maxDim * 0.7f); 
             
-            // HUD Panelini (Alt Kısım) telafi etmek için fokus noktasını biraz yukarı kaydır
+            // HUD Panelini (Alt Kisim) telafi etmek icin fokus noktasini biraz yukari kaydir
             // Trigonometrik ofset + Sabit birim ofset
             float uiOffsetZ = -height / Mathf.Tan(camAngle * Mathf.Deg2Rad); 
-            float hudCompensation = 10f; // Haritayı dikeyde tam merkeze (HUD üstüne) taşır
+            float hudCompensation = 10f; // Haritayi dikeyde tam merkeze (HUD ustune) tasir
 
             // cam.transform.position = new Vector3(center.x, height, center.z + uiOffsetZ + hudCompensation);
             // cam.transform.rotation = Quaternion.Euler(camAngle, 0, 0);
             
-            // orthographicSize artık kod tarafından değiştirilmiyor, editördeki değer korunuyor.
+            // orthographicSize artik kod tarafindan degistirilmiyor, editordeki deger korunuyor.
             if (!cam.orthographic) cam.fieldOfView = 40;
 
             Debug.Log($"[CampaignManager] Camera centering logic skipped as per requirement. Target would be: {center}, Height: {height}");
@@ -393,7 +393,7 @@ namespace TowerDefence.Core
 
         public LevelData GetCurrentLevel() => currentSelectedLevel;
 
-        /// <summary>Bir sonraki seviyeyi seç ve yükle. Son seviyedeyse false döner.</summary>
+        /// <summary>Bir sonraki seviyeyi sec ve yukle. Son seviyedeyse false doner.</summary>
         public bool LoadNextLevel()
         {
             if (allLevels == null || allLevels.Count == 0 || currentSelectedLevel == null)

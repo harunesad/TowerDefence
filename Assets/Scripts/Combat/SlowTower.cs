@@ -8,7 +8,7 @@ namespace TowerDefence.Combat
     {
         [Header("Settings")]
         [SerializeField] private float slowRadius = 5f;
-        [SerializeField] private float slowPercentage = 0.5f; // %50 yavaşlatma
+        [SerializeField] private float slowPercentage = 0.5f; // 50% slow
         [SerializeField] private LayerMask targetLayer;
 
         private Tower tower;

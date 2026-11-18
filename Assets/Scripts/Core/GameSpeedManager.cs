@@ -3,7 +3,7 @@ using UnityEngine;
 namespace TowerDefence.Core
 {
     /// <summary>
-    /// Oyun hızını (x1, x2, x3) ve duraklatma (Pause) durumunu Time.timeScale üzerinden yönetir.
+    /// Manages game speed (x1, x2, x3) and pause state via Time.timeScale.
     /// </summary>
     public class GameSpeedManager : MonoBehaviour
     {
@@ -17,7 +17,7 @@ namespace TowerDefence.Core
         private bool isPaused = false;
         private float savedTimeScale = 1f;
 
-        // Hız değiştiğinde UI'ın dinleyebileceği event. Duraklatıldıysa -1 döner.
+        // Event for UI to listen when speed changes. Returns -1 if paused.
         public System.Action<int> OnSpeedChanged;
 
         private void Awake()
@@ -50,7 +50,7 @@ namespace TowerDefence.Core
         {
             if (index < 0 || index >= speedLevels.Length) return;
             currentSpeedIndex = index;
-            isPaused = false; // Hız butonuna basılınca duraklatmayı otomatik kapat
+            isPaused = false; // Automatically unpause when speed button is pressed
             Time.timeScale = speedLevels[index];
             Time.fixedDeltaTime = DefaultFixedDelta * Time.timeScale;
             OnSpeedChanged?.Invoke(currentSpeedIndex);
@@ -80,10 +80,10 @@ namespace TowerDefence.Core
 
         public bool IsPaused() => isPaused;
 
-        /// <summary>Mevcut hız indeksini döndürür (0=x1, 1=x2, 2=x3)</summary>
+        /// <summary>Returns the current speed index (0=x1, 1=x2, 2=x3)</summary>
         public int GetCurrentSpeedIndex() => currentSpeedIndex;
 
-        /// <summary>Mevcut Time.timeScale değerini döndürür</summary>
+        /// <summary>Returns the current Time.timeScale value</summary>
         public float GetCurrentSpeed() => isPaused ? 0f : speedLevels[currentSpeedIndex];
     }
 }

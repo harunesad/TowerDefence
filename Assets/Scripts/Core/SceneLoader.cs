@@ -8,8 +8,8 @@ using TowerDefence.Data;
 namespace TowerDefence.Core
 {
     /// <summary>
-    /// Sahneler arası asenkron yükleme ve fade geçiş yöneticisi.
-    /// DontDestroyOnLoad olarak yaşar. Tüm sahne geçişlerinde SceneLoader.Instance.LoadScene(...) çağrılır.
+    /// Sahneler arasi asenkron yukleme ve fade gecis yoneticisi.
+    /// DontDestroyOnLoad olarak yasar. Tum sahne gecislerinde SceneLoader.Instance.LoadScene(...) cagrilir.
     /// </summary>
     public class SceneLoader : MonoBehaviour
     {
@@ -54,7 +54,7 @@ namespace TowerDefence.Core
                 transform.SetParent(null);
                 DontDestroyOnLoad(gameObject);
 
-                // Başlangıçta gizle
+                // Hide initially
                 if (canvasGroup != null)
                 {
                     canvasGroup.alpha = 0f;
@@ -78,7 +78,7 @@ namespace TowerDefence.Core
         }
 
         /// <summary>
-        /// Sahneyi build index ile yükler.
+        /// Sahneyi build index ile yukler.
         /// </summary>
         public void LoadScene(int sceneIndex)
         {
@@ -87,7 +87,7 @@ namespace TowerDefence.Core
         }
 
         /// <summary>
-        /// Sahneyi isim ile yükler.
+        /// Sahneyi isim ile yukler.
         /// </summary>
         public void LoadScene(string sceneName)
         {
@@ -96,7 +96,7 @@ namespace TowerDefence.Core
         }
 
         /// <summary>
-        /// Mevcut sahneyi yeniden yükler.
+        /// Mevcut sahneyi yeniden yukler.
         /// </summary>
         public void ReloadCurrentScene()
         {
@@ -108,7 +108,7 @@ namespace TowerDefence.Core
         {
             isLoading = true;
 
-            // Rastgele bir ipucu göster
+            // Rastgele bir ipucu goster
             if (tipsText != null)
             {
                 if (tipsData != null)
@@ -117,14 +117,14 @@ namespace TowerDefence.Core
                     tipsText.text = fallbackTips[Random.Range(0, fallbackTips.Length)];
             }
 
-            // Progress sıfırla
+            // Progress sifirla
             if (progressBar != null) progressBar.value = 0f;
             if (progressText != null) progressText.text = "0%";
 
-            // === FADE IN (Ekranı kapat) ===
+            // === FADE IN (Ekrani kapat) ===
             yield return StartCoroutine(Fade(0f, 1f));
 
-            // Asenkron sahne yüklemeyi başlat
+            // Asenkron sahne yuklemeyi baslat
             AsyncOperation asyncOp;
             if (sceneName != null)
                 asyncOp = SceneManager.LoadSceneAsync(sceneName);
@@ -141,14 +141,14 @@ namespace TowerDefence.Core
             {
                 elapsed += Time.unscaledDeltaTime;
 
-                // Gerçek ilerlemeyi 0-1 aralığına normalize et (0.9 = %100)
+                // Gercek ilerlemeyi 0-1 araligina normalize et (0.9 = %100)
                 float targetProgress = Mathf.Clamp01(asyncOp.progress / 0.9f);
 
-                // Minimum bekleme süresini de hesaba kat
+                // Minimum bekleme suresini de hesaba kat
                 float timeProgress = Mathf.Clamp01(elapsed / minimumLoadTime);
                 targetProgress = Mathf.Min(targetProgress, timeProgress);
 
-                // Yumuşak ilerleme
+                // Yumusak ilerleme
                 displayProgress = Mathf.MoveTowards(displayProgress, targetProgress, Time.unscaledDeltaTime * 2f);
 
                 if (progressBar != null) progressBar.value = displayProgress;
@@ -167,14 +167,14 @@ namespace TowerDefence.Core
             // Sahneyi aktive et
             asyncOp.allowSceneActivation = true;
 
-            // Sahnenin tam yüklenmesini bekle
+            // Sahnenin tam yuklenmesini bekle
             while (!asyncOp.isDone)
                 yield return null;
 
-            // Yeni sahnenin ilk frame'inin render olmasını bekle
+            // Yeni sahnenin ilk frame'inin render olmasini bekle
             yield return null;
 
-            // === FADE OUT (Ekranı aç) ===
+            // === FADE OUT (Ekrani ac) ===
             yield return StartCoroutine(Fade(1f, 0f));
 
             isLoading = false;
@@ -204,7 +204,7 @@ namespace TowerDefence.Core
         }
 
         /// <summary>
-        /// SceneLoader instance'ını kontrol eder. GameManager.Awake()'te prefab zaten instantiate edilmiş olmalıdır.
+        /// SceneLoader instance'ini kontrol eder. GameManager.Awake()'te prefab zaten instantiate edilmis olmalidir.
         /// </summary>
         public static void EnsureInstance()
         {

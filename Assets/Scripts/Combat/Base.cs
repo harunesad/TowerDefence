@@ -37,14 +37,24 @@ namespace TowerDefence.Combat
                 baseSide = SideController.Instance.GetPlayerSide();
         }
 
+        public void Leak(int lives)
+        {
+            if (LivesManager.Instance == null) return;
+            LivesManager.Instance.ReduceLives(baseSide, Mathf.Max(1, lives));
+            PlayBreachFeedback();
+        }
+
         public void TakeDamage(float amount)
         {
             if (LivesManager.Instance == null) return;
 
             int livesLost = Mathf.Max(1, Mathf.CeilToInt(amount / 50f));
             LivesManager.Instance.ReduceLives(baseSide, livesLost);
+            PlayBreachFeedback();
+        }
 
-            // Görsel ve İşitsel Geri Bildirim
+        private void PlayBreachFeedback()
+        {
             if (ScreenShake.Instance != null)
             {
                 ScreenShake.Instance.Shake(0.3f, 0.5f);

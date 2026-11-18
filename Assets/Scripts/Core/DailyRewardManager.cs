@@ -49,14 +49,14 @@ namespace TowerDefence.UI
                     int karma = 0;
                     int crystal = 0;
 
-                    // Her gün için tek bir ödül türü (genelde Karma, her 5. gün veya özel günlerde Kristal)
+                    // Single reward type per day (usually Karma, Crystal every 5th or special day)
                     if (day % 7 == 0 || day % 10 == 0) 
                     {
-                        crystal = (day / 5) * 5 + 5; // Örn: 7. gün 5 kristal, 10. gün 15 kristal vs.
+                        crystal = (day / 5) * 5 + 5; // e.g. Day 7: 5 crystals, Day 10: 15 crystals, etc.
                     }
                     else
                     {
-                        karma = day * 10 + 50; // Örn: 1. gün 60 karma, 2. gün 70 karma
+                        karma = day * 10 + 50; // e.g. Day 1: 60 karma, Day 2: 70 karma
                     }
 
                     if (day == 30)

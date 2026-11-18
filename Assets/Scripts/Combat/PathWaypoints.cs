@@ -12,7 +12,7 @@ namespace TowerDefence.Combat
         [SerializeField] private int splineResolution = 10;
         
         [Header("Path Dimensions")]
-        [SerializeField] private float pathWidth = 3f; // Yürüme yolunun genişliği
+        [SerializeField] private float pathWidth = 3f; // Walking path width
         public float PathWidth => pathWidth;
 
         [HideInInspector] public List<Vector3> curveHandles = new List<Vector3>();
@@ -34,7 +34,7 @@ namespace TowerDefence.Combat
             cachedPathPoints = new List<Vector3>();
             if (waypoints == null || waypoints.Count == 0) return;
             
-            // Eğer yeterli handle yoksa listeyi eşitle
+            // Eger yeterli handle yoksa listeyi esitle
             while (curveHandles.Count < waypoints.Count - 1)
             {
                 curveHandles.Add(Vector3.zero);
@@ -56,7 +56,7 @@ namespace TowerDefence.Combat
                 Vector3 p0 = waypoints[i].position;
                 Vector3 p2 = waypoints[i + 1].position;
                 
-                // Handle hiç ayarlanmamışsa (Vector3.zero) otomatik orta nokta yap
+                // Handle hic ayarlanmamissa (Vector3.zero) otomatik orta nokta yap
                 Vector3 p1 = curveHandles[i];
                 if (p1 == Vector3.zero) 
                 {
@@ -91,7 +91,7 @@ namespace TowerDefence.Combat
         {
             if (waypoints == null || waypoints.Count == 0) return;
 
-            // Kontrol noktalarını (orijinal waypoints) çiz
+            // Kontrol noktalarini (orijinal waypoints) ciz
             Gizmos.color = Color.cyan;
             for (int i = 0; i < waypoints.Count; i++)
             {
@@ -101,7 +101,7 @@ namespace TowerDefence.Combat
                 }
             }
 
-            // Kavisli veya düz yolu çiz
+            // Kavisli veya duz yolu ciz
             GeneratePathPoints();
             if (cachedPathPoints != null && cachedPathPoints.Count > 1)
             {

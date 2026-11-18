@@ -115,7 +115,7 @@ namespace TowerDefence.Core
         }
 
         /// <summary>
-        /// Ödüllü reklam gösterir.
+        /// odullu reklam gosterir.
         /// </summary>
         public void ShowRewardedAd(Action onSuccess, Action onFailed = null)
         {
@@ -148,7 +148,7 @@ namespace TowerDefence.Core
         }
 
         /// <summary>
-        /// Geçiş (Zorunlu) reklamı gösterir.
+        /// Gecis (Zorunlu) reklami gosterir.
         /// </summary>
         public void ShowInterstitialAd(Action onCompleted = null)
         {
@@ -157,14 +157,14 @@ namespace TowerDefence.Core
             if (isInterstitialLoaded)
             {
                 Debug.Log("Showing Interstitial Ad.");
-                isInterstitialLoaded = false; // Kullanıldı
+                isInterstitialLoaded = false; // Kullanildi
                 Advertisement.Show(interstitialId, this);
             }
             else
             {
                 Debug.LogWarning("Interstitial Ad not ready!");
                 FinishInterstitial();
-                LoadAd(interstitialId); // Yeniden yüklemeyi dene
+                LoadAd(interstitialId); // Yeniden yuklemeyi dene
             }
         }
 
@@ -202,7 +202,7 @@ namespace TowerDefence.Core
                 FinishInterstitial();
             }
 
-            LoadAd(adUnitId); // Gösterimden sonra yenisini yükle
+            LoadAd(adUnitId); // Gosterimden sonra yenisini yukle
         }
 
         private void FinishRewarded(bool success)

@@ -13,26 +13,26 @@ namespace TowerDefence.Data
         }
 
         [Header("Mode")]
-        [Tooltip("SolidColor: Kamera arka plan rengi kullanılır. SkyboxMaterial: Klasik skybox kullanılır.")]
+        [Tooltip("SolidColor: Camera background color used. SkyboxMaterial: Classic skybox used.")]
         public BackgroundMode backgroundMode = BackgroundMode.SolidColor;
 
         [Header("Theme Solid Colors (Mode = SolidColor)")]
-        [Tooltip("Forest seviyeleri için kamera arka plan rengi")]
-        public Color forestColor = new Color(0.18f, 0.28f, 0.22f, 1f); // Doğal yumuşak orman yeşili/tonu
+        [Tooltip("Camera background color for Forest levels")]
+        public Color forestColor = new Color(0.18f, 0.28f, 0.22f, 1f); // Natural soft forest green/tone
 
-        [Tooltip("Desert seviyeleri için kamera arka plan rengi")]
-        public Color desertColor = new Color(0.38f, 0.30f, 0.20f, 1f); // Çöl kumu / sıcak toprak tonu
+        [Tooltip("Camera background color for Desert levels")]
+        public Color desertColor = new Color(0.38f, 0.30f, 0.20f, 1f); // Desert sand / warm soil tone
 
-        [Tooltip("Snow seviyeleri için kamera arka plan rengi")]
-        public Color snowColor = new Color(0.24f, 0.32f, 0.40f, 1f); // Soğuk kış mavisi/grisi
+        [Tooltip("Camera background color for Snow levels")]
+        public Color snowColor = new Color(0.24f, 0.32f, 0.40f, 1f); // Cold winter blue/gray
 
-        [Tooltip("Lava seviyeleri için kamera arka plan rengi")]
-        public Color lavaColor = new Color(0.28f, 0.12f, 0.10f, 1f); // Koyu lav / kızıl kül tonu
+        [Tooltip("Camera background color for Lava levels")]
+        public Color lavaColor = new Color(0.28f, 0.12f, 0.10f, 1f); // Dark lava / crimson ash tone
 
-        [Tooltip("Underworld seviyeleri için kamera arka plan rengi")]
-        public Color underworldColor = new Color(0.14f, 0.10f, 0.22f, 1f); // Mistik yeraltı moru/karanlık
+        [Tooltip("Camera background color for Underworld levels")]
+        public Color underworldColor = new Color(0.14f, 0.10f, 0.22f, 1f); // Mystical underworld purple/dark
 
-        [Tooltip("Belirlenmemiş temalar için varsayılan renk")]
+        [Tooltip("Default color for unassigned themes")]
         public Color defaultColor = new Color(0.15f, 0.18f, 0.22f, 1f);
 
         [Header("Theme Skyboxes (Mode = SkyboxMaterial)")]

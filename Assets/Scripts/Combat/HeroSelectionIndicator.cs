@@ -9,7 +9,7 @@ namespace TowerDefence.Combat
         Active
     }
 
-    /// <summary>Her zaman görünen seçim halkası — pasif (soluk) / aktif (parlak).</summary>
+    /// <summary>Always visible selection ring — passive (faded) / active (bright).</summary>
     public class HeroSelectionIndicator : MonoBehaviour
     {
         private static readonly Color PassiveColor = new Color(0.02f, 0.04f, 0.18f, 0.35f);
@@ -91,7 +91,7 @@ namespace TowerDefence.Combat
                 for (int x = 0; x < size; x++)
                 {
                     float dist = Vector2.Distance(new Vector2(x, y), center);
-                    // Yumuşak kenarlar (anti-aliasing) için
+                    // For soft edges (anti-aliasing)
                     float alpha = 0f;
                     if (dist <= outerRadius && dist >= innerRadius) alpha = 1f;
                     else if (dist > outerRadius && dist < outerRadius + 2f) alpha = 1f - (dist - outerRadius) / 2f;

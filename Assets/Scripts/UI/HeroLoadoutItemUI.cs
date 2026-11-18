@@ -41,6 +41,7 @@ namespace TowerDefence.UI
         {
             if (eventData.button != PointerEventData.InputButton.Left) return;
             if (TutorialDirector.Instance != null && TutorialDirector.Instance.BlocksLoadoutClick("hero", ItemId)) return;
+            UIButtonSound.Play();
 
             float timeSinceLastClick = Time.unscaledTime - lastClickTime;
             lastClickTime = Time.unscaledTime;

@@ -18,11 +18,11 @@ namespace TowerDefence.Core
         private DateTime networkBaseUtcTime;
         private float syncRealtimeSinceStartup = 0f;
 
-        // İnternet olmasa dahi cihaz saatinin geriye veya kontrolsüz ileri alınmasını engellemek için
+        // internet olmasa dahi cihaz saatinin geriye veya kontrolsuz ileri alinmasini engellemek icin
         private long lastKnownSafeUtcTicks = 0;
         private const string PREF_SAFE_TIME_KEY = "TD_LAST_SAFE_TIME_TICKS";
 
-        // Güvenilir, hafif HTTP head / time endpoint'leri
+        // Guvenilir, hafif HTTP head / time endpoint'leri
         private readonly string[] timeServers = new string[]
         {
             "https://www.google.com",
@@ -55,7 +55,7 @@ namespace TowerDefence.Core
                 lastKnownSafeUtcTicks = ticks;
             }
 
-            // Başlangıçta fallback olarak cihaz UTC saatini güvenli referansla karşılaştır
+            // Baslangicta fallback olarak cihaz UTC saatini guvenli referansla karsilastir
             DateTime deviceUtc = DateTime.UtcNow;
             if (lastKnownSafeUtcTicks <= 0)
             {
@@ -64,8 +64,8 @@ namespace TowerDefence.Core
             }
             else
             {
-                // Cihaz saati ileri alınsa da oturum, son kayıtlı andan ve gerçek geçen süreden yürür.
-                // Geri alınan saat de bu andın gerisine düşemez.
+                // Cihaz saati ileri alinsa da oturum, son kayitli andan ve gercek gecen sureden yurur.
+                // Geri alinan saat de bu andin gerisine dusemez.
                 networkBaseUtcTime = new DateTime(lastKnownSafeUtcTicks, DateTimeKind.Utc);
             }
             syncRealtimeSinceStartup = Time.realtimeSinceStartup;
@@ -90,7 +90,7 @@ namespace TowerDefence.Core
             }
             else
             {
-                // Uygulamaya geri dönüldüğünde zamanı tekrar senkronize etmeyi dene
+                // Uygulamaya geri donuldugunde zamani tekrar senkronize etmeyi dene
                 StartCoroutine(SyncTimeRoutine());
             }
         }
@@ -133,18 +133,18 @@ namespace TowerDefence.Core
         }
 
         /// <summary>
-        /// Saat hilelerine karşı korumalı anlık UTC zamanını döndürür.
-        /// Cihaz saati ileri veya geri alınsa bile, son bilinen gerçek zamandan donanımsal geçen süre (realtimeSinceStartup) kadar ilerler.
+        /// Saat hilelerine karsi korumali anlik UTC zamanini dondurur.
+        /// Cihaz saati ileri veya geri alinsa bile, son bilinen gercek zamandan donanimsal gecen sure (realtimeSinceStartup) kadar ilerler.
         /// </summary>
         public DateTime GetCurrentUtcTime()
         {
-            // Senkronize olunan andan beri donanımsal olarak geçen saniye
+            // Senkronize olunan andan beri donanimsal olarak gecen saniye
             float elapsedSeconds = Time.realtimeSinceStartup - syncRealtimeSinceStartup;
             if (elapsedSeconds < 0f) elapsedSeconds = 0f;
 
             DateTime calculatedTime = networkBaseUtcTime.AddSeconds(elapsedSeconds);
 
-            // Eğer cihaz saati bilinen en güvenli andan gerideyse asla geriye gitme
+            // Eger cihaz saati bilinen en guvenli andan gerideyse asla geriye gitme
             if (calculatedTime.Ticks < lastKnownSafeUtcTicks)
             {
                 calculatedTime = new DateTime(lastKnownSafeUtcTicks, DateTimeKind.Utc);
@@ -154,7 +154,7 @@ namespace TowerDefence.Core
         }
 
         /// <summary>
-        /// Yerel saat dilimine dönüştürülmüş anlık güvenli zaman.
+        /// Yerel saat dilimine donusturulmus anlik guvenli zaman.
         /// </summary>
         public DateTime GetCurrentLocalTime()
         {

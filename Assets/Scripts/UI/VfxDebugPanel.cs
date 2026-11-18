@@ -332,7 +332,7 @@ namespace TowerDefence.UI
             if (arrowPrefab != null)
             {
                 const float radius = 4f;
-                const int arrowCount = 8;
+                const int arrowCount = 32;
                 for (int i = 0; i < arrowCount; i++)
                 {
                     Vector2 circle = Random.insideUnitCircle * radius;

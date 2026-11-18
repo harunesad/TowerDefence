@@ -12,7 +12,7 @@ namespace TowerDefence.UI
         [SerializeField] private Transform itemContainer;
         [SerializeField] private GameObject itemPrefab;
         [SerializeField] private TextMeshProUGUI karmaText;
-        [SerializeField] private TextMeshProUGUI crystalText; // Yeni: Kristal göstergesi
+        [SerializeField] private TextMeshProUGUI crystalText; // New: Crystal display
         [SerializeField] private Button backButton;
         [SerializeField] private HeroDetailPanelUI detailPanel;
 
@@ -47,11 +47,11 @@ namespace TowerDefence.UI
                 RectTransform rt = itemContainer.GetComponent<RectTransform>();
                 if (rt != null)
                 {
-                    // Scroll view'un düzgün çalışması için Content pivotu her zaman üstte (1) olmalı
+                    // Content pivot must always be top (1) for proper scroll view operation
                     rt.pivot = new Vector2(0.5f, 1f);
                     rt.anchorMin = new Vector2(0.5f, 1f);
                     rt.anchorMax = new Vector2(0.5f, 1f);
-                    // Y pozisyonunu sıfırlayarak en üste yasla
+                    // Snap to top by resetting Y position to zero
                     rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, 0);
                 }
             }
@@ -64,7 +64,7 @@ namespace TowerDefence.UI
             if (MetaProgressionManager.Instance != null)
                 MetaProgressionManager.Instance.OnHeroProgressChanged += OnProgressChanged;
             
-            // Panelin her açılışında scrollu en başa al
+            // Reset scroll to top whenever panel opens
             if (itemContainer != null)
             {
                 RectTransform rt = itemContainer.GetComponent<RectTransform>();

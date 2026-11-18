@@ -15,7 +15,7 @@ namespace TowerDefence.Combat
             parentUnit = GetComponentInParent<Unit>();
         }
 
-        // Animation Event'ten çağrılır
+        // Called from Animation Event
         public void OnAttackHit()
         {
             if (parentUnit != null)

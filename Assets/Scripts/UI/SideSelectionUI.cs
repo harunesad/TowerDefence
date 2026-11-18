@@ -178,7 +178,7 @@ namespace TowerDefence.UI
             foreach (Transform child in spellItemContainer)
                 Destroy(child.gameObject);
 
-            // En yüksek seviyeli büyüleri bulmak için gruplandır
+            // En yuksek seviyeli buyuleri bulmak icin gruplandir
             Dictionary<string, SpellData> bestSpells = new Dictionary<string, SpellData>();
             Dictionary<string, int> highestTiers = new Dictionary<string, int>();
 
@@ -245,7 +245,7 @@ namespace TowerDefence.UI
             else
                 bossItemContainer = bossScrollObj.transform.Find("UnitContent") ?? bossScrollObj.transform; // Fallback
 
-            // UnitHint kopyası
+            // UnitHint copy
             if (unitLoadoutHint != null)
             {
                 GameObject bossHintObj = Instantiate(unitLoadoutHint.gameObject, unitLoadoutHint.transform.parent);
@@ -568,7 +568,7 @@ namespace TowerDefence.UI
                 return;
             }
 
-            // Kahraman seçilmemişse bile savaşa girilebilir, auto-equip yapmıyoruz.
+            // Kahraman secilmemisse bile savasa girilebilir, auto-equip yapmiyoruz.
             // Bu sayede oyuncu istemezse kahraman olmadan oynayabilir.
 
             Debug.Log("Starting match with side: " + currentSelectedSide);

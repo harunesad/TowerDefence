@@ -53,7 +53,7 @@ namespace TowerDefence.Combat
         private Vector3 GetTargetCenter()
         {
             if (target == null) return transform.position;
-            // Karakterlerin merkez noktası ayaklarında olduğu için mermiyi göğüs hizasına (1 birim yukarı) nişanla
+            // Karakterlerin merkez noktasi ayaklarinda oldugu icin mermiyi gogus hizasina (1 birim yukari) nisanla
             return target.position + Vector3.up * 1f;
         }
 
@@ -61,7 +61,7 @@ namespace TowerDefence.Combat
         {
             target = _target;
 
-            // Balistik atış: atış anındaki hedef noktasını dondur (dumb lob — hedef yürürse ıskalanabilir)
+            // Balistik atis: atis anindaki hedef noktasini dondur (dumb lob — hedef yururse iskalanabilir)
             if (useArc && target != null)
             {
                 isBallistic = true;
@@ -157,7 +157,7 @@ namespace TowerDefence.Combat
         {
             if (target == null && !isBallistic) return;
 
-            // Hedefin tarafını (Side) alalım ki sadece hedefle aynı taraftaki birimlere hasar verelim.
+            // Hedefin tarafini (Side) alalim ki sadece hedefle ayni taraftaki birimlere hasar verelim.
             IDamageable targetDamageable = target != null ? target.GetComponentInParent<IDamageable>() : null;
             Side targetSide = targetDamageable != null ? targetDamageable.GetSide() : cachedTargetSide;
 

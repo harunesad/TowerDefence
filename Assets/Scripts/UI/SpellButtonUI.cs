@@ -23,8 +23,9 @@ namespace TowerDefence.UI
         {
             if (spellData != null) Setup(spellData);
             button.onClick.AddListener(OnClicked);
+            UIButtonSound.Attach(button);
             
-            // Seçim (Selected) parlaması için Outline ekle
+            // Secim (Selected) parlamasi icin Outline ekle
             selectionOutline = gameObject.GetComponent<Outline>();
             if (selectionOutline == null) selectionOutline = gameObject.AddComponent<Outline>();
             
@@ -90,7 +91,7 @@ namespace TowerDefence.UI
                 cooldownOverlay.fillAmount = remaining / total;
                 button.interactable = false;
                 
-                // Bekleme süresindeyken saniye yazsın
+                // Bekleme suresindeyken saniye yazsin
                 costText.text = $"{remaining:F1}s";
                 costText.color = Color.yellow;
                 iconImage.color = new Color(0.6f, 0.6f, 0.6f, 1f); // Hafif karart
@@ -100,7 +101,7 @@ namespace TowerDefence.UI
                 cooldownOverlay.fillAmount = 0;
                 button.interactable = canAfford;
                 
-                // Bekleme bitince mana miktarını yazsın
+                // Bekleme bitince mana miktarini yazsin
                 costText.text = spellData.manaCost.ToString();
                 
                 if (canAfford)
@@ -110,12 +111,12 @@ namespace TowerDefence.UI
                 }
                 else
                 {
-                    costText.color = Color.red; // Mana yetersizse kırmızı yazsın
+                    costText.color = Color.red; // Display red if insufficient mana
                     iconImage.color = new Color(0.6f, 0.6f, 0.6f, 1f); // Hafif karart
                 }
             }
             
-            // Seçim durumu (Outline'ı aç/kapat)
+            // Secim durumu (Outline'i ac/kapat)
             if (selectionOutline != null)
             {
                 selectionOutline.enabled = isSelected;
@@ -144,14 +145,14 @@ namespace TowerDefence.UI
                     return;
                 }
 
-                // Anında cast edilecek büyüler
+                // Aninda cast edilecek buyuler
                 if (spellData.spellType == SpellType.GoldBoost)
                 {
                     SpellManager.Instance.CastSpell(spellData, Vector3.zero);
                     return;
                 }
 
-                // Eğer zaten seçiliyse seçimi iptal et, değilse seç
+                // Eger zaten seciliyse secimi iptal et, degilse sec
                 if (SpellManager.Instance.SelectedSpell == spellData)
                 {
                     SpellManager.Instance.ClearSelectedSpell();

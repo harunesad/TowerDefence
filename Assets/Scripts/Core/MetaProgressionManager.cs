@@ -30,12 +30,12 @@ namespace TowerDefence.Core
     {
         public int totalKarma;
         public int totalCrystals; // Yeni ikinci para birimi
-        public long lastDailyRewardTime; // Son günlük ödül zamanı (Ticks)
-        public long dailyRewardStartTicks; // İlk ödülün alındığı takvim günü
-        public int dailyRewardDayIndex; // Alınmış gün sayısı (0=henüz başlamamış, 30=tamamlandı)
+        public long lastDailyRewardTime; // Son gunluk odul zamani (Ticks)
+        public long dailyRewardStartTicks; // ilk odulun alindigi takvim gunu
+        public int dailyRewardDayIndex; // Alinmis gun sayisi (0=henuz baslamamis, 30=tamamlandi)
         public List<string> unlockedSkillIDs = new List<string>();
-        public List<string> unlockedSpellIDs = new List<string>(); // Açılan aktif büyüler
-        public List<string> equippedSpellIDs = new List<string>(); // Kuşatılan büyüler
+        public List<string> unlockedSpellIDs = new List<string>(); // Acilan aktif buyuler
+        public List<string> equippedSpellIDs = new List<string>(); // Kusatilan buyuler
         public List<string> unlockedHeroIDs = new List<string>();
         public List<string> equippedHeroIDs = new List<string>(); // Maksimum 2
         public List<string> equippedUnitNames = new List<string>(); // Maksimum 5
@@ -48,16 +48,16 @@ namespace TowerDefence.Core
         public List<string> darkEquippedSpellIDs = new List<string>();
         public List<HeroProgressEntry> heroProgressList = new List<HeroProgressEntry>();
         
-        // Geriye dönük uyumluluk için tutuluyor
+        // Geriye donuk uyumluluk icin tutuluyor
         public int highestUnlockedLevelIndex = 0;
         
-        // Yeni Zorluk Sistemi Değişkenleri
+        // Yeni Zorluk Sistemi Degiskenleri
         public int highestUnlockedGlobalDifficulty = 1;
-        public List<int> highestUnlockedLevelIndexPerDifficulty = new List<int> { 0, 0, 0, 0 }; // İndeksler: 1=Normal, 2=Hard, 3=Expert
+        public List<int> highestUnlockedLevelIndexPerDifficulty = new List<int> { 0, 0, 0, 0 }; // indeksler: 1=Normal, 2=Hard, 3=Expert
         
         public List<LevelProgress> levelProgressList = new List<LevelProgress>();
-        public long lastFortuneWheelTime; // Son çark çevirme zamanı (Ticks)
-        public long lastFortuneWheelAdTime; // Son reklamla çark çevirme zamanı (Ticks)
+        public long lastFortuneWheelTime; // Son cark cevirme zamani (Ticks)
+        public long lastFortuneWheelAdTime; // Son reklamla cark cevirme zamani (Ticks)
         public List<string> crystalVaultClaimedLevels = new List<string>();
         public List<string> completedTutorialSteps;
     }
@@ -100,7 +100,7 @@ namespace TowerDefence.Core
         public event System.Action OnHeroProgressChanged;
 
         [Header("Skill Tree Limits")]
-        [SerializeField] private int maxSkillsUnlocked = 10; // Maksimum açılabilir skill sayısı
+        [SerializeField] private int maxSkillsUnlocked = 10; // Maksimum acilabilir skill sayisi
 
         public int GetMaxSkillsUnlocked() => maxSkillsUnlocked;
         public int GetCurrentSkillsUnlocked() => CountCappedSkills();
@@ -182,13 +182,13 @@ namespace TowerDefence.Core
         {
             if (saveData.totalKarma >= skill.karmaCost && saveData.totalCrystals >= skill.crystalCost && !IsSkillUnlocked(skill.skillID))
             {
-                // Önkoşul kontrolü
+                // onkosul kontrolu
                 foreach (var req in skill.requiredSkills)
                 {
                     if (!IsSkillUnlocked(req.skillID)) return false;
                 }
 
-                // Sınır kontrolü: Maksimum skill sayısı kontrolü
+                // Sinir kontrolu: Maksimum skill sayisi kontrolu
                 bool spellUnlock = skill.upgradeType == UpgradeType.UnlockSpell;
                 bool lessonTarget = TutorialDirector.Instance != null
                     && TutorialDirector.Instance.SkillHoverLocked()
@@ -203,7 +203,7 @@ namespace TowerDefence.Core
                 saveData.totalCrystals -= skill.crystalCost;
                 saveData.unlockedSkillIDs.Add(skill.skillID);
 
-                // Eğer bu yetenek bir büyü açıyorsa, büyüyü de ekle
+                // Eger bu yetenek bir buyu aciyorsa, buyuyu de ekle
                 if (skill.upgradeType == UpgradeType.UnlockSpell && skill.grantedSpell != null)
                 {
                     if (!saveData.unlockedSpellIDs.Contains(skill.grantedSpell.spellID))
@@ -246,7 +246,7 @@ namespace TowerDefence.Core
             SaveGame();
         }
 
-        // Skill ID -> Spell ID eşleşme tablosu (grantedSpell referansı kırıldığında fallback)
+        // Skill ID -> Spell ID eslesme tablosu (grantedSpell referansi kirildiginda fallback)
         private static readonly Dictionary<string, string> skillToSpellMap = new Dictionary<string, string>()
         {
             { "Skill_Unlock_GoldRush", "Spell_Neutral_Gold" },
@@ -268,10 +268,10 @@ namespace TowerDefence.Core
             if (saveData.unlockedSpellIDs.Contains(spellID))
                 return true;
 
-            // Fallback: skill tree'den kontrol et (önce grantedSpell referansı, sonra hardcoded map)
+            // Fallback: skill tree'den kontrol et (once grantedSpell referansi, sonra hardcoded map)
             foreach (string skillID in saveData.unlockedSkillIDs)
             {
-                // Yol 1: allAvailableSkills üzerinden grantedSpell referansı
+                // Yol 1: allAvailableSkills uzerinden grantedSpell referansi
                 if (allAvailableSkills != null)
                 {
                     SkillNodeData skill = allAvailableSkills.Find(s => s != null && s.skillID == skillID);
@@ -283,7 +283,7 @@ namespace TowerDefence.Core
                     }
                 }
 
-                // Yol 2: Hardcoded eşleşme tablosu (grantedSpell null geldiğinde)
+                // Yol 2: Hardcoded eslesme tablosu (grantedSpell null geldiginde)
                 if (skillToSpellMap.TryGetValue(skillID, out string mappedSpellID) && mappedSpellID == spellID)
                 {
                     saveData.unlockedSpellIDs.Add(spellID);
@@ -298,7 +298,7 @@ namespace TowerDefence.Core
         {
             if (IsSpellUnlocked(spellID) && !saveData.equippedSpellIDs.Contains(spellID))
             {
-                if (saveData.equippedSpellIDs.Count < 3) // Maksimum 3 büyü sınırı
+                if (saveData.equippedSpellIDs.Count < 3) // Maksimum 3 buyu siniri
                 {
                     saveData.equippedSpellIDs.Add(spellID);
                     SyncActiveToSideList();
@@ -327,7 +327,7 @@ namespace TowerDefence.Core
         {
             if (!saveData.equippedUnitNames.Contains(unitName))
             {
-                if (saveData.equippedUnitNames.Count < 5) // Maksimum 5 unit sınırı
+                if (saveData.equippedUnitNames.Count < 5) // Maksimum 5 unit siniri
                 {
                     saveData.equippedUnitNames.Add(unitName);
                     SyncActiveToSideList();
@@ -350,8 +350,8 @@ namespace TowerDefence.Core
 
         public void SanitizeEquippedUnitsForSide(Side side)
         {
-            // Menüde taraf değiştiğinde farklı tarafın ünitelerini temizle
-            // Tamamen sıfırlamak en kolayıdır, oyuncu baştan seçsin.
+            // Menude taraf degistiginde farkli tarafin unitelerini temizle
+            // Tamamen sifirlamak en kolayidir, oyuncu bastan secsin.
             saveData.equippedUnitNames.Clear();
             SaveGame();
         }
@@ -425,10 +425,12 @@ namespace TowerDefence.Core
 
             int currentLevel = GetHeroLevel(hero.heroID);
             if (currentLevel >= hero.maxUpgradeLevel) return false;
-            if (saveData.totalKarma < hero.upgradeKarmaCost || saveData.totalCrystals < hero.upgradeCrystalCost) return false;
+            int karmaCost = hero.KarmaCostForNextLevel(currentLevel);
+            int crystalCost = hero.CrystalCostForNextLevel(currentLevel);
+            if (saveData.totalKarma < karmaCost || saveData.totalCrystals < crystalCost) return false;
 
-            saveData.totalKarma -= hero.upgradeKarmaCost;
-            saveData.totalCrystals -= hero.upgradeCrystalCost;
+            saveData.totalKarma -= karmaCost;
+            saveData.totalCrystals -= crystalCost;
             HeroProgressEntry entry = saveData.heroProgressList.Find(p => p.heroID == hero.heroID);
             if (entry == null)
             {
@@ -468,6 +470,18 @@ namespace TowerDefence.Core
             if (hero == null) return 1f;
             int level = GetHeroLevel(heroID);
             return 1f + Mathf.Max(0, level - 1) * hero.damageBonusPerLevel;
+        }
+
+        public float GetHeroAbilityCooldown(HeroData hero)
+        {
+            if (hero == null) return 0f;
+            return hero.AbilityCooldownAtLevel(GetHeroLevel(hero.heroID));
+        }
+
+        public float GetHeroAbilityPower(HeroData hero)
+        {
+            if (hero == null) return 1f;
+            return hero.AbilityPowerAtLevel(GetHeroLevel(hero.heroID));
         }
 
         public void GetHeroCombatStats(HeroData hero, out float health, out float damage, out float speed, out float range, out float attackRate)
@@ -590,7 +604,7 @@ namespace TowerDefence.Core
                 saveData.levelProgressList.Add(progress);
             }
 
-            // Sadece daha yüksek bir yıldız almışsak güncelle
+            // Sadece daha yuksek bir yildiz almissak guncelle
             if (stars > progress.stars)
             {
                 progress.stars = stars;
@@ -734,7 +748,7 @@ namespace TowerDefence.Core
                 SkillNodeData skill = allAvailableSkills.Find(s => s.skillID == skillID);
                 if (skill == null || skill.upgradeType != type) continue;
                 if (skill.skillID == "Skill_Neutral_AncientWisdom") continue;
-                // Kahraman ve okçu düğümleri genel çarpana girmez.
+                // Kahraman ve okcu dugumleri genel carpana girmez.
                 if (skill.skillID.StartsWith("Skill_Hero_") || skill.skillID.StartsWith("Skill_Archer_")) continue;
                 if (skill.side == Side.Neutral || skill.side == side)
                     totalMultiplier *= skill.multiplier;
@@ -1098,7 +1112,7 @@ namespace TowerDefence.Core
                     string fileContent = File.ReadAllText(savePath, Encoding.UTF8);
                     bool loadSuccess = false;
 
-                    // 1. Yeni Güvenli AES-256 + HMAC formatını dene
+                    // 1. Yeni Guvenli AES-256 + HMAC formatini dene
                     if (fileContent.StartsWith(AES_HEADER_V3) || fileContent.StartsWith(AES_HEADER_V2))
                     {
                         if (TryDecryptSecure(fileContent, out string plainText))
@@ -1119,7 +1133,7 @@ namespace TowerDefence.Core
                         }
                     }
 #if UNITY_EDITOR
-                    // Editörde eski düz JSON ve XOR kayıtlar bir kez şifreli formata taşınır.
+                    // Editorde eski duz JSON ve XOR kayitlar bir kez sifreli formata tasinir.
                     else if (fileContent.TrimStart().StartsWith("{"))
                     {
                         saveData = JsonUtility.FromJson<SaveData>(fileContent);
@@ -1172,30 +1186,30 @@ namespace TowerDefence.Core
             else if (!TryLoadBackup())
             {
                 saveData = new SaveData();
-                saveData.totalKarma = 200; // Başlangıç Karma puanı
+                saveData.totalKarma = 200; // Baslangic Karma puani
             }
 
             EnsureSaveCollections();
 
-            // Migration: Yeni array sistemi için eksik eleman varsa doldur
+            // Migration: Yeni array sistemi icin eksik eleman varsa doldur
             while (saveData.highestUnlockedLevelIndexPerDifficulty.Count <= 3)
             {
                 saveData.highestUnlockedLevelIndexPerDifficulty.Add(0);
             }
 
-            // Migration: Eski sistemdeki progress değerini Zorluk 1'e aktar
+            // Migration: Eski sistemdeki progress degerini Zorluk 1'e aktar
             if (saveData.highestUnlockedLevelIndex > saveData.highestUnlockedLevelIndexPerDifficulty[1])
             {
                 saveData.highestUnlockedLevelIndexPerDifficulty[1] = saveData.highestUnlockedLevelIndex;
             }
             
-            // Migration: Tüm mevcut level progress'lerde difficulty yoksa 1 yap
+            // Migration: Tum mevcut level progress'lerde difficulty yoksa 1 yap
             foreach (var progress in saveData.levelProgressList)
             {
                 if (progress.difficultyLevel == 0) progress.difficultyLevel = 1;
             }
 
-            // Migration: Eski günlük ödül kullananlar için dailyRewardDayIndex başlat
+            // Migration: Eski gunluk odul kullananlar icin dailyRewardDayIndex baslat
             if (saveData.lastDailyRewardTime != 0 && saveData.dailyRewardDayIndex == 0)
             {
                 saveData.dailyRewardDayIndex = 1;
@@ -1208,9 +1222,9 @@ namespace TowerDefence.Core
                 saveData.dailyRewardStartTicks = lastClaim.Date.AddDays(-(claimedDays - 1)).Ticks;
             }
 
-            // Migration: Büyü listesini skill tree ile senkronize et
-            // Sadece unlock edilmiş skill'lerin grant ettiği büyüler kalsın
-            // allAvailableSkills boşsa mevcut listeyi sıfırlama
+            // Migration: Buyu listesini skill tree ile senkronize et
+            // Sadece unlock edilmis skill'lerin grant ettigi buyuler kalsin
+            // allAvailableSkills bossa mevcut listeyi sifirlama
             List<SkillNodeData> skillsPool = (allAvailableSkills != null && allAvailableSkills.Count > 0)
                 ? allAvailableSkills
                 : new List<SkillNodeData>(Resources.FindObjectsOfTypeAll<SkillNodeData>());

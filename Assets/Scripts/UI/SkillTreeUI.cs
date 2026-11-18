@@ -12,7 +12,7 @@ namespace TowerDefence.UI
     {
         [Header("UI Elements")]
         [SerializeField] private TextMeshProUGUI totalKarmaText;
-        [SerializeField] private TextMeshProUGUI totalCrystalsText; // Yeni: Kristal göstergesi
+        [SerializeField] private TextMeshProUGUI totalCrystalsText; // New: Crystal display
         [SerializeField] private TextMeshProUGUI feedbackText; 
         [SerializeField] private List<SkillNodeUI> allNodes;
         [SerializeField] private Button backButton;
@@ -212,8 +212,8 @@ namespace TowerDefence.UI
                 if (spell != null)
                 {
                     if (body.Length > 0) body += "\n";
-                    body += $"Power {spell.power}  |  {StatIcons.Range} {spell.radius}\n";
-                    body += $"{StatIcons.Price(spell.side)} {spell.manaCost}  |  {StatIcons.Time} {spell.cooldown}s";
+                    body += StatIcons.SpellStrike(spell) + "\n";
+                    body += $"{StatIcons.Price(spell.side)} {spell.manaCost}  |  {StatIcons.Time} {spell.cooldown:0}s";
                 }
                 detailDesc.color = new Color(0.22f, 0.13f, 0.06f, 1f);
                 StatIcons.Set(detailDesc, body);
@@ -302,11 +302,11 @@ namespace TowerDefence.UI
             float columnSpacing = 280f;
             float rowSpacing = 240f;
             
-            // Merkezden hizalamak veya en soldan başlatmak için ofset (örneğin 8 kategori var)
+            // Merkezden hizalamak veya en soldan baslatmak icin ofset (ornegin 8 kategori var)
             float startX = -((8 - 1) * columnSpacing) / 2f; 
-            float startY = -800f; // Skilleri daha aşağıda başlat
+            float startY = -800f; // Start skills lower
 
-            // Tüm düğümleri tier ve category'ye göre otomatik yerleştir
+            // Tum dugumleri tier ve category'ye gore otomatik yerlestir
             foreach (var node in allNodes)
             {
                 if (node == null) continue;
@@ -430,7 +430,7 @@ namespace TowerDefence.UI
                 CurrencyRowView.Apply(totalCrystalsText.transform, 0, MetaProgressionManager.Instance.GetTotalCrystals(), false);
             }
 
-            // Skill limit info gösterimi
+            // Skill limit info gosterimi
             if (skillsUnlockedText != null || skillsMaxText != null)
             {
                 int current = MetaProgressionManager.Instance.GetCurrentSkillsUnlocked();

@@ -51,7 +51,7 @@ namespace TowerDefence.UI
 
         private void BuildUI()
         {
-            // Canvas veya parent kontrolü
+            // Canvas veya parent kontrolu
             Canvas parentCanvas = GetComponentInParent<Canvas>();
             if (parentCanvas == null)
             {
@@ -65,7 +65,7 @@ namespace TowerDefence.UI
             RectTransform rootRT = GetComponent<RectTransform>();
             if (rootRT == null) rootRT = gameObject.AddComponent<RectTransform>();
 
-            // Ekranın üst-orta bölgesinde yerleşecek
+            // Ekranin ust-orta bolgesinde yerlesecek
             rootRT.anchorMin = new Vector2(0.5f, 0.72f);
             rootRT.anchorMax = new Vector2(0.5f, 0.72f);
             rootRT.pivot = new Vector2(0.5f, 0.5f);
@@ -93,7 +93,7 @@ namespace TowerDefence.UI
             warningText.fontSize = 28f;
             warningText.fontStyle = FontStyles.Bold;
             warningText.alignment = TextAlignmentOptions.Center;
-            warningText.color = new Color(1f, 0.25f, 0.2f, 1f); // Kırmızı / Uyarı
+            warningText.color = new Color(1f, 0.25f, 0.2f, 1f); // Red / Warning
             warningText.raycastTarget = false;
             warningText.enableWordWrapping = false;
             warningText.outlineColor = new Color32(0, 0, 0, 255);
@@ -121,7 +121,7 @@ namespace TowerDefence.UI
         {
             if (warningText == null) return;
 
-            transform.SetAsLastSibling(); // Her zaman en önde görünsün
+            transform.SetAsLastSibling(); // Always render on top
             StatIcons.Set(warningText, message);
             warningText.color = textColor ?? (isReward ? new Color(1f, 0.84f, 0f, 1f) : new Color(1f, 0.3f, 0.25f, 1f));
 
@@ -158,10 +158,10 @@ namespace TowerDefence.UI
             canvasGroup.alpha = 1f;
             transform.localScale = targetScale;
 
-            // Bekleme süresi
+            // Bekleme suresi
             yield return new WaitForSecondsRealtime(stayDuration);
 
-            // Fade Out & Yükselme
+            // Fade Out & Yukselme
             elapsed = 0f;
             float fadeOutTime = 0.35f;
             Vector2 startPos = Vector2.zero;

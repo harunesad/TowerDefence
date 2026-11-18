@@ -5,12 +5,12 @@ namespace TowerDefence.Data
 {
     public enum SpellType
     {
-        Thunderstrike, // Anlık alan hasarı
-        Reinforcement, // Yol üzerine geçici asker çağırma
-        Freeze,        // Tüm düşmanları dondurma
-        GoldBoost,     // Anlık altın kazanımı
-        Shield,        // Kulelere geçici dokunulmazlık
-        Buff           // Kulelere geçici saldırı hızı artışı
+        Thunderstrike, // Instant area-of-effect damage
+        Reinforcement, // Summons temporary soldiers onto the path
+        Freeze,        // Freezes all enemies
+        GoldBoost,     // Instant gold gain
+        Shield,        // Temporary invulnerability for towers
+        Buff           // Temporary attack speed increase for towers
     }
 
     [CreateAssetMenu(fileName = "New Spell Data", menuName = "Tower Defence/Spells/Spell Data")]
@@ -24,19 +24,19 @@ namespace TowerDefence.Data
         public Sprite icon;
 
         [Header("Economics")]
-        public int manaCost;        // Büyü enerjisi / Altın maliyeti
+        public int manaCost;        // Mana / Gold cost
         public float cooldown = 10f;
-        public bool isOneTimeUse = false; // Oyunda sadece bir kez mi kullanılabilir?
+        public bool isOneTimeUse = false; // Can it be used only once per game?
 
         [Header("Effects")]
         public SpellType spellType;
-        public float power = 50f;     // Hasar, iyileştirme veya buff çarpanı
-        public float radius = 3f;    // Etki alanı yarıçapı
-        public float duration = 5f;  // Buff, dondurma veya kalkan süresi
+        public float power = 50f;     // Damage, heal, or buff multiplier
+        public float radius = 3f;    // Radius of effect area
+        public float duration = 5f;  // Duration for buff, freeze, or shield
         
         [Header("Visuals")]
         public VFXType spellVFXType;
-        public GameObject spellVFXPrefab; // Doğrudan instantiate edilecek VFX prefab'ı
+        public GameObject spellVFXPrefab; // VFX prefab to be directly instantiated
         public AudioClip castSFX;
 
         [Header("Spawn Settings (For Reinforcements)")]

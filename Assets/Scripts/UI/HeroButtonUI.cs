@@ -17,7 +17,7 @@ namespace TowerDefence.UI
 
         [Header("Button Behavior")]
         [SerializeField] private Button mainButton;
-        [Tooltip("Hero slot indexi (0: 1. Hero, 1: 2. Hero). -1 bırakılırsa GameObject isminden veya sıra indeksinden otomatik alınır.")]
+        [Tooltip("Hero slot index (0: Hero 1, 1: Hero 2). If -1, automatically inferred from GameObject name or sibling index.")]
         [SerializeField] private int slotIndex = -1;
         private HeroUnit linkedHero;
 
@@ -68,6 +68,7 @@ namespace TowerDefence.UI
             mainButton.transition = Selectable.Transition.None;
             mainButton.onClick.RemoveAllListeners();
             mainButton.onClick.AddListener(OnHeroButtonClicked);
+            UIButtonSound.Attach(mainButton);
         }
 
         private float lastClickTime = 0f;
@@ -79,12 +80,12 @@ namespace TowerDefence.UI
             
             if (currentTime - lastClickTime <= DOUBLE_CLICK_THRESHOLD)
             {
-                // ÇİFT TIKLAMA - Stats Panelini Aç
+                // DOUBLE CLICK - Open Stats Panel
                 ShowStatsPanel();
             }
             else
             {
-                // TEK TIKLAMA - Kahramanı Seç
+                // SINGLE CLICK - Select Hero
                 if (HeroManager.Instance != null && slotIndex >= 0)
                 {
                     HeroManager.Instance.SelectHeroSlot(slotIndex);
@@ -300,6 +301,7 @@ namespace TowerDefence.UI
                     if (btn == null) btn = iconT.gameObject.AddComponent<Button>();
                     btn.onClick.RemoveAllListeners();
                     btn.onClick.AddListener(OnAbilityClicked);
+                    UIButtonSound.Attach(btn);
                 }
                 Transform overlayT = abilityRoot.transform.Find("CooldownOverlay");
                 if (overlayT != null) abilityCooldownOverlay = overlayT.GetComponent<Image>();
@@ -353,6 +355,7 @@ namespace TowerDefence.UI
 
             Button abilityBtn = iconObj.AddComponent<Button>();
             abilityBtn.onClick.AddListener(OnAbilityClicked);
+            UIButtonSound.Attach(abilityBtn);
         }
 
         private void OnAbilityClicked()

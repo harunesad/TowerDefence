@@ -27,12 +27,12 @@ namespace TowerDefence.UI
 
         private void Awake()
         {
-            gameObject.SetActive(false); // Başlangıçta gizle
+            gameObject.SetActive(false); // Hide initially
         }
 
         private void OnEnable()
         {
-            // Taraf veya altın değiştiğinde menüyü güncelle
+            // Taraf veya altin degistiginde menuyu guncelle
             if (SideController.Instance != null)
                 SideController.Instance.OnSideChanged += HandleSideChanged;
             
@@ -75,7 +75,7 @@ namespace TowerDefence.UI
             // Managers check
             List<TowerData> allTowers = TowerPlacementManager.Instance != null ? TowerPlacementManager.Instance.AllTowers : new List<TowerData>();
 
-            // FALLBACK: Eğer manager boşsa her şeyi bul
+            // FALLBACK: Eger manager bossa her seyi bul
             if (allTowers == null || allTowers.Count == 0)
             {
                 allTowers = new List<TowerData>(Resources.FindObjectsOfTypeAll<TowerData>());
@@ -178,6 +178,7 @@ namespace TowerDefence.UI
                 button.interactable = !lessonLock;
                 TowerData chosen = tower;
                 button.onClick.AddListener(() => OnTowerButtonClicked(chosen));
+                UIButtonSound.Attach(button);
             }
         }
 
@@ -203,7 +204,7 @@ namespace TowerDefence.UI
             currentActiveSlot = slot;
             gameObject.SetActive(true);
 
-            // Standart Ölçek
+            // Standart olcek
             transform.localScale = new Vector3(0.045f, 0.045f, 0.045f);
             transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             transform.localPosition = DefaultLocalPosition;
@@ -320,13 +321,14 @@ namespace TowerDefence.UI
             if (barracks != null)
                 return $"{data.towerName}\n{StatIcons.Health} {data.health:0}\n{StatIcons.Soldiers} {barracks.soldierCount}\n{StatIcons.Time} {barracks.respawnDelay:0}s";
 
+            if (data.isAuraTower)
+                return $"{data.towerName}\n{StatIcons.Health} {data.health:0}\n{StatIcons.Range} {data.auraRadius:0.#}\n{StatIcons.AuraBonus(data.auraDamageBonus, data.auraFireRateBonus)}";
+
             string text = $"{data.towerName}\n{StatIcons.Damage} {data.damage:0}\n{StatIcons.Range} {data.range:0.#}\n{StatIcons.Attack} {data.fireRate:0.##}/s\n{StatIcons.Health} {data.health:0}";
             if (data.isArtillery && data.explosionRadius > 0f)
                 text += $"\n{StatIcons.Area} {data.explosionRadius:0.#}";
             else if (data.isSlowTower)
                 text += $"\n{StatIcons.Slow} {data.effectPower * 100f:0}%";
-            else if (data.isAuraTower)
-                text += $"\n{StatIcons.Aura} +{data.auraDamageBonus * 100f:0}%";
             return text;
         }
 
@@ -356,7 +358,7 @@ namespace TowerDefence.UI
 
         private void OnUnitButtonClicked(UnitData unit)
         {
-            // Bu metod artık seçim panelinde (popup) kullanılmıyor, üniteler alt barda.
+            // This method is no longer used in popup selection; units are on the bottom bar.
             if (CurrencyManager.Instance != null && CurrencyManager.Instance.TrySpendCurrency(unit.side, unit.spawnCost))
             {
                 Spawner.SpawnPlayerUnits(unit);

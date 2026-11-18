@@ -15,7 +15,7 @@ namespace TowerDefence.Combat
         private float lastDamageTime;
         private bool isBroken;
 
-        public bool IsDead => false; // Kalkan ölmez, sadece kırılır
+        public bool IsDead => false; // Shield does not die, only breaks
         public Side GetSide() => GetComponent<Unit>()?.GetSide() ?? GetComponent<Base>()?.GetSide() ?? Side.Neutral;
 
         private void Start()
@@ -49,13 +49,13 @@ namespace TowerDefence.Combat
                     isBroken = true;
                     Debug.Log("Shield Broken!");
                     
-                    // Taşan hasarı ana birime ilet
+                    // Tasan hasari ana birime ilet
                     SendMessageUpwards("TakeHealthDamage", remainingDamage, SendMessageOptions.DontRequireReceiver);
                 }
             }
             else
             {
-                // Kalkan yoksa hasar ana birime geçer
+                // Kalkan yoksa hasar ana birime gecer
                 SendMessageUpwards("TakeHealthDamage", amount, SendMessageOptions.DontRequireReceiver);
             }
         }

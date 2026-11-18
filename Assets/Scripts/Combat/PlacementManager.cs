@@ -48,7 +48,7 @@ namespace TowerDefence.Combat
                         Instantiate(selectedTower.prefab, gridPos, Quaternion.identity);
                         TowerDefence.UI.CurrencyFloatUI.Show(gridPos, -selectedTower.cost, selectedTower.side);
                         Debug.Log("Tower Placed!");
-                        // selectedTower = null; // Sürekli yerleştirme için kapalı tutulabilir
+                        // selectedTower = null; // Can be kept commented for continuous placement
                     }
                 }
             }

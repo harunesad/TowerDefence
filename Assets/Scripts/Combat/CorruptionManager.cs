@@ -27,8 +27,8 @@ namespace TowerDefence.Combat
         {
             if (VFXManager.Instance == null) return;
 
-            // Sahnedeki tüm yozlaşma noktalarını/alanlarını temsil eden bir mantık.
-            // Örnek: Aktif olan tüm Corruption Node objelerinin üzerinde efekt çıkar.
+            // Logic representing all corruption points/zones in the scene.
+            // Example: Spawns effects above all active Corruption Nodes.
             GameObject[] nodes = GameObject.FindGameObjectsWithTag("CorruptionNode");
             foreach (var node in nodes)
             {
@@ -38,7 +38,7 @@ namespace TowerDefence.Combat
 
         public bool IsPositionCorrupted(Vector3 position)
         {
-            // Basitçe o pozisyonda bir "Corruption Node" olup olmadığını kontrol eder
+            // Checks whether a "Corruption Node" exists at that position
             return Physics.CheckSphere(position, 1f, corruptionLayer);
         }
 

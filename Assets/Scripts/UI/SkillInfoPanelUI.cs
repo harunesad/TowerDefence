@@ -18,7 +18,7 @@ namespace TowerDefence.UI
 
         public void Setup(SkillNodeData data, RectTransform source)
         {
-            float panelW = 300;
+            float panelW = 380f;
 
             overlayRef = new GameObject("SkillInfoOverlay", typeof(RectTransform), typeof(Image));
             overlayRef.transform.SetParent(transform.parent, false);
@@ -34,17 +34,15 @@ namespace TowerDefence.UI
             var et = overlayRef.AddComponent<EventTrigger>();
             var entry = new EventTrigger.Entry();
             entry.eventID = EventTriggerType.PointerClick;
-            entry.callback.AddListener((_) => { Destroy(overlayRef); Destroy(gameObject); });
+            entry.callback.AddListener((_) => { UIButtonSound.Play(); Destroy(overlayRef); Destroy(gameObject); });
             et.triggers.Add(entry);
 
-            float iconSize = 64f;
-            float y = -10 - iconSize - 8;
-            SpellData spell = data.grantedSpell;
-            int descLineCount = string.IsNullOrEmpty(data.description) ? 0 : Mathf.Max(1, data.description.Length / 40 + 1);
-            float descBlock = descLineCount > 0 ? descLineCount * 16 + 4 : 0f;
-            float spellBlock = spell != null ? 44f : 0f;
-            float contentH = 24 + 2 + 16 + 2 + descBlock + spellBlock + 12;
-            float panelH = Mathf.Abs(y) + contentH + 12;
+            float iconSize = 76f;
+            float y = -16 - iconSize - 12;
+            string blurb = ShortBlurb(data);
+            float descBlock = string.IsNullOrEmpty(blurb) ? 0f : 40f;
+            float contentH = 28 + 6 + 20 + 8 + descBlock + 16;
+            float panelH = Mathf.Abs(y) + contentH + 18;
 
             RectTransform rt = GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(panelW, panelH);
@@ -63,7 +61,7 @@ namespace TowerDefence.UI
             var pTrigger = gameObject.AddComponent<EventTrigger>();
             var pEntry = new EventTrigger.Entry();
             pEntry.eventID = EventTriggerType.PointerClick;
-            pEntry.callback.AddListener((_) => { Destroy(overlayRef); Destroy(gameObject); });
+            pEntry.callback.AddListener((_) => { UIButtonSound.Play(); Destroy(overlayRef); Destroy(gameObject); });
             pTrigger.triggers.Add(pEntry);
 
             CreateImage("Border", Vector2.zero, Vector2.zero, Vector2.one, Vector2.zero, new Color(0.2f, 0.2f, 0.3f, 1f), false);
@@ -93,39 +91,35 @@ namespace TowerDefence.UI
             icoImg.preserveAspect = true;
             icoImg.raycastTarget = false;
 
-            CreateText("NameText", data.skillName, new Vector2(0, y), new Vector2(260, 22),
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 18, FontStyles.Bold, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f));
-            y -= 26;
+            CreateText("NameText", data.skillName, new Vector2(0, y), new Vector2(340, 26),
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 20, FontStyles.Bold, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f));
+            y -= 30;
 
             bool isActive = data.upgradeType == UpgradeType.UnlockSpell;
             string sideStr = data.side.ToString().ToUpper();
             string typeStr = $"{sideStr} {(isActive ? "ACTIVE" : "PASSIVE")}";
             Color typeColor = isActive ? new Color(1f, 0.8f, 0.2f) : Color.white;
-            CreateText("TypeText", typeStr, new Vector2(0, y), new Vector2(260, 16),
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 12, FontStyles.Bold, TextAlignmentOptions.Center, typeColor);
-            y -= 18;
+            CreateText("TypeText", typeStr, new Vector2(0, y), new Vector2(340, 18),
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 13, FontStyles.Bold, TextAlignmentOptions.Center, typeColor);
+            y -= 24;
 
-            if (descLineCount > 0)
+            if (!string.IsNullOrEmpty(blurb))
             {
-                CreateText("DescText", data.description, new Vector2(0, y), new Vector2(260, descLineCount * 16),
-                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 13, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.7f, 0.7f, 0.8f));
-                y -= descLineCount * 16 + 4;
-            }
-
-            if (spell != null)
-            {
-                string statsText = $"Power {spell.power}  |  {StatIcons.Range} {spell.radius}";
-                CreateText("StatsText", statsText, new Vector2(0, y), new Vector2(260, 20),
-                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 14, FontStyles.Normal, TextAlignmentOptions.Center, Color.white);
-                y -= 22;
-
-                string castText = $"{StatIcons.Price(spell.side)} {spell.manaCost}  |  {StatIcons.Time} {spell.cooldown}s";
-                CreateText("CastText", castText, new Vector2(0, y), new Vector2(260, 20),
-                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 14, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.6f, 1f, 0.6f));
+                CreateText("DescText", blurb, new Vector2(0, y), new Vector2(340, 36),
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 15, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.7f, 0.7f, 0.8f));
             }
 
             RaiseAboveShade(gameObject);
             if (overlayRef != null) RaiseAboveShade(overlayRef);
+        }
+
+        static string ShortBlurb(SkillNodeData data)
+        {
+            if (data == null) return "";
+            SpellData spell = data.grantedSpell;
+            if (spell != null && !string.IsNullOrEmpty(spell.description))
+                return spell.description;
+            return data.description ?? "";
         }
 
         static void RaiseAboveShade(GameObject go)

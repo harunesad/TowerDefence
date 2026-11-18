@@ -5,7 +5,7 @@ using UnityEngine;
 namespace TowerDefence.Core.Security
 {
     /// <summary>
-    /// Değer şifreli durur. Anahtar struct'ın içinde değil, oturum sözlüğündedir.
+    /// Holds the value in encrypted form. The key is stored in a session dictionary rather than inside the struct.
     /// </summary>
     [Serializable]
     public struct ObscuredInt : IEquatable<ObscuredInt>, IComparable<ObscuredInt>

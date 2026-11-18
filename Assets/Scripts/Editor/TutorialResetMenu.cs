@@ -7,7 +7,7 @@ namespace TowerDefence.EditorTools
 {
     public static class TutorialResetMenu
     {
-        [MenuItem("Tools/Tower Defence/Tutorialı Baştan Başlat")]
+        [MenuItem("Tools/Tower Defence/Restart Tutorial From Beginning")]
         public static void ResetTutorial()
         {
             string directory = Application.persistentDataPath;
@@ -29,7 +29,7 @@ namespace TowerDefence.EditorTools
                 if (SceneLoader.Instance != null)
                     SceneLoader.Instance.LoadScene(1);
 
-                Debug.Log("Kayıt silindi. Oyun yeni başlamış gibi ana menüye dönüyor.");
+                Debug.Log("Save cleared. Returning to main menu as a fresh game.");
                 return;
             }
 
@@ -39,7 +39,7 @@ namespace TowerDefence.EditorTools
                 if (File.Exists(path)) File.Delete(path);
             }
 
-            Debug.Log("Kayıt dosyası silindi. Sonraki Play yeni oyun olur.");
+            Debug.Log("Save file deleted. Next Play will be a new game.");
         }
     }
 }

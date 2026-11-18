@@ -43,7 +43,7 @@ namespace TowerDefence.Core
                 if (Time.time < cooldowns[spell.spellID]) return false;
             }
 
-            // Para kontrolü
+            // Para kontrolu
             return CurrencyManager.Instance.CanAfford(SideController.Instance.GetPlayerSide(), spell.manaCost);
         }
 
@@ -58,18 +58,18 @@ namespace TowerDefence.Core
                 return;
             TowerDefence.UI.CurrencyFloatUI.Show(targetPos, -spell.manaCost, payer);
             
-            // Eğer tek seferlikse kaydet
+            // Eger tek seferlikse kaydet
             if (spell.isOneTimeUse)
             {
                 usedOneTimeSpells.Add(spell.spellID);
             }
             else
             {
-                // Cooldown başlat
+                // Cooldown baslat
                 cooldowns[spell.spellID] = Time.time + spell.cooldown;
             }
 
-            // Yazılım Mantığını Uygula
+            // Yazilim Mantigini Uygula
             ExecuteSpellEffect(spell, targetPos);
 
             PlaySpellVfx(spell, targetPos);
@@ -83,6 +83,7 @@ namespace TowerDefence.Core
             Vector3 vfxPos = spell.spellType == Data.SpellType.GoldBoost
                 ? PlayerBasePosition(targetPos)
                 : targetPos;
+            vfxPos = SeatOnGround(vfxPos, spell.radius);
             GameObject vfx = Instantiate(spell.spellVFXPrefab, vfxPos, Quaternion.identity);
             CFXR_Effect[] clearEffects = vfx.GetComponentsInChildren<CFXR_Effect>(true);
             for (int i = 0; i < clearEffects.Length; i++)
@@ -258,7 +259,7 @@ namespace TowerDefence.Core
             foreach (var path in allPaths)
             {
                 if (path == null || path.GetPathPoints().Count == 0) continue;
-                // En yakın waypoint'i bul
+                // En yakin waypoint'i bul
                 foreach (var wp in path.GetPathPoints())
                 {
                     float dist = Vector3.Distance(center, wp);
@@ -279,9 +280,9 @@ namespace TowerDefence.Core
                 
                 if (unit != null)
                 {
-                    // Oyuncu tarafı olduğunu varsayıyoruz. 
+                    // Oyuncu tarafi oldugunu varsayiyoruz. 
                     // StatMultiplier 1f.
-                    // unit.Initialize(unit.unitData); // Eğer start'ta initialize olmuyorsa
+                    // unit.Initialize(unit.unitData); // Eger start'ta initialize olmuyorsa
 
                     unit.SuppressKillReward();
                     if (nearestPath != null)
@@ -289,10 +290,34 @@ namespace TowerDefence.Core
                         unit.SetPathAtNearestWaypoint(nearestPath, spawnPos);
                     }
 
-                    // Reinforcement'lar kalıcı olmasın, 30 saniye sonra ölsünler (TakeDamage kullanarak güvenli ölüm)
+                    // Reinforcement'lar kalici olmasin, 30 saniye sonra olsunler (TakeDamage kullanarak guvenli olum)
                     StartCoroutine(KillReinforcementAfterTime(unit, 30f));
                 }
             }
+        }
+
+        private static Vector3 SeatOnGround(Vector3 center, float radius)
+        {
+            float highest = GroundHeight(center.x, center.z);
+            if (radius > 0.1f)
+            {
+                const int samples = 8;
+                for (int ring = 1; ring <= 2; ring++)
+                {
+                    float reach = radius * ring * 0.5f;
+                    float turn = ring == 2 ? 22.5f : 0f;
+                    for (int i = 0; i < samples; i++)
+                    {
+                        float angle = (360f / samples) * i + turn;
+                        float x = center.x + Mathf.Sin(angle * Mathf.Deg2Rad) * reach;
+                        float z = center.z + Mathf.Cos(angle * Mathf.Deg2Rad) * reach;
+                        highest = Mathf.Max(highest, GroundHeight(x, z));
+                    }
+                }
+            }
+
+            center.y = highest + 0.08f;
+            return center;
         }
 
         private static float GroundHeight(float x, float z)
@@ -322,7 +347,7 @@ namespace TowerDefence.Core
             yield return new WaitForSeconds(delay);
             if (unit != null)
             {
-                unit.TakeDamage(99999f); // Güvenli ölüm (ölüm animasyonu vb. tetiklenir)
+                unit.TakeDamage(99999f); // Guvenli olum (olum animasyonu vb. tetiklenir)
             }
         }
 

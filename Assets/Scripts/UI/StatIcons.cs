@@ -18,6 +18,20 @@ namespace TowerDefence.UI
         public static string Soul => Icon("soul");
         public static string Time => Icon("time");
 
+        public static string SpellStrike(TowerDefence.Data.SpellData spell)
+        {
+            if (spell == null) return "";
+            string range = $"{Range} {spell.radius:0}";
+            if (spell.spellType != TowerDefence.Data.SpellType.Thunderstrike)
+                return range;
+            return $"{Damage} {spell.power:0}  |  {range}";
+        }
+
+        public static string AuraBonus(float damageBonus, float fireRateBonus)
+        {
+            return $"{Damage} +{damageBonus * 100f:0}%\n{Attack} +{fireRateBonus * 100f:0}%";
+        }
+
         public static string Price(TowerDefence.Core.Side side)
         {
             if (side == TowerDefence.Core.Side.Dark) return Soul;

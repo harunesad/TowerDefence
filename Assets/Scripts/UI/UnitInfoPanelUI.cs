@@ -19,10 +19,10 @@ namespace TowerDefence.UI
         {
             float panelW = 300;
             int statCount = showCost ? 4 : 3;
-            float iconArea = 15; // İkon kaldırıldığı için sadece üst boşluk
+            float iconArea = 15; // Top padding only since icon removed
             float panelH = iconArea + 14 + 2 + statCount * 22 + 12;
 
-            // Overlay (en üste, panelin arkasında kalacak)
+            // Overlay (en uste, panelin arkasinda kalacak)
             overlayRef = new GameObject("UnitInfoOverlay", typeof(RectTransform), typeof(Image));
             overlayRef.transform.SetParent(transform.parent, false);
             overlayRef.transform.SetAsLastSibling();
@@ -37,7 +37,7 @@ namespace TowerDefence.UI
             var et = overlayRef.AddComponent<EventTrigger>();
             var entry = new EventTrigger.Entry();
             entry.eventID = EventTriggerType.PointerClick;
-            entry.callback.AddListener((_) => { Destroy(overlayRef); Destroy(gameObject); });
+            entry.callback.AddListener((_) => { UIButtonSound.Play(); Destroy(overlayRef); Destroy(gameObject); });
             et.triggers.Add(entry);
 
             // Panel
@@ -45,12 +45,12 @@ namespace TowerDefence.UI
             rt.sizeDelta = new Vector2(panelW, panelH);
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
-            // Sol alt köşeyi pivot olarak belirliyoruz ki butonun sağ üstüne doğru büyüsün
+            // Sol alt koseyi pivot olarak belirliyoruz ki butonun sag ustune dogru buyusun
             rt.pivot = new Vector2(0f, 0f);
 
-            // Pozisyonu tam olarak butonun dünya pozisyonuna eşitleyip
+            // Pozisyonu tam olarak butonun dunya pozisyonuna esitleyip
             rt.position = source.position;
-            // Canvas ölçeklemesinden bağımsız olarak UI üzerinde sağ üste kaydırıyoruz
+            // Canvas olceklemesinden bagimsiz olarak UI uzerinde sag uste kaydiriyoruz
             rt.anchoredPosition += new Vector2(source.rect.width * 0.5f + 10f, source.rect.height * 0.5f + 10f);
 
             Image bgImg = gameObject.GetComponent<Image>();
@@ -61,13 +61,13 @@ namespace TowerDefence.UI
             var pTrigger = gameObject.AddComponent<EventTrigger>();
             var pEntry = new EventTrigger.Entry();
             pEntry.eventID = EventTriggerType.PointerClick;
-            pEntry.callback.AddListener((_) => { Destroy(overlayRef); Destroy(gameObject); });
+            pEntry.callback.AddListener((_) => { UIButtonSound.Play(); Destroy(overlayRef); Destroy(gameObject); });
             pTrigger.triggers.Add(pEntry);
 
             CreateImage("Border", Vector2.zero, Vector2.zero, Vector2.one, Vector2.zero, new Color(0.2f, 0.2f, 0.3f, 1f), false);
             CreateImage("InnerBg", Vector2.zero, Vector2.zero, Vector2.one, new Vector2(-4, -4), new Color(0.08f, 0.08f, 0.13f, 1f), false);
 
-            float y = -15; // İkon olmadığı için y koordinatını yukarıdan başlatıyoruz
+            float y = -15; // Starting Y coordinate from top since there is no icon
             CreateText("NameText", data.unitName, new Vector2(0, y), new Vector2(260, 22),
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 18, FontStyles.Bold, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f));
             y -= 26;

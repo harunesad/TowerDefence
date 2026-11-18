@@ -32,20 +32,20 @@ namespace TowerDefence.UI
         [SerializeField] private Button speedX3Button;
         [SerializeField] private Button pauseButton;
 
-        private readonly Color speedActiveColor   = new Color(1f,   0.75f, 0.1f); // Sarı - aktif
-        private readonly Color speedInactiveColor = new Color(0.2f, 0.2f,  0.2f); // Koyu - pasif
+        private readonly Color speedActiveColor   = new Color(1f,   0.75f, 0.1f); // Yellow - active
+        private readonly Color speedInactiveColor = new Color(0.2f, 0.2f,  0.2f); // Dark - inactive
         
         [Header("Game Control Buttons")]
         [SerializeField] private Button menuButton;
         [SerializeField] private Button restartButton;
         [SerializeField] private Button soundButton;
-        [SerializeField] private Image soundIcon; // Boş bırakılırsa soundButton'ın kendi Image'ı kullanılır
+        [SerializeField] private Image soundIcon; // If left empty, soundButton's own Image is used
         [SerializeField] private Sprite soundOnSprite;
         [SerializeField] private Sprite soundOffSprite;
         
         [Header("Wave Info")]
         [SerializeField] private WaveInfoUI waveInfoUI;
-        [Tooltip("WaveInfo panelinde düşman birimlerinin gösterildiği satır prefabı (WaveInfoUnitsRow.prefab)")]
+        [Tooltip("Row prefab displaying enemy units in WaveInfo panel (WaveInfoUnitsRow.prefab)")]
         [SerializeField] private GameObject waveInfoUnitsRowPrefab;
         [SerializeField] private AudioClip waveInfoToggleSFX;
         [SerializeField] private AudioClip warningSFX;
@@ -103,7 +103,7 @@ namespace TowerDefence.UI
         {
             EnsureAbilityControls();
 
-            // Event abonelikleri
+            // Event subscriptions
             if (CurrencyManager.Instance != null)
                 CurrencyManager.Instance.OnCurrencyChanged += UpdateCurrencyUI;
             
@@ -122,27 +122,27 @@ namespace TowerDefence.UI
             if (skipPrepButton != null) skipPrepButton.onClick.AddListener(OnSkipPrepClicked);
             if (abilityButton  != null) abilityButton.onClick.AddListener(OnAbilityClicked);
 
-            // Hız butonlarını bağla
+            // Wire speed buttons
             if (speedX1Button != null) speedX1Button.onClick.AddListener(() => OnSpeedButtonClicked(0));
             if (speedX2Button != null) speedX2Button.onClick.AddListener(() => OnSpeedButtonClicked(1));
             if (speedX3Button != null) speedX3Button.onClick.AddListener(() => OnSpeedButtonClicked(2));
             if (pauseButton != null) pauseButton.onClick.AddListener(OnPauseClicked);
 
-            // Hız değişikliği eventine abone ol
+            // Subscribe to speed change event
             if (GameSpeedManager.Instance != null)
             {
                 GameSpeedManager.Instance.OnSpeedChanged += UpdateSpeedButtonHighlights;
                 UpdateSpeedButtonHighlights(GameSpeedManager.Instance.GetCurrentSpeedIndex());
             }
 
-            // Menü, Restart ve Ses butonları
+            // Menu, Restart, and Audio buttons
             if (menuButton != null) menuButton.onClick.AddListener(ReturnToMenu);
             if (restartButton != null) restartButton.onClick.AddListener(RestartLevel);
             if (soundButton != null) soundButton.onClick.AddListener(OnSoundButtonClicked);
             UpdateSoundIcon();
             ApplyPauseMenuLock();
             
-            // Başlangıç değerleri
+            // Initial values
             if (SideController.Instance != null)
             {
                 Side playerSide = SideController.Instance.GetPlayerSide();
@@ -218,7 +218,7 @@ namespace TowerDefence.UI
 
             int heroCount = HeroManager.Instance.GetEquippedHeroCount();
 
-            // 1. ÖNCELİK: Eğer Inspector'da veya HeroPanel altında zaten yerleştirilmiş butonlar varsa onları kullan
+            // 1st PRIORITY: If buttons are already placed in Inspector or under HeroPanel, use them
             HeroButtonUI[] existingButtons = preassignedHeroButtons;
             if (existingButtons == null || existingButtons.Length == 0)
             {
@@ -237,14 +237,14 @@ namespace TowerDefence.UI
                     }
                     else
                     {
-                        // Kuşanılmış hero yoksa bu butonu gizle
+                        // Hide this button if no hero is equipped
                         existingButtons[i].gameObject.SetActive(false);
                     }
                 }
                 return;
             }
 
-            // 2. ÖNCELİK: Sahnedeki eski butonları temizle ve heroButtonPrefab atanmışsa prefab'den oluştur
+            // 2nd PRIORITY: Clean up old buttons in scene and instantiate from prefab if heroButtonPrefab is assigned
             for (int i = heroPanel.transform.childCount - 1; i >= 0; i--)
                 Destroy(heroPanel.transform.GetChild(i).gameObject);
 
@@ -260,7 +260,7 @@ namespace TowerDefence.UI
                 }
                 else
                 {
-                    // Fallback: Kod ile oluştur
+                    // Fallback: Create via code
                     HeroButtonUI.Create(heroPanel.GetComponent<RectTransform>(), i);
                 }
             }
@@ -505,7 +505,7 @@ namespace TowerDefence.UI
             if (TutorialDirector.Instance != null && TutorialDirector.Instance.LocksPauseMenu()) return;
             if (AudioManager.Instance != null)
             {
-                // MasterVolume 0 ise aç (1f veya önceki ses seviyesi), 0'dan büyükse kapat (0f)
+                // If MasterVolume is 0, unmute (1f or previous volume); if greater than 0, mute (0f)
                 if (AudioManager.Instance.MasterVolume > 0.01f)
                 {
                     PlayerPrefs.SetFloat("PreMuteMasterVolume", AudioManager.Instance.MasterVolume);
@@ -529,7 +529,7 @@ namespace TowerDefence.UI
 
         private void UpdateSoundIcon()
         {
-            // Eğer soundIcon ayrıca atanmamışsa, doğrudan soundButton'ın üzerindeki Image bileşenini kullan
+            // If soundIcon is not assigned separately, use Image component on soundButton directly
             Image targetImage = soundIcon;
             if (targetImage == null && soundButton != null)
             {

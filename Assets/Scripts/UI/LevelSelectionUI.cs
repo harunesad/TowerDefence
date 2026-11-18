@@ -11,12 +11,12 @@ namespace TowerDefence.UI
         [SerializeField] private List<LevelMapData> maps;
         [SerializeField] private GameObject levelButtonPrefab;
         [SerializeField] private Image backgroundImage;
-        [SerializeField] private List<Transform> slotContainers; // Her harita için 1 container (LevelSlot_0..N çocukları)
+        [SerializeField] private List<Transform> slotContainers; // 1 container per map (LevelSlot_0..N children)
         [SerializeField] private Button leftArrowButton;
         [SerializeField] private Button rightArrowButton;
         [SerializeField] private TMPro.TextMeshProUGUI mapNameText;
 
-        [SerializeField] private GameObject sideSelectionPanel; // Seviye seçince aktif olacak panel
+        [SerializeField] private GameObject sideSelectionPanel; // Panel activated when selecting level
         [SerializeField] private Button backButton;
 
         [Header("Difficulty Selection")]
@@ -112,6 +112,7 @@ namespace TowerDefence.UI
             if (sweepBtn == null) return;
             sweepBtn.onClick.RemoveAllListeners();
             sweepBtn.onClick.AddListener(() => OnSweepButtonClicked(data));
+            UIButtonSound.Attach(sweepBtn);
         }
 
         LevelData FindLevelData(string levelId)
@@ -209,14 +210,14 @@ namespace TowerDefence.UI
             currentMapIndex = Mathf.Clamp(index, 0, maps.Count - 1);
             LevelMapData map = maps[currentMapIndex];
 
-            // Slot container'ları toggle et
+            // Slot container'lari toggle et
             for (int i = 0; i < slotContainers.Count; i++)
             {
                 if (slotContainers[i] != null)
                     slotContainers[i].gameObject.SetActive(i == currentMapIndex);
             }
 
-            // Arkaplan görselini güncelle (yüklenmediyse düz renk korunur)
+            // Arkaplan gorselini guncelle (yuklenmediyse duz renk korunur)
             if (backgroundImage != null)
             {
                 if (map != null && map.mapBackground != null)
@@ -231,11 +232,11 @@ namespace TowerDefence.UI
                 }
             }
 
-            // Kenar durdurma: ilk haritada sol ok, son haritada sağ ok kapalı
+            // Kenar durdurma: ilk haritada sol ok, son haritada sag ok kapali
             if (leftArrowButton != null) leftArrowButton.interactable = currentMapIndex > 0;
             if (rightArrowButton != null) rightArrowButton.interactable = currentMapIndex < maps.Count - 1;
 
-            // Harita adını güncelle
+            // Harita adini guncelle
             if (mapNameText != null)
             {
                 mapNameText.text = map != null ? map.mapName : "MAP";
@@ -301,7 +302,7 @@ namespace TowerDefence.UI
             }
         }
 
-        // Tüm haritaların slot'larına seviye butonu kurar/bağlar
+        // Tum haritalarin slot'larina seviye butonu kurar/baglar
         private void BuildAllMaps()
         {
             levelTargets.Clear();
@@ -348,7 +349,7 @@ namespace TowerDefence.UI
             Button button = buttonGO.GetComponent<Button>();
             if (button == null) return;
 
-            // Tamamlanan yıldız sayısını al (tamamlanmamışsa 0 → 3 soluk yıldız)
+            // Tamamlanan yildiz sayisini al (tamamlanmamissa 0 → 3 soluk yildiz)
             int earnedStars = 0;
             if (MetaProgressionManager.Instance != null)
             {
@@ -356,7 +357,7 @@ namespace TowerDefence.UI
                 earnedStars = MetaProgressionManager.Instance.GetLevelStars(level.levelID, difficulty);
             }
 
-            // Yıldızları marker'ın üstünde göster: kazanılan altın, kazanılmayan soluk
+            // Yildizlari marker'in ustunde goster: kazanilan altin, kazanilmayan soluk
             Transform starContainer = buttonGO.transform.Find("StarContainer");
             if (starContainer != null)
             {
@@ -376,7 +377,7 @@ namespace TowerDefence.UI
             bool closed = TutorialDirector.Instance != null && TutorialDirector.Instance.LevelClosed(level.levelID);
             if (lockedOverlay != null) lockedOverlay.gameObject.SetActive(!isUnlocked || closed);
 
-            // Sweep (Hızlı Geç) Butonu
+            // Sweep (Hizli Gec) Butonu
             Transform sweepButtonTrans = buttonGO.transform.Find("SweepButton");
             if (sweepButtonTrans != null)
             {
@@ -389,6 +390,7 @@ namespace TowerDefence.UI
                         sweepBtn.gameObject.SetActive(true);
                         sweepBtn.onClick.RemoveAllListeners();
                         sweepBtn.onClick.AddListener(() => OnSweepButtonClicked(level));
+                        UIButtonSound.Attach(sweepBtn);
                     }
                     else
                     {
@@ -402,6 +404,7 @@ namespace TowerDefence.UI
             levelTargets[level.levelID] = button.transform as RectTransform;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() => OnLevelSelected(level));
+            UIButtonSound.Attach(button);
         }
 
         private void OnLevelSelected(LevelData level)
@@ -466,12 +469,12 @@ namespace TowerDefence.UI
 
                         if (sweepResultUI != null)
                         {
-                            // 3 yıldız ödülünü sweep mantığıyla ver
+                            // Grant 3-star rewards via sweep logic
                             sweepResultUI.ShowSweepResult();
                         }
                         else
                         {
-                            Debug.LogWarning("SweepResultUI atanmamış! Manuel ödül veriliyor.");
+                            Debug.LogWarning("SweepResultUI unassigned! Granting manual reward.");
                             if (CampaignManager.Instance != null)
                             {
                                 int globalDifficulty = CampaignManager.Instance.CurrentDifficultyLevel;

@@ -60,7 +60,7 @@ namespace TowerDefence.Combat
         private float attackRange;
         private float attackRate;
         private Side unitSide;
-        private float pathOffset; // Yol üzerindeki yanal sapma (Sabitlendi)
+        private float pathOffset; // Lateral deviation on path (Fixed)
         private Vector3 currentMoveTarget; // Bir sonraki waypoint hedefi (Ofset dahil)
         
         protected float currentHealth;
@@ -96,7 +96,7 @@ namespace TowerDefence.Combat
         // --- BLOCKING SYSTEM ---
         protected bool isBlocked;
         protected Unit currentBlocker;
-        protected List<Unit> blockedEnemies = new List<Unit>(); // Bizim engellediğimiz düşmanlar
+        protected List<Unit> blockedEnemies = new List<Unit>(); // Enemies blocked by us
         public bool IsBlocked => isBlocked;
         public void Block(Unit blocker)
         {
@@ -121,7 +121,7 @@ namespace TowerDefence.Combat
             AllUnits.Add(this);
             animator = GetComponentInChildren<Animator>();
             
-            // Runtime Bulletproof Fix: Eğer AnimationEventHandler yoksa otomatik ekle
+            // Runtime Bulletproof Fix: Eger AnimationEventHandler yoksa otomatik ekle
             if (animator != null && animator.GetComponent<AnimationEventHandler>() == null)
             {
                 animator.gameObject.AddComponent<AnimationEventHandler>();
@@ -165,9 +165,13 @@ namespace TowerDefence.Combat
 
             float healthScale = statMultiplier;
             float damageScale = damageStatMultiplier < 0f ? statMultiplier : damageStatMultiplier;
+            if (!(this is HeroUnit)
+                && SideController.Instance != null
+                && data.side == SideController.Instance.GetPlayerSide())
+                damageScale *= 1f / 3f;
 
-            // Meta-Gelişim Çarpanlarını Uygula
-            // SpeedBonus kule ateş hızıdır (Rapid Fire). Birim hızı yalnızca UnitSpeedBonus.
+            // Meta-Gelisim carpanlarini Uygula
+            // SpeedBonus kule ates hizidir (Rapid Fire). Birim hizi yalnizca UnitSpeedBonus.
             float healthMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.HealthBonus, unitSide);
             if (this is HeroUnit)
                 healthMult *= MetaProgressionManager.Instance.GetSkillGroupMultiplier("Skill_Hero_", UpgradeType.HealthBonus, unitSide);
@@ -192,17 +196,17 @@ namespace TowerDefence.Combat
             // pathOffset will be set when the path is assigned
             pathOffset = 0f;
 
-            // Animasyon hızını hareket hızıyla senkronize et
-            // 1.0f = referans hız, animasyon bu hıza göre kalibre edilmiş sayılır
+            // Animasyon hizini hareket hiziyla senkronize et
+            // 1.0f = referans hiz, animasyon bu hiza gore kalibre edilmis sayilir
             SyncAnimatorSpeed(moveSpeed);
 
             if (healthBar != null) 
             {
-                // Dost birimler mavi, düşman birimler yeşil/kırmızı (prefabın orijinal rengi veya yeşil)
+                // Dost birimler mavi, dusman birimler yesil/kirmizi (prefabin orijinal rengi veya yesil)
                 if (unitSide == SideController.Instance.GetPlayerSide())
                     healthBar.SetColor(new Color(0.2f, 0.6f, 1f)); // Mavi
                 else
-                    healthBar.SetColor(new Color(0.2f, 0.8f, 0.2f)); // Yeşil
+                    healthBar.SetColor(new Color(0.2f, 0.8f, 0.2f)); // Yesil
                     
                 healthBar.UpdateHealth(currentHealth, maxHealth);
             }
@@ -213,7 +217,7 @@ namespace TowerDefence.Combat
             SetLayerRecursive(gameObject, (unitSide == Side.Light) ? 6 : 7);
             targetLayer = (unitSide == Side.Light) ? (1 << 7) : (1 << 6);
             
-            // Kullanıcı isteği üzerine: Dost birliklerin altına çıkan indicator halkası tamamen kaldırıldı (Can barı renklerinden ayırt ediliyor)
+            // Per user request: Indicator ring under friendly units completely removed (distinguished by health bar colors)
             // if (unitSide == SideController.Instance.GetPlayerSide())
             //     CreateUnitIndicator();
 
@@ -221,12 +225,12 @@ namespace TowerDefence.Combat
                 AudioManager.Instance.PlaySFX(unitData.spawnSFX);
         }
 
-        /// <summary>Animator hızını verilen hareket hızına göre ayarlar.</summary>
+        /// <summary>Adjusts animator speed based on given movement speed.</summary>
         private void SyncAnimatorSpeed(float speed)
         {
             if (animator == null || isAttacking) return;
-            // Referans hızı: 1.0f. Animasyonlar bu hıza göre çekilmiş sayılır.
-            // Kısmi çarpım (0.85f) aşırı hızlı görünmeyi engeller.
+            // Reference speed: 1.0f. Animations considered calibrated to this.
+            // Partial factor (0.85f) prevents appearing excessively fast.
             const float baseSpeed = 1.0f;
             animator.speed = Mathf.Clamp((speed / baseSpeed) * 0.85f, 0.3f, 2.5f);
         }
@@ -286,7 +290,7 @@ namespace TowerDefence.Combat
 
             unitIndicator = new GameObject("UnitIndicator");
             unitIndicator.transform.SetParent(transform, false);
-            unitIndicator.transform.localPosition = indicatorPosition; // Editörden ayarlanan pozisyon
+            unitIndicator.transform.localPosition = indicatorPosition; // Position configured from editor
             unitIndicator.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             unitIndicator.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
 
@@ -404,7 +408,7 @@ namespace TowerDefence.Combat
                 targetSearchTimer = TARGET_SEARCH_INTERVAL;
             }
 
-            // Savaş Durumu Check — isBlocked'dan bağımsız çalışır
+            // Combat State Check — operates independently of isBlocked
             bool isStunned = activeEffects.Exists(e => e.type == StatusEffectType.Stun);
             bool isFighting = false;
             if (!isStunned && targetCombatant != null && !targetCombatant.IsDead)
@@ -412,7 +416,7 @@ namespace TowerDefence.Combat
                 Vector3 fightPos = ((MonoBehaviour)targetCombatant).transform.position;
                 float distance = GetCombatDistance(targetCombatant, fightPos);
                 
-                // Saldırı menziline küçük bir tolerans ekle (+0.5f)
+                // Add a small tolerance to attack range (+0.5f)
                 if (distance <= attackRange + 0.5f)
                 {
                     isFighting = true;
@@ -426,10 +430,10 @@ namespace TowerDefence.Combat
                 }
             }
 
-            // Hareket Mantığı — isBlocked sadece yol/kovalama hareketini engeller
+            // Movement Logic — isBlocked only prevents path/chase movement
             if (!isFighting && !isStunned && !isAttacking)
             {
-                // Değişiklik: isBlocked olsa bile eğer bir hedefimiz (düello partnerimiz) varsa ona yürüyebilelim
+                // Change: Even if isBlocked, walk towards duel partner if we have one
                 if (targetCombatant != null && !targetCombatant.IsDead)
                 {
                     // 1. Hedefi Kovala (Chase Logic)
@@ -437,7 +441,7 @@ namespace TowerDefence.Combat
                     Vector3 chaseTarget = ((MonoBehaviour)targetCombatant).transform.position;
                     float distance = GetCombatDistance(targetCombatant, chaseTarget);
                     
-                    // Yakın dövüşçü ise (Projectile yoksa) iyice dibine (1.2f) gir
+                    // If melee (no projectile), close in closely (1.2f)
                     float stopDistance = (unitData.projectilePrefab == null) ? 1.2f : attackRange * 0.8f;
                     
                     if (distance > stopDistance)
@@ -466,7 +470,7 @@ namespace TowerDefence.Combat
                     }
                     else
                     {
-                    // 2. Düşman yoksa ve engellenmemişsek Waypoint Takibi yap
+                    // 2. If no enemy and unblocked, follow waypoints
                     Vector3 targetPos = Vector3.zero;
                     bool hasTarget = false;
 
@@ -518,7 +522,7 @@ namespace TowerDefence.Combat
                 }
                 else
                 {
-                    // isBlocked: Yerinde dur, hedefe dön
+                    // isBlocked: Stay in place, face target
                     if (currentBlocker != null)
                         HandleRotation(currentBlocker.transform.position);
                     if (animator != null) animator.SetBool("IsMoving", false);
@@ -526,8 +530,8 @@ namespace TowerDefence.Combat
             }
             else
             {
-                // Savaş/saldırı sırasında yürüme animasyonunu kapat — ama sadece normal üniteler için.
-                // Hero'lar kendi animasyon yönetimlerini HeroUnit.Update() içinde yapıyor.
+                // Stop walk animation during combat/attack — but only for normal units.
+                // Heroes manage their own animations inside HeroUnit.Update().
                 if (!(this is HeroUnit) && animator != null) animator.SetBool("IsMoving", false);
             }
         }
@@ -620,8 +624,8 @@ namespace TowerDefence.Combat
             var points = currentPath.GetPathPoints();
             Vector3 baseTarget = points[currentWaypointIndex];
             
-            // Yanal sapma için yönü ünitenin nerede olduğuna göre değil, yolun gidişatına (segment) göre hesapla.
-            // Bu sayede ünite hedefe çok yaklaştığında sağ/sol hesaplaması fırıldak gibi dönüp sapmaz.
+            // Calculate lateral offset direction from path segment, not unit's current position.
+            // This prevents jitter when the unit gets very close to target.
             Vector3 pathDirection = Vector3.forward;
 
             if (points.Count > 1)
@@ -630,12 +634,12 @@ namespace TowerDefence.Combat
                 
                 if (prevIndex >= 0 && prevIndex < points.Count)
                 {
-                    // Önceki noktadan şu anki hedefe doğru olan yön
+                    // Direction from previous waypoint towards current target
                     pathDirection = (baseTarget - points[prevIndex]).normalized;
                 }
                 else
                 {
-                    // İlk nokta için yönü bir sonraki noktaya bakarak al
+                    // For first waypoint, determine direction looking towards next point
                     int nextIndex = walkPathBackward ? currentWaypointIndex - 1 : currentWaypointIndex + 1;
                     if (nextIndex >= 0 && nextIndex < points.Count)
                     {
@@ -661,9 +665,9 @@ namespace TowerDefence.Combat
         protected void HandleRotation(Vector3 targetPos)
         {
             Vector3 direction = (targetPos - transform.position);
-            direction.y = 0; // Yerden yükselmeyi veya aşağı bakmayı engelle
+            direction.y = 0; // Prevent tilting up or down
             
-            // Eğer sıfıra çok yakınsa dönmeye çalışma (LookRotation hatasını engeller)
+            // Do not rotate if vector is near zero (prevents LookRotation error)
             if (direction.sqrMagnitude > 0.001f)
             {
                 Quaternion lookRotation = Quaternion.LookRotation(direction.normalized);
@@ -685,7 +689,7 @@ namespace TowerDefence.Combat
 
         private void UpdateTargetConflict()
         {
-            // 1. ÖNCELİK: Düello Partneri Kontrolü
+            // 1. PRIORITY: Duel Partner Check
             if (blockedEnemies.Count > 0 && blockedEnemies[0] != null && !blockedEnemies[0].IsDead)
             {
                 targetCombatant = blockedEnemies[0];
@@ -717,7 +721,7 @@ namespace TowerDefence.Combat
                 if (damageable == null || damageable.IsDead || damageable.GetSide() == unitSide)
                     continue;
 
-                // 1'E 1 KURALI: Unit vs Unit, kahramanlar muaftır
+                // 1 ON 1 RULE: Unit vs Unit, heroes exempt
                 Unit otherUnit = damageable as Unit;
                 if (otherUnit != null && !(this is HeroUnit) && !(otherUnit is HeroUnit))
                 {
@@ -751,8 +755,8 @@ namespace TowerDefence.Combat
         {
             if (path == null) return;
             float hw = path.PathWidth / 2f;
-            // 4 şerit veya sürekli rastgele dağılım. Daha doğal görünmesi için PathWidth üzerinden hesaplıyoruz.
-            // Örneğin width = 3 ise, offset -1.5 ile 1.5 arası.
+            // 4 lanes or continuous random spread. Calculated via PathWidth for natural look.
+            // e.g. if width = 3, offset is between -1.5 and 1.5.
             float[] lanes = new float[] { -hw, -hw/3f, hw/3f, hw };
             pathOffset = lanes[Random.Range(0, lanes.Length)];
         }
@@ -819,7 +823,7 @@ namespace TowerDefence.Combat
                 }
             }
 
-            // En yakın noktaya ulaştı sayıp bir sonrakine yönlendiriyoruz
+            // Consider reached to closest waypoint and steer to next
             currentWaypointIndex = Mathf.Min(nearestIdx + 1, wps.Count - 1);
             
             if (currentWaypointIndex >= 0 && currentWaypointIndex < wps.Count)
@@ -878,7 +882,7 @@ namespace TowerDefence.Combat
             float spacing = 0.6f;
             float startX = -(activeEffectVisuals.Count - 1) * spacing / 2f;
             
-            // Health barın Y pozisyonunun biraz altında
+            // Slightly below health bar Y position
             float yPos = (healthBar != null) ? healthBar.transform.localPosition.y - 0.75f : 2.5f;
 
             foreach (var kvp in activeEffectVisuals)
@@ -886,9 +890,9 @@ namespace TowerDefence.Combat
                 if (kvp.Value != null)
                 {
                     kvp.Value.transform.localPosition = new Vector3(startX + (index * spacing), yPos, 0f);
-                    // Kameraya bakması (billboard) sağlanabilir, ama HealthBarUI'nin parent'ı zaten billboard yapıyorsa sorun yok.
-                    // UnitIndicator tarzı Yere paralel mi olsun, yoksa ekrana mı baksın? 
-                    // İkon oldukları için SpriteRenderer ile ekrana bakmaları daha iyidir.
+                    // Billboard towards camera; HealthBarUI parent already handles billboard if present.
+                    // Should it lie flat like UnitIndicator or face the screen? 
+                    // Facing screen with SpriteRenderer is better since they are icons.
                     if (Camera.main != null)
                     {
                         kvp.Value.transform.rotation = Camera.main.transform.rotation;
@@ -907,7 +911,7 @@ namespace TowerDefence.Combat
 
         public void AddStatusEffect(StatusEffectType type, float duration, float power)
         {
-            // Aynı tipte bir efekt varsa süreyi yenile veya daha güçlüsünü al
+            // Refresh duration or take stronger effect if same type exists
             StatusEffect existing = activeEffects.Find(e => e.type == type);
             if (existing != null)
             {
@@ -947,8 +951,8 @@ namespace TowerDefence.Combat
             
             SpriteRenderer sr = visualObj.AddComponent<SpriteRenderer>();
             sr.sprite = icon;
-            sr.sortingOrder = 15; // Healthbar'ın üstünde/altında net görünsün
-            visualObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // İkonların boyutu
+            sr.sortingOrder = 15; // Clearly visible above/below healthbar
+            visualObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // Icon size
             
             activeEffectVisuals[type] = visualObj;
             UpdateStatusVisualPositions();
@@ -977,7 +981,7 @@ namespace TowerDefence.Combat
         public void ApplySlow(float multiplier, float duration)
         {
             AddStatusEffect(StatusEffectType.Slow, duration, multiplier);
-            // Slow uygulandığında animasyonu ve hareketi yavaşlat
+            // Slow down animation and movement when Slow is applied
             RefreshSlowFactor();
         }
 
@@ -985,7 +989,7 @@ namespace TowerDefence.Combat
         {
             Base[] bases = FindObjectsByType<Base>(FindObjectsSortMode.None);
             
-            // Eğer yol atanmışsa, hedef olarak yolun son noktasını (Base kapısını) referans al
+            // If path is assigned, target end of path (Base gate) as destination
             Vector3 referencePos = transform.position;
             if (currentPath != null && currentPath.GetPathPoints().Count > 0)
             {
@@ -998,7 +1002,7 @@ namespace TowerDefence.Combat
             {
                 if (b.GetSide() != unitSide)
                 {
-                    // Artık doğduğu yere göre değil, gideceği yolun sonuna en yakın Base'i seçecek
+                    // Selects the closest Base to the end of its path rather than spawn point
                     float dist = Vector3.Distance(referencePos, b.transform.position);
                     if (dist < minDistance)
                     {
@@ -1016,14 +1020,13 @@ namespace TowerDefence.Combat
 
             if (targetBase != null)
             {
-                // Üsse ulaştığında güncel hasarı ver. Can zaten bitmişse yenilgi yine işler.
-                targetBase.TakeDamage(GetDamage());
+                targetBase.Leak(unitData != null ? unitData.LeakLives : 1);
                 Debug.Log($"{gameObject.name} reached base and exploded!");
                 
                 // Kamikaze efekti
                 if (VFXManager.Instance != null)
                 {
-                    // Özel ölüm veya standart ölüm efekti
+                    // Special death or standard death effect
                     VFXManager.Instance.SpawnVFX(VFXType.UnitDeath, transform.position, Quaternion.identity);
                 }
             }
@@ -1109,13 +1112,13 @@ namespace TowerDefence.Combat
             return animator.IsInTransition(0) && animator.GetNextAnimatorStateInfo(0).IsName("Attack");
         }
 
-        // Animation Event'ten çağrılacak metod
+        // Method called from Animation Event
         public void OnAttackHit()
         {
-            // Eğer daha önceden (fallback veya çoklu event) hasar verildiyse çık
+            // Exit if damage was already dealt (fallback or multiple events)
             if (hasDealtDamage || isDead) return;
             
-            // Eğer saldırı iptal edildiyse veya bitirildiyse vurma
+            // Do not hit if attack was cancelled or completed
             if (!isAttacking) return;
             
             ExecuteAttackHit();
@@ -1129,7 +1132,7 @@ namespace TowerDefence.Combat
             if (currentTargetMB == null) return;
             IDamageable targetC = currentTargetMB as IDamageable;
 
-            // Phantom Hit Fix (Ölüye vurmayı engelle)
+            // Phantom Hit Fix (Prevent hitting dead targets)
             if (targetC != null && !targetC.IsDead)
             {
                 if (AudioManager.Instance != null && unitData != null && unitData.attackSFX != null)
@@ -1212,7 +1215,7 @@ namespace TowerDefence.Combat
                 if (amount <= 0f) return;
             }
 
-            // Eğer kalkan varsa hasarı kalkan emsin
+            // If shield exists, let shield absorb damage
             Shield shield = GetComponent<Shield>();
             if (shield != null && shield.GetCurrentShield() > 0)
             {
@@ -1283,14 +1286,14 @@ namespace TowerDefence.Combat
             isDead = true;
             StopAllCoroutines();
             
-            // Bizi engelleyen varsa onu boşa çıkar
+            // Release anyone blocking us
             if (currentBlocker != null)
             {
                 currentBlocker.OnBlockedEnemyDied(this);
                 currentBlocker = null;
             }
 
-            // Bizim engellediğimiz düşmanlar varsa onları serbest bırak
+            // Release enemies blocked by us if any
             foreach (var enemy in blockedEnemies)
             {
                 if (enemy != null) enemy.Unblock();
@@ -1300,13 +1303,13 @@ namespace TowerDefence.Combat
             isDead = true;
             if (healthBar != null) healthBar.SetVisible(false);
             
-            // Efekt görsellerini temizle
+            // Efekt gorsellerini temizle
             ClearAllStatusEffects();
 
             if (animator != null) animator.SetTrigger("Die");
             Debug.Log($"{gameObject.name} died!");
 
-            // Ölüm efekti
+            // Death effect
             if (VFXManager.Instance != null)
             {
                 VFXManager.Instance.SpawnVFX(VFXType.UnitDeath, transform.position, Quaternion.identity);
@@ -1347,7 +1350,7 @@ namespace TowerDefence.Combat
             blockedEnemies.Remove(enemy);
             if (blockedEnemies.Count == 0)
             {
-                // Artık birini engellemiyoruz, normal harekete dönebiliriz (Veya rally point'e)
+                // Artik birini engellemiyoruz, normal harekete donebiliriz (Veya rally point'e)
             }
         }
 

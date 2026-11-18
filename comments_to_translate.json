@@ -1,0 +1,2657 @@
+[
+  {
+    "file": "Assets\\Scripts\\Combat\\AnimationEventHandler.cs",
+    "line": 17,
+    "text": "        // Animation Event'ten çağrılır"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Aura.cs",
+    "line": 0,
+    "text": "// Bu dosya AuraTower.cs ile değiştirildi.\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Aura.cs",
+    "line": 1,
+    "text": "// Tüm aura mantığı Assets/Scripts/Combat/AuraTower.cs içerisindedir.\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Aura.cs",
+    "line": 2,
+    "text": "// Bu dosya geriye dönük uyumluluk için boş bırakılmıştır.\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 8,
+    "text": "    /// Aura Tower bileşeni: Yakındaki dost kulelere hasar ve ateş hızı buffu uygular."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 9,
+    "text": "    /// Aura alanı zemin spriteı ile görselleştirilir, etkilenen kuleler turkuaz parlaklıkla belirtilir."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 15,
+    "text": "        [SerializeField] private SpriteRenderer auraSprite;   // Zemin halkası (Inspector'dan atanır veya otomatik oluşturulur)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 25,
+    "text": "        // Şu an buffluyor olduğumuz kuleler"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 81,
+    "text": "                // Otomatik oluştur"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 85,
+    "text": "                spriteGO.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Yere yatır"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 93,
+    "text": "            // Radius'a göre ölçekle (Sprite 1 Unity Unit = 1 dünya birimi varsayımı)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 98,
+    "text": "        /// <summary>Prosedürel yumuşak çember sprite oluşturur (dışa gidildikçe şeffaflaşır).</summary>"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 106,
+    "text": "            float innerR = outerR * 0.55f;   // İç kısım şeffaf"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 107,
+    "text": "            float edgeW  = outerR * 0.18f;   // Kenar kalınlığı"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 122,
+    "text": "                        // İç merkez: çok hafif dolgu"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 127,
+    "text": "                        // Kenar bandı: yumuşak geçiş"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 160,
+    "text": "            // Aura içindeki aynı taraf kulelerini bul"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 166,
+    "text": "                // Kendi Tower bileşenimizi atlıyoruz"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\AuraTower.cs",
+    "line": 176,
+    "text": "            // Aralıktan çıkanların buffını kaldır"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 25,
+    "text": "        private Color rangeColor = new Color(0.2f, 0.8f, 1f, 0.6f); // Turkuaz/Mavi parlak çizgi"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 32,
+    "text": "            // Eğer inspector/kod tarafında değer girilmişse onu kullan"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 35,
+    "text": "                // Mevcut rallyRadius değerini koru"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 43,
+    "text": "                rallyRadius = 30f; // Güvenli fallback"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 49,
+    "text": "        // Menzili elle de artırabilmen için (Hızlı müdahale)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 53,
+    "text": "            SetRangeVisible(true); // Ölçeği tazelemesi için"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 65,
+    "text": "            rangeLine.useWorldSpace = true; // Kule ölçeğinden bağımsız dünyada çiz"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 110,
+    "text": "            // İşaretçiyi oluştur ama gizli başlat (SetRangeVisible ile menü açılınca görünecek)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 148,
+    "text": "            // Tower base'in Update'ini (ateş etme) engellemek için base.Update() ÇAĞIRMIYORUZ"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 149,
+    "text": "            // Kışla kulesi ateş etmez, asker yönetir."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 157,
+    "text": "            // Ölen askerleri kontrol et ve respawn başlat"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 211,
+    "text": "                // Eğer prefab'da Soldier scripti yoksa ekle (Veya Unit'i Soldier'a çevir)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 212,
+    "text": "                // Genelde prefab'da olması tercih edilir."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 220,
+    "text": "            // Rally point etrafında küçük bir ofset ver (üst üste binmesinler)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 288,
+    "text": "            // Görsel İşaretçiyi Güncelle"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\BarracksTower.cs",
+    "line": 319,
+    "text": "            // İşaretçiyi temizle"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Base.cs",
+    "line": 46,
+    "text": "            // Görsel ve İşitsel Geri Bildirim"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\CorruptionManager.cs",
+    "line": 29,
+    "text": "            // Sahnedeki tüm yozlaşma noktalarını/alanlarını temsil eden bir mantık.\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\CorruptionManager.cs",
+    "line": 30,
+    "text": "            // Örnek: Aktif olan tüm Corruption Node objelerinin üzerinde efekt çıkar.\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\CorruptionManager.cs",
+    "line": 40,
+    "text": "            // Basitçe o pozisyonda bir \"Corruption Node\" olup olmadığını kontrol eder\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroSelectionIndicator.cs",
+    "line": 11,
+    "text": "    /// <summary>Her zaman görünen seçim halkası — pasif (soluk) / aktif (parlak).</summary>\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroSelectionIndicator.cs",
+    "line": 93,
+    "text": "                    // Yumuşak kenarlar (anti-aliasing) için\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 49,
+    "text": "            // Tıklanabilmesi için Collider eksikse dinamik olarak ekle (Root objesinde olmasını garanti ediyoruz)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 59,
+    "text": "            // Ölçeği ayarla (Gereksinim: Herolar scale (1.5, 1.5, 1.5))"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 81,
+    "text": "            // Dalga bittiğinde (Hazırlık fazına geçildiğinde) animasyonu sıfırla"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 96,
+    "text": "            // 1. Animasyonları Idle'a çek"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 101,
+    "text": "                // Triggers temizliği"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 113,
+    "text": "                // Sert sıfırlama: Idle animasyonuna anında geç"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 117,
+    "text": "            // 2. Saldırı ve Hareket durumlarını temizle"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 124,
+    "text": "            // 3. Ölçeği tekrar garanti et"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 137,
+    "text": "            // Mevcut saldırı ve hedef eylemlerini anında iptal et"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 285,
+    "text": "                // Combat fazı dışındayken saldırı veya hedef varsa temizle"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 338,
+    "text": "            // Sadece vuruş/hasar odaklı yeteneklerde \"Ability\" animasyonunu tetikle"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 351,
+    "text": "                // Pasif veya iyileştirme gibi destek yetenekleri animasyon oynatmaz"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 554,
+    "text": "            // Bizi engelleyen varsa onu boşa çıkar"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 562,
+    "text": "            // Bizim engellediğimiz düşmanlar varsa onları serbest bırak"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 571,
+    "text": "            // Unit.Die()'daki Destroy'u engellemek için base.Die() çağırmıyoruz"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 589,
+    "text": "            // Ölüm efekti"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\HeroUnit.cs",
+    "line": 596,
+    "text": "            // Ekonomi ödülü"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\PathWaypoints.cs",
+    "line": 14,
+    "text": "        [SerializeField] private float pathWidth = 3f; // Yürüme yolunun genişliği\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\PathWaypoints.cs",
+    "line": 36,
+    "text": "            // Eğer yeterli handle yoksa listeyi eşitle\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\PathWaypoints.cs",
+    "line": 58,
+    "text": "                // Handle hiç ayarlanmamışsa (Vector3.zero) otomatik orta nokta yap\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\PathWaypoints.cs",
+    "line": 93,
+    "text": "            // Kontrol noktalarını (orijinal waypoints) çiz\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\PathWaypoints.cs",
+    "line": 103,
+    "text": "            // Kavisli veya düz yolu çiz\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\PlacementManager.cs",
+    "line": 50,
+    "text": "                        // selectedTower = null; // Sürekli yerleştirme için kapalı tutulabilir\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Projectile.cs",
+    "line": 55,
+    "text": "            // Karakterlerin merkez noktası ayaklarında olduğu için mermiyi göğüs hizasına (1 birim yukarı) nişanla\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Projectile.cs",
+    "line": 63,
+    "text": "            // Balistik atış: atış anındaki hedef noktasını dondur (dumb lob — hedef yürürse ıskalanabilir)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Projectile.cs",
+    "line": 159,
+    "text": "            // Hedefin tarafını (Side) alalım ki sadece hedefle aynı taraftaki birimlere hasar verelim.\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Shield.cs",
+    "line": 17,
+    "text": "        public bool IsDead => false; // Kalkan ölmez, sadece kırılır\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Shield.cs",
+    "line": 51,
+    "text": "                    // Taşan hasarı ana birime ilet\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Shield.cs",
+    "line": 57,
+    "text": "                // Kalkan yoksa hasar ana birime geçer\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\SlowTower.cs",
+    "line": 10,
+    "text": "        [SerializeField] private float slowPercentage = 0.5f; // %50 yavaşlatma"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Soldier.cs",
+    "line": 48,
+    "text": "            // 1. Düşman Taraması (Sadece birini engellemiyorsak)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Soldier.cs",
+    "line": 54,
+    "text": "            // 2. Savaş ve Hareket Mantığı (Base sınıf kovalama ve saldırıyı halleder)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Soldier.cs",
+    "line": 57,
+    "text": "            // 3. Eğer engellemiyorsak ve savaşmıyorsak Rally Point'e dön"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Soldier.cs",
+    "line": 66,
+    "text": "            // Düşman katmanını belirle (Side.Light isek Dark olanlara (7) bak)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Soldier.cs",
+    "line": 73,
+    "text": "                // Sadece ölmemiş ve başka biri tarafından engellenmemiş düşmanları engelle"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Soldier.cs",
+    "line": 91,
+    "text": "                // Unit.cs'deki MoveTowardsTarget ve HandleRotation metodlarını kullan"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Spawner.cs",
+    "line": 48,
+    "text": "            if (isPlayerSpawner) return; // Oyuncu spawner'ı dalga beklemek yerine manuel tetiklenir"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Spawner.cs",
+    "line": 58,
+    "text": "            // Yeni bir dalga başladığında kontrol et"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Spawner.cs",
+    "line": 102,
+    "text": "                // Sadece bu spawner'a ait grupları filtrele"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Spawner.cs",
+    "line": 153,
+    "text": "                    // Grubu bitir, sonrakine geç"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Spawner.cs",
+    "line": 157,
+    "text": "                    // Yeni grup varsa onun delay süresini uygula"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Spawner.cs",
+    "line": 166,
+    "text": "                // Tüm gruplar bitti"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Spawner.cs",
+    "line": 216,
+    "text": "            // --- Dinamik Taraf Kontrolü ---"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Spawner.cs",
+    "line": 217,
+    "text": "            // Sadece otomatik dalga üretimlerinde aynalama yap (Düşman ordusu oluşturmak için)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Spawner.cs",
+    "line": 218,
+    "text": "            // Oyuncu kendisi basıyorsa direkt kendi tarafını basar"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Spawner.cs",
+    "line": 248,
+    "text": "                // Atanan yollardan rastgele birini seç"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\StatusEffect.cs",
+    "line": 56,
+    "text": "                    // Stun mantığı Unit Update'inde NavMeshAgent.isStopped ile kontrol edilecek"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\StatusEffect.cs",
+    "line": 64,
+    "text": "        /// Süreyi ve gücü günceller. Tick saatini sıfırlamaz; yenilenen zehir ve yanma işlemeye devam eder."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 51,
+    "text": "        [SerializeField] private float targetSwitchCooldown = 0.5f; // Gecikme süresi (saniye)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 114,
+    "text": "            // Slotu serbest bırak"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 133,
+    "text": "        private static readonly Color auraGlowColor = new Color(0.3f, 0.8f, 1f); // Turkuaz parlaklık"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 138,
+    "text": "        /// Statlar taban veriden yeniden yazılmadan önce aura izini siler."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 139,
+    "text": "        /// Çarpan bölünmez; bir sonraki aura taraması taze değerlere yeniden uygulanır."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 153,
+    "text": "        /// <summary>Aura Tower tarafından çağrılır. Daha güçlü aura zayıf olanın yerine geçer.</summary>"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 190,
+    "text": "        /// <summary>Buff'ı yalnız onu veren aura kaldırabilir.</summary>"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 337,
+    "text": "            // Meta-Gelişim Çarpanlarını Uygula"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 338,
+    "text": "            // DamageBonus birim hasarıdır. Kule hasarı yalnızca TowerDamageBonus ile gelir."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 367,
+    "text": "            // 3D Kuleler için Weapon nesnesini kaldırdık, kule modelinin kendisi dönecek"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 373,
+    "text": "                    // Visuals altındaki ilk obje kule modelidir"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 403,
+    "text": "            // Dinamik Hedefleme (Light kuleler Dark layer'ı (7), Dark kuleler Light layer'ı (6) hedefler)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 434,
+    "text": "            // Aura kuleleri ateş etmez, sadece buff verir"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 484,
+    "text": "            // Visual feedback: Hızlanma efekti"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 575,
+    "text": "                        // First: En yüksek waypoint index'i + waypoint'e en yakın olan"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 732,
+    "text": "            // Hasar, seviye sayısı kadar katlanır: 2. seviye ikinci kuleyle aynı hasar."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 733,
+    "text": "            // Menzil seviye başına %20 artar."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 764,
+    "text": "            // Veriyi değiştir ve yeniden başlat"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Tower.cs",
+    "line": 766,
+    "text": "            currentLevel++; // Bir üst seviyeye geç (1->2, 2->3 vb.)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 62,
+    "text": "        private float pathOffset; // Yol üzerindeki yanal sapma (Sabitlendi)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 98,
+    "text": "        protected List<Unit> blockedEnemies = new List<Unit>(); // Bizim engellediğimiz düşmanlar"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 123,
+    "text": "            // Runtime Bulletproof Fix: Eğer AnimationEventHandler yoksa otomatik ekle"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 168,
+    "text": "            // Meta-Gelişim Çarpanlarını Uygula"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 169,
+    "text": "            // SpeedBonus kule ateş hızıdır (Rapid Fire). Birim hızı yalnızca UnitSpeedBonus."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 194,
+    "text": "            // Animasyon hızını hareket hızıyla senkronize et"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 195,
+    "text": "            // 1.0f = referans hız, animasyon bu hıza göre kalibre edilmiş sayılır"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 200,
+    "text": "                // Dost birimler mavi, düşman birimler yeşil/kırmızı (prefabın orijinal rengi veya yeşil)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 204,
+    "text": "                    healthBar.SetColor(new Color(0.2f, 0.8f, 0.2f)); // Yeşil"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 215,
+    "text": "            // Kullanıcı isteği üzerine: Dost birliklerin altına çıkan indicator halkası tamamen kaldırıldı (Can barı renklerinden ayırt ediliyor)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 223,
+    "text": "        /// <summary>Animator hızını verilen hareket hızına göre ayarlar.</summary>"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 227,
+    "text": "            // Referans hızı: 1.0f. Animasyonlar bu hıza göre çekilmiş sayılır."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 228,
+    "text": "            // Kısmi çarpım (0.85f) aşırı hızlı görünmeyi engeller."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 288,
+    "text": "            unitIndicator.transform.localPosition = indicatorPosition; // Editörden ayarlanan pozisyon"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 406,
+    "text": "            // Savaş Durumu Check — isBlocked'dan bağımsız çalışır"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 414,
+    "text": "                // Saldırı menziline küçük bir tolerans ekle (+0.5f)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 428,
+    "text": "            // Hareket Mantığı — isBlocked sadece yol/kovalama hareketini engeller"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 431,
+    "text": "                // Değişiklik: isBlocked olsa bile eğer bir hedefimiz (düello partnerimiz) varsa ona yürüyebilelim"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 439,
+    "text": "                    // Yakın dövüşçü ise (Projectile yoksa) iyice dibine (1.2f) gir"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 468,
+    "text": "                    // 2. Düşman yoksa ve engellenmemişsek Waypoint Takibi yap"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 520,
+    "text": "                    // isBlocked: Yerinde dur, hedefe dön"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 528,
+    "text": "                // Savaş/saldırı sırasında yürüme animasyonunu kapat — ama sadece normal üniteler için."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 529,
+    "text": "                // Hero'lar kendi animasyon yönetimlerini HeroUnit.Update() içinde yapıyor."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 622,
+    "text": "            // Yanal sapma için yönü ünitenin nerede olduğuna göre değil, yolun gidişatına (segment) göre hesapla."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 623,
+    "text": "            // Bu sayede ünite hedefe çok yaklaştığında sağ/sol hesaplaması fırıldak gibi dönüp sapmaz."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 632,
+    "text": "                    // Önceki noktadan şu anki hedefe doğru olan yön"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 637,
+    "text": "                    // İlk nokta için yönü bir sonraki noktaya bakarak al"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 663,
+    "text": "            direction.y = 0; // Yerden yükselmeyi veya aşağı bakmayı engelle"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 665,
+    "text": "            // Eğer sıfıra çok yakınsa dönmeye çalışma (LookRotation hatasını engeller)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 687,
+    "text": "            // 1. ÖNCELİK: Düello Partneri Kontrolü"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 719,
+    "text": "                // 1'E 1 KURALI: Unit vs Unit, kahramanlar muaftır"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 753,
+    "text": "            // 4 şerit veya sürekli rastgele dağılım. Daha doğal görünmesi için PathWidth üzerinden hesaplıyoruz."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 754,
+    "text": "            // Örneğin width = 3 ise, offset -1.5 ile 1.5 arası."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 821,
+    "text": "            // En yakın noktaya ulaştı sayıp bir sonrakine yönlendiriyoruz"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 880,
+    "text": "            // Health barın Y pozisyonunun biraz altında"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 888,
+    "text": "                    // Kameraya bakması (billboard) sağlanabilir, ama HealthBarUI'nin parent'ı zaten billboard yapıyorsa sorun yok."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 889,
+    "text": "                    // UnitIndicator tarzı Yere paralel mi olsun, yoksa ekrana mı baksın? "
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 890,
+    "text": "                    // İkon oldukları için SpriteRenderer ile ekrana bakmaları daha iyidir."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 909,
+    "text": "            // Aynı tipte bir efekt varsa süreyi yenile veya daha güçlüsünü al"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 949,
+    "text": "            sr.sortingOrder = 15; // Healthbar'ın üstünde/altında net görünsün"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 950,
+    "text": "            visualObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // İkonların boyutu"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 979,
+    "text": "            // Slow uygulandığında animasyonu ve hareketi yavaşlat"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 987,
+    "text": "            // Eğer yol atanmışsa, hedef olarak yolun son noktasını (Base kapısını) referans al"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1000,
+    "text": "                    // Artık doğduğu yere göre değil, gideceği yolun sonuna en yakın Base'i seçecek"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1018,
+    "text": "                // Üsse ulaştığında güncel hasarı ver. Can zaten bitmişse yenilgi yine işler."
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1025,
+    "text": "                    // Özel ölüm veya standart ölüm efekti"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1111,
+    "text": "        // Animation Event'ten çağrılacak metod"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1114,
+    "text": "            // Eğer daha önceden (fallback veya çoklu event) hasar verildiyse çık"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1117,
+    "text": "            // Eğer saldırı iptal edildiyse veya bitirildiyse vurma"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1131,
+    "text": "            // Phantom Hit Fix (Ölüye vurmayı engelle)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1214,
+    "text": "            // Eğer kalkan varsa hasarı kalkan emsin"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1285,
+    "text": "            // Bizi engelleyen varsa onu boşa çıkar"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1292,
+    "text": "            // Bizim engellediğimiz düşmanlar varsa onları serbest bırak"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1302,
+    "text": "            // Efekt görsellerini temizle"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1308,
+    "text": "            // Ölüm efekti"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\Unit.cs",
+    "line": 1349,
+    "text": "                // Artık birini engellemiyoruz, normal harekete dönebiliriz (Veya rally point'e)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\UnitPlacementManager.cs",
+    "line": 45,
+    "text": "            // Ghost unit oluştur (Birim prefab'ının bir kopyası ama yarı saydam shader verilbilir)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\UnitPlacementManager.cs",
+    "line": 49,
+    "text": "                // NavMeshAgent'ı kapat ki sürüklerken hareket etmeye çalışmasın"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\UnitPlacementManager.cs",
+    "line": 53,
+    "text": "                // Çarpışmaları kapat"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\UnitPlacementManager.cs",
+    "line": 57,
+    "text": "                // Unit bileşenini kapat ki sürükleme esnasında saldırmasın/hedef aramasın"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\UnitPlacementManager.cs",
+    "line": 61,
+    "text": "                // Sağlık barını da gizle"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\UnitPlacementManager.cs",
+    "line": 65,
+    "text": "                UpdateGhostPosition(); // İlk karede ghost'u mouse'a ışınla"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\UnitPlacementManager.cs",
+    "line": 109,
+    "text": "                // Tüm PathWaypoints'leri tara (spawner bağımsız)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\UnitPlacementManager.cs",
+    "line": 147,
+    "text": "                        // Player unitleri path'te geriye doğru yürüsün (wp[son] → wp[0] = düşmana doğru)"
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\UnitPlacementManager.cs",
+    "line": 240,
+    "text": "            // İleride buraya malzeme (Material) değiştirme eklenebilir. "
+  },
+  {
+    "file": "Assets\\Scripts\\Combat\\UnitPlacementManager.cs",
+    "line": 241,
+    "text": "            // Şimdilik sadece debug veya basit renk değişimi."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\AdManager.cs",
+    "line": 117,
+    "text": "        /// Ödüllü reklam gösterir."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\AdManager.cs",
+    "line": 150,
+    "text": "        /// Geçiş (Zorunlu) reklamı gösterir."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\AdManager.cs",
+    "line": 159,
+    "text": "                isInterstitialLoaded = false; // Kullanıldı"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\AdManager.cs",
+    "line": 166,
+    "text": "                LoadAd(interstitialId); // Yeniden yüklemeyi dene"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\AdManager.cs",
+    "line": 204,
+    "text": "            LoadAd(adUnitId); // Gösterimden sonra yenisini yükle"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CameraAspectRatioScaler.cs",
+    "line": 5,
+    "text": "    /// Ekranın en/boy oranına (Aspect Ratio) göre kameranın görüş alanını (FOV veya Orthographic Size) dinamik ayarlar."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CameraAspectRatioScaler.cs",
+    "line": 6,
+    "text": "    /// Referans 16:9 oranından daha dar ekranlarda (iPad, tablet vb.) haritanın kenarlarının kesilmesini engeller."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CameraAspectRatioScaler.cs",
+    "line": 45,
+    "text": "            // Çözünürlük veya yön (Orientation) değiştiğinde anında güncelle"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CameraAspectRatioScaler.cs",
+    "line": 64,
+    "text": "                // Cihaz 16:9'dan daha darsa (örn: iPad 4:3), haritayı kesmemek için kamerayı geriye çek"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CameraAspectRatioScaler.cs",
+    "line": 71,
+    "text": "                    // 16:9 veya daha geniş ekranlarda temel boyutu koru"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CameraAspectRatioScaler.cs",
+    "line": 77,
+    "text": "                // Perspektif kamera için yatay FOV'u koru"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CameraAspectRatioScaler.cs",
+    "line": 92,
+    "text": "        /// Sahneye yüklendiğinde ve her sahne geçişinde Main Camera üzerinde bu bileşen yoksa otomatik ekler."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 95,
+    "text": "                // Sahne yüklendiğinde yeni haritayı spawn etmek için abone ol"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 110,
+    "text": "                // Sahne yüklendiğinde haritayı tekrar kurması için abone ol"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 124,
+    "text": "            // Sadece bir kez çalışması için çıkar"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 127,
+    "text": "            // Sahne yükleme bitince spawn et"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 135,
+    "text": "            // 3. Spawning: Haritayı oluştur"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 164,
+    "text": "            // Yeni: Haritayı ekrana tam ortala (HUD payı dahil)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 219,
+    "text": "            // Bölümü tamamlandı olarak kaydet"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 222,
+    "text": "            // Bir sonraki seviyenin kilidini aç (Yazılımsal mantık)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 225,
+    "text": "            // Tüm bölümler bittiyse bir sonraki zorluğu aç"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 245,
+    "text": "                // Eğer açılan yeni bölüm, kayıttaki en yüksek bölümden büyükse kaydı güncelle"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 284,
+    "text": "            // Kayıtlı en yüksek bölüm indeksinden küçük veya eşitse açıktır"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 293,
+    "text": "            // Harita sınırlarını tam oynanabilir alana göre hesapla (Waypointler üzerinden)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 315,
+    "text": "            // Dinamik yükseklik: Harita boyutuna göre mesafeyi ayarla"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 318,
+    "text": "            // HUD Panelini (Alt Kısım) telafi etmek için fokus noktasını biraz yukarı kaydır"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 321,
+    "text": "            float hudCompensation = 10f; // Haritayı dikeyde tam merkeze (HUD üstüne) taşır"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 326,
+    "text": "            // orthographicSize artık kod tarafından değiştirilmiyor, editördeki değer korunuyor."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CampaignManager.cs",
+    "line": 395,
+    "text": "        /// <summary>Bir sonraki seviyeyi seç ve yükle. Son seviyedeyse false döner.</summary>"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\CurrencyManager.cs",
+    "line": 39,
+    "text": "            // İlk başlatma (Varsayılan)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\DailyRewardManager.cs",
+    "line": 51,
+    "text": "                    // Her gün için tek bir ödül türü (genelde Karma, her 5. gün veya özel günlerde Kristal)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\DailyRewardManager.cs",
+    "line": 54,
+    "text": "                        crystal = (day / 5) * 5 + 5; // Örn: 7. gün 5 kristal, 10. gün 15 kristal vs."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\DailyRewardManager.cs",
+    "line": 58,
+    "text": "                        karma = day * 10 + 50; // Örn: 1. gün 60 karma, 2. gün 70 karma"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\GameManager.cs",
+    "line": 46,
+    "text": "                // Loading Screen prefab'ını başlat"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\GameManager.cs",
+    "line": 58,
+    "text": "            // Eğer oyun Bootstrap sahnesinden başlıyorsa otomatik Menüye git"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\GameManager.cs",
+    "line": 73,
+    "text": "            // State'e özgü eventler burada tetiklenebilir"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\GameSpeedManager.cs",
+    "line": 5,
+    "text": "    /// Oyun hızını (x1, x2, x3) ve duraklatma (Pause) durumunu Time.timeScale üzerinden yönetir."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\GameSpeedManager.cs",
+    "line": 19,
+    "text": "        // Hız değiştiğinde UI'ın dinleyebileceği event. Duraklatıldıysa -1 döner."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\GameSpeedManager.cs",
+    "line": 52,
+    "text": "            isPaused = false; // Hız butonuna basılınca duraklatmayı otomatik kapat"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\GameSpeedManager.cs",
+    "line": 82,
+    "text": "        /// <summary>Mevcut hız indeksini döndürür (0=x1, 1=x2, 2=x3)</summary>"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\GameSpeedManager.cs",
+    "line": 85,
+    "text": "        /// <summary>Mevcut Time.timeScale değerini döndürür</summary>"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\HeroManager.cs",
+    "line": 131,
+    "text": "            // 1. ÖNCELİK: 3D dünyada Hero tıklamasını kontrol et"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\HeroManager.cs",
+    "line": 152,
+    "text": "            // 2. Seçili hero varsa zemine tıklayarak hareket ettir"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\HeroManager.cs",
+    "line": 163,
+    "text": "            // 3. Boş alana tıklandıysa seçimi kaldır"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\HeroManager.cs",
+    "line": 303,
+    "text": "            // Eğer kahraman zaten sahnedeyse yeniden oluşturma, respawn et"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\HeroManager.cs",
+    "line": 356,
+    "text": "            // Tüm yolları bul ve en uzun (en çok waypoint'e sahip) olanı seç"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\HeroManager.cs",
+    "line": 377,
+    "text": "                    // Özel Durum: Sadece 2 waypoint varsa, ikisinin tam ortasını hesapla"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\HeroManager.cs",
+    "line": 384,
+    "text": "                    // Genel Durum: 2'den fazla waypoint varsa, orta noktadaki waypoint'i seç"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\HeroManager.cs",
+    "line": 394,
+    "text": "            // Yedek: Eğer yol bulunamazsa player spawner'ı kullan"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\HeroManager.cs",
+    "line": 401,
+    "text": "            // Son çare: Sahne merkezi veya sıfır noktası"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 32,
+    "text": "        public long lastDailyRewardTime; // Son günlük ödül zamanı (Ticks)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 33,
+    "text": "        public long dailyRewardStartTicks; // İlk ödülün alındığı takvim günü"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 34,
+    "text": "        public int dailyRewardDayIndex; // Alınmış gün sayısı (0=henüz başlamamış, 30=tamamlandı)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 36,
+    "text": "        public List<string> unlockedSpellIDs = new List<string>(); // Açılan aktif büyüler"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 37,
+    "text": "        public List<string> equippedSpellIDs = new List<string>(); // Kuşatılan büyüler"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 50,
+    "text": "        // Geriye dönük uyumluluk için tutuluyor"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 53,
+    "text": "        // Yeni Zorluk Sistemi Değişkenleri"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 55,
+    "text": "        public List<int> highestUnlockedLevelIndexPerDifficulty = new List<int> { 0, 0, 0, 0 }; // İndeksler: 1=Normal, 2=Hard, 3=Expert"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 58,
+    "text": "        public long lastFortuneWheelTime; // Son çark çevirme zamanı (Ticks)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 59,
+    "text": "        public long lastFortuneWheelAdTime; // Son reklamla çark çevirme zamanı (Ticks)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 102,
+    "text": "        [SerializeField] private int maxSkillsUnlocked = 10; // Maksimum açılabilir skill sayısı"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 184,
+    "text": "                // Önkoşul kontrolü"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 190,
+    "text": "                // Sınır kontrolü: Maksimum skill sayısı kontrolü"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 205,
+    "text": "                // Eğer bu yetenek bir büyü açıyorsa, büyüyü de ekle"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 248,
+    "text": "        // Skill ID -> Spell ID eşleşme tablosu (grantedSpell referansı kırıldığında fallback)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 270,
+    "text": "            // Fallback: skill tree'den kontrol et (önce grantedSpell referansı, sonra hardcoded map)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 273,
+    "text": "                // Yol 1: allAvailableSkills üzerinden grantedSpell referansı"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 285,
+    "text": "                // Yol 2: Hardcoded eşleşme tablosu (grantedSpell null geldiğinde)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 300,
+    "text": "                if (saveData.equippedSpellIDs.Count < 3) // Maksimum 3 büyü sınırı"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 329,
+    "text": "                if (saveData.equippedUnitNames.Count < 5) // Maksimum 5 unit sınırı"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 352,
+    "text": "            // Menüde taraf değiştiğinde farklı tarafın ünitelerini temizle"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 353,
+    "text": "            // Tamamen sıfırlamak en kolayıdır, oyuncu baştan seçsin."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 592,
+    "text": "            // Sadece daha yüksek bir yıldız almışsak güncelle"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 736,
+    "text": "                // Kahraman ve okçu düğümleri genel çarpana girmez."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 1100,
+    "text": "                    // 1. Yeni Güvenli AES-256 + HMAC formatını dene"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 1121,
+    "text": "                    // Editörde eski düz JSON ve XOR kayıtlar bir kez şifreli formata taşınır."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 1174,
+    "text": "                saveData.totalKarma = 200; // Başlangıç Karma puanı"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 1179,
+    "text": "            // Migration: Yeni array sistemi için eksik eleman varsa doldur"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 1185,
+    "text": "            // Migration: Eski sistemdeki progress değerini Zorluk 1'e aktar"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 1191,
+    "text": "            // Migration: Tüm mevcut level progress'lerde difficulty yoksa 1 yap"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 1197,
+    "text": "            // Migration: Eski günlük ödül kullananlar için dailyRewardDayIndex başlat"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 1210,
+    "text": "            // Migration: Büyü listesini skill tree ile senkronize et"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 1211,
+    "text": "            // Sadece unlock edilmiş skill'lerin grant ettiği büyüler kalsın"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\MetaProgressionManager.cs",
+    "line": 1212,
+    "text": "            // allAvailableSkills boşsa mevcut listeyi sıfırlama"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 20,
+    "text": "        // İnternet olmasa dahi cihaz saatinin geriye veya kontrolsüz ileri alınmasını engellemek için"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 24,
+    "text": "        // Güvenilir, hafif HTTP head / time endpoint'leri"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 57,
+    "text": "            // Başlangıçta fallback olarak cihaz UTC saatini güvenli referansla karşılaştır"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 66,
+    "text": "                // Cihaz saati ileri alınsa da oturum, son kayıtlı andan ve gerçek geçen süreden yürür."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 67,
+    "text": "                // Geri alınan saat de bu andın gerisine düşemez."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 92,
+    "text": "                // Uygulamaya geri dönüldüğünde zamanı tekrar senkronize etmeyi dene"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 135,
+    "text": "        /// Saat hilelerine karşı korumalı anlık UTC zamanını döndürür."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 136,
+    "text": "        /// Cihaz saati ileri veya geri alınsa bile, son bilinen gerçek zamandan donanımsal geçen süre (realtimeSinceStartup) kadar ilerler."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 140,
+    "text": "            // Senkronize olunan andan beri donanımsal olarak geçen saniye"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 146,
+    "text": "            // Eğer cihaz saati bilinen en güvenli andan gerideyse asla geriye gitme"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\NetworkTimeManager.cs",
+    "line": 156,
+    "text": "        /// Yerel saat dilimine dönüştürülmüş anlık güvenli zaman."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\PhaseManager.cs",
+    "line": 162,
+    "text": "                // Erken Çağırma Bonusu (Early Call Bonus)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\PhaseManager.cs",
+    "line": 196,
+    "text": "            // Senkronizasyon için çok kısa bir süre bekle (En az 1.5 saniye)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\PhaseManager.cs",
+    "line": 199,
+    "text": "            // Spawner'lar hala üretim yapıyor mu VEYA henüz dalgaya başladılar mı kontrol et"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\PhaseManager.cs",
+    "line": 216,
+    "text": "            // Sadece DÜŞMAN birimlerini kontrol et (Oyuncunun kendi askerleri dalgayı bloklamasın)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\PhaseManager.cs",
+    "line": 228,
+    "text": "            // Eğer sahada düşman kalmadıysa ve spawner'lar bittiyse dalga bitmiştir"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SaveManager.cs",
+    "line": 5,
+    "text": "    /// İlerleme kaydı MetaProgressionManager içindedir. Bu nesne ayrı bir kayıt dosyası yazmaz."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 10,
+    "text": "    /// Sahneler arası asenkron yükleme ve fade geçiş yöneticisi."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 11,
+    "text": "    /// DontDestroyOnLoad olarak yaşar. Tüm sahne geçişlerinde SceneLoader.Instance.LoadScene(...) çağrılır."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 56,
+    "text": "                // Başlangıçta gizle"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 80,
+    "text": "        /// Sahneyi build index ile yükler."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 89,
+    "text": "        /// Sahneyi isim ile yükler."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 98,
+    "text": "        /// Mevcut sahneyi yeniden yükler."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 110,
+    "text": "            // Rastgele bir ipucu göster"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 119,
+    "text": "            // Progress sıfırla"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 123,
+    "text": "            // === FADE IN (Ekranı kapat) ==="
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 126,
+    "text": "            // Asenkron sahne yüklemeyi başlat"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 143,
+    "text": "                // Gerçek ilerlemeyi 0-1 aralığına normalize et (0.9 = %100)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 146,
+    "text": "                // Minimum bekleme süresini de hesaba kat"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 150,
+    "text": "                // Yumuşak ilerleme"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 169,
+    "text": "            // Sahnenin tam yüklenmesini bekle"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 173,
+    "text": "            // Yeni sahnenin ilk frame'inin render olmasını bekle"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 176,
+    "text": "            // === FADE OUT (Ekranı aç) ==="
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SceneLoader.cs",
+    "line": 206,
+    "text": "        /// SceneLoader instance'ını kontrol eder. GameManager.Awake()'te prefab zaten instantiate edilmiş olmalıdır."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\Security\\ObscuredInt.cs",
+    "line": 7,
+    "text": "    /// Değer şifreli durur. Anahtar struct'ın içinde değil, oturum sözlüğündedir."
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SpellManager.cs",
+    "line": 45,
+    "text": "            // Para kontrolü"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SpellManager.cs",
+    "line": 60,
+    "text": "            // Eğer tek seferlikse kaydet"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SpellManager.cs",
+    "line": 67,
+    "text": "                // Cooldown başlat"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SpellManager.cs",
+    "line": 71,
+    "text": "            // Yazılım Mantığını Uygula"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SpellManager.cs",
+    "line": 260,
+    "text": "                // En yakın waypoint'i bul"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SpellManager.cs",
+    "line": 281,
+    "text": "                    // Oyuncu tarafı olduğunu varsayıyoruz. "
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SpellManager.cs",
+    "line": 283,
+    "text": "                    // unit.Initialize(unit.unitData); // Eğer start'ta initialize olmuyorsa"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SpellManager.cs",
+    "line": 291,
+    "text": "                    // Reinforcement'lar kalıcı olmasın, 30 saniye sonra ölsünler (TakeDamage kullanarak güvenli ölüm)"
+  },
+  {
+    "file": "Assets\\Scripts\\Core\\SpellManager.cs",
+    "line": 324,
+    "text": "                unit.TakeDamage(99999f); // Güvenli ölüm (ölüm animasyonu vb. tetiklenir)"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\HeroData.cs",
+    "line": 60,
+    "text": "        public int upgradeCrystalCost = 15; // Yeni: Kristal yükseltme maliyeti\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\LevelData.cs",
+    "line": 37,
+    "text": "        public string levelID; // Kilit takibi için benzersiz ID"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\LevelThemeEnvironmentConfig.cs",
+    "line": 20,
+    "text": "        public Color forestColor = new Color(0.18f, 0.28f, 0.22f, 1f); // Doğal yumuşak orman yeşili/tonu"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\LevelThemeEnvironmentConfig.cs",
+    "line": 23,
+    "text": "        public Color desertColor = new Color(0.38f, 0.30f, 0.20f, 1f); // Çöl kumu / sıcak toprak tonu"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\LevelThemeEnvironmentConfig.cs",
+    "line": 26,
+    "text": "        public Color snowColor = new Color(0.24f, 0.32f, 0.40f, 1f); // Soğuk kış mavisi/grisi"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\LevelThemeEnvironmentConfig.cs",
+    "line": 29,
+    "text": "        public Color lavaColor = new Color(0.28f, 0.12f, 0.10f, 1f); // Koyu lav / kızıl kül tonu"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\LevelThemeEnvironmentConfig.cs",
+    "line": 32,
+    "text": "        public Color underworldColor = new Color(0.14f, 0.10f, 0.22f, 1f); // Mistik yeraltı moru/karanlık"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SkillNodeData.cs",
+    "line": 42,
+    "text": "        public SkillCategory category; // Hangi dalda yer alacağı"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SkillNodeData.cs",
+    "line": 43,
+    "text": "        public int tier; // Hangi satırda (aşağıdan yukarıya) yer alacağı (0, 1, 2...)"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SkillNodeData.cs",
+    "line": 52,
+    "text": "        public float multiplier = 1.1f; // %10 artış için 1.1"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SkillNodeData.cs",
+    "line": 53,
+    "text": "        public SpellData grantedSpell; // Eğer upgradeType == UnlockSpell ise bu büyü açılır"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SkillNodeData.cs",
+    "line": 54,
+    "text": "        public Side side; // Hangi tarafa ait olduğunu belirtir (Aydınlık/Karanlık/Genel)"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SkillNodeData.cs",
+    "line": 56,
+    "text": "        // Artık manuel pozisyona gerek kalmadı, UI tarafı otomatik düzecek."
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SkillNodeData.cs",
+    "line": 61,
+    "text": "            // Bu mantık MetaProgressionManager tarafından kontrol edilecek"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 7,
+    "text": "        Thunderstrike, // Anlık alan hasarı\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 8,
+    "text": "        Reinforcement, // Yol üzerine geçici asker çağırma\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 9,
+    "text": "        Freeze,        // Tüm düşmanları dondurma\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 10,
+    "text": "        GoldBoost,     // Anlık altın kazanımı\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 11,
+    "text": "        Shield,        // Kulelere geçici dokunulmazlık\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 12,
+    "text": "        Buff           // Kulelere geçici saldırı hızı artışı\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 26,
+    "text": "        public int manaCost;        // Büyü enerjisi / Altın maliyeti\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 28,
+    "text": "        public bool isOneTimeUse = false; // Oyunda sadece bir kez mi kullanılabilir?\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 32,
+    "text": "        public float power = 50f;     // Hasar, iyileştirme veya buff çarpanı\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 33,
+    "text": "        public float radius = 3f;    // Etki alanı yarıçapı\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 34,
+    "text": "        public float duration = 5f;  // Buff, dondurma veya kalkan süresi\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\SpellData.cs",
+    "line": 38,
+    "text": "        public GameObject spellVFXPrefab; // Doğrudan instantiate edilecek VFX prefab'ı\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\TowerData.cs",
+    "line": 15,
+    "text": "        public TowerData enemyCounterpart; // Karşı taraftaki karşılığı (Aydınlık <-> Karanlık)"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\TowerData.cs",
+    "line": 26,
+    "text": "        public float health; // Kule dayanıklılığı"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\TowerData.cs",
+    "line": 47,
+    "text": "        public bool isArtillery = false; // Mancınık/top kuleleri: mermi yay çizerek balistik düşer"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\TowerData.cs",
+    "line": 50,
+    "text": "        public bool isBeamTower = false; // Işın kulesi: mermi atmaz, hedefi sürekli lazerle yakar"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\TowerData.cs",
+    "line": 53,
+    "text": "        public bool isSlowTower = false; // Alan yavaşlatma kulesi: çevredeki rakip birimleri sürekli yavaşlatır"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\TowerData.cs",
+    "line": 58,
+    "text": "        [Range(0f, 1f)] public float auraDamageBonus = 0.25f;   // %25 hasar artışı"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\TowerData.cs",
+    "line": 59,
+    "text": "        [Range(0f, 1f)] public float auraFireRateBonus = 0.15f; // %15 ateş hızı artışı"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\UnitData.cs",
+    "line": 41,
+    "text": "        public UnitData enemyCounterpart; // Karşı taraftaki karşılığı (Aydınlık <-> Karanlık)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\WaveData.cs",
+    "line": 11,
+    "text": "        public float groupDelay = 0f; // Gruba başlamadan önceki bekleme süresi\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Data\\WaveData.cs",
+    "line": 12,
+    "text": "        public int spawnerIndex = 0; // Hangi spawner bu grubu çıkaracak?\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Editor\\LevelMapConfigurator.cs",
+    "line": 66,
+    "text": "        // 2. Tower Slots'ları Bul"
+  },
+  {
+    "file": "Assets\\Scripts\\Editor\\LevelMapConfigurator.cs",
+    "line": 89,
+    "text": "            // Eğer \"TowerSlots\" objesi yoksa, isminde Slot_ geçen her şeyi alalım"
+  },
+  {
+    "file": "Assets\\Scripts\\Editor\\LevelMapConfigurator.cs",
+    "line": 110,
+    "text": "        // Her Path için WP_'leri topla ve sıraya diz"
+  },
+  {
+    "file": "Assets\\Scripts\\Editor\\LevelMapConfigurator.cs",
+    "line": 116,
+    "text": "            // İsmin sonundaki sayıyı spawnerIndex yapalım (Path_0 -> 0)"
+  },
+  {
+    "file": "Assets\\Scripts\\Editor\\LevelMapConfigurator.cs",
+    "line": 135,
+    "text": "            // WP_0, WP_1 ismine göre sırala"
+  },
+  {
+    "file": "Assets\\Scripts\\Editor\\LevelMapConfigurator.cs",
+    "line": 168,
+    "text": "        // Örn: \"WP_5\" veya \"WP_0_5\" (Eski sistemde alt WP'ler)"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\LevelInitializer.cs",
+    "line": 28,
+    "text": "                // Haritayı oluştur\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\LevelInitializer.cs",
+    "line": 32,
+    "text": "                // Haritadaki kuleleri tara ve oyuncunun seçtiği tarafa göre rakip karşılıklarına dönüştür\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\LevelInitializer.cs",
+    "line": 49,
+    "text": "                // NavMesh sistemi kaldırıldı, waypoint bazlı hareket sistemine geçildi.\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerPlacementManager.cs",
+    "line": 49,
+    "text": "            // Eğer liste boşsa, Projedeki tüm TowerData'ları bulmaya çalış (Gelişmiş Başlatma)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerPlacementManager.cs",
+    "line": 63,
+    "text": "            // Yeni Input Sistemi'nde hem fare hem dokunmatik için en iyi yöntem: Pointer.current\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerPlacementManager.cs",
+    "line": 197,
+    "text": "                // ÖNCELİK: Eğer bir büyü seçiliyse kule işlemlerini yapma, büyüyü at\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerPlacementManager.cs",
+    "line": 217,
+    "text": "                    // Fallback: Eğer kuleye tıklandıysa kule üzerinden slotu al\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerPlacementManager.cs",
+    "line": 230,
+    "text": "                    // Boş bir yere veya slot olmayan bir yere tıklandığında tüm menüleri kapat\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerPlacementManager.cs",
+    "line": 236,
+    "text": "                // Gökyüzüne veya collider olmayan bir yere tıklandığında da kapat\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerPlacementManager.cs",
+    "line": 266,
+    "text": "            // Eğer daha önce başka bir slot aktifse onun menüsünü kapatabilirsin\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerPlacementManager.cs",
+    "line": 305,
+    "text": "            // Sahnedeki tüm kule seçim ve yükseltme menülerini kapat\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerPlacementManager.cs",
+    "line": 320,
+    "text": "            // Singleton yerine kulenin kendi içindeki (çocuk) UI'ı tetikle\r"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerSlot.cs",
+    "line": 42,
+    "text": "            // Mevcut durumu kontrol et (Zaten açıksa toggle yapacak)"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerSlot.cs",
+    "line": 51,
+    "text": "                // Zaten açıksa, sadece bu slota özel kapatma/toggle işlemini Show metodlarına bırak"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerSlot.cs",
+    "line": 52,
+    "text": "                // (Show metodları içerisindeki toggle mantığı çalışacak)"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerSlot.cs",
+    "line": 56,
+    "text": "                // Başka bir slot menüsü açıksa hepsini kapat"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerSlot.cs",
+    "line": 63,
+    "text": "                // Yükseltme/Satış menüsünü aç (BarracksTower da Tower'dan türediği için GetComponent<Tower> çalışır)"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerSlot.cs",
+    "line": 72,
+    "text": "            // Kendi içindeki seçim menüsünü aç"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerSlot.cs",
+    "line": 93,
+    "text": "            // İnşa sonrası kendi menüsünü kapat"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerSlot.cs",
+    "line": 96,
+    "text": "            // Slot görselini gizle (kule inşa edildi)"
+  },
+  {
+    "file": "Assets\\Scripts\\Grid\\TowerSlot.cs",
+    "line": 106,
+    "text": "            // Slot görselini tekrar göster (kule yok edildi, yeniden inşa edilebilir)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 9,
+    "text": "    /// Mobil/Cihaz üzerinde bölümleri tek tıkla rastgele başarıyla (1-3 yıldız) bitirip test etmeyi sağlayan debug bileşeni."
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 10,
+    "text": "    /// Runtime'da HUDController tarafından otomatik oluşturulur."
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 26,
+    "text": "            // Ekranın sağ-üst köşesinde, diğer butonların yanına güvenli bir alana yerleş"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 33,
+    "text": "            // Arka plan (Yarı saydam dikkat çekici koyu kehribar/altın)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 37,
+    "text": "            // Buton bileşeni"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 46,
+    "text": "            // Yazı (TMP)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 78,
+    "text": "            // 1. Rastgele yıldız belirleme (1, 2 veya 3 yıldız)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 79,
+    "text": "            // %25 ihtimalle 1 yıldız, %35 ihtimalle 2 yıldız, %40 ihtimalle 3 yıldız"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 86,
+    "text": "            // 2. Can simülasyonu: LevelResultUI yıldızı (livesRemaining / totalLives) formülüyle hesaplar:"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 87,
+    "text": "            // lifePercent >= 1.0f -> 3 Yıldız"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 88,
+    "text": "            // lifePercent >= 0.5f -> 2 Yıldız"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 89,
+    "text": "            // lifePercent < 0.5f  -> 1 Yıldız"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 113,
+    "text": "            // 3. Sahadaki aktif düşmanları durdur/temizle"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\DebugAutoWinButton.cs",
+    "line": 126,
+    "text": "            // Test butonunu tekrar basılmaması için gizle/devre dışı bırak"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 117,
+    "text": "            if (lastTimeTicks == 0) return true; // Hiç çevirmemiş"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 120,
+    "text": "            DateTime nextTime = lastTime.AddDays(1).Date; // Ertesi günün başlangıcı"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 170,
+    "text": "                // Free hakkı yok ama Reklam izleyerek çevirebilir"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 177,
+    "text": "                // İki hak da bitti"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 198,
+    "text": "            // Sürekli kalan süreyi güncelle (çark dönmüyorsa ve ne free ne de ad spin yoksa)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 217,
+    "text": "                // Ücretsiz çevirme"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 222,
+    "text": "                // Reklamlı çevirme"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 246,
+    "text": "                // Hiçbir hak yok (Buraya normalde tıklanamaz ama önlem)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 283,
+    "text": "            // Dilim N'in (0..7) tepe ibresinin tam altına gelmesi için durması gereken MUTLAK (absolute) açı:"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 284,
+    "text": "            // Dilimler saat yönünde dizilmiştir:"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 286,
+    "text": "            // Çark saat yönünde (Euler Z azalarak) döndüğünde, tepeye tam olarak bu açı gelir."
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 288,
+    "text": "            float jitter = UnityEngine.Random.Range(-6f, 6f); // Dilimin içinde hafif rastgele duruş"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 292,
+    "text": "            // Mevcut açıdan başlayıp saat yönünde en az 'spinRevolutions' tur dönerek kesin hedef açıya in:"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 293,
+    "text": "            // startAngle'ı targetEndAngle'a göre normalize et"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 324,
+    "text": "            // Hak, ödülle aynı kayıtta yazılır. Dönüş bitmeden uygulama kapanırsa hak durur."
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 342,
+    "text": "            // Ödül metni"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\FortuneWheelUI.cs",
+    "line": 353,
+    "text": "            // UI'ı mevcut duruma göre (reklamlı çevirmeye uygun şekilde) geri yükle"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HealthBarUI.cs",
+    "line": 26,
+    "text": "                // Renk değişimi kaldırıldı. \r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HealthBarUI.cs",
+    "line": 27,
+    "text": "                // fillImage her zaman kendi orijinal renginde kalacak (örn: Yeşil).\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HealthBarUI.cs",
+    "line": 28,
+    "text": "                // Altındaki background Image objesi ise kırmızı renkte olarak arka planda görünecek.\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroButtonUI.cs",
+    "line": 82,
+    "text": "                // ÇİFT TIKLAMA - Stats Panelini Aç\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroButtonUI.cs",
+    "line": 87,
+    "text": "                // TEK TIKLAMA - Kahramanı Seç\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroDetailPanelUI.cs",
+    "line": 83,
+    "text": "            // Hero icon'ı info panelde gösterme - kullanıcı istediği gibi gizle\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroDetailPanelUI.cs",
+    "line": 84,
+    "text": "            // Sprite'ı null yap + toggle state'i koru (Repair sonrası da gizli kalması için)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroDetailPanelUI.cs",
+    "line": 88,
+    "text": "                heroIcon.enabled = false; // Image component'ını devre dışı bırak\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroDetailPanelUI.cs",
+    "line": 104,
+    "text": "            // Hero icon'ı info panelde gösterme - kullanıcı istediği gibi gizle\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroDetailPanelUI.cs",
+    "line": 105,
+    "text": "            // Icon sprite ve enabled state'i koru (Repair sonrası da gizli kalması için)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroInfoPanelUI.cs",
+    "line": 54,
+    "text": "            // Sol alt köşeyi pivot olarak belirliyoruz ki butonun sağ üstüne doğru büyüsün"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroInfoPanelUI.cs",
+    "line": 57,
+    "text": "            // Pozisyonu tam olarak butonun dünya pozisyonuna eşitleyip"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroInfoPanelUI.cs",
+    "line": 59,
+    "text": "            // Canvas ölçeklemesinden bağımsız olarak UI üzerinde sağ üste kaydırıyoruz"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroShopUI.cs",
+    "line": 14,
+    "text": "        [SerializeField] private TextMeshProUGUI crystalText; // Yeni: Kristal göstergesi\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroShopUI.cs",
+    "line": 49,
+    "text": "                    // Scroll view'un düzgün çalışması için Content pivotu her zaman üstte (1) olmalı\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroShopUI.cs",
+    "line": 53,
+    "text": "                    // Y pozisyonunu sıfırlayarak en üste yasla\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HeroShopUI.cs",
+    "line": 66,
+    "text": "            // Panelin her açılışında scrollu en başa al\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 34,
+    "text": "        private readonly Color speedActiveColor   = new Color(1f,   0.75f, 0.1f); // Sarı - aktif"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 41,
+    "text": "        [SerializeField] private Image soundIcon; // Boş bırakılırsa soundButton'ın kendi Image'ı kullanılır"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 124,
+    "text": "            // Hız butonlarını bağla"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 130,
+    "text": "            // Hız değişikliği eventine abone ol"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 137,
+    "text": "            // Menü, Restart ve Ses butonları"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 144,
+    "text": "            // Başlangıç değerleri"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 220,
+    "text": "            // 1. ÖNCELİK: Eğer Inspector'da veya HeroPanel altında zaten yerleştirilmiş butonlar varsa onları kullan"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 239,
+    "text": "                        // Kuşanılmış hero yoksa bu butonu gizle"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 246,
+    "text": "            // 2. ÖNCELİK: Sahnedeki eski butonları temizle ve heroButtonPrefab atanmışsa prefab'den oluştur"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 262,
+    "text": "                    // Fallback: Kod ile oluştur"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 507,
+    "text": "                // MasterVolume 0 ise aç (1f veya önceki ses seviyesi), 0'dan büyükse kapat (0f)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\HUDController.cs",
+    "line": 531,
+    "text": "            // Eğer soundIcon ayrıca atanmamışsa, doğrudan soundButton'ın üzerindeki Image bileşenini kullan"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 17,
+    "text": "        [SerializeField] private Button closeButton; // Sadece Sweep modunda veya kapatmak için"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 33,
+    "text": "            // Eğer Restart butonu atanmamışsa, Menü butonundan otomatik kopyala"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 43,
+    "text": "                // Menü butonunun yanına/altına itmek için (Basit offset)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 83,
+    "text": "                // Yıldız sayısına ve çarpanlara göre ödül (Bölüm Zorluğu x Global Zorluk)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 89,
+    "text": "                // Kasaya yazılan tutar, ekranda ve reklam katında kullanılan tutardır."
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 112,
+    "text": "            // Ödül metnini güncelle"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 115,
+    "text": "            // Yıldızları Görselleştir"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 121,
+    "text": "            // Next Level Butonu Kontrolü"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 125,
+    "text": "            // Diğer butonları aç, Close'u kapat"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 130,
+    "text": "                if (txt != null) txt.text = \"MAIN MENU\"; // Varsayılan metni geri yükle"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 132,
+    "text": "                menuButton.onClick.AddListener(OnMenuClicked); // Varsayılan metodu geri bağla"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 203,
+    "text": "            // Oynamadan geçildiği için normalin çok daha azı verilir. (Bölüm Zorluğu x Global Zorluk)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 214,
+    "text": "            // Ödül metnini güncelle"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 217,
+    "text": "            // Yıldızları Görselleştir"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 223,
+    "text": "            // Normal butonları gizle, sadece Close butonunu göster"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 236,
+    "text": "                // Fallback: Eğer kullanıcı Close butonu koymamışsa, Menu butonunu kapatıcı olarak kullan"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 300,
+    "text": "                        // Ekstra ödül, kasaya yazılan tutarın bir katıdır."
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 330,
+    "text": "            // Zamanı GameSpeedManager üzerinden normale döndür"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 336,
+    "text": "            // Interstitial reklam göster, sonra ana menüye dön"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 363,
+    "text": "            // Zamanı normale döndür"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 369,
+    "text": "            // Sıradaki seviyeyi yükle, başarısızsa menüye dön"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 373,
+    "text": "                return; // Sonraki seviye yüklendi"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 376,
+    "text": "            // Son seviyedeyse veya hata varsa menüye dön"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 386,
+    "text": "            // Zamanı GameSpeedManager üzerinden normale döndür"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 392,
+    "text": "            // CampaignManager üzerinden temiz bir restart at"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelResultUI.cs",
+    "line": 399,
+    "text": "                // Fallback: Manager yoksa sahneyi yükle (ama gri ekran riski var)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 13,
+    "text": "        [SerializeField] private List<Transform> slotContainers; // Her harita için 1 container (LevelSlot_0..N çocukları)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 18,
+    "text": "        [SerializeField] private GameObject sideSelectionPanel; // Seviye seçince aktif olacak panel"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 212,
+    "text": "            // Slot container'ları toggle et"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 219,
+    "text": "            // Arkaplan görselini güncelle (yüklenmediyse düz renk korunur)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 234,
+    "text": "            // Kenar durdurma: ilk haritada sol ok, son haritada sağ ok kapalı"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 238,
+    "text": "            // Harita adını güncelle"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 304,
+    "text": "        // Tüm haritaların slot'larına seviye butonu kurar/bağlar"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 351,
+    "text": "            // Tamamlanan yıldız sayısını al (tamamlanmamışsa 0 → 3 soluk yıldız)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 359,
+    "text": "            // Yıldızları marker'ın üstünde göster: kazanılan altın, kazanılmayan soluk"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 379,
+    "text": "            // Sweep (Hızlı Geç) Butonu"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\LevelSelectionUI.cs",
+    "line": 471,
+    "text": "                            // 3 yıldız ödülünü sweep mantığıyla ver"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\MainMenuController.cs",
+    "line": 102,
+    "text": "            dailyRewardButton.interactable = true; // Buton her zaman tıklanabilir, panelde süre yazar\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\MainMenuController.cs",
+    "line": 181,
+    "text": "            // Referans yoksa isimle bul (prefab bağlantısı kopsa bile çalışır)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\MainMenuController.cs",
+    "line": 194,
+    "text": "            // Günlük ödül butonunu bul\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\MainMenuController.cs",
+    "line": 198,
+    "text": "            // Tüm panelleri kapat\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\MainMenuController.cs",
+    "line": 215,
+    "text": "            // Buton olaylarını bağla\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\MainMenuController.cs",
+    "line": 233,
+    "text": "            // Ana menüyü hemen görünür olarak aç (fade yok, anında)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\MainMenuController.cs",
+    "line": 241,
+    "text": "            // Müzik çal\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\MainMenuController.cs",
+    "line": 265,
+    "text": "            // Eğer CanvasGroup yoksa ekle (opsiyonel ama önerilir)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\MainMenuController.cs",
+    "line": 319,
+    "text": "            // Yeni paneli aç\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 6,
+    "text": "        Auto,           // Tam ekran panellerde Anchor, köşelere sabitli öğelerde Offset kullanır"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 7,
+    "text": "        StretchAnchors, // Doğrudan anchorMin ve anchorMax'i güvenli alana eşitler (Konteyner/Panel için ideal)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 8,
+    "text": "        OffsetPosition  // Öğenin konumunu çentik mesafesi kadar içeri kaydırır (Köşe butonları için ideal)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 12,
+    "text": "    /// Ekranın çentik (notch), kamera deliği ve yuvarlak köşe gibi güvenli alan sınırlarını (Screen.safeArea)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 13,
+    "text": "    /// RectTransform üzerine otomatik uygular. Hem tam ekran panellerde hem de köşe butonlarında sorunsuz çalışır."
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 42,
+    "text": "        // Orijinal pozisyonu sakla (Offset modunda katlanarak kaymayı önlemek için)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 94,
+    "text": "                // Anchor Modu: Güvenli alan koordinatlarını 0.0 - 1.0 aralığına normalize et"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 110,
+    "text": "                // Offset Modu: Canvas ölçeğine göre piksel farkını hesapla ve içeri ötele"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 121,
+    "text": "                // Sol kenara sabitlenmişse içeri (sağa) kaydır"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 124,
+    "text": "                // Sağ kenara sabitlenmişse içeri (sola) kaydır"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 128,
+    "text": "                // Alt kenara sabitlenmişse içeri (yukarı) kaydır"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SafeAreaFitter.cs",
+    "line": 131,
+    "text": "                // Üst kenara sabitlenmişse içeri (aşağı) kaydır"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SideSelectionUI.cs",
+    "line": 180,
+    "text": "            // En yüksek seviyeli büyüleri bulmak için gruplandır\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SideSelectionUI.cs",
+    "line": 247,
+    "text": "            // UnitHint kopyası\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SideSelectionUI.cs",
+    "line": 570,
+    "text": "            // Kahraman seçilmemişse bile savaşa girilebilir, auto-equip yapmıyoruz.\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SkillTreeUI.cs",
+    "line": 14,
+    "text": "        [SerializeField] private TextMeshProUGUI totalCrystalsText; // Yeni: Kristal göstergesi\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SkillTreeUI.cs",
+    "line": 304,
+    "text": "            // Merkezden hizalamak veya en soldan başlatmak için ofset (örneğin 8 kategori var)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SkillTreeUI.cs",
+    "line": 306,
+    "text": "            float startY = -800f; // Skilleri daha aşağıda başlat\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SkillTreeUI.cs",
+    "line": 308,
+    "text": "            // Tüm düğümleri tier ve category'ye göre otomatik yerleştir\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SkillTreeUI.cs",
+    "line": 432,
+    "text": "            // Skill limit info gösterimi\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellButtonUI.cs",
+    "line": 27,
+    "text": "            // Seçim (Selected) parlaması için Outline ekle"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellButtonUI.cs",
+    "line": 93,
+    "text": "                // Bekleme süresindeyken saniye yazsın"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellButtonUI.cs",
+    "line": 103,
+    "text": "                // Bekleme bitince mana miktarını yazsın"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellButtonUI.cs",
+    "line": 113,
+    "text": "                    costText.color = Color.red; // Mana yetersizse kırmızı yazsın"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellButtonUI.cs",
+    "line": 118,
+    "text": "            // Seçim durumu (Outline'ı aç/kapat)"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellButtonUI.cs",
+    "line": 147,
+    "text": "                // Anında cast edilecek büyüler"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellButtonUI.cs",
+    "line": 154,
+    "text": "                // Eğer zaten seçiliyse seçimi iptal et, değilse seç"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellSelectionUI.cs",
+    "line": 19,
+    "text": "            // HUD yüklendiğinde tarafa göre büyüleri listele\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellSelectionUI.cs",
+    "line": 27,
+    "text": "            // Mevcut butonları temizle\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellSelectionUI.cs",
+    "line": 38,
+    "text": "            // Tüm büyüleri topla: Inspector listesi + Resources'tan dinamik yükleme\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellSelectionUI.cs",
+    "line": 52,
+    "text": "            // Resources/Data/Spells altından da yükle (eksik olanları yakalar)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellSelectionUI.cs",
+    "line": 59,
+    "text": "            // Assets/Data/Spells klasöründen de yükle (Resources dışındakiler için)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\SpellSelectionUI.cs",
+    "line": 71,
+    "text": "            // Equipped büyüleri göster\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\TowerSelectionUI.cs",
+    "line": 29,
+    "text": "            gameObject.SetActive(false); // Başlangıçta gizle"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\TowerSelectionUI.cs",
+    "line": 34,
+    "text": "            // Taraf veya altın değiştiğinde menüyü güncelle"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\TowerSelectionUI.cs",
+    "line": 77,
+    "text": "            // FALLBACK: Eğer manager boşsa her şeyi bul"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\TowerSelectionUI.cs",
+    "line": 206,
+    "text": "            // Standart Ölçek"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\TowerSelectionUI.cs",
+    "line": 359,
+    "text": "            // Bu metod artık seçim panelinde (popup) kullanılmıyor, üniteler alt barda."
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\UnitInfoPanelUI.cs",
+    "line": 21,
+    "text": "            float iconArea = 15; // İkon kaldırıldığı için sadece üst boşluk\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\UnitInfoPanelUI.cs",
+    "line": 24,
+    "text": "            // Overlay (en üste, panelin arkasında kalacak)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\UnitInfoPanelUI.cs",
+    "line": 47,
+    "text": "            // Sol alt köşeyi pivot olarak belirliyoruz ki butonun sağ üstüne doğru büyüsün\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\UnitInfoPanelUI.cs",
+    "line": 50,
+    "text": "            // Pozisyonu tam olarak butonun dünya pozisyonuna eşitleyip\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\UnitInfoPanelUI.cs",
+    "line": 52,
+    "text": "            // Canvas ölçeklemesinden bağımsız olarak UI üzerinde sağ üste kaydırıyoruz\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\UnitInfoPanelUI.cs",
+    "line": 69,
+    "text": "            float y = -15; // İkon olmadığı için y koordinatını yukarıdan başlatıyoruz\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\UnitSelectionUI.cs",
+    "line": 42,
+    "text": "            // Bekle ki SideController vs iyice yerleşsin\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\UnitSelectionUI.cs",
+    "line": 46,
+    "text": "            // Eğer hala (yanlışlıkla) aydınlık gelmişse veya boşsa birkaç kez daha dene\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\UnitSelectionUI.cs",
+    "line": 170,
+    "text": "            // Butonları oluşturduktan sonra wave durumuna göre kontrol et\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WarningBannerUI.cs",
+    "line": 53,
+    "text": "            // Canvas veya parent kontrolü\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WarningBannerUI.cs",
+    "line": 67,
+    "text": "            // Ekranın üst-orta bölgesinde yerleşecek\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WarningBannerUI.cs",
+    "line": 95,
+    "text": "            warningText.color = new Color(1f, 0.25f, 0.2f, 1f); // Kırmızı / Uyarı\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WarningBannerUI.cs",
+    "line": 123,
+    "text": "            transform.SetAsLastSibling(); // Her zaman en önde görünsün\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WarningBannerUI.cs",
+    "line": 160,
+    "text": "            // Bekleme süresi\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WarningBannerUI.cs",
+    "line": 163,
+    "text": "            // Fade Out & Yükselme\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WaveInfoUI.cs",
+    "line": 134,
+    "text": "            // Arka plan engelleyici (dışarı tıklandığında paneli kapatır)\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WaveInfoUI.cs",
+    "line": 147,
+    "text": "            bImg.color = new Color(0, 0, 0, 0.001f); // Görünmez ama dış tıklamaları yakalar\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WaveInfoUI.cs",
+    "line": 233,
+    "text": "                    // Blocker'ı panelin arkasında ama diğer UI elemanlarının önünde olacak şekilde sırala\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WaveInfoUI.cs",
+    "line": 325,
+    "text": "                // Prefab içindeki şablon/placeholder çocukları temizle\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WaveInfoUI.cs",
+    "line": 397,
+    "text": "            // UnitData'daki bağımsız Wave Info ayarlarını uygula\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WaveInfoUI.cs",
+    "line": 477,
+    "text": "            // Panelin içine tıklanınca kapanmasını engelle\r"
+  },
+  {
+    "file": "Assets\\Scripts\\UI\\WaveInfoUI.cs",
+    "line": 481,
+    "text": "            // Zorluk katsayılarını hesapla (1: Normal, 2: Hard (+50%), 3: Expert (+100%))\r"
+  }
+]

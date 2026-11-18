@@ -46,16 +46,16 @@ namespace TowerDefence.Combat
             if (myBarracks != null && myBarracks.IsDisabled) return;
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
-            // 1. Düşman Taraması (Sadece birini engellemiyorsak)
+            // 1. Dusman Taramasi (Sadece birini engellemiyorsak)
             if (CanBlockMore())
             {
                 SearchAndBlockEnemy();
             }
 
-            // 2. Savaş ve Hareket Mantığı (Base sınıf kovalama ve saldırıyı halleder)
+            // 2. Savas ve Hareket Mantigi (Base sinif kovalama ve saldiriyi halleder)
             base.Update();
 
-            // 3. Eğer engellemiyorsak ve savaşmıyorsak Rally Point'e dön
+            // 3. Eger engellemiyorsak ve savasmiyorsak Rally Point'e don
             if (!IsBlocked && !IsAttacking() && GetTarget() == null && hasRallyPoint)
             {
                 MoveToRallyPoint();
@@ -64,14 +64,14 @@ namespace TowerDefence.Combat
 
         protected void SearchAndBlockEnemy()
         {
-            // Düşman katmanını belirle (Side.Light isek Dark olanlara (7) bak)
+            // Dusman katmanini belirle (Side.Light isek Dark olanlara (7) bak)
             int enemyLayer = (GetSide() == Side.Light) ? (1 << 7) : (1 << 6);
             Collider[] hits = Physics.OverlapSphere(transform.position, searchRadius, enemyLayer);
 
             foreach (var hit in hits)
             {
                 Unit enemy = hit.GetComponent<Unit>();
-                // Sadece ölmemiş ve başka biri tarafından engellenmemiş düşmanları engelle
+                // Sadece olmemis ve baska biri tarafindan engellenmemis dusmanlari engelle
                 if (enemy != null && !enemy.IsDead && !enemy.IsBlocked)
                 {
                     Debug.Log($"<color=green>[SOLDIER]</color> {gameObject.name} engaged {enemy.gameObject.name}!");
@@ -89,7 +89,7 @@ namespace TowerDefence.Combat
             
             if (dist > 0.2f)
             {
-                // Unit.cs'deki MoveTowardsTarget ve HandleRotation metodlarını kullan
+                // Unit.cs'deki MoveTowardsTarget ve HandleRotation metodlarini kullan
                 MoveTowardsTarget(rallyPoint);
                 HandleRotation(rallyPoint);
                 

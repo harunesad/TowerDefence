@@ -1,4 +1,4 @@
-// Bu dosya AuraTower.cs ile değiştirildi.
-// Tüm aura mantığı Assets/Scripts/Combat/AuraTower.cs içerisindedir.
-// Bu dosya geriye dönük uyumluluk için boş bırakılmıştır.
+// This file has been replaced with AuraTower.cs.
+// All aura logic is contained within Assets/Scripts/Combat/AuraTower.cs.
+// This file is kept empty for backwards compatibility.
 namespace TowerDefence.Combat { }

@@ -35,7 +35,7 @@ namespace TowerDefence.UI
             var et = overlayRef.AddComponent<EventTrigger>();
             var entry = new EventTrigger.Entry();
             entry.eventID = EventTriggerType.PointerClick;
-            entry.callback.AddListener((_) => { Destroy(overlayRef); Destroy(gameObject); });
+            entry.callback.AddListener((_) => { UIButtonSound.Play(); Destroy(overlayRef); Destroy(gameObject); });
             et.triggers.Add(entry);
 
             // Panel
@@ -52,12 +52,12 @@ namespace TowerDefence.UI
             rt.sizeDelta = new Vector2(panelW, panelH);
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
-            // Sol alt köşeyi pivot olarak belirliyoruz ki butonun sağ üstüne doğru büyüsün
+            // Sol alt koseyi pivot olarak belirliyoruz ki butonun sag ustune dogru buyusun
             rt.pivot = new Vector2(0f, 0f);
 
-            // Pozisyonu tam olarak butonun dünya pozisyonuna eşitleyip
+            // Pozisyonu tam olarak butonun dunya pozisyonuna esitleyip
             rt.position = source.position;
-            // Canvas ölçeklemesinden bağımsız olarak UI üzerinde sağ üste kaydırıyoruz
+            // Canvas olceklemesinden bagimsiz olarak UI uzerinde sag uste kaydiriyoruz
             rt.anchoredPosition = new Vector2(rt.anchoredPosition.x + source.rect.width * 0.5f + 10f, 300f);
 
             Image bgImg = gameObject.GetComponent<Image>();
@@ -68,7 +68,7 @@ namespace TowerDefence.UI
             var pTrigger = gameObject.AddComponent<EventTrigger>();
             var pEntry = new EventTrigger.Entry();
             pEntry.eventID = EventTriggerType.PointerClick;
-            pEntry.callback.AddListener((_) => { Destroy(overlayRef); Destroy(gameObject); });
+            pEntry.callback.AddListener((_) => { UIButtonSound.Play(); Destroy(overlayRef); Destroy(gameObject); });
             pTrigger.triggers.Add(pEntry);
 
             CreateImage("Border", Vector2.zero, Vector2.zero, Vector2.one, Vector2.zero, new Color(0.2f, 0.2f, 0.3f, 1f), false);
@@ -103,7 +103,9 @@ namespace TowerDefence.UI
                 14, FontStyles.Bold, TextAlignmentOptions.Center, new Color(0.6f, 0.8f, 1f));
 
             y -= 22;
-            CreateText("AbilityDescText", $"{data.abilityDescription}  {StatIcons.Time} {data.abilityCooldown}s",
+            int heroLevel = MetaProgressionManager.Instance.GetHeroLevel(data.heroID);
+            if (heroLevel < 1) heroLevel = 1;
+            CreateText("AbilityDescText", $"{data.abilityDescription}  {StatIcons.Time} {data.AbilityCooldownAtLevel(heroLevel):0}s",
                 new Vector2(0, y), new Vector2(290, 32),
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 14, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.7f, 0.7f, 0.8f));

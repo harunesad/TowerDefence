@@ -100,7 +100,7 @@ namespace TowerDefence.UI
             if (dailyRewardButton == null) return;
 
             bool available = DailyRewardManager.Instance.IsRewardAvailable();
-            dailyRewardButton.interactable = true; // Buton her zaman tıklanabilir, panelde süre yazar
+            dailyRewardButton.interactable = true; // Buton her zaman tiklanabilir, panelde sure yazar
 
             if (dailyRewardTimerText != null)
             {
@@ -179,7 +179,7 @@ namespace TowerDefence.UI
 
         private void Start()
         {
-            // Referans yoksa isimle bul (prefab bağlantısı kopsa bile çalışır)
+            // Referans yoksa isimle bul (prefab baglantisi kopsa bile calisir)
             if (mainMenuPanel   == null) mainMenuPanel   = FindChild("MainMenuPanel");
             if (levelSelectPanel == null) levelSelectPanel = FindChild("LevelSelectionPanel");
             if (skillTreePanel   == null) skillTreePanel   = FindChild("SkillTreePanel");
@@ -192,11 +192,11 @@ namespace TowerDefence.UI
             if (karmaText == null) karmaText = transform.Find("TopPanel/CurrencyContainer/Karma/Value")?.GetComponent<TMPro.TextMeshProUGUI>();
             if (crystalText == null) crystalText = transform.Find("TopPanel/CurrencyContainer/Crystals/Value")?.GetComponent<TMPro.TextMeshProUGUI>();
 
-            // Günlük ödül butonunu bul
+            // Gunluk odul butonunu bul
             if (dailyRewardButton == null) dailyRewardButton = transform.Find("MainMenuPanel/DailyRewardButton")?.GetComponent<Button>();
             if (dailyRewardButton != null) dailyRewardButton.onClick.AddListener(ShowDailyRewardPanel);
 
-            // Tüm panelleri kapat
+            // Tum panelleri kapat
             InitPanel(mainMenuPanel);
             InitPanel(levelSelectPanel);
             InitPanel(skillTreePanel);
@@ -213,7 +213,7 @@ namespace TowerDefence.UI
             GameObject settingsBackdrop = FindChild("SettingsBackdrop");
             if (settingsBackdrop != null) settingsBackdrop.SetActive(false);
 
-            // Buton olaylarını bağla
+            // Buton olaylarini bagla
             if (playButton != null)
                 playButton.onClick.AddListener(ShowLevelSelect);
             ApplyTutorialButtons();
@@ -231,7 +231,7 @@ namespace TowerDefence.UI
             if (quitButton != null)
                 quitButton.onClick.AddListener(QuitGame);
 
-            // Ana menüyü hemen görünür olarak aç (fade yok, anında)
+            // Ana menuyu hemen gorunur olarak ac (fade yok, aninda)
             if (mainMenuPanel != null)
             {
                 currentActivePanel = mainMenuPanel;
@@ -239,7 +239,7 @@ namespace TowerDefence.UI
                 AnimatePanelIn(mainMenuPanel, instant: true);
             }
 
-            // Müzik çal
+            // Muzik cal
             if (AudioManager.Instance != null && menuBGM != null)
             {
                 AudioManager.Instance.PlayBGM(menuBGM);
@@ -263,7 +263,7 @@ namespace TowerDefence.UI
             if (panel == null) return;
             panel.SetActive(false);
             
-            // Eğer CanvasGroup yoksa ekle (opsiyonel ama önerilir)
+            // Eger CanvasGroup yoksa ekle (opsiyonel ama onerilir)
             CanvasGroup group = panel.GetComponent<CanvasGroup>();
             if (group == null) group = panel.AddComponent<CanvasGroup>();
             group.alpha = 0;
@@ -317,7 +317,7 @@ namespace TowerDefence.UI
                 });
             }
 
-            // Yeni paneli aç
+            // Yeni paneli ac
             currentActivePanel = targetPanel;
             targetPanel.SetActive(true);
             AnimatePanelIn(targetPanel);

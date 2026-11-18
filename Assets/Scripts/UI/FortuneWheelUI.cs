@@ -115,10 +115,10 @@ namespace TowerDefence.UI
             if (MetaProgressionManager.Instance == null) return true;
 
             long lastTimeTicks = MetaProgressionManager.Instance.GetLastFortuneWheelTime();
-            if (lastTimeTicks == 0) return true; // Hiç çevirmemiş
+            if (lastTimeTicks == 0) return true; // Has never spun
 
             DateTime lastTime = new DateTime(lastTimeTicks);
-            DateTime nextTime = lastTime.AddDays(1).Date; // Ertesi günün başlangıcı
+            DateTime nextTime = lastTime.AddDays(1).Date; // Start of next day
             DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
             return now >= nextTime;
         }
@@ -168,14 +168,14 @@ namespace TowerDefence.UI
             }
             else if (adAvailable)
             {
-                // Free hakkı yok ama Reklam izleyerek çevirebilir
+                // No free spin, but can spin by watching an ad
                 if (spinButton != null) spinButton.interactable = true;
                 if (btnText != null) btnText.text = "WATCH AD";
                 statusMsg = "Watch Ad for Extra Spin!";
             }
             else
             {
-                // İki hak da bitti
+                // Both spins consumed
                 if (spinButton != null) spinButton.interactable = false;
                 if (btnText != null) btnText.text = "NO SPINS";
                 statusMsg = "Next Spin: " + GetTimeToNextSpin();
@@ -196,7 +196,7 @@ namespace TowerDefence.UI
 
         private void Update()
         {
-            // Sürekli kalan süreyi güncelle (çark dönmüyorsa ve ne free ne de ad spin yoksa)
+            // Continuously update remaining time (if wheel isn't spinning and neither free nor ad spin is available)
             if (!isSpinning && !IsSpinAvailable() && !IsAdSpinAvailable())
             {
                 string statusMsg = "Next Spin: " + GetTimeToNextSpin();
@@ -215,12 +215,12 @@ namespace TowerDefence.UI
 
             if (isFreeSpin)
             {
-                // Ücretsiz çevirme
+                // Free spin
                 StartCoroutine(SpinRoutine(isFreeSpin: true));
             }
             else if (isAdSpin)
             {
-                // Reklamlı çevirme
+                // Ad-rewarded spin
                 if (AdManager.Instance != null)
                 {
                     lastWonKarma = 0;
@@ -244,7 +244,7 @@ namespace TowerDefence.UI
             }
             else
             {
-                // Hiçbir hak yok (Buraya normalde tıklanamaz ama önlem)
+                // No spins available (normally unreachable button click safeguard)
                 if (rewardText != null)
                     rewardText.text = "Next Spin: " + GetTimeToNextSpin();
             }
@@ -281,17 +281,17 @@ namespace TowerDefence.UI
             // Random slice to land on (0 to 7)
             int randomSlice = UnityEngine.Random.Range(0, 8);
             
-            // Dilim N'in (0..7) tepe ibresinin tam altına gelmesi için durması gereken MUTLAK (absolute) açı:
-            // Dilimler saat yönünde dizilmiştir:
-            // Dilim 0 (5 Karma): +22.5° | Dilim 6 (40 Karma): +292.5° | Dilim 7 (10 Crystal): +337.5°
-            // Çark saat yönünde (Euler Z azalarak) döndüğünde, tepeye tam olarak bu açı gelir.
+            // Absolute angle required for slice N (0..7) to align directly under the top pointer:
+            // Slices are arranged clockwise:
+            // Slice 0 (5 Karma): +22.5° | Slice 6 (40 Karma): +292.5° | Slice 7 (10 Crystal): +337.5°
+            // When wheel spins clockwise (Euler Z decreasing), this angle lands exactly at the top.
             float targetEndAngle = (randomSlice * 45f) + 22.5f;
-            float jitter = UnityEngine.Random.Range(-6f, 6f); // Dilimin içinde hafif rastgele duruş
+            float jitter = UnityEngine.Random.Range(-6f, 6f); // Slight random offset within the slice
             targetEndAngle += jitter;
 
             float startAngle = wheelTransform.eulerAngles.z;
-            // Mevcut açıdan başlayıp saat yönünde en az 'spinRevolutions' tur dönerek kesin hedef açıya in:
-            // startAngle'ı targetEndAngle'a göre normalize et
+            // Starting from current angle, rotate clockwise by at least 'spinRevolutions' turns to land exactly on target angle:
+            // Normalize startAngle relative to targetEndAngle
             float delta = Mathf.Repeat(startAngle - targetEndAngle, 360f);
             float totalRotation = (360f * spinRevolutions) + delta;
             float endAngle = startAngle - totalRotation;
@@ -322,7 +322,7 @@ namespace TowerDefence.UI
             
             wheelTransform.rotation = Quaternion.Euler(0, 0, endAngle);
 
-            // Hak, ödülle aynı kayıtta yazılır. Dönüş bitmeden uygulama kapanırsa hak durur.
+            // Spin eligibility is saved alongside reward. If app closes before spin ends, eligibility remains intact.
             if (MetaProgressionManager.Instance != null)
             {
                 DateTime now = NetworkTimeManager.Instance != null ? NetworkTimeManager.Instance.GetCurrentLocalTime() : DateTime.Now;
@@ -340,7 +340,7 @@ namespace TowerDefence.UI
                     MetaProgressionManager.Instance.AddCrystals(crystals);
             }
 
-            // Ödül metni
+            // Reward text
             lastWonKarma = karmaRewards[randomSlice];
             lastWonCrystals = crystalRewards[randomSlice];
             if (AudioManager.Instance != null && rewardSound != null)
@@ -351,7 +351,7 @@ namespace TowerDefence.UI
             if (TutorialDirector.Instance != null)
                 TutorialDirector.Instance.OnFortuneReward();
 
-            // UI'ı mevcut duruma göre (reklamlı çevirmeye uygun şekilde) geri yükle
+            // Restore UI based on current state (ready for ad spin)
             UpdateUI();
             if (closeButtonObj != null) closeButtonObj.SetActive(true);
         }

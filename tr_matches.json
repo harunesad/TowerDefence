@@ -1,0 +1,864 @@
+{
+  "Assets/Scripts/Core/MetaProgressionManager.cs": [
+    {
+      "line": 32,
+      "text": "public int totalCrystals; // Yeni ikinci para birimi"
+    },
+    {
+      "line": 33,
+      "text": "public long lastDailyRewardTime; // Son günlük ödül zamanı (Ticks)"
+    },
+    {
+      "line": 34,
+      "text": "public long dailyRewardStartTicks; // İlk ödülün alındığı takvim günü"
+    },
+    {
+      "line": 35,
+      "text": "public int dailyRewardDayIndex; // Alınmış gün sayısı (0=henüz başlamamış, 30=tamamlandı)"
+    },
+    {
+      "line": 37,
+      "text": "public List<string> unlockedSpellIDs = new List<string>(); // Açılan aktif büyüler"
+    },
+    {
+      "line": 38,
+      "text": "public List<string> equippedSpellIDs = new List<string>(); // Kuşatılan büyüler"
+    },
+    {
+      "line": 42,
+      "text": "// Taraf bazli loadout kayitlari (Light ve Dark ayri saklanir)"
+    },
+    {
+      "line": 51,
+      "text": "// Geriye dönük uyumluluk için tutuluyor"
+    },
+    {
+      "line": 54,
+      "text": "// Yeni Zorluk Sistemi Değişkenleri"
+    },
+    {
+      "line": 56,
+      "text": "public List<int> highestUnlockedLevelIndexPerDifficulty = new List<int> { 0, 0, 0, 0 }; // İndeksler: 1=Normal, 2=Hard, 3=Expert"
+    },
+    {
+      "line": 59,
+      "text": "public long lastFortuneWheelTime; // Son çark çevirme zamanı (Ticks)"
+    },
+    {
+      "line": 60,
+      "text": "public long lastFortuneWheelAdTime; // Son reklamla çark çevirme zamanı (Ticks)"
+    },
+    {
+      "line": 103,
+      "text": "[SerializeField] private int maxSkillsUnlocked = 10; // Maksimum açılabilir skill sayısı"
+    },
+    {
+      "line": 185,
+      "text": "// Önkoşul kontrolü"
+    },
+    {
+      "line": 191,
+      "text": "// Sınır kontrolü: Maksimum skill sayısı kontrolü"
+    },
+    {
+      "line": 206,
+      "text": "// Eğer bu yetenek bir büyü açıyorsa, büyüyü de ekle"
+    },
+    {
+      "line": 249,
+      "text": "// Skill ID -> Spell ID eşleşme tablosu (grantedSpell referansı kırıldığında fallback)"
+    },
+    {
+      "line": 271,
+      "text": "// Fallback: skill tree'den kontrol et (önce grantedSpell referansı, sonra hardcoded map)"
+    },
+    {
+      "line": 274,
+      "text": "// Yol 1: allAvailableSkills üzerinden grantedSpell referansı"
+    },
+    {
+      "line": 286,
+      "text": "// Yol 2: Hardcoded eşleşme tablosu (grantedSpell null geldiğinde)"
+    },
+    {
+      "line": 301,
+      "text": "if (saveData.equippedSpellIDs.Count < 3) // Maksimum 3 büyü sınırı"
+    },
+    {
+      "line": 330,
+      "text": "if (saveData.equippedUnitNames.Count < 5) // Maksimum 5 unit sınırı"
+    },
+    {
+      "line": 353,
+      "text": "// Menüde taraf değiştiğinde farklı tarafın ünitelerini temizle"
+    },
+    {
+      "line": 354,
+      "text": "// Tamamen sıfırlamak en kolayıdır, oyuncu baştan seçsin."
+    },
+    {
+      "line": 593,
+      "text": "// Sadece daha yüksek bir yıldız almışsak güncelle"
+    },
+    {
+      "line": 737,
+      "text": "// Kahraman ve okçu düğümleri genel çarpana girmez."
+    },
+    {
+      "line": 1101,
+      "text": "// 1. Yeni Güvenli AES-256 + HMAC formatını dene"
+    },
+    {
+      "line": 1122,
+      "text": "// Editörde eski düz JSON ve XOR kayıtlar bir kez şifreli formata taşınır."
+    },
+    {
+      "line": 1175,
+      "text": "saveData.totalKarma = 200; // Başlangıç Karma puanı"
+    },
+    {
+      "line": 1180,
+      "text": "// Migration: Yeni array sistemi için eksik eleman varsa doldur"
+    },
+    {
+      "line": 1186,
+      "text": "// Migration: Eski sistemdeki progress değerini Zorluk 1'e aktar"
+    },
+    {
+      "line": 1192,
+      "text": "// Migration: Tüm mevcut level progress'lerde difficulty yoksa 1 yap"
+    },
+    {
+      "line": 1198,
+      "text": "// Migration: Eski günlük ödül kullananlar için dailyRewardDayIndex başlat"
+    },
+    {
+      "line": 1211,
+      "text": "// Migration: Büyü listesini skill tree ile senkronize et"
+    },
+    {
+      "line": 1212,
+      "text": "// Sadece unlock edilmiş skill'lerin grant ettiği büyüler kalsın"
+    },
+    {
+      "line": 1213,
+      "text": "// allAvailableSkills boşsa mevcut listeyi sıfırlama"
+    },
+    {
+      "line": 1309,
+      "text": "// Hicbir varsayilan eleman eklenmez veya eksiltilmez; kullanici ne sectiyse (veya bos biraktiysa) o gelir."
+    }
+  ],
+  "Assets/Scripts/Core/CampaignManager.cs": [
+    {
+      "line": 96,
+      "text": "// Sahne yüklendiğinde yeni haritayı spawn etmek için abone ol"
+    },
+    {
+      "line": 111,
+      "text": "// Sahne yüklendiğinde haritayı tekrar kurması için abone ol"
+    },
+    {
+      "line": 125,
+      "text": "// Sadece bir kez çalışması için çıkar"
+    },
+    {
+      "line": 128,
+      "text": "// Sahne yükleme bitince spawn et"
+    },
+    {
+      "line": 136,
+      "text": "// 3. Spawning: Haritayı oluştur"
+    },
+    {
+      "line": 165,
+      "text": "// Yeni: Haritayı ekrana tam ortala (HUD payı dahil)"
+    },
+    {
+      "line": 220,
+      "text": "// Bölümü tamamlandı olarak kaydet"
+    },
+    {
+      "line": 223,
+      "text": "// Bir sonraki seviyenin kilidini aç (Yazılımsal mantık)"
+    },
+    {
+      "line": 226,
+      "text": "// Tüm bölümler bittiyse bir sonraki zorluğu aç"
+    },
+    {
+      "line": 246,
+      "text": "// Eğer açılan yeni bölüm, kayıttaki en yüksek bölümden büyükse kaydı güncelle"
+    },
+    {
+      "line": 285,
+      "text": "// Kayıtlı en yüksek bölüm indeksinden küçük veya eşitse açıktır"
+    },
+    {
+      "line": 294,
+      "text": "// Harita sınırlarını tam oynanabilir alana göre hesapla (Waypointler üzerinden)"
+    },
+    {
+      "line": 316,
+      "text": "// Dinamik yükseklik: Harita boyutuna göre mesafeyi ayarla"
+    },
+    {
+      "line": 319,
+      "text": "// HUD Panelini (Alt Kısım) telafi etmek için fokus noktasını biraz yukarı kaydır"
+    },
+    {
+      "line": 322,
+      "text": "float hudCompensation = 10f; // Haritayı dikeyde tam merkeze (HUD üstüne) taşır"
+    },
+    {
+      "line": 327,
+      "text": "// orthographicSize artık kod tarafından değiştirilmiyor, editördeki değer korunuyor."
+    },
+    {
+      "line": 341,
+      "text": "// Solid Color Modu (Varsayilan ve hafif mod)"
+    },
+    {
+      "line": 396,
+      "text": "/// <summary>Bir sonraki seviyeyi seç ve yükle. Son seviyedeyse false döner.</summary>"
+    }
+  ],
+  "Assets/Scripts/Core/SceneLoader.cs": [
+    {
+      "line": 11,
+      "text": "/// Sahneler arası asenkron yükleme ve fade geçiş yöneticisi."
+    },
+    {
+      "line": 12,
+      "text": "/// DontDestroyOnLoad olarak yaşar. Tüm sahne geçişlerinde SceneLoader.Instance.LoadScene(...) çağrılır."
+    },
+    {
+      "line": 57,
+      "text": "// Başlangıçta gizle"
+    },
+    {
+      "line": 81,
+      "text": "/// Sahneyi build index ile yükler."
+    },
+    {
+      "line": 90,
+      "text": "/// Sahneyi isim ile yükler."
+    },
+    {
+      "line": 99,
+      "text": "/// Mevcut sahneyi yeniden yükler."
+    },
+    {
+      "line": 111,
+      "text": "// Rastgele bir ipucu göster"
+    },
+    {
+      "line": 120,
+      "text": "// Progress sıfırla"
+    },
+    {
+      "line": 124,
+      "text": "// === FADE IN (Ekranı kapat) ==="
+    },
+    {
+      "line": 127,
+      "text": "// Asenkron sahne yüklemeyi başlat"
+    },
+    {
+      "line": 139,
+      "text": "// Unity'de asyncOp.progress 0.9'a kadar gider, sonra allowSceneActivation bekler"
+    },
+    {
+      "line": 144,
+      "text": "// Gerçek ilerlemeyi 0-1 aralığına normalize et (0.9 = %100)"
+    },
+    {
+      "line": 147,
+      "text": "// Minimum bekleme süresini de hesaba kat"
+    },
+    {
+      "line": 151,
+      "text": "// Yumuşak ilerleme"
+    },
+    {
+      "line": 167,
+      "text": "// Sahneyi aktive et"
+    },
+    {
+      "line": 170,
+      "text": "// Sahnenin tam yüklenmesini bekle"
+    },
+    {
+      "line": 174,
+      "text": "// Yeni sahnenin ilk frame'inin render olmasını bekle"
+    },
+    {
+      "line": 177,
+      "text": "// === FADE OUT (Ekranı aç) ==="
+    },
+    {
+      "line": 207,
+      "text": "/// SceneLoader instance'ını kontrol eder. GameManager.Awake()'te prefab zaten instantiate edilmiş olmalıdır."
+    }
+  ],
+  "Assets/Scripts/Core/NetworkTimeManager.cs": [
+    {
+      "line": 21,
+      "text": "// İnternet olmasa dahi cihaz saatinin geriye veya kontrolsüz ileri alınmasını engellemek için"
+    },
+    {
+      "line": 25,
+      "text": "// Güvenilir, hafif HTTP head / time endpoint'leri"
+    },
+    {
+      "line": 58,
+      "text": "// Başlangıçta fallback olarak cihaz UTC saatini güvenli referansla karşılaştır"
+    },
+    {
+      "line": 67,
+      "text": "// Cihaz saati ileri alınsa da oturum, son kayıtlı andan ve gerçek geçen süreden yürür."
+    },
+    {
+      "line": 68,
+      "text": "// Geri alınan saat de bu andın gerisine düşemez."
+    },
+    {
+      "line": 93,
+      "text": "// Uygulamaya geri dönüldüğünde zamanı tekrar senkronize etmeyi dene"
+    },
+    {
+      "line": 136,
+      "text": "/// Saat hilelerine karşı korumalı anlık UTC zamanını döndürür."
+    },
+    {
+      "line": 137,
+      "text": "/// Cihaz saati ileri veya geri alınsa bile, son bilinen gerçek zamandan donanımsal geçen süre (realtimeSinceStartup) kadar ilerler."
+    },
+    {
+      "line": 141,
+      "text": "// Senkronize olunan andan beri donanımsal olarak geçen saniye"
+    },
+    {
+      "line": 147,
+      "text": "// Eğer cihaz saati bilinen en güvenli andan gerideyse asla geriye gitme"
+    },
+    {
+      "line": 157,
+      "text": "/// Yerel saat dilimine dönüştürülmüş anlık güvenli zaman."
+    }
+  ],
+  "Assets/Scripts/Core/HeroManager.cs": [
+    {
+      "line": 132,
+      "text": "// 1. ÖNCELİK: 3D dünyada Hero tıklamasını kontrol et"
+    },
+    {
+      "line": 153,
+      "text": "// 2. Seçili hero varsa zemine tıklayarak hareket ettir"
+    },
+    {
+      "line": 164,
+      "text": "// 3. Boş alana tıklandıysa seçimi kaldır"
+    },
+    {
+      "line": 304,
+      "text": "// Eğer kahraman zaten sahnedeyse yeniden oluşturma, respawn et"
+    },
+    {
+      "line": 357,
+      "text": "// Tüm yolları bul ve en uzun (en çok waypoint'e sahip) olanı seç"
+    },
+    {
+      "line": 378,
+      "text": "// Özel Durum: Sadece 2 waypoint varsa, ikisinin tam ortasını hesapla"
+    },
+    {
+      "line": 385,
+      "text": "// Genel Durum: 2'den fazla waypoint varsa, orta noktadaki waypoint'i seç"
+    },
+    {
+      "line": 395,
+      "text": "// Yedek: Eğer yol bulunamazsa player spawner'ı kullan"
+    },
+    {
+      "line": 402,
+      "text": "// Son çare: Sahne merkezi veya sıfır noktası"
+    }
+  ],
+  "Assets/Scripts/Core/SpellManager.cs": [
+    {
+      "line": 46,
+      "text": "// Para kontrolü"
+    },
+    {
+      "line": 61,
+      "text": "// Eğer tek seferlikse kaydet"
+    },
+    {
+      "line": 68,
+      "text": "// Cooldown başlat"
+    },
+    {
+      "line": 72,
+      "text": "// Yazılım Mantığını Uygula"
+    },
+    {
+      "line": 261,
+      "text": "// En yakın waypoint'i bul"
+    },
+    {
+      "line": 282,
+      "text": "// Oyuncu tarafı olduğunu varsayıyoruz."
+    },
+    {
+      "line": 284,
+      "text": "// unit.Initialize(unit.unitData); // Eğer start'ta initialize olmuyorsa"
+    },
+    {
+      "line": 292,
+      "text": "// Reinforcement'lar kalıcı olmasın, 30 saniye sonra ölsünler (TakeDamage kullanarak güvenli ölüm)"
+    },
+    {
+      "line": 325,
+      "text": "unit.TakeDamage(99999f); // Güvenli ölüm (ölüm animasyonu vb. tetiklenir)"
+    }
+  ],
+  "Assets/Scripts/Core/CameraAspectRatioScaler.cs": [
+    {
+      "line": 6,
+      "text": "/// Ekranın en/boy oranına (Aspect Ratio) göre kameranın görüş alanını (FOV veya Orthographic Size) dinamik ayarlar."
+    },
+    {
+      "line": 7,
+      "text": "/// Referans 16:9 oranından daha dar ekranlarda (iPad, tablet vb.) haritanın kenarlarının kesilmesini engeller."
+    },
+    {
+      "line": 46,
+      "text": "// Çözünürlük veya yön (Orientation) değiştiğinde anında güncelle"
+    },
+    {
+      "line": 65,
+      "text": "// Cihaz 16:9'dan daha darsa (örn: iPad 4:3), haritayı kesmemek için kamerayı geriye çek"
+    },
+    {
+      "line": 72,
+      "text": "// 16:9 veya daha geniş ekranlarda temel boyutu koru"
+    },
+    {
+      "line": 78,
+      "text": "// Perspektif kamera için yatay FOV'u koru"
+    },
+    {
+      "line": 93,
+      "text": "/// Sahneye yüklendiğinde ve her sahne geçişinde Main Camera üzerinde bu bileşen yoksa otomatik ekler."
+    }
+  ],
+  "Assets/Scripts/Core/AdManager.cs": [
+    {
+      "line": 118,
+      "text": "/// Ödüllü reklam gösterir."
+    },
+    {
+      "line": 151,
+      "text": "/// Geçiş (Zorunlu) reklamı gösterir."
+    },
+    {
+      "line": 160,
+      "text": "isInterstitialLoaded = false; // Kullanıldı"
+    },
+    {
+      "line": 167,
+      "text": "LoadAd(interstitialId); // Yeniden yüklemeyi dene"
+    },
+    {
+      "line": 205,
+      "text": "LoadAd(adUnitId); // Gösterimden sonra yenisini yükle"
+    }
+  ],
+  "Assets/Scripts/Core/GameSpeedManager.cs": [
+    {
+      "line": 6,
+      "text": "/// Oyun hızını (x1, x2, x3) ve duraklatma (Pause) durumunu Time.timeScale üzerinden yönetir."
+    },
+    {
+      "line": 20,
+      "text": "// Hız değiştiğinde UI'ın dinleyebileceği event. Duraklatıldıysa -1 döner."
+    },
+    {
+      "line": 53,
+      "text": "isPaused = false; // Hız butonuna basılınca duraklatmayı otomatik kapat"
+    },
+    {
+      "line": 83,
+      "text": "/// <summary>Mevcut hız indeksini döndürür (0=x1, 1=x2, 2=x3)</summary>"
+    },
+    {
+      "line": 86,
+      "text": "/// <summary>Mevcut Time.timeScale değerini döndürür</summary>"
+    }
+  ],
+  "Assets/Scripts/Core/PhaseManager.cs": [
+    {
+      "line": 163,
+      "text": "// Erken Çağırma Bonusu (Early Call Bonus)"
+    },
+    {
+      "line": 197,
+      "text": "// Senkronizasyon için çok kısa bir süre bekle (En az 1.5 saniye)"
+    },
+    {
+      "line": 200,
+      "text": "// Spawner'lar hala üretim yapıyor mu VEYA henüz dalgaya başladılar mı kontrol et"
+    },
+    {
+      "line": 217,
+      "text": "// Sadece DÜŞMAN birimlerini kontrol et (Oyuncunun kendi askerleri dalgayı bloklamasın)"
+    },
+    {
+      "line": 229,
+      "text": "// Eğer sahada düşman kalmadıysa ve spawner'lar bittiyse dalga bitmiştir"
+    }
+  ],
+  "Assets/Scripts/Core/DailyRewardManager.cs": [
+    {
+      "line": 52,
+      "text": "// Her gün için tek bir ödül türü (genelde Karma, her 5. gün veya özel günlerde Kristal)"
+    },
+    {
+      "line": 55,
+      "text": "crystal = (day / 5) * 5 + 5; // Örn: 7. gün 5 kristal, 10. gün 15 kristal vs."
+    },
+    {
+      "line": 59,
+      "text": "karma = day * 10 + 50; // Örn: 1. gün 60 karma, 2. gün 70 karma"
+    }
+  ],
+  "Assets/Scripts/Core/GameManager.cs": [
+    {
+      "line": 47,
+      "text": "// Loading Screen prefab'ını başlat"
+    },
+    {
+      "line": 59,
+      "text": "// Eğer oyun Bootstrap sahnesinden başlıyorsa otomatik Menüye git"
+    },
+    {
+      "line": 74,
+      "text": "// State'e özgü eventler burada tetiklenebilir"
+    }
+  ],
+  "Assets/Scripts/Core/CurrencyManager.cs": [
+    {
+      "line": 40,
+      "text": "// İlk başlatma (Varsayılan)"
+    }
+  ],
+  "Assets/Scripts/Core/SaveManager.cs": [
+    {
+      "line": 6,
+      "text": "/// İlerleme kaydı MetaProgressionManager içindedir. Bu nesne ayrı bir kayıt dosyası yazmaz."
+    }
+  ],
+  "Assets/Scripts/Core/Security/ObscuredInt.cs": [
+    {
+      "line": 8,
+      "text": "/// Değer şifreli durur. Anahtar struct'ın içinde değil, oturum sözlüğündedir."
+    }
+  ],
+  "Assets/Scripts/Data/SpellData.cs": [
+    {
+      "line": 8,
+      "text": "Thunderstrike, // Anlık alan hasarı"
+    },
+    {
+      "line": 9,
+      "text": "Reinforcement, // Yol üzerine geçici asker çağırma"
+    },
+    {
+      "line": 10,
+      "text": "Freeze,        // Tüm düşmanları dondurma"
+    },
+    {
+      "line": 11,
+      "text": "GoldBoost,     // Anlık altın kazanımı"
+    },
+    {
+      "line": 12,
+      "text": "Shield,        // Kulelere geçici dokunulmazlık"
+    },
+    {
+      "line": 13,
+      "text": "Buff           // Kulelere geçici saldırı hızı artışı"
+    },
+    {
+      "line": 27,
+      "text": "public int manaCost;        // Büyü enerjisi / Altın maliyeti"
+    },
+    {
+      "line": 29,
+      "text": "public bool isOneTimeUse = false; // Oyunda sadece bir kez mi kullanılabilir?"
+    },
+    {
+      "line": 33,
+      "text": "public float power = 50f;     // Hasar, iyileştirme veya buff çarpanı"
+    },
+    {
+      "line": 34,
+      "text": "public float radius = 3f;    // Etki alanı yarıçapı"
+    },
+    {
+      "line": 35,
+      "text": "public float duration = 5f;  // Buff, dondurma veya kalkan süresi"
+    },
+    {
+      "line": 39,
+      "text": "public GameObject spellVFXPrefab; // Doğrudan instantiate edilecek VFX prefab'ı"
+    }
+  ],
+  "Assets/Scripts/Data/SkillNodeData.cs": [
+    {
+      "line": 43,
+      "text": "public SkillCategory category; // Hangi dalda yer alacağı"
+    },
+    {
+      "line": 44,
+      "text": "public int tier; // Hangi satırda (aşağıdan yukarıya) yer alacağı (0, 1, 2...)"
+    },
+    {
+      "line": 48,
+      "text": "public int crystalCost; // Yeni: Kristal maliyeti"
+    },
+    {
+      "line": 53,
+      "text": "public float multiplier = 1.1f; // %10 artış için 1.1"
+    },
+    {
+      "line": 54,
+      "text": "public SpellData grantedSpell; // Eğer upgradeType == UnlockSpell ise bu büyü açılır"
+    },
+    {
+      "line": 55,
+      "text": "public Side side; // Hangi tarafa ait olduğunu belirtir (Aydınlık/Karanlık/Genel)"
+    },
+    {
+      "line": 57,
+      "text": "// Artık manuel pozisyona gerek kalmadı, UI tarafı otomatik düzecek."
+    },
+    {
+      "line": 62,
+      "text": "// Bu mantık MetaProgressionManager tarafından kontrol edilecek"
+    }
+  ],
+  "Assets/Scripts/Data/TowerData.cs": [
+    {
+      "line": 16,
+      "text": "public TowerData enemyCounterpart; // Karşı taraftaki karşılığı (Aydınlık <-> Karanlık)"
+    },
+    {
+      "line": 27,
+      "text": "public float health; // Kule dayanıklılığı"
+    },
+    {
+      "line": 43,
+      "text": "public bool isBaseTower = false; // Sadece ana kuleler (Archer, Mage vb.) true olur"
+    },
+    {
+      "line": 48,
+      "text": "public bool isArtillery = false; // Mancınık/top kuleleri: mermi yay çizerek balistik düşer"
+    },
+    {
+      "line": 51,
+      "text": "public bool isBeamTower = false; // Işın kulesi: mermi atmaz, hedefi sürekli lazerle yakar"
+    },
+    {
+      "line": 54,
+      "text": "public bool isSlowTower = false; // Alan yavaşlatma kulesi: çevredeki rakip birimleri sürekli yavaşlatır"
+    },
+    {
+      "line": 59,
+      "text": "[Range(0f, 1f)] public float auraDamageBonus = 0.25f;   // %25 hasar artışı"
+    },
+    {
+      "line": 60,
+      "text": "[Range(0f, 1f)] public float auraFireRateBonus = 0.15f; // %15 ateş hızı artışı"
+    }
+  ],
+  "Assets/Scripts/Data/LevelThemeEnvironmentConfig.cs": [
+    {
+      "line": 21,
+      "text": "public Color forestColor = new Color(0.18f, 0.28f, 0.22f, 1f); // Doğal yumuşak orman yeşili/tonu"
+    },
+    {
+      "line": 24,
+      "text": "public Color desertColor = new Color(0.38f, 0.30f, 0.20f, 1f); // Çöl kumu / sıcak toprak tonu"
+    },
+    {
+      "line": 27,
+      "text": "public Color snowColor = new Color(0.24f, 0.32f, 0.40f, 1f); // Soğuk kış mavisi/grisi"
+    },
+    {
+      "line": 30,
+      "text": "public Color lavaColor = new Color(0.28f, 0.12f, 0.10f, 1f); // Koyu lav / kızıl kül tonu"
+    },
+    {
+      "line": 33,
+      "text": "public Color underworldColor = new Color(0.14f, 0.10f, 0.22f, 1f); // Mistik yeraltı moru/karanlık"
+    }
+  ],
+  "Assets/Scripts/Data/WaveData.cs": [
+    {
+      "line": 12,
+      "text": "public float groupDelay = 0f; // Gruba başlamadan önceki bekleme süresi"
+    },
+    {
+      "line": 13,
+      "text": "public int spawnerIndex = 0; // Hangi spawner bu grubu çıkaracak?"
+    }
+  ],
+  "Assets/Scripts/Data/HeroData.cs": [
+    {
+      "line": 57,
+      "text": "public int unlockCrystalCost = 50; // Yeni: Kristal maliyeti"
+    },
+    {
+      "line": 61,
+      "text": "public int upgradeCrystalCost = 15; // Yeni: Kristal yükseltme maliyeti"
+    }
+  ],
+  "Assets/Scripts/Data/LevelData.cs": [
+    {
+      "line": 38,
+      "text": "public string levelID; // Kilit takibi için benzersiz ID"
+    },
+    {
+      "line": 42,
+      "text": "[Tooltip(\"Opsiyonel: Tema rengi/skybox'i yerine bu bolume ozel bir renk atamak isterseniz secin.\")]"
+    },
+    {
+      "line": 44,
+      "text": "[Tooltip(\"Opsiyonel: Skybox modu aktifse ve bu bolume ozel skybox isteniyorsa atayin.\")]"
+    }
+  ],
+  "Assets/Scripts/Data/UnitData.cs": [
+    {
+      "line": 42,
+      "text": "public UnitData enemyCounterpart; // Karşı taraftaki karşılığı (Aydınlık <-> Karanlık)"
+    }
+  ],
+  "Assets/Scripts/Grid/TowerPlacementManager.cs": [
+    {
+      "line": 50,
+      "text": "// Eğer liste boşsa, Projedeki tüm TowerData'ları bulmaya çalış (Gelişmiş Başlatma)"
+    },
+    {
+      "line": 64,
+      "text": "// Yeni Input Sistemi'nde hem fare hem dokunmatik için en iyi yöntem: Pointer.current"
+    },
+    {
+      "line": 198,
+      "text": "// ÖNCELİK: Eğer bir büyü seçiliyse kule işlemlerini yapma, büyüyü at"
+    },
+    {
+      "line": 218,
+      "text": "// Fallback: Eğer kuleye tıklandıysa kule üzerinden slotu al"
+    },
+    {
+      "line": 231,
+      "text": "// Boş bir yere veya slot olmayan bir yere tıklandığında tüm menüleri kapat"
+    },
+    {
+      "line": 237,
+      "text": "// Gökyüzüne veya collider olmayan bir yere tıklandığında da kapat"
+    },
+    {
+      "line": 267,
+      "text": "// Eğer daha önce başka bir slot aktifse onun menüsünü kapatabilirsin"
+    },
+    {
+      "line": 306,
+      "text": "// Sahnedeki tüm kule seçim ve yükseltme menülerini kapat"
+    },
+    {
+      "line": 321,
+      "text": "// Singleton yerine kulenin kendi içindeki (çocuk) UI'ı tetikle"
+    }
+  ],
+  "Assets/Scripts/Grid/TowerSlot.cs": [
+    {
+      "line": 43,
+      "text": "// Mevcut durumu kontrol et (Zaten açıksa toggle yapacak)"
+    },
+    {
+      "line": 52,
+      "text": "// Zaten açıksa, sadece bu slota özel kapatma/toggle işlemini Show metodlarına bırak"
+    },
+    {
+      "line": 53,
+      "text": "// (Show metodları içerisindeki toggle mantığı çalışacak)"
+    },
+    {
+      "line": 57,
+      "text": "// Başka bir slot menüsü açıksa hepsini kapat"
+    },
+    {
+      "line": 64,
+      "text": "// Yükseltme/Satış menüsünü aç (BarracksTower da Tower'dan türediği için GetComponent<Tower> çalışır)"
+    },
+    {
+      "line": 73,
+      "text": "// Kendi içindeki seçim menüsünü aç"
+    },
+    {
+      "line": 94,
+      "text": "// İnşa sonrası kendi menüsünü kapat"
+    },
+    {
+      "line": 97,
+      "text": "// Slot görselini gizle (kule inşa edildi)"
+    },
+    {
+      "line": 107,
+      "text": "// Slot görselini tekrar göster (kule yok edildi, yeniden inşa edilebilir)"
+    }
+  ],
+  "Assets/Scripts/Grid/LevelInitializer.cs": [
+    {
+      "line": 29,
+      "text": "// Haritayı oluştur"
+    },
+    {
+      "line": 33,
+      "text": "// Haritadaki kuleleri tara ve oyuncunun seçtiği tarafa göre rakip karşılıklarına dönüştür"
+    },
+    {
+      "line": 50,
+      "text": "// NavMesh sistemi kaldırıldı, waypoint bazlı hareket sistemine geçildi."
+    }
+  ],
+  "Assets/Scripts/Editor/LevelMapConfigurator.cs": [
+    {
+      "line": 67,
+      "text": "// 2. Tower Slots'ları Bul"
+    },
+    {
+      "line": 90,
+      "text": "// Eğer \"TowerSlots\" objesi yoksa, isminde Slot_ geçen her şeyi alalım"
+    },
+    {
+      "line": 111,
+      "text": "// Her Path için WP_'leri topla ve sıraya diz"
+    },
+    {
+      "line": 117,
+      "text": "// İsmin sonundaki sayıyı spawnerIndex yapalım (Path_0 -> 0)"
+    },
+    {
+      "line": 136,
+      "text": "// WP_0, WP_1 ismine göre sırala"
+    },
+    {
+      "line": 169,
+      "text": "// Örn: \"WP_5\" veya \"WP_0_5\" (Eski sistemde alt WP'ler)"
+    }
+  ]
+}

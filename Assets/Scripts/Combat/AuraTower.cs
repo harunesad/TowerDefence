@@ -6,14 +6,14 @@ using TowerDefence.Data;
 namespace TowerDefence.Combat
 {
     /// <summary>
-    /// Aura Tower bileşeni: Yakındaki dost kulelere hasar ve ateş hızı buffu uygular.
-    /// Aura alanı zemin spriteı ile görselleştirilir, etkilenen kuleler turkuaz parlaklıkla belirtilir.
+    /// Aura Tower component: Applies damage and fire rate buffs to nearby allied towers.
+    /// Aura area is visualized with a ground sprite; affected towers are indicated with cyan glow.
     /// </summary>
     [RequireComponent(typeof(Tower))]
     public class AuraTower : MonoBehaviour
     {
         [Header("Visual")]
-        [SerializeField] private SpriteRenderer auraSprite;   // Zemin halkası (Inspector'dan atanır veya otomatik oluşturulur)
+        [SerializeField] private SpriteRenderer auraSprite;   // Ground ring (assigned from Inspector or auto-generated)
         [SerializeField] private Color auraColor = new Color(0.2f, 0.7f, 1f, 0.25f);
 
         private Tower myTower;
@@ -23,7 +23,7 @@ namespace TowerDefence.Combat
         private float fireRateBonus;
         private Side mySide;
 
-        // Şu an buffluyor olduğumuz kuleler
+        // Towers currently being buffed
         private readonly HashSet<Tower> buffedTowers = new HashSet<Tower>();
 
         // Physics Throttling
@@ -57,7 +57,7 @@ namespace TowerDefence.Combat
         public void OnTowerUpgraded(int level)
         {
             if (myData == null) return;
-            float levelScale = 1f + Mathf.Max(0, level - 1) * 0.2f;
+            float levelScale = myData.AuraLevelScale(level);
             radius = myData.auraRadius * levelScale;
             damageBonus = myData.auraDamageBonus * levelScale;
             fireRateBonus = myData.auraFireRateBonus * levelScale;
@@ -79,11 +79,11 @@ namespace TowerDefence.Combat
         {
             if (auraSprite == null)
             {
-                // Otomatik oluştur
+                // Auto-generate
                 GameObject spriteGO = new GameObject("AuraRadius");
                 spriteGO.transform.SetParent(transform);
                 spriteGO.transform.localPosition = Vector3.zero;
-                spriteGO.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Yere yatır
+                spriteGO.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Align flat on ground
                 auraSprite = spriteGO.AddComponent<SpriteRenderer>();
                 auraSprite.sprite = CreateCircleSprite();
                 auraSprite.sortingOrder = -1;
@@ -91,12 +91,12 @@ namespace TowerDefence.Combat
 
             auraSprite.color = auraColor;
 
-            // Radius'a göre ölçekle (Sprite 1 Unity Unit = 1 dünya birimi varsayımı)
+            // Scale according to radius (assumes sprite 1 unit = 1 world unit)
             float scale = radius * 2f;
             auraSprite.transform.localScale = new Vector3(scale, scale, 1f);
         }
 
-        /// <summary>Prosedürel yumuşak çember sprite oluşturur (dışa gidildikçe şeffaflaşır).</summary>
+        /// <summary>Creates a procedural soft circle sprite (fades outwards).</summary>
         private Sprite CreateCircleSprite()
         {
             int size = 256;
@@ -104,8 +104,8 @@ namespace TowerDefence.Combat
             tex.filterMode = FilterMode.Bilinear;
             Vector2 center = new Vector2(size / 2f, size / 2f);
             float outerR = size / 2f;
-            float innerR = outerR * 0.55f;   // İç kısım şeffaf
-            float edgeW  = outerR * 0.18f;   // Kenar kalınlığı
+            float innerR = outerR * 0.55f;   // Inner part transparent
+            float edgeW  = outerR * 0.18f;   // Edge thickness
 
             for (int y = 0; y < size; y++)
             {
@@ -120,12 +120,12 @@ namespace TowerDefence.Combat
                     }
                     else if (dist < innerR)
                     {
-                        // İç merkez: çok hafif dolgu
+                        // Center: slight fill
                         alpha = 0.04f;
                     }
                     else
                     {
-                        // Kenar bandı: yumuşak geçiş
+                        // Edge band: smooth fade
                         float t = (dist - innerR) / (outerR - innerR);
                         alpha = Mathf.SmoothStep(0f, 0.85f, t) * Mathf.SmoothStep(0f, 0.85f, 1f - (dist - outerR + edgeW) / edgeW);
                     }
@@ -158,13 +158,13 @@ namespace TowerDefence.Combat
 
         private void RefreshBuffedTowers()
         {
-            // Aura içindeki aynı taraf kulelerini bul
+            // Find towers on the same side within the aura
             Collider[] hits = Physics.OverlapSphere(transform.position, radius);
             HashSet<Tower> currentInRange = new HashSet<Tower>();
 
             foreach (Collider col in hits)
             {
-                // Kendi Tower bileşenimizi atlıyoruz
+                // Skip self Tower component
                 Tower t = col.GetComponent<Tower>();
                 if (t == null || t == myTower) continue;
                 if (t.GetSide() != mySide) continue;
@@ -174,7 +174,7 @@ namespace TowerDefence.Combat
                 buffedTowers.Add(t);
             }
 
-            // Aralıktan çıkanların buffını kaldır
+            // Remove buff from towers that left the range
             List<Tower> toRemove = new List<Tower>();
             foreach (Tower t in buffedTowers)
             {

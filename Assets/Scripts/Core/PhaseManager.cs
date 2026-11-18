@@ -160,7 +160,7 @@ namespace TowerDefence.Core
 
             if (currentPhase == GamePhase.Preparation)
             {
-                // Erken Çağırma Bonusu (Early Call Bonus)
+                // Early Call Bonus
                 if (timer > 0)
                 {
                     int bonus = Mathf.CeilToInt(timer * 2f);
@@ -194,10 +194,10 @@ namespace TowerDefence.Core
             if (currentPhase != GamePhase.Combat) return;
             if (GameManager.Instance == null || GameManager.Instance.GetCurrentState() != GameState.Playing) return;
 
-            // Senkronizasyon için çok kısa bir süre bekle (En az 1.5 saniye)
+            // Wait a brief moment for synchronization (At least 1.5 seconds)
             if (Time.time < combatStartTime + 1.5f) return;
 
-            // Spawner'lar hala üretim yapıyor mu VEYA henüz dalgaya başladılar mı kontrol et
+            // Check if spawners are still spawning OR have started the wave yet
             bool anySpawnerBusy = false;
             int enemySpawnerCount = 0;
             foreach (var spawner in Spawner.AllSpawners)
@@ -214,7 +214,7 @@ namespace TowerDefence.Core
 
             if (enemySpawnerCount == 0 || anySpawnerBusy) return;
 
-            // Sadece DÜŞMAN birimlerini kontrol et (Oyuncunun kendi askerleri dalgayı bloklamasın)
+            // Only check ENEMY units (Player units should not block wave completion)
             Side playerSide = SideController.Instance.GetPlayerSide();
             int enemyCount = 0;
 
@@ -226,7 +226,7 @@ namespace TowerDefence.Core
                 }
             }
             
-            // Eğer sahada düşman kalmadıysa ve spawner'lar bittiyse dalga bitmiştir
+            // If no enemies remain on the field and spawners are done, wave is complete
             if (enemyCount == 0)
             {
                 WaveCompleted();

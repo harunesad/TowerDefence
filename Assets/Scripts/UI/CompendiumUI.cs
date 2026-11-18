@@ -171,7 +171,7 @@ namespace TowerDefence.UI
 
             if (item == null)
             {
-                Debug.LogError("[CompendiumUI] compendiumItemPrefab bulunamadı veya atanmamış!");
+                Debug.LogError("[CompendiumUI] compendiumItemPrefab not found or unassigned!");
                 return;
             }
 

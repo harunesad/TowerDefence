@@ -23,17 +23,17 @@ namespace TowerDefence.Combat
         
         [Header("Range Visual")]
         private LineRenderer rangeLine;
-        private Color rangeColor = new Color(0.2f, 0.8f, 1f, 0.6f); // Turkuaz/Mavi parlak çizgi
+        private Color rangeColor = new Color(0.2f, 0.8f, 1f, 0.6f); // Glowing cyan/blue line
 
         private void Awake()
         {
             EnsureTowerObstacle();
             baseRespawnDelay = respawnDelay;
             
-            // Eğer inspector/kod tarafında değer girilmişse onu kullan
+            // Use value if specified in inspector or code
             if (rallyRadius > 0.1f)
             {
-                // Mevcut rallyRadius değerini koru
+                // Retain existing rallyRadius value
             }
             else if (towerData != null && towerData.range > 0.1f)
             {
@@ -41,17 +41,17 @@ namespace TowerDefence.Combat
             }
             else
             {
-                rallyRadius = 30f; // Güvenli fallback
+                rallyRadius = 30f; // Safe fallback
             }
 
             SetupRangeIndicator();
         }
     
-        // Menzili elle de artırabilmen için (Hızlı müdahale)
+        // Allows manually increasing range if needed
         public void IncreaseRallyRadius(float amount)
         {
             rallyRadius += amount;
-            SetRangeVisible(true); // Ölçeği tazelemesi için
+            SetRangeVisible(true); // Refresh scale
         }
 
         private void SetupRangeIndicator()
@@ -63,7 +63,7 @@ namespace TowerDefence.Combat
             rangeLine.startWidth = 0.4f; 
             rangeLine.endWidth = 0.4f;
             rangeLine.positionCount = 51;
-            rangeLine.useWorldSpace = true; // Kule ölçeğinden bağımsız dünyada çiz
+            rangeLine.useWorldSpace = true; // Draw in world space independent of tower scale
             rangeLine.loop = true;
             rangeLine.alignment = LineAlignment.TransformZ;
             
@@ -108,7 +108,7 @@ namespace TowerDefence.Combat
         {
             currentRallyPoint = FindNearestPathInRange();
 
-            // İşaretçiyi oluştur ama gizli başlat (SetRangeVisible ile menü açılınca görünecek)
+            // Instantiate indicator hidden initially (visible when menu opens via SetRangeVisible)
             if (currentIndicator == null && rallyIndicatorPrefab != null)
             {
                 currentIndicator = Instantiate(rallyIndicatorPrefab, currentRallyPoint, Quaternion.Euler(90, 0, 0), transform);
@@ -127,9 +127,8 @@ namespace TowerDefence.Combat
             float previousPower = soldierStatMultiplier;
             currentLevel++;
 
-            soldierCount++;
             respawnDelay = baseRespawnDelay * (1f - (currentLevel - 1) * 0.15f);
-            soldierStatMultiplier = 1f + (currentLevel - 1) * 0.5f;
+            soldierStatMultiplier = 1f + (currentLevel - 1) * 0.25f;
 
             for (int i = activeSoldiers.Count - 1; i >= 0; i--)
             {
@@ -138,16 +137,14 @@ namespace TowerDefence.Combat
                     soldier.MatchBarracksPower(soldierStatMultiplier);
             }
 
-            SpawnSoldier();
-
             Debug.Log($"[Barracks] Upgraded to Level {currentLevel}! Soldiers: {soldierCount}, Respawn: {respawnDelay:F1}s, Power: x{soldierStatMultiplier} (was x{previousPower})");
             return true;
         }
 
         private void Update()
         {
-            // Tower base'in Update'ini (ateş etme) engellemek için base.Update() ÇAĞIRMIYORUZ
-            // Kışla kulesi ateş etmez, asker yönetir.
+            // Do not call base.Update() to prevent base tower firing logic
+            // Barracks tower does not shoot; it manages soldiers.
             if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded()) return;
             if (IsDisabled)
             {
@@ -155,7 +152,7 @@ namespace TowerDefence.Combat
                 return;
             }
 
-            // Ölen askerleri kontrol et ve respawn başlat
+            // Check dead soldiers and initiate respawn
             for (int i = activeSoldiers.Count - 1; i >= 0; i--)
             {
                 if (activeSoldiers[i] == null || activeSoldiers[i].IsDead)
@@ -209,8 +206,8 @@ namespace TowerDefence.Combat
             
             if (soldier == null)
             {
-                // Eğer prefab'da Soldier scripti yoksa ekle (Veya Unit'i Soldier'a çevir)
-                // Genelde prefab'da olması tercih edilir.
+                // Add Soldier script if not present on prefab
+                // Typically preferred on the prefab.
                 soldier = soldierGO.AddComponent<Soldier>();
             }
 
@@ -218,7 +215,7 @@ namespace TowerDefence.Combat
             soldier.SetAppliedStatMultiplier(soldierStatMultiplier);
             soldier.SetBarracks(this);
             
-            // Rally point etrafında küçük bir ofset ver (üst üste binmesinler)
+            // Add slight offset around rally point to prevent overlapping
             Vector3 offset = Random.insideUnitSphere * 0.8f;
             offset.y = 0;
             soldier.SetRallyPoint(currentRallyPoint + offset);
@@ -286,7 +283,7 @@ namespace TowerDefence.Combat
         {
             currentRallyPoint = newPoint;
 
-            // Görsel İşaretçiyi Güncelle
+            // Update Visual Indicator
             if (currentIndicator == null && rallyIndicatorPrefab != null)
             {
                 currentIndicator = Instantiate(rallyIndicatorPrefab, currentRallyPoint, Quaternion.Euler(90, 0, 0), transform);
@@ -317,7 +314,7 @@ namespace TowerDefence.Combat
             }
             activeSoldiers.Clear();
 
-            // İşaretçiyi temizle
+            // Clean up indicator
             if (currentIndicator != null)
             {
                 Destroy(currentIndicator);

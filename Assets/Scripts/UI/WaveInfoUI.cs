@@ -132,7 +132,7 @@ namespace TowerDefence.UI
 
         private void CreatePanel()
         {
-            // Arka plan engelleyici (dışarı tıklandığında paneli kapatır)
+            // Arka plan engelleyici (disari tiklandiginda paneli kapatir)
             Canvas canvas = GetComponentInParent<Canvas>();
             Transform canvasTransform = canvas != null ? canvas.transform : transform.parent;
 
@@ -145,7 +145,7 @@ namespace TowerDefence.UI
             brt.offsetMax = Vector2.zero;
 
             Image bImg = blocker.AddComponent<Image>();
-            bImg.color = new Color(0, 0, 0, 0.001f); // Görünmez ama dış tıklamaları yakalar
+            bImg.color = new Color(0, 0, 0, 0.001f); // Invisible but intercepts outside clicks
             bImg.raycastTarget = true;
 
             Button bBtn = blocker.AddComponent<Button>();
@@ -231,7 +231,7 @@ namespace TowerDefence.UI
             {
                 if (isOpen)
                 {
-                    // Blocker'ı panelin arkasında ama diğer UI elemanlarının önünde olacak şekilde sırala
+                    // Blocker'i panelin arkasinda ama diger UI elemanlarinin onunde olacak sekilde sirala
                     blocker.transform.SetSiblingIndex(Mathf.Max(0, transform.GetSiblingIndex()));
                 }
                 blocker.SetActive(isOpen);
@@ -323,7 +323,7 @@ namespace TowerDefence.UI
             {
                 rowGO = Instantiate(unitsRowPrefab, content.transform, false);
                 rowGO.name = "UnitsRow";
-                // Prefab içindeki şablon/placeholder çocukları temizle
+                // Prefab icindeki sablon/placeholder cocuklari temizle
                 for (int i = rowGO.transform.childCount - 1; i >= 0; i--)
                     Destroy(rowGO.transform.GetChild(i).gameObject);
             }
@@ -379,6 +379,7 @@ namespace TowerDefence.UI
 
             UnitData captured = data;
             btn.onClick.AddListener(() => ToggleStatPopup(captured, rt));
+            UIButtonSound.Attach(btn);
 
             GameObject spriteGO = new GameObject("Sprite", typeof(RectTransform), typeof(Image));
             spriteGO.transform.SetParent(iconGO.transform, false);
@@ -394,7 +395,7 @@ namespace TowerDefence.UI
             spriteImg.raycastTarget = false;
             btn.targetGraphic = spriteImg;
 
-            // UnitData'daki bağımsız Wave Info ayarlarını uygula
+            // UnitData'daki bagimsiz Wave Info ayarlarini uygula
             data.waveInfoIcon.ApplyTo(spriteImg);
 
             GameObject countGO = new GameObject("Count", typeof(RectTransform));
@@ -474,11 +475,11 @@ namespace TowerDefence.UI
             popupBg.color = new Color(0.12f, 0.12f, 0.14f, 0.98f);
             popupBg.raycastTarget = true;
 
-            // Panelin içine tıklanınca kapanmasını engelle
+            // Panelin icine tiklaninca kapanmasini engelle
             Button popupBlocker = statPopup.AddComponent<Button>();
             popupBlocker.transition = Selectable.Transition.None;
 
-            // Zorluk katsayılarını hesapla (1: Normal, 2: Hard (+50%), 3: Expert (+100%))
+            // Zorluk katsayilarini hesapla (1: Normal, 2: Hard (+50%), 3: Expert (+100%))
             int diffLevel = CampaignManager.Instance != null ? CampaignManager.Instance.CurrentDifficultyLevel : 1;
             string diffName = "Normal";
             float diffMult = 1f;

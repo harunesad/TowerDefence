@@ -46,7 +46,7 @@ namespace TowerDefence.Combat
         }
         private void Update()
         {
-            if (isPlayerSpawner) return; // Oyuncu spawner'ı dalga beklemek yerine manuel tetiklenir
+            if (isPlayerSpawner) return; // Player spawner is triggered manually rather than waiting for waves
             if (TutorialDirector.Instance != null && TutorialDirector.Instance.HoldsUnitMarch()) return;
             if (GameManager.Instance != null && GameManager.Instance.HasMatchEnded()) return;
 
@@ -56,7 +56,7 @@ namespace TowerDefence.Combat
                 return;
             }
 
-            // Yeni bir dalga başladığında kontrol et
+            // Yeni bir dalga basladiginda kontrol et
             int phaseWaveIndex = PhaseManager.Instance.GetCurrentWaveIndex();
             if (currentWaveIndex != phaseWaveIndex)
             {
@@ -100,7 +100,7 @@ namespace TowerDefence.Combat
             {
                 WaveData wave = currentLevel.waves[waveIndex];
                 
-                // Sadece bu spawner'a ait grupları filtrele
+                // Sadece bu spawner'a ait gruplari filtrele
                 foreach (var group in wave.unitGroups)
                 {
                     if (group.spawnerIndex == spawnerIndex)
@@ -151,11 +151,11 @@ namespace TowerDefence.Combat
                 }
                 else
                 {
-                    // Grubu bitir, sonrakine geç
+                    // Grubu bitir, sonrakine gec
                     currentGroupIndex++;
                     unitsSpawnedInGroup = 0;
                     
-                    // Yeni grup varsa onun delay süresini uygula
+                    // Yeni grup varsa onun delay suresini uygula
                     if (currentGroupIndex < activeWaveGroups.Count)
                     {
                         nextSpawnTime = Time.time + activeWaveGroups[currentGroupIndex].groupDelay;
@@ -164,7 +164,7 @@ namespace TowerDefence.Combat
             }
             else
             {
-                // Tüm gruplar bitti
+                // Tum gruplar bitti
                 isSpawning = false;
                 Debug.Log($"Spawner [{spawnerIndex}]: Wave {currentWaveIndex + 1} complete.");
             }
@@ -214,9 +214,9 @@ namespace TowerDefence.Combat
 
             UnitData finalUnitData = unitData;
 
-            // --- Dinamik Taraf Kontrolü ---
-            // Sadece otomatik dalga üretimlerinde aynalama yap (Düşman ordusu oluşturmak için)
-            // Oyuncu kendisi basıyorsa direkt kendi tarafını basar
+            // --- Dinamik Taraf Kontrolu ---
+            // Sadece otomatik dalga uretimlerinde aynalama yap (Dusman ordusu olusturmak icin)
+            // Oyuncu kendisi basiyorsa direkt kendi tarafini basar
             if (!isManual)
             {
                 Side playerSide = SideController.Instance.GetPlayerSide();
@@ -246,7 +246,7 @@ namespace TowerDefence.Combat
                 unit.Initialize(finalUnitData, diffMultiplier);
                 if (diffMultiplier > 1f) unit.SetKillRewardMultiplier(diffMultiplier);
                 
-                // Atanan yollardan rastgele birini seç
+                // Atanan yollardan rastgele birini sec
                 if (assignedPaths != null && assignedPaths.Count > 0)
                 {
                     int randomIndex = Random.Range(0, assignedPaths.Count);

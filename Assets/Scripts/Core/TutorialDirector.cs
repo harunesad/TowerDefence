@@ -3055,6 +3055,7 @@ namespace TowerDefence.Core
             buttonImage.color = Color.white;
             nextButton = buttonGo.GetComponent<Button>();
             nextButton.targetGraphic = buttonImage;
+            UIButtonSound.Attach(nextButton);
         }
 
         static Sprite whiteSprite;

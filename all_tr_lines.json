@@ -1,0 +1,1432 @@
+{
+  "Assets\\Scripts\\Combat\\HeroSelectionIndicator.cs": [
+    {
+      "lineIndex": 93,
+      "text": "                    // Soft kenarlar (anti-aliasing) için\r"
+    }
+  ],
+  "Assets\\Scripts\\Combat\\HeroUnit.cs": [
+    {
+      "lineIndex": 49,
+      "text": "            // Tıklanabilmesi için Collider eksikse dinamik olarak ekle (Root objesinde olmasını garanti ediyoruz)"
+    },
+    {
+      "lineIndex": 59,
+      "text": "            // Ölçeği ayarla (Gereksinim: Herolar scale (1.5, 1.5, 1.5))"
+    },
+    {
+      "lineIndex": 81,
+      "text": "            // Dalga bittiğinde (Hazırlık fazına geçildiğinde) animasyonu sıfırla"
+    },
+    {
+      "lineIndex": 96,
+      "text": "            // 1. Animasyonları Idle'a çek"
+    },
+    {
+      "lineIndex": 101,
+      "text": "                // Triggers temizliği"
+    },
+    {
+      "lineIndex": 113,
+      "text": "                // Sert sıfırlama: Idle animasyonuna anında geç"
+    },
+    {
+      "lineIndex": 117,
+      "text": "            // 2. Saldırı ve Hareket durumlarını temizle"
+    },
+    {
+      "lineIndex": 124,
+      "text": "            // 3. Ölçeği tekrar garanti et"
+    },
+    {
+      "lineIndex": 137,
+      "text": "            // Mevcut saldırı ve hedef eylemlerini anında iptal et"
+    },
+    {
+      "lineIndex": 285,
+      "text": "                // Combat fazı dışındayken saldırı veya hedef varsa temizle"
+    },
+    {
+      "lineIndex": 338,
+      "text": "            // Sadece vuruş/hasar odaklı yeteneklerde \"Ability\" animasyonunu tetikle"
+    },
+    {
+      "lineIndex": 351,
+      "text": "                // Pasif veya iyileştirme gibi destek yetenekleri animasyon oynatmaz"
+    },
+    {
+      "lineIndex": 554,
+      "text": "            // Bizi engelleyen varsa onu boşa çıkar"
+    },
+    {
+      "lineIndex": 562,
+      "text": "            // Bizim engellediğimiz düşmanlar varsa onları serbest bırak"
+    },
+    {
+      "lineIndex": 571,
+      "text": "            // Unit.Die()'daki Destroy'u engellemek için base.Die() çağırmıyoruz"
+    },
+    {
+      "lineIndex": 589,
+      "text": "            // Ölüm efekti"
+    },
+    {
+      "lineIndex": 596,
+      "text": "            // Ekonomi ödülü"
+    }
+  ],
+  "Assets\\Scripts\\Combat\\PathWaypoints.cs": [
+    {
+      "lineIndex": 36,
+      "text": "            // Eğer yeterli handle yoksa listeyi eşitle\r"
+    },
+    {
+      "lineIndex": 58,
+      "text": "                // Handle hiç ayarlanmamışsa (Vector3.zero) otomatik orta nokta yap\r"
+    },
+    {
+      "lineIndex": 93,
+      "text": "            // Kontrol noktalarını (orijinal waypoints) çiz\r"
+    },
+    {
+      "lineIndex": 103,
+      "text": "            // Kavisli veya düz yolu çiz\r"
+    }
+  ],
+  "Assets\\Scripts\\Combat\\PlacementManager.cs": [
+    {
+      "lineIndex": 50,
+      "text": "                        // selectedTower = null; // Sürekli yerleştirme için kapalı tutulabilir\r"
+    }
+  ],
+  "Assets\\Scripts\\Combat\\Projectile.cs": [
+    {
+      "lineIndex": 55,
+      "text": "            // Karakterlerin merkez noktası ayaklarında olduğu için mermiyi göğüs hizasına (1 birim yukarı) nişanla\r"
+    },
+    {
+      "lineIndex": 63,
+      "text": "            // Balistik atış: atış anındaki hedef noktasını dondur (dumb lob — hedef yürürse ıskalanabilir)\r"
+    },
+    {
+      "lineIndex": 159,
+      "text": "            // Hedefin tarafını (Side) alalım ki sadece hedefle aynı taraftaki birimlere hasar verelim.\r"
+    }
+  ],
+  "Assets\\Scripts\\Combat\\Shield.cs": [
+    {
+      "lineIndex": 51,
+      "text": "                    // Taşan hasarı ana birime ilet\r"
+    },
+    {
+      "lineIndex": 57,
+      "text": "                // Kalkan yoksa hasar ana birime geçer\r"
+    }
+  ],
+  "Assets\\Scripts\\Combat\\Soldier.cs": [
+    {
+      "lineIndex": 48,
+      "text": "            // 1. Düşman Taraması (Sadece birini engellemiyorsak)"
+    },
+    {
+      "lineIndex": 54,
+      "text": "            // 2. Savaş ve Hareket Mantığı (Base sınıf kovalama ve saldırıyı halleder)"
+    },
+    {
+      "lineIndex": 57,
+      "text": "            // 3. Eğer engellemiyorsak ve savaşmıyorsak Rally Point'e dön"
+    },
+    {
+      "lineIndex": 66,
+      "text": "            // Düşman katmanını belirle (Side.Light isek Dark olanlara (7) bak)"
+    },
+    {
+      "lineIndex": 73,
+      "text": "                // Sadece ölmemiş ve başka biri tarafından engellenmemiş düşmanları engelle"
+    },
+    {
+      "lineIndex": 91,
+      "text": "                // Unit.cs'deki MoveTowardsTarget ve HandleRotation metodlarını kullan"
+    }
+  ],
+  "Assets\\Scripts\\Combat\\Spawner.cs": [
+    {
+      "lineIndex": 58,
+      "text": "            // Yeni bir dalga başladığında kontrol et"
+    },
+    {
+      "lineIndex": 102,
+      "text": "                // Sadece bu spawner'a ait grupları filtrele"
+    },
+    {
+      "lineIndex": 153,
+      "text": "                    // Grubu bitir, sonrakine geç"
+    },
+    {
+      "lineIndex": 157,
+      "text": "                    // Yeni grup varsa onun delay süresini uygula"
+    },
+    {
+      "lineIndex": 166,
+      "text": "                // Tüm gruplar bitti"
+    },
+    {
+      "lineIndex": 216,
+      "text": "            // --- Dinamik Taraf Kontrolü ---"
+    },
+    {
+      "lineIndex": 217,
+      "text": "            // Sadece otomatik dalga üretimlerinde aynalama yap (Düşman ordusu oluşturmak için)"
+    },
+    {
+      "lineIndex": 218,
+      "text": "            // Oyuncu kendisi basıyorsa direkt kendi tarafını basar"
+    },
+    {
+      "lineIndex": 248,
+      "text": "                // Atanan yollardan rastgele birini seç"
+    }
+  ],
+  "Assets\\Scripts\\Combat\\StatusEffect.cs": [
+    {
+      "lineIndex": 56,
+      "text": "                    // Stun mantığı Unit Update'inde NavMeshAgent.isStopped ile kontrol edilecek"
+    },
+    {
+      "lineIndex": 64,
+      "text": "        /// Süreyi ve gücü günceller. Tick saatini sıfırlamaz; yenilenen zehir ve yanma işlemeye devam eder."
+    }
+  ],
+  "Assets\\Scripts\\Combat\\Tower.cs": [
+    {
+      "lineIndex": 114,
+      "text": "            // Slotu serbest bırak"
+    },
+    {
+      "lineIndex": 138,
+      "text": "        /// Statlar taban veriden yeniden yazılmadan önce aura izini siler."
+    },
+    {
+      "lineIndex": 139,
+      "text": "        /// Çarpan bölünmez; bir sonraki aura taraması taze değerlere yeniden uygulanır."
+    },
+    {
+      "lineIndex": 153,
+      "text": "        /// <summary>Aura Tower tarafından çağrılır. Daha güçlü aura zayıf olanın yerine geçer.</summary>"
+    },
+    {
+      "lineIndex": 190,
+      "text": "        /// <summary>Buff'ı yalnız onu veren aura kaldırabilir.</summary>"
+    },
+    {
+      "lineIndex": 337,
+      "text": "            // Meta-Gelişim Çarpanlarını Uygula"
+    },
+    {
+      "lineIndex": 338,
+      "text": "            // DamageBonus birim hasarıdır. Kule hasarı yalnızca TowerDamageBonus ile gelir."
+    },
+    {
+      "lineIndex": 367,
+      "text": "            // 3D Kuleler için Weapon nesnesini kaldırdık, kule modelinin kendisi dönecek"
+    },
+    {
+      "lineIndex": 373,
+      "text": "                    // Visuals altındaki ilk obje kule modelidir"
+    },
+    {
+      "lineIndex": 403,
+      "text": "            // Dinamik Hedefleme (Light kuleler Dark layer'ı (7), Dark kuleler Light layer'ı (6) hedefler)"
+    },
+    {
+      "lineIndex": 434,
+      "text": "            // Aura kuleleri ateş etmez, sadece buff verir"
+    },
+    {
+      "lineIndex": 484,
+      "text": "            // Visual feedback: Hızlanma efekti"
+    },
+    {
+      "lineIndex": 575,
+      "text": "                        // First: En yüksek waypoint index'i + waypoint'e en yakın olan"
+    },
+    {
+      "lineIndex": 732,
+      "text": "            // Hasar, seviye sayısı kadar katlanır: 2. seviye ikinci kuleyle aynı hasar."
+    },
+    {
+      "lineIndex": 733,
+      "text": "            // Menzil seviye başına %20 artar."
+    },
+    {
+      "lineIndex": 764,
+      "text": "            // Veriyi değiştir ve yeniden başlat"
+    }
+  ],
+  "Assets\\Scripts\\Combat\\Unit.cs": [
+    {
+      "lineIndex": 62,
+      "text": "        private float pathOffset; // Yol üzerindeki yanal sapma (Sabitlendi)"
+    },
+    {
+      "lineIndex": 98,
+      "text": "        protected List<Unit> blockedEnemies = new List<Unit>(); // Bizim engellediğimiz düşmanlar"
+    },
+    {
+      "lineIndex": 123,
+      "text": "            // Runtime Bulletproof Fix: Eğer AnimationEventHandler yoksa otomatik ekle"
+    },
+    {
+      "lineIndex": 168,
+      "text": "            // Meta-Gelişim Çarpanlarını Uygula"
+    },
+    {
+      "lineIndex": 169,
+      "text": "            // SpeedBonus kule ateş hızıdır (Rapid Fire). Birim hızı yalnızca UnitSpeedBonus."
+    },
+    {
+      "lineIndex": 194,
+      "text": "            // Animasyon hızını hareket hızıyla senkronize et"
+    },
+    {
+      "lineIndex": 195,
+      "text": "            // 1.0f = referans hız, animasyon bu hıza göre kalibre edilmiş sayılır"
+    },
+    {
+      "lineIndex": 200,
+      "text": "                // Dost birimler mavi, düşman birimler yeşil/kırmızı (prefabın orijinal rengi veya yeşil)"
+    },
+    {
+      "lineIndex": 204,
+      "text": "                    healthBar.SetColor(new Color(0.2f, 0.8f, 0.2f)); // Yeşil"
+    },
+    {
+      "lineIndex": 215,
+      "text": "            // Kullanıcı isteği üzerine: Dost birliklerin altına çıkan indicator halkası tamamen kaldırıldı (Can barı renklerinden ayırt ediliyor)"
+    },
+    {
+      "lineIndex": 223,
+      "text": "        /// <summary>Animator hızını verilen hareket hızına göre ayarlar.</summary>"
+    },
+    {
+      "lineIndex": 227,
+      "text": "            // Referans hızı: 1.0f. Animasyonlar bu hıza göre çekilmiş sayılır."
+    },
+    {
+      "lineIndex": 228,
+      "text": "            // Kısmi çarpım (0.85f) aşırı hızlı görünmeyi engeller."
+    },
+    {
+      "lineIndex": 288,
+      "text": "            unitIndicator.transform.localPosition = indicatorPosition; // Editörden ayarlanan pozisyon"
+    },
+    {
+      "lineIndex": 406,
+      "text": "            // Savaş Durumu Check — isBlocked'dan bağımsız çalışır"
+    },
+    {
+      "lineIndex": 414,
+      "text": "                // Saldırı menziline küçük bir tolerans ekle (+0.5f)"
+    },
+    {
+      "lineIndex": 428,
+      "text": "            // Hareket Mantığı — isBlocked sadece yol/kovalama hareketini engeller"
+    },
+    {
+      "lineIndex": 431,
+      "text": "                // Değişiklik: isBlocked olsa bile eğer bir hedefimiz (düello partnerimiz) varsa ona yürüyebilelim"
+    },
+    {
+      "lineIndex": 439,
+      "text": "                    // Yakın dövüşçü ise (Projectile yoksa) iyice dibine (1.2f) gir"
+    },
+    {
+      "lineIndex": 468,
+      "text": "                    // 2. Düşman yoksa ve engellenmemişsek Waypoint Takibi yap"
+    },
+    {
+      "lineIndex": 520,
+      "text": "                    // isBlocked: Yerinde dur, hedefe dön"
+    },
+    {
+      "lineIndex": 528,
+      "text": "                // Savaş/saldırı sırasında yürüme animasyonunu kapat — ama sadece normal üniteler için."
+    },
+    {
+      "lineIndex": 529,
+      "text": "                // Hero'lar kendi animasyon yönetimlerini HeroUnit.Update() içinde yapıyor."
+    },
+    {
+      "lineIndex": 622,
+      "text": "            // Yanal sapma için yönü ünitenin nerede olduğuna göre değil, yolun gidişatına (segment) göre hesapla."
+    },
+    {
+      "lineIndex": 623,
+      "text": "            // Bu sayede ünite hedefe çok yaklaştığında sağ/sol hesaplaması fırıldak gibi dönüp sapmaz."
+    },
+    {
+      "lineIndex": 632,
+      "text": "                    // Önceki noktadan şu anki hedefe doğru olan yön"
+    },
+    {
+      "lineIndex": 637,
+      "text": "                    // İlk nokta için yönü bir sonraki noktaya bakarak al"
+    },
+    {
+      "lineIndex": 663,
+      "text": "            direction.y = 0; // Yerden yükselmeyi veya aşağı bakmayı engelle"
+    },
+    {
+      "lineIndex": 665,
+      "text": "            // Eğer sıfıra çok yakınsa dönmeye çalışma (LookRotation hatasını engeller)"
+    },
+    {
+      "lineIndex": 687,
+      "text": "            // 1. ÖNCELİK: Düello Partneri Kontrolü"
+    },
+    {
+      "lineIndex": 719,
+      "text": "                // 1'E 1 KURALI: Unit vs Unit, kahramanlar muaftır"
+    },
+    {
+      "lineIndex": 753,
+      "text": "            // 4 şerit veya sürekli rastgele dağılım. Daha doğal görünmesi için PathWidth üzerinden hesaplıyoruz."
+    },
+    {
+      "lineIndex": 754,
+      "text": "            // Örneğin width = 3 ise, offset -1.5 ile 1.5 arası."
+    },
+    {
+      "lineIndex": 821,
+      "text": "            // En yakın noktaya ulaştı sayıp bir sonrakine yönlendiriyoruz"
+    },
+    {
+      "lineIndex": 880,
+      "text": "            // Health barın Y pozisyonunun biraz altında"
+    },
+    {
+      "lineIndex": 888,
+      "text": "                    // Kameraya bakması (billboard) sağlanabilir, ama HealthBarUI'nin parent'ı zaten billboard yapıyorsa sorun yok."
+    },
+    {
+      "lineIndex": 889,
+      "text": "                    // UnitIndicator tarzı Yere paralel mi olsun, yoksa ekrana mı baksın? "
+    },
+    {
+      "lineIndex": 890,
+      "text": "                    // İkon oldukları için SpriteRenderer ile ekrana bakmaları daha iyidir."
+    },
+    {
+      "lineIndex": 909,
+      "text": "            // Aynı tipte bir efekt varsa süreyi yenile veya daha güçlüsünü al"
+    },
+    {
+      "lineIndex": 949,
+      "text": "            sr.sortingOrder = 15; // Healthbar'ın üstünde/altında net görünsün"
+    },
+    {
+      "lineIndex": 950,
+      "text": "            visualObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // İkonların boyutu"
+    },
+    {
+      "lineIndex": 979,
+      "text": "            // Slow uygulandığında animasyonu ve hareketi yavaşlat"
+    },
+    {
+      "lineIndex": 987,
+      "text": "            // Eğer yol atanmışsa, hedef olarak yolun son noktasını (Base kapısını) referans al"
+    },
+    {
+      "lineIndex": 1000,
+      "text": "                    // Artık doğduğu yere göre değil, gideceği yolun sonuna en yakın Base'i seçecek"
+    },
+    {
+      "lineIndex": 1018,
+      "text": "                // Üsse ulaştığında güncel hasarı ver. Can zaten bitmişse yenilgi yine işler."
+    },
+    {
+      "lineIndex": 1025,
+      "text": "                    // Özel ölüm veya standart ölüm efekti"
+    },
+    {
+      "lineIndex": 1111,
+      "text": "        // Animation Event'ten çağrılacak metod"
+    },
+    {
+      "lineIndex": 1114,
+      "text": "            // Eğer daha önceden (fallback veya çoklu event) hasar verildiyse çık"
+    },
+    {
+      "lineIndex": 1117,
+      "text": "            // Eğer saldırı iptal edildiyse veya bitirildiyse vurma"
+    },
+    {
+      "lineIndex": 1131,
+      "text": "            // Phantom Hit Fix (Ölüye vurmayı engelle)"
+    },
+    {
+      "lineIndex": 1214,
+      "text": "            // Eğer kalkan varsa hasarı kalkan emsin"
+    },
+    {
+      "lineIndex": 1285,
+      "text": "            // Bizi engelleyen varsa onu boşa çıkar"
+    },
+    {
+      "lineIndex": 1292,
+      "text": "            // Bizim engellediğimiz düşmanlar varsa onları serbest bırak"
+    },
+    {
+      "lineIndex": 1302,
+      "text": "            // Efekt görsellerini temizle"
+    },
+    {
+      "lineIndex": 1308,
+      "text": "            // Ölüm efekti"
+    },
+    {
+      "lineIndex": 1349,
+      "text": "                // Artık birini engellemiyoruz, normal harekete dönebiliriz (Veya rally point'e)"
+    }
+  ],
+  "Assets\\Scripts\\Core\\AdManager.cs": [
+    {
+      "lineIndex": 117,
+      "text": "        /// Ödüllü reklam gösterir."
+    },
+    {
+      "lineIndex": 150,
+      "text": "        /// Geçiş (Zorunlu) reklamı gösterir."
+    },
+    {
+      "lineIndex": 159,
+      "text": "                isInterstitialLoaded = false; // Kullanıldı"
+    },
+    {
+      "lineIndex": 166,
+      "text": "                LoadAd(interstitialId); // Yeniden yüklemeyi dene"
+    },
+    {
+      "lineIndex": 204,
+      "text": "            LoadAd(adUnitId); // Gösterimden sonra yenisini yükle"
+    }
+  ],
+  "Assets\\Scripts\\Core\\CameraAspectRatioScaler.cs": [
+    {
+      "lineIndex": 5,
+      "text": "    /// Ekranın en/boy oranına (Aspect Ratio) göre kameranın görüş alanını (FOV veya Orthographic Size) dinamik ayarlar."
+    },
+    {
+      "lineIndex": 6,
+      "text": "    /// Referans 16:9 oranından daha dar ekranlarda (iPad, tablet vb.) haritanın kenarlarının kesilmesini engeller."
+    },
+    {
+      "lineIndex": 45,
+      "text": "            // Çözünürlük veya yön (Orientation) değiştiğinde anında güncelle"
+    },
+    {
+      "lineIndex": 64,
+      "text": "                // Cihaz 16:9'dan daha darsa (örn: iPad 4:3), haritayı kesmemek için kamerayı geriye çek"
+    },
+    {
+      "lineIndex": 71,
+      "text": "                    // 16:9 veya daha geniş ekranlarda temel boyutu koru"
+    },
+    {
+      "lineIndex": 77,
+      "text": "                // Perspektif kamera için yatay FOV'u koru"
+    },
+    {
+      "lineIndex": 92,
+      "text": "        /// Sahneye yüklendiğinde ve her sahne geçişinde Main Camera üzerinde bu bileşen yoksa otomatik ekler."
+    }
+  ],
+  "Assets\\Scripts\\Core\\CampaignManager.cs": [
+    {
+      "lineIndex": 95,
+      "text": "                // Sahne yüklendiğinde yeni haritayı spawn etmek için abone ol"
+    },
+    {
+      "lineIndex": 110,
+      "text": "                // Sahne yüklendiğinde haritayı tekrar kurması için abone ol"
+    },
+    {
+      "lineIndex": 124,
+      "text": "            // Sadece bir kez çalışması için çıkar"
+    },
+    {
+      "lineIndex": 127,
+      "text": "            // Sahne yükleme bitince spawn et"
+    },
+    {
+      "lineIndex": 135,
+      "text": "            // 3. Spawning: Haritayı oluştur"
+    },
+    {
+      "lineIndex": 164,
+      "text": "            // Yeni: Haritayı ekrana tam ortala (HUD payı dahil)"
+    },
+    {
+      "lineIndex": 219,
+      "text": "            // Bölümü tamamlandı olarak kaydet"
+    },
+    {
+      "lineIndex": 222,
+      "text": "            // Bir sonraki seviyenin kilidini aç (Yazılımsal mantık)"
+    },
+    {
+      "lineIndex": 225,
+      "text": "            // Tüm bölümler bittiyse bir sonraki zorluğu aç"
+    },
+    {
+      "lineIndex": 245,
+      "text": "                // Eğer açılan yeni bölüm, kayıttaki en yüksek bölümden büyükse kaydı güncelle"
+    },
+    {
+      "lineIndex": 284,
+      "text": "            // Kayıtlı en yüksek bölüm indeksinden küçük veya eşitse açıktır"
+    },
+    {
+      "lineIndex": 293,
+      "text": "            // Harita sınırlarını tam oynanabilir alana göre hesapla (Waypointler üzerinden)"
+    },
+    {
+      "lineIndex": 315,
+      "text": "            // Dinamik yükseklik: Harita boyutuna göre mesafeyi ayarla"
+    },
+    {
+      "lineIndex": 318,
+      "text": "            // HUD Panelini (Alt Kısım) telafi etmek için fokus noktasını biraz yukarı kaydır"
+    },
+    {
+      "lineIndex": 321,
+      "text": "            float hudCompensation = 10f; // Haritayı dikeyde tam merkeze (HUD üstüne) taşır"
+    },
+    {
+      "lineIndex": 326,
+      "text": "            // orthographicSize artık kod tarafından değiştirilmiyor, editördeki değer korunuyor."
+    },
+    {
+      "lineIndex": 395,
+      "text": "        /// <summary>Bir sonraki seviyeyi seç ve yükle. Son seviyedeyse false döner.</summary>"
+    }
+  ],
+  "Assets\\Scripts\\Core\\HeroManager.cs": [
+    {
+      "lineIndex": 131,
+      "text": "            // 1. ÖNCELİK: 3D dünyada Hero tıklamasını kontrol et"
+    },
+    {
+      "lineIndex": 152,
+      "text": "            // 2. Seçili hero varsa zemine tıklayarak hareket ettir"
+    },
+    {
+      "lineIndex": 163,
+      "text": "            // 3. Boş alana tıklandıysa seçimi kaldır"
+    },
+    {
+      "lineIndex": 303,
+      "text": "            // Eğer kahraman zaten sahnedeyse yeniden oluşturma, respawn et"
+    },
+    {
+      "lineIndex": 356,
+      "text": "            // Tüm yolları bul ve en uzun (en çok waypoint'e sahip) olanı seç"
+    },
+    {
+      "lineIndex": 377,
+      "text": "                    // Özel Durum: Sadece 2 waypoint varsa, ikisinin tam ortasını hesapla"
+    },
+    {
+      "lineIndex": 384,
+      "text": "                    // Genel Durum: 2'den fazla waypoint varsa, orta noktadaki waypoint'i seç"
+    },
+    {
+      "lineIndex": 394,
+      "text": "            // Yedek: Eğer yol bulunamazsa player spawner'ı kullan"
+    },
+    {
+      "lineIndex": 401,
+      "text": "            // Son çare: Sahne merkezi veya sıfır noktası"
+    }
+  ],
+  "Assets\\Scripts\\Core\\MetaProgressionManager.cs": [
+    {
+      "lineIndex": 32,
+      "text": "        public long lastDailyRewardTime; // Son günlük ödül zamanı (Ticks)"
+    },
+    {
+      "lineIndex": 33,
+      "text": "        public long dailyRewardStartTicks; // İlk ödülün alındığı takvim günü"
+    },
+    {
+      "lineIndex": 34,
+      "text": "        public int dailyRewardDayIndex; // Alınmış gün sayısı (0=henüz başlamamış, 30=tamamlandı)"
+    },
+    {
+      "lineIndex": 36,
+      "text": "        public List<string> unlockedSpellIDs = new List<string>(); // Açılan aktif büyüler"
+    },
+    {
+      "lineIndex": 37,
+      "text": "        public List<string> equippedSpellIDs = new List<string>(); // Kuşatılan büyüler"
+    },
+    {
+      "lineIndex": 50,
+      "text": "        // Geriye dönük uyumluluk için tutuluyor"
+    },
+    {
+      "lineIndex": 53,
+      "text": "        // Yeni Zorluk Sistemi Değişkenleri"
+    },
+    {
+      "lineIndex": 55,
+      "text": "        public List<int> highestUnlockedLevelIndexPerDifficulty = new List<int> { 0, 0, 0, 0 }; // İndeksler: 1=Normal, 2=Hard, 3=Expert"
+    },
+    {
+      "lineIndex": 58,
+      "text": "        public long lastFortuneWheelTime; // Son çark çevirme zamanı (Ticks)"
+    },
+    {
+      "lineIndex": 59,
+      "text": "        public long lastFortuneWheelAdTime; // Son reklamla çark çevirme zamanı (Ticks)"
+    },
+    {
+      "lineIndex": 102,
+      "text": "        [SerializeField] private int maxSkillsUnlocked = 10; // Maksimum açılabilir skill sayısı"
+    },
+    {
+      "lineIndex": 184,
+      "text": "                // Önkoşul kontrolü"
+    },
+    {
+      "lineIndex": 190,
+      "text": "                // Sınır kontrolü: Maksimum skill sayısı kontrolü"
+    },
+    {
+      "lineIndex": 205,
+      "text": "                // Eğer bu yetenek bir büyü açıyorsa, büyüyü de ekle"
+    },
+    {
+      "lineIndex": 248,
+      "text": "        // Skill ID -> Spell ID eşleşme tablosu (grantedSpell referansı kırıldığında fallback)"
+    },
+    {
+      "lineIndex": 270,
+      "text": "            // Fallback: skill tree'den kontrol et (önce grantedSpell referansı, sonra hardcoded map)"
+    },
+    {
+      "lineIndex": 273,
+      "text": "                // Yol 1: allAvailableSkills üzerinden grantedSpell referansı"
+    },
+    {
+      "lineIndex": 285,
+      "text": "                // Yol 2: Hardcoded eşleşme tablosu (grantedSpell null geldiğinde)"
+    },
+    {
+      "lineIndex": 300,
+      "text": "                if (saveData.equippedSpellIDs.Count < 3) // Maksimum 3 büyü sınırı"
+    },
+    {
+      "lineIndex": 329,
+      "text": "                if (saveData.equippedUnitNames.Count < 5) // Maksimum 5 unit sınırı"
+    },
+    {
+      "lineIndex": 352,
+      "text": "            // Menüde taraf değiştiğinde farklı tarafın ünitelerini temizle"
+    },
+    {
+      "lineIndex": 353,
+      "text": "            // Tamamen sıfırlamak en kolayıdır, oyuncu baştan seçsin."
+    },
+    {
+      "lineIndex": 592,
+      "text": "            // Sadece daha yüksek bir yıldız almışsak güncelle"
+    },
+    {
+      "lineIndex": 736,
+      "text": "                // Kahraman ve okçu düğümleri genel çarpana girmez."
+    },
+    {
+      "lineIndex": 1100,
+      "text": "                    // 1. Yeni Güvenli AES-256 + HMAC formatını dene"
+    },
+    {
+      "lineIndex": 1121,
+      "text": "                    // Editörde eski düz JSON ve XOR kayıtlar bir kez şifreli formata taşınır."
+    },
+    {
+      "lineIndex": 1174,
+      "text": "                saveData.totalKarma = 200; // Başlangıç Karma puanı"
+    },
+    {
+      "lineIndex": 1179,
+      "text": "            // Migration: Yeni array sistemi için eksik eleman varsa doldur"
+    },
+    {
+      "lineIndex": 1185,
+      "text": "            // Migration: Eski sistemdeki progress değerini Zorluk 1'e aktar"
+    },
+    {
+      "lineIndex": 1191,
+      "text": "            // Migration: Tüm mevcut level progress'lerde difficulty yoksa 1 yap"
+    },
+    {
+      "lineIndex": 1197,
+      "text": "            // Migration: Eski günlük ödül kullananlar için dailyRewardDayIndex başlat"
+    },
+    {
+      "lineIndex": 1210,
+      "text": "            // Migration: Büyü listesini skill tree ile senkronize et"
+    },
+    {
+      "lineIndex": 1211,
+      "text": "            // Sadece unlock edilmiş skill'lerin grant ettiği büyüler kalsın"
+    },
+    {
+      "lineIndex": 1212,
+      "text": "            // allAvailableSkills boşsa mevcut listeyi sıfırlama"
+    }
+  ],
+  "Assets\\Scripts\\Core\\NetworkTimeManager.cs": [
+    {
+      "lineIndex": 20,
+      "text": "        // İnternet olmasa dahi cihaz saatinin geriye veya kontrolsüz ileri alınmasını engellemek için"
+    },
+    {
+      "lineIndex": 24,
+      "text": "        // Güvenilir, hafif HTTP head / time endpoint'leri"
+    },
+    {
+      "lineIndex": 57,
+      "text": "            // Başlangıçta fallback olarak cihaz UTC saatini güvenli referansla karşılaştır"
+    },
+    {
+      "lineIndex": 66,
+      "text": "                // Cihaz saati ileri alınsa da oturum, son kayıtlı andan ve gerçek geçen süreden yürür."
+    },
+    {
+      "lineIndex": 67,
+      "text": "                // Geri alınan saat de bu andın gerisine düşemez."
+    },
+    {
+      "lineIndex": 92,
+      "text": "                // Uygulamaya geri dönüldüğünde zamanı tekrar senkronize etmeyi dene"
+    },
+    {
+      "lineIndex": 135,
+      "text": "        /// Saat hilelerine karşı korumalı anlık UTC zamanını döndürür."
+    },
+    {
+      "lineIndex": 136,
+      "text": "        /// Cihaz saati ileri veya geri alınsa bile, son bilinen gerçek zamandan donanımsal geçen süre (realtimeSinceStartup) kadar ilerler."
+    },
+    {
+      "lineIndex": 140,
+      "text": "            // Senkronize olunan andan beri donanımsal olarak geçen saniye"
+    },
+    {
+      "lineIndex": 146,
+      "text": "            // Eğer cihaz saati bilinen en güvenli andan gerideyse asla geriye gitme"
+    },
+    {
+      "lineIndex": 156,
+      "text": "        /// Yerel saat dilimine dönüştürülmüş anlık güvenli zaman."
+    }
+  ],
+  "Assets\\Scripts\\Core\\SceneLoader.cs": [
+    {
+      "lineIndex": 10,
+      "text": "    /// Sahneler arası asenkron yükleme ve fade geçiş yöneticisi."
+    },
+    {
+      "lineIndex": 11,
+      "text": "    /// DontDestroyOnLoad olarak yaşar. Tüm sahne geçişlerinde SceneLoader.Instance.LoadScene(...) çağrılır."
+    },
+    {
+      "lineIndex": 56,
+      "text": "                // Başlangıçta gizle"
+    },
+    {
+      "lineIndex": 80,
+      "text": "        /// Sahneyi build index ile yükler."
+    },
+    {
+      "lineIndex": 89,
+      "text": "        /// Sahneyi isim ile yükler."
+    },
+    {
+      "lineIndex": 98,
+      "text": "        /// Mevcut sahneyi yeniden yükler."
+    },
+    {
+      "lineIndex": 110,
+      "text": "            // Rastgele bir ipucu göster"
+    },
+    {
+      "lineIndex": 119,
+      "text": "            // Progress sıfırla"
+    },
+    {
+      "lineIndex": 123,
+      "text": "            // === FADE IN (Ekranı kapat) ==="
+    },
+    {
+      "lineIndex": 126,
+      "text": "            // Asenkron sahne yüklemeyi başlat"
+    },
+    {
+      "lineIndex": 143,
+      "text": "                // Gerçek ilerlemeyi 0-1 aralığına normalize et (0.9 = %100)"
+    },
+    {
+      "lineIndex": 146,
+      "text": "                // Minimum bekleme süresini de hesaba kat"
+    },
+    {
+      "lineIndex": 150,
+      "text": "                // Yumuşak ilerleme"
+    },
+    {
+      "lineIndex": 169,
+      "text": "            // Sahnenin tam yüklenmesini bekle"
+    },
+    {
+      "lineIndex": 173,
+      "text": "            // Yeni sahnenin ilk frame'inin render olmasını bekle"
+    },
+    {
+      "lineIndex": 176,
+      "text": "            // === FADE OUT (Ekranı aç) ==="
+    },
+    {
+      "lineIndex": 206,
+      "text": "        /// SceneLoader instance'ını kontrol eder. GameManager.Awake()'te prefab zaten instantiate edilmiş olmalıdır."
+    }
+  ],
+  "Assets\\Scripts\\Core\\SpellManager.cs": [
+    {
+      "lineIndex": 45,
+      "text": "            // Para kontrolü"
+    },
+    {
+      "lineIndex": 60,
+      "text": "            // Eğer tek seferlikse kaydet"
+    },
+    {
+      "lineIndex": 67,
+      "text": "                // Cooldown başlat"
+    },
+    {
+      "lineIndex": 71,
+      "text": "            // Yazılım Mantığını Uygula"
+    },
+    {
+      "lineIndex": 260,
+      "text": "                // En yakın waypoint'i bul"
+    },
+    {
+      "lineIndex": 281,
+      "text": "                    // Oyuncu tarafı olduğunu varsayıyoruz. "
+    },
+    {
+      "lineIndex": 283,
+      "text": "                    // unit.Initialize(unit.unitData); // Eğer start'ta initialize olmuyorsa"
+    },
+    {
+      "lineIndex": 291,
+      "text": "                    // Reinforcement'lar kalıcı olmasın, 30 saniye sonra ölsünler (TakeDamage kullanarak güvenli ölüm)"
+    },
+    {
+      "lineIndex": 324,
+      "text": "                unit.TakeDamage(99999f); // Güvenli ölüm (ölüm animasyonu vb. tetiklenir)"
+    }
+  ],
+  "Assets\\Scripts\\Editor\\LevelMapConfigurator.cs": [
+    {
+      "lineIndex": 66,
+      "text": "        // 2. Tower Slots'ları Bul"
+    },
+    {
+      "lineIndex": 89,
+      "text": "            // Eğer \"TowerSlots\" objesi yoksa, isminde Slot_ geçen her şeyi alalım"
+    },
+    {
+      "lineIndex": 110,
+      "text": "        // Her Path için WP_'leri topla ve sıraya diz"
+    },
+    {
+      "lineIndex": 116,
+      "text": "            // İsmin sonundaki sayıyı spawnerIndex yapalım (Path_0 -> 0)"
+    },
+    {
+      "lineIndex": 135,
+      "text": "            // WP_0, WP_1 ismine göre sırala"
+    },
+    {
+      "lineIndex": 168,
+      "text": "        // Örn: \"WP_5\" veya \"WP_0_5\" (Eski sistemde alt WP'ler)"
+    }
+  ],
+  "Assets\\Scripts\\Grid\\LevelInitializer.cs": [
+    {
+      "lineIndex": 28,
+      "text": "                // Haritayı oluştur\r"
+    },
+    {
+      "lineIndex": 32,
+      "text": "                // Haritadaki kuleleri tara ve oyuncunun seçtiği tarafa göre rakip karşılıklarına dönüştür\r"
+    },
+    {
+      "lineIndex": 49,
+      "text": "                // NavMesh sistemi kaldırıldı, waypoint bazlı hareket sistemine geçildi.\r"
+    }
+  ],
+  "Assets\\Scripts\\Grid\\TowerPlacementManager.cs": [
+    {
+      "lineIndex": 49,
+      "text": "            // Eğer liste boşsa, Projedeki tüm TowerData'ları bulmaya çalış (Gelişmiş Başlatma)\r"
+    },
+    {
+      "lineIndex": 63,
+      "text": "            // Yeni Input Sistemi'nde hem fare hem dokunmatik için en iyi yöntem: Pointer.current\r"
+    },
+    {
+      "lineIndex": 197,
+      "text": "                // ÖNCELİK: Eğer bir büyü seçiliyse kule işlemlerini yapma, büyüyü at\r"
+    },
+    {
+      "lineIndex": 217,
+      "text": "                    // Fallback: Eğer kuleye tıklandıysa kule üzerinden slotu al\r"
+    },
+    {
+      "lineIndex": 230,
+      "text": "                    // Boş bir yere veya slot olmayan bir yere tıklandığında tüm menüleri kapat\r"
+    },
+    {
+      "lineIndex": 236,
+      "text": "                // Gökyüzüne veya collider olmayan bir yere tıklandığında da kapat\r"
+    },
+    {
+      "lineIndex": 266,
+      "text": "            // Eğer daha önce başka bir slot aktifse onun menüsünü kapatabilirsin\r"
+    },
+    {
+      "lineIndex": 305,
+      "text": "            // Sahnedeki tüm kule seçim ve yükseltme menülerini kapat\r"
+    },
+    {
+      "lineIndex": 320,
+      "text": "            // Singleton yerine kulenin kendi içindeki (çocuk) UI'ı tetikle\r"
+    }
+  ],
+  "Assets\\Scripts\\Grid\\TowerSlot.cs": [
+    {
+      "lineIndex": 42,
+      "text": "            // Mevcut durumu kontrol et (Zaten açıksa toggle yapacak)"
+    },
+    {
+      "lineIndex": 51,
+      "text": "                // Zaten açıksa, sadece bu slota özel kapatma/toggle işlemini Show metodlarına bırak"
+    },
+    {
+      "lineIndex": 52,
+      "text": "                // (Show metodları içerisindeki toggle mantığı çalışacak)"
+    },
+    {
+      "lineIndex": 56,
+      "text": "                // Başka bir slot menüsü açıksa hepsini kapat"
+    },
+    {
+      "lineIndex": 63,
+      "text": "                // Yükseltme/Satış menüsünü aç (BarracksTower da Tower'dan türediği için GetComponent<Tower> çalışır)"
+    },
+    {
+      "lineIndex": 72,
+      "text": "            // Kendi içindeki seçim menüsünü aç"
+    },
+    {
+      "lineIndex": 93,
+      "text": "            // İnşa sonrası kendi menüsünü kapat"
+    },
+    {
+      "lineIndex": 96,
+      "text": "            // Slot görselini gizle (kule inşa edildi)"
+    },
+    {
+      "lineIndex": 106,
+      "text": "            // Slot görselini tekrar göster (kule yok edildi, yeniden inşa edilebilir)"
+    }
+  ],
+  "Assets\\Scripts\\UI\\HealthBarUI.cs": [
+    {
+      "lineIndex": 26,
+      "text": "                // Renk değişimi kaldırıldı. \r"
+    },
+    {
+      "lineIndex": 27,
+      "text": "                // fillImage her zaman kendi orijinal renginde kalacak (örn: Yeşil).\r"
+    },
+    {
+      "lineIndex": 28,
+      "text": "                // Altındaki background Image objesi ise kırmızı renkte olarak arka planda görünecek.\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\HeroButtonUI.cs": [
+    {
+      "lineIndex": 82,
+      "text": "                // ÇİFT TIKLAMA - Stats Panelini Aç\r"
+    },
+    {
+      "lineIndex": 87,
+      "text": "                // TEK TIKLAMA - Kahramanı Seç\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\HeroDetailPanelUI.cs": [
+    {
+      "lineIndex": 83,
+      "text": "            // Hero icon'ı info panelde gösterme - kullanıcı istediği gibi gizle\r"
+    },
+    {
+      "lineIndex": 84,
+      "text": "            // Sprite'ı null yap + toggle state'i koru (Repair sonrası da gizli kalması için)\r"
+    },
+    {
+      "lineIndex": 88,
+      "text": "                heroIcon.enabled = false; // Image component'ını devre dışı bırak\r"
+    },
+    {
+      "lineIndex": 104,
+      "text": "            // Hero icon'ı info panelde gösterme - kullanıcı istediği gibi gizle\r"
+    },
+    {
+      "lineIndex": 105,
+      "text": "            // Icon sprite ve enabled state'i koru (Repair sonrası da gizli kalması için)\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\HeroInfoPanelUI.cs": [
+    {
+      "lineIndex": 54,
+      "text": "            // Sol alt köşeyi pivot olarak belirliyoruz ki butonun sağ üstüne doğru büyüsün"
+    },
+    {
+      "lineIndex": 57,
+      "text": "            // Pozisyonu tam olarak butonun dünya pozisyonuna eşitleyip"
+    },
+    {
+      "lineIndex": 59,
+      "text": "            // Canvas ölçeklemesinden bağımsız olarak UI üzerinde sağ üste kaydırıyoruz"
+    }
+  ],
+  "Assets\\Scripts\\UI\\HeroShopUI.cs": [
+    {
+      "lineIndex": 14,
+      "text": "        [SerializeField] private TextMeshProUGUI crystalText; // Yeni: Kristal göstergesi\r"
+    },
+    {
+      "lineIndex": 49,
+      "text": "                    // Scroll view'un düzgün çalışması için Content pivotu her zaman üstte (1) olmalı\r"
+    },
+    {
+      "lineIndex": 53,
+      "text": "                    // Y pozisyonunu sıfırlayarak en üste yasla\r"
+    },
+    {
+      "lineIndex": 66,
+      "text": "            // Panelin her açılışında scrollu en başa al\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\LevelSelectionUI.cs": [
+    {
+      "lineIndex": 13,
+      "text": "        [SerializeField] private List<Transform> slotContainers; // Her harita için 1 container (LevelSlot_0..N çocukları)"
+    },
+    {
+      "lineIndex": 18,
+      "text": "        [SerializeField] private GameObject sideSelectionPanel; // Seviye seçince aktif olacak panel"
+    },
+    {
+      "lineIndex": 212,
+      "text": "            // Slot container'ları toggle et"
+    },
+    {
+      "lineIndex": 219,
+      "text": "            // Arkaplan görselini güncelle (yüklenmediyse düz renk korunur)"
+    },
+    {
+      "lineIndex": 234,
+      "text": "            // Kenar durdurma: ilk haritada sol ok, son haritada sağ ok kapalı"
+    },
+    {
+      "lineIndex": 238,
+      "text": "            // Harita adını güncelle"
+    },
+    {
+      "lineIndex": 304,
+      "text": "        // Tüm haritaların slot'larına seviye butonu kurar/bağlar"
+    },
+    {
+      "lineIndex": 351,
+      "text": "            // Tamamlanan yıldız sayısını al (tamamlanmamışsa 0 → 3 soluk yıldız)"
+    },
+    {
+      "lineIndex": 359,
+      "text": "            // Yıldızları marker'ın üstünde göster: kazanılan altın, kazanılmayan soluk"
+    },
+    {
+      "lineIndex": 379,
+      "text": "            // Sweep (Hızlı Geç) Butonu"
+    },
+    {
+      "lineIndex": 471,
+      "text": "                            // 3 yıldız ödülünü sweep mantığıyla ver"
+    }
+  ],
+  "Assets\\Scripts\\UI\\MainMenuController.cs": [
+    {
+      "lineIndex": 102,
+      "text": "            dailyRewardButton.interactable = true; // Buton her zaman tıklanabilir, panelde süre yazar\r"
+    },
+    {
+      "lineIndex": 181,
+      "text": "            // Referans yoksa isimle bul (prefab bağlantısı kopsa bile çalışır)\r"
+    },
+    {
+      "lineIndex": 194,
+      "text": "            // Günlük ödül butonunu bul\r"
+    },
+    {
+      "lineIndex": 198,
+      "text": "            // Tüm panelleri kapat\r"
+    },
+    {
+      "lineIndex": 215,
+      "text": "            // Buton olaylarını bağla\r"
+    },
+    {
+      "lineIndex": 233,
+      "text": "            // Ana menüyü hemen görünür olarak aç (fade yok, anında)\r"
+    },
+    {
+      "lineIndex": 241,
+      "text": "            // Müzik çal\r"
+    },
+    {
+      "lineIndex": 265,
+      "text": "            // Eğer CanvasGroup yoksa ekle (opsiyonel ama önerilir)\r"
+    },
+    {
+      "lineIndex": 319,
+      "text": "            // Yeni paneli aç\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\SideSelectionUI.cs": [
+    {
+      "lineIndex": 180,
+      "text": "            // En yüksek seviyeli büyüleri bulmak için gruplandır\r"
+    },
+    {
+      "lineIndex": 247,
+      "text": "            // UnitHint kopyası\r"
+    },
+    {
+      "lineIndex": 570,
+      "text": "            // Kahraman seçilmemişse bile savaşa girilebilir, auto-equip yapmıyoruz.\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\SkillTreeUI.cs": [
+    {
+      "lineIndex": 14,
+      "text": "        [SerializeField] private TextMeshProUGUI totalCrystalsText; // Yeni: Kristal göstergesi\r"
+    },
+    {
+      "lineIndex": 304,
+      "text": "            // Merkezden hizalamak veya en soldan başlatmak için ofset (örneğin 8 kategori var)\r"
+    },
+    {
+      "lineIndex": 306,
+      "text": "            float startY = -800f; // Skilleri daha aşağıda başlat\r"
+    },
+    {
+      "lineIndex": 308,
+      "text": "            // Tüm düğümleri tier ve category'ye göre otomatik yerleştir\r"
+    },
+    {
+      "lineIndex": 432,
+      "text": "            // Skill limit info gösterimi\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\SpellButtonUI.cs": [
+    {
+      "lineIndex": 27,
+      "text": "            // Seçim (Selected) parlaması için Outline ekle"
+    },
+    {
+      "lineIndex": 93,
+      "text": "                // Bekleme süresindeyken saniye yazsın"
+    },
+    {
+      "lineIndex": 103,
+      "text": "                // Bekleme bitince mana miktarını yazsın"
+    },
+    {
+      "lineIndex": 113,
+      "text": "                    costText.color = Color.red; // Mana yetersizse kırmızı yazsın"
+    },
+    {
+      "lineIndex": 118,
+      "text": "            // Seçim durumu (Outline'ı aç/kapat)"
+    },
+    {
+      "lineIndex": 147,
+      "text": "                // Anında cast edilecek büyüler"
+    },
+    {
+      "lineIndex": 154,
+      "text": "                // Eğer zaten seçiliyse seçimi iptal et, değilse seç"
+    }
+  ],
+  "Assets\\Scripts\\UI\\SpellSelectionUI.cs": [
+    {
+      "lineIndex": 19,
+      "text": "            // HUD yüklendiğinde tarafa göre büyüleri listele\r"
+    },
+    {
+      "lineIndex": 27,
+      "text": "            // Mevcut butonları temizle\r"
+    },
+    {
+      "lineIndex": 38,
+      "text": "            // Tüm büyüleri topla: Inspector listesi + Resources'tan dinamik yükleme\r"
+    },
+    {
+      "lineIndex": 52,
+      "text": "            // Resources/Data/Spells altından da yükle (eksik olanları yakalar)\r"
+    },
+    {
+      "lineIndex": 59,
+      "text": "            // Assets/Data/Spells klasöründen de yükle (Resources dışındakiler için)\r"
+    },
+    {
+      "lineIndex": 71,
+      "text": "            // Equipped büyüleri göster\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\TowerSelectionUI.cs": [
+    {
+      "lineIndex": 29,
+      "text": "            gameObject.SetActive(false); // Başlangıçta gizle"
+    },
+    {
+      "lineIndex": 34,
+      "text": "            // Taraf veya altın değiştiğinde menüyü güncelle"
+    },
+    {
+      "lineIndex": 77,
+      "text": "            // FALLBACK: Eğer manager boşsa her şeyi bul"
+    },
+    {
+      "lineIndex": 206,
+      "text": "            // Standart Ölçek"
+    },
+    {
+      "lineIndex": 359,
+      "text": "            // Bu metod artık seçim panelinde (popup) kullanılmıyor, üniteler alt barda."
+    }
+  ],
+  "Assets\\Scripts\\UI\\UnitInfoPanelUI.cs": [
+    {
+      "lineIndex": 21,
+      "text": "            float iconArea = 15; // İkon kaldırıldığı için sadece üst boşluk\r"
+    },
+    {
+      "lineIndex": 24,
+      "text": "            // Overlay (en üste, panelin arkasında kalacak)\r"
+    },
+    {
+      "lineIndex": 47,
+      "text": "            // Sol alt köşeyi pivot olarak belirliyoruz ki butonun sağ üstüne doğru büyüsün\r"
+    },
+    {
+      "lineIndex": 50,
+      "text": "            // Pozisyonu tam olarak butonun dünya pozisyonuna eşitleyip\r"
+    },
+    {
+      "lineIndex": 52,
+      "text": "            // Canvas ölçeklemesinden bağımsız olarak UI üzerinde sağ üste kaydırıyoruz\r"
+    },
+    {
+      "lineIndex": 69,
+      "text": "            float y = -15; // İkon olmadığı için y koordinatını yukarıdan başlatıyoruz\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\UnitSelectionUI.cs": [
+    {
+      "lineIndex": 42,
+      "text": "            // Bekle ki SideController vs iyice yerleşsin\r"
+    },
+    {
+      "lineIndex": 46,
+      "text": "            // Eğer hala (yanlışlıkla) aydınlık gelmişse veya boşsa birkaç kez daha dene\r"
+    },
+    {
+      "lineIndex": 170,
+      "text": "            // Butonları oluşturduktan sonra wave durumuna göre kontrol et\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\WarningBannerUI.cs": [
+    {
+      "lineIndex": 53,
+      "text": "            // Canvas veya parent kontrolü\r"
+    },
+    {
+      "lineIndex": 67,
+      "text": "            // Ekranın üst-orta bölgesinde yerleşecek\r"
+    },
+    {
+      "lineIndex": 95,
+      "text": "            warningText.color = new Color(1f, 0.25f, 0.2f, 1f); // Kırmızı / Uyarı\r"
+    },
+    {
+      "lineIndex": 123,
+      "text": "            transform.SetAsLastSibling(); // Her zaman en önde görünsün\r"
+    },
+    {
+      "lineIndex": 160,
+      "text": "            // Bekleme süresi\r"
+    },
+    {
+      "lineIndex": 163,
+      "text": "            // Fade Out & Yükselme\r"
+    }
+  ],
+  "Assets\\Scripts\\UI\\WaveInfoUI.cs": [
+    {
+      "lineIndex": 134,
+      "text": "            // Arka plan engelleyici (dışarı tıklandığında paneli kapatır)\r"
+    },
+    {
+      "lineIndex": 147,
+      "text": "            bImg.color = new Color(0, 0, 0, 0.001f); // Görünmez ama dış tıklamaları yakalar\r"
+    },
+    {
+      "lineIndex": 233,
+      "text": "                    // Blocker'ı panelin arkasında ama diğer UI elemanlarının önünde olacak şekilde sırala\r"
+    },
+    {
+      "lineIndex": 325,
+      "text": "                // Prefab içindeki şablon/placeholder çocukları temizle\r"
+    },
+    {
+      "lineIndex": 397,
+      "text": "            // UnitData'daki bağımsız Wave Info ayarlarını uygula\r"
+    },
+    {
+      "lineIndex": 477,
+      "text": "            // Panelin içine tıklanınca kapanmasını engelle\r"
+    },
+    {
+      "lineIndex": 481,
+      "text": "            // Zorluk katsayılarını hesapla (1: Normal, 2: Hard (+50%), 3: Expert (+100%))\r"
+    }
+  ]
+}

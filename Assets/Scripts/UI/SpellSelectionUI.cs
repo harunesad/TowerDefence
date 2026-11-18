@@ -17,7 +17,7 @@ namespace TowerDefence.UI
 
         private void Start()
         {
-            // HUD yüklendiğinde tarafa göre büyüleri listele
+            // HUD yuklendiginde tarafa gore buyuleri listele
             PopulateSpells();
         }
 
@@ -25,7 +25,7 @@ namespace TowerDefence.UI
         {
             if (spellContainer == null || spellButtonPrefab == null) return;
 
-            // Mevcut butonları temizle
+            // Mevcut butonlari temizle
             foreach (Transform child in spellContainer)
             {
                 Destroy(child.gameObject);
@@ -36,7 +36,7 @@ namespace TowerDefence.UI
             List<string> equippedIDs = MetaProgressionManager.Instance.GetEquippedSpellIDs();
             if (equippedIDs == null || equippedIDs.Count == 0) return;
 
-            // Tüm büyüleri topla: Inspector listesi + Resources'tan dinamik yükleme
+            // Tum buyuleri topla: Inspector listesi + Resources'tan dinamik yukleme
             Dictionary<string, SpellData> allSpellsMap = new Dictionary<string, SpellData>();
 
             // Inspector'daki listeler varsa ekle
@@ -50,14 +50,14 @@ namespace TowerDefence.UI
                     if (s != null && !allSpellsMap.ContainsKey(s.spellID))
                         allSpellsMap[s.spellID] = s;
 
-            // Resources/Data/Spells altından da yükle (eksik olanları yakalar)
+            // Resources/Data/Spells altindan da yukle (eksik olanlari yakalar)
             SpellData[] resourceSpells = Resources.LoadAll<SpellData>("Data/Spells");
             if (resourceSpells != null)
                 foreach (var s in resourceSpells)
                     if (s != null && !allSpellsMap.ContainsKey(s.spellID))
                         allSpellsMap[s.spellID] = s;
 
-            // Assets/Data/Spells klasöründen de yükle (Resources dışındakiler için)
+            // Assets/Data/Spells klasorunden de yukle (Resources disindakiler icin)
             #if UNITY_EDITOR
             string[] guids = UnityEditor.AssetDatabase.FindAssets("t:SpellData", new[] { "Assets/Data/Spells" });
             foreach (string guid in guids)
@@ -69,7 +69,7 @@ namespace TowerDefence.UI
             }
             #endif
 
-            // Equipped büyüleri göster
+            // Equipped buyuleri goster
             foreach (string spellID in equippedIDs)
             {
                 if (allSpellsMap.TryGetValue(spellID, out SpellData spell))
@@ -83,7 +83,7 @@ namespace TowerDefence.UI
                 }
                 else
                 {
-                    Debug.LogWarning($"SpellSelectionUI: Equipped spell '{spellID}' bulunamadı!");
+                    Debug.LogWarning($"SpellSelectionUI: Equipped spell '{spellID}' not found!");
                 }
             }
         }

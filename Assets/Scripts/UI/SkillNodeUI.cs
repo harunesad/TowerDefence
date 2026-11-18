@@ -154,6 +154,7 @@ namespace TowerDefence.UI
             if (eventData is PointerEventData pointerData && pointerData.button != PointerEventData.InputButton.Left) return;
             if (skillData != null && TutorialDirector.Instance != null && TutorialDirector.Instance.SkillChoiceLocked(skillData.skillID))
                 return;
+            UIButtonSound.Play();
 
             float timeSinceLastClick = Time.unscaledTime - lastClickTime;
             lastClickTime = Time.unscaledTime;

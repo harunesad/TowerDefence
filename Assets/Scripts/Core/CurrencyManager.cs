@@ -37,7 +37,7 @@ namespace TowerDefence.Core
 
         private void Start()
         {
-            // İlk başlatma (Varsayılan)
+            // Initial startup (Default)
             ResetToDefaults();
         }
 

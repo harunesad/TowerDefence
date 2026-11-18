@@ -49,7 +49,7 @@ namespace TowerDefence.Combat
         }
 
         [Header("Target Switch")]
-        [SerializeField] private float targetSwitchCooldown = 0.5f; // Gecikme süresi (saniye)
+        [SerializeField] private float targetSwitchCooldown = 0.5f; // Cooldown duration (seconds)
         private float targetSwitchTimer = 0f;
         private Transform previousTarget = null;
         private float previousTargetTimer = 0f;
@@ -57,9 +57,9 @@ namespace TowerDefence.Combat
         [Header("Rotation")]
         [SerializeField] private Transform partToRotate;
         [SerializeField] private float rotationSpeed = 10f;
-        [Tooltip("Düşmana dönerken uygulanacak Euler açısı offseti. Varsayılan: X=-90, Y=180, Z=90")]
+        [Tooltip("Euler angle offset applied when rotating towards target. Default: X=-90, Y=180, Z=90")]
         [SerializeField] private Vector3 rotationOffset = new Vector3(-90f, 180f, 90f);
-        [Tooltip("Spawn'da en yakın path'e dönerken uygulanacak ek Euler açısı offseti")]
+        [Tooltip("Additional Euler angle offset applied when rotating towards nearest path on spawn")]
         [SerializeField] private Vector3 spawnRotationOffset = Vector3.zero;
 
         private float fireCountdown = 0f;
@@ -112,7 +112,7 @@ namespace TowerDefence.Combat
             if (VFXManager.Instance != null)
                 VFXManager.Instance.SpawnVFX(VFXType.SpellEarthquake, transform.position, Quaternion.identity);
 
-            // Slotu serbest bırak
+            // Slotu serbest birak
             if (mySlot != null) mySlot.ClearSlot();
 
             Destroy(gameObject);
@@ -130,14 +130,13 @@ namespace TowerDefence.Combat
         private float auraDamageMultiplier = 1f;
         private float auraFireRateMultiplier = 1f;
         private bool isAuraBuffed = false;
-        private Color originalEmissionColor = Color.black;
-        private static readonly Color auraGlowColor = new Color(0.3f, 0.8f, 1f); // Turkuaz parlaklık
+        private LineRenderer buffRing;
 
         public bool IsAuraBuffed => isAuraBuffed;
 
         /// <summary>
-        /// Statlar taban veriden yeniden yazılmadan önce aura izini siler.
-        /// Çarpan bölünmez; bir sonraki aura taraması taze değerlere yeniden uygulanır.
+        /// Statlar taban veriden yeniden yazilmadan once aura izini siler.
+        /// carpan bolunmez; bir sonraki aura taramasi taze degerlere yeniden uygulanir.
         /// </summary>
         private void ForgetAuraBuff()
         {
@@ -146,12 +145,12 @@ namespace TowerDefence.Combat
             auraOwnerId = 0;
             auraDamageMultiplier = 1f;
             auraFireRateMultiplier = 1f;
-            SetGlow(false);
+            SetBuffRing(false);
         }
 
         private int auraOwnerId;
 
-        /// <summary>Aura Tower tarafından çağrılır. Daha güçlü aura zayıf olanın yerine geçer.</summary>
+        /// <summary>Aura Tower tarafindan cagrilir. Daha guclu aura zayif olanin yerine gecer.</summary>
         public void ApplyAuraBuff(float damageBonus, float fireRateBonus, int ownerId)
         {
             float newDamage = 1f + Mathf.Max(0f, damageBonus);
@@ -185,10 +184,10 @@ namespace TowerDefence.Combat
             auraFireRateMultiplier = newRate;
             damage *= auraDamageMultiplier;
             fireRate *= auraFireRateMultiplier;
-            SetGlow(true);
+            SetBuffRing(true);
         }
 
-        /// <summary>Buff'ı yalnız onu veren aura kaldırabilir.</summary>
+        /// <summary>Buff'i yalniz onu veren aura kaldirabilir.</summary>
         public void RemoveAuraBuff(int ownerId)
         {
             if (!isAuraBuffed || auraOwnerId != ownerId) return;
@@ -198,38 +197,47 @@ namespace TowerDefence.Combat
             fireRate /= auraFireRateMultiplier;
             auraDamageMultiplier = 1f;
             auraFireRateMultiplier = 1f;
-            SetGlow(false);
+            SetBuffRing(false);
         }
 
-        private System.Collections.Generic.List<Material> glowMaterials;
-
-        private void SetGlow(bool enabled)
+        private void SetBuffRing(bool enabled)
         {
-            EnsureGlowMaterials();
-            Color color = enabled ? auraGlowColor * 0.6f : Color.black;
-            for (int i = 0; i < glowMaterials.Count; i++)
+            if (!enabled)
             {
-                Material mat = glowMaterials[i];
-                if (mat == null) continue;
-                mat.SetColor("_EmissionColor", color);
+                if (buffRing != null) buffRing.gameObject.SetActive(false);
+                return;
             }
-        }
 
-        private void EnsureGlowMaterials()
-        {
-            if (glowMaterials != null) return;
-            glowMaterials = new System.Collections.Generic.List<Material>();
-            foreach (Renderer rend in GetComponentsInChildren<Renderer>())
+            if (buffRing == null)
             {
-                if (rend == null) continue;
-                Material[] mats = rend.materials;
-                foreach (Material mat in mats)
-                {
-                    if (mat == null) continue;
-                    mat.EnableKeyword("_EMISSION");
-                    glowMaterials.Add(mat);
-                }
+                GameObject go = new GameObject("BuffRing");
+                go.transform.SetParent(transform, false);
+                buffRing = go.AddComponent<LineRenderer>();
+                buffRing.positionCount = 40;
+                buffRing.loop = true;
+                buffRing.useWorldSpace = true;
+                buffRing.startWidth = 0.16f;
+                buffRing.endWidth = 0.16f;
+                buffRing.alignment = LineAlignment.TransformZ;
+                buffRing.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                buffRing.receiveShadows = false;
+                buffRing.material = new Material(Shader.Find("Sprites/Default"));
+                buffRing.startColor = Color.yellow;
+                buffRing.endColor = Color.yellow;
             }
+
+            float radius = Mathf.Max(1.1f, MeasureVisualRadius() * 0.72f);
+            float angle = 0f;
+            float step = 360f / buffRing.positionCount;
+            Vector3 center = transform.position;
+            for (int i = 0; i < buffRing.positionCount; i++)
+            {
+                float x = center.x + Mathf.Sin(Mathf.Deg2Rad * angle) * radius;
+                float z = center.z + Mathf.Cos(Mathf.Deg2Rad * angle) * radius;
+                buffRing.SetPosition(i, new Vector3(x, GroundHeight(x, z), z));
+                angle += step;
+            }
+            buffRing.gameObject.SetActive(true);
         }
 
         private TowerObstacle towerObstacle;
@@ -320,12 +328,8 @@ namespace TowerDefence.Combat
 
         private void OnDestroy()
         {
-            if (glowMaterials == null) return;
-            for (int i = 0; i < glowMaterials.Count; i++)
-            {
-                if (glowMaterials[i] != null)
-                    Destroy(glowMaterials[i]);
-            }
+            if (buffRing != null && buffRing.material != null)
+                Destroy(buffRing.material);
         }
 
 
@@ -335,8 +339,8 @@ namespace TowerDefence.Combat
             towerData = data;
             towerSide = data.side;
 
-            // Meta-Gelişim Çarpanlarını Uygula
-            // DamageBonus birim hasarıdır. Kule hasarı yalnızca TowerDamageBonus ile gelir.
+            // Meta-Gelisim carpanlarini Uygula
+            // DamageBonus birim hasaridir. Kule hasari yalnizca TowerDamageBonus ile gelir.
             float rangeMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.RangeBonus, towerSide);
             float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.TowerDamageBonus, towerSide);
             if (IsLightArcher(data))
@@ -365,13 +369,13 @@ namespace TowerDefence.Combat
             if (this is BarracksTower && TutorialDirector.Instance != null)
                 TutorialDirector.Instance.Notify("barracks");
             
-            // 3D Kuleler için Weapon nesnesini kaldırdık, kule modelinin kendisi dönecek
+            // 3D Kuleler icin Weapon nesnesini kaldirdik, kule modelinin kendisi donecek
             if (partToRotate == null)
             {
                 Transform visuals = transform.Find("Visuals");
                 if (visuals != null && visuals.childCount > 0)
                 {
-                    // Visuals altındaki ilk obje kule modelidir
+                    // Visuals altindaki ilk obje kule modelidir
                     partToRotate = visuals.GetChild(0);
                     if (partToRotate != null)
                     {
@@ -401,7 +405,7 @@ namespace TowerDefence.Combat
                 attackRangeLine.gameObject.SetActive(false);
             }
 
-            // Dinamik Hedefleme (Light kuleler Dark layer'ı (7), Dark kuleler Light layer'ı (6) hedefler)
+            // Dinamik Hedefleme (Light kuleler Dark layer'i (7), Dark kuleler Light layer'i (6) hedefler)
             targetLayer = (towerSide == Side.Light) ? (1 << 7) : (1 << 6);
 
             FaceNearestPathOnSpawn();
@@ -432,7 +436,7 @@ namespace TowerDefence.Combat
                 if (tempBuffTimer <= 0) tempFireRateMultiplier = 1f;
             }
 
-            // Aura kuleleri ateş etmez, sadece buff verir
+            // Aura towers do not shoot, they only provide buffs
             if (fireRate <= 0f) return;
 
             if (target != null)
@@ -482,7 +486,7 @@ namespace TowerDefence.Combat
         {
             tempFireRateMultiplier = speedMult;
             tempBuffTimer = duration;
-            // Visual feedback: Hızlanma efekti
+            // Visual feedback: Haste effect
         }
 
         private void LockOnTarget()
@@ -497,7 +501,7 @@ namespace TowerDefence.Combat
             float targetY = lookRotation.eulerAngles.y + rotationOffset.y;
 
             Quaternion targetRotation = Quaternion.Euler(rotationOffset.x, targetY, rotationOffset.z);
-            partToRotate.rotation = Quaternion.Lerp(partToRotate.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+            partToRotate.rotation = Quaternion.RotateTowards(partToRotate.rotation, targetRotation, rotationSpeed * 16f * Time.deltaTime);
         }
 
         private void FaceNearestPathOnSpawn()
@@ -573,7 +577,7 @@ namespace TowerDefence.Combat
                     {
                         if (!TryGetLivingUnit(col, out Unit unit)) continue;
                         
-                        // First: En yüksek waypoint index'i + waypoint'e en yakın olan
+                        // First: Highest waypoint index + closest to next waypoint
                         float progress = CalculateUnitProgress(unit);
                         if (progress > maxProgress)
                         {
@@ -730,9 +734,9 @@ namespace TowerDefence.Combat
             currentLevel++;
             ForgetAuraBuff();
 
-            // Hasar, seviye sayısı kadar katlanır: 2. seviye ikinci kuleyle aynı hasar.
-            // Menzil seviye başına %20 artar.
-            float damageLevel = currentLevel;
+            // Level 2 is x1.4 and level 3 is x1.8, so a second tower stays worth building.
+            // Range increases by 20% per level.
+            float damageLevel = DamageLevelScale(currentLevel);
             float rangeLevel = 1f + (currentLevel - 1) * 0.2f;
 
             float rangeMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.RangeBonus, towerSide);
@@ -762,13 +766,18 @@ namespace TowerDefence.Combat
         {
             if (newData == null) return;
             
-            // Veriyi değiştir ve yeniden başlat
+            // Change data and restart
             towerData = newData;
-            currentLevel++; // Bir üst seviyeye geç (1->2, 2->3 vb.)
+            currentLevel++; // Advance to next level (1->2, 2->3 etc.)
             
             Initialize(newData);
             
             Debug.Log($"{gameObject.name} specialized into {newData.towerName}!");
+        }
+
+        public static float DamageLevelScale(int level)
+        {
+            return 1f + Mathf.Max(0, level - 1) * 0.4f;
         }
 
         public int GetLevel() => currentLevel;

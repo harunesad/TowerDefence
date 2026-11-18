@@ -7,7 +7,7 @@ namespace TowerDefence.Data
     public class LoadingTipsData : ScriptableObject
     {
         [Header("Loading Screen Tips")]
-        [Tooltip("Sahneler arası geçişte alt kısımda rastgele gösterilecek ipuçları")]
+        [Tooltip("Random hints displayed at the bottom during scene transitions")]
         [TextArea(2, 5)]
         public List<string> tips = new List<string>()
         {

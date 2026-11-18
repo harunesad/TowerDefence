@@ -6,11 +6,11 @@ namespace TowerDefence.Data
     [System.Serializable]
     public struct UIIconSettings
     {
-        [Tooltip("İkon boyutu (Genişlik, Yükseklik). (0,0) bırakılırsa varsayılan prefab boyutu kullanılır.")]
+        [Tooltip("Icon size (Width, Height). Default prefab size used if (0,0).")]
         public Vector2 size;
-        [Tooltip("İkon ölçek çarpanı (Varsayılan 1).")]
+        [Tooltip("Icon scale multiplier (Default 1).")]
         public float scale;
-        [Tooltip("İkon pozisyon ofseti (X, Y).")]
+        [Tooltip("Icon position offset (X, Y).")]
         public Vector2 offset;
 
         public void ApplyTo(UnityEngine.UI.Image img)
@@ -39,25 +39,25 @@ namespace TowerDefence.Data
         public Side side;
         public GameObject prefab;
         public Sprite icon;
-        public UnitData enemyCounterpart; // Karşı taraftaki karşılığı (Aydınlık <-> Karanlık)
+        public UnitData enemyCounterpart; // Counterpart on the opposing side (Light <-> Dark)
         [TextArea(2, 3)]
-        [Tooltip("Compendium ve bilgi ekranında gösterilecek kısa tanıtım/lore metni.")]
+        [Tooltip("Short lore/intro text shown in Compendium and info screen.")]
         public string loreDescription;
 
         [Header("Compendium Icon Settings")]
-        [Tooltip("Kütüphane / Compendium ekranındaki ikon ayarları.")]
+        [Tooltip("Icon settings in Compendium screen.")]
         public UIIconSettings compendiumIcon = new UIIconSettings { scale = 1f };
 
         [Header("Prepare For Battle (Loadout) Icon Settings")]
-        [Tooltip("Savaş Hazırlık (Prepare for Battle) ekranındaki ikon ayarları.")]
+        [Tooltip("Icon settings on Prepare for Battle screen.")]
         public UIIconSettings loadoutIcon = new UIIconSettings { scale = 1f };
 
         [Header("In-Game HUD Icon Settings")]
-        [Tooltip("Oyun içi birim çağırma butonundaki ikon ayarları.")]
+        [Tooltip("Icon settings on in-game unit summon button.")]
         public UIIconSettings hudIcon = new UIIconSettings { scale = 1f };
 
         [Header("Wave Info Icon Settings")]
-        [Tooltip("Oyun içi sol üst Wave Info panelindeki ikon ayarları.")]
+        [Tooltip("Icon settings in top-left Wave Info panel.")]
         public UIIconSettings waveInfoIcon = new UIIconSettings { scale = 1f };
 
         [Header("Economics")]
@@ -70,6 +70,18 @@ namespace TowerDefence.Data
         public float attackDamage;
         public float attackRange;
         public float attackRate;
+
+        public int LeakLives
+        {
+            get
+            {
+                if (spawnCost >= 500 || maxHealth >= 3000f) return 5;
+                if (maxHealth >= 800f) return 3;
+                if (spawnCost >= 250) return 2;
+                return 1;
+            }
+        }
+
         public GameObject projectilePrefab;
         public GameObject breathVfxPrefab;
         public float breathVfxScale = 0.55f;

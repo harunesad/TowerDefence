@@ -40,7 +40,7 @@ namespace TowerDefence.Grid
 
             Debug.Log($"TowerSlot {gameObject.name} clicked. Occupied: {isOccupied}");
             
-            // Mevcut durumu kontrol et (Zaten açıksa toggle yapacak)
+            // Check current state (toggles if already open)
             bool isSelectionOpen = !isOccupied && localUI != null && localUI.gameObject.activeSelf;
             var upgradeUIComp = isOccupied && currentTower != null 
                 ? currentTower.GetComponentInChildren<UI.TowerUpgradeUI>(true) 
@@ -49,19 +49,19 @@ namespace TowerDefence.Grid
 
             if (isSelectionOpen || isUpgradeOpen)
             {
-                // Zaten açıksa, sadece bu slota özel kapatma/toggle işlemini Show metodlarına bırak
-                // (Show metodları içerisindeki toggle mantığı çalışacak)
+                // If already open, leave close/toggle handling to Show methods
+                // (Toggle logic inside Show methods will run)
             }
             else
             {
-                // Başka bir slot menüsü açıksa hepsini kapat
+                // Close all if another slot menu is open
                 if (TowerPlacementManager.Instance != null)
                     TowerPlacementManager.Instance.CloseAllTowerUI();
             }
 
             if (isOccupied)
             {
-                // Yükseltme/Satış menüsünü aç (BarracksTower da Tower'dan türediği için GetComponent<Tower> çalışır)
+                // Open Upgrade/Sell menu (GetComponent<Tower> works since BarracksTower derives from Tower)
                 Combat.Tower towerComp = currentTower.GetComponent<Combat.Tower>();
                 if (TowerPlacementManager.Instance != null && towerComp != null)
                     TowerPlacementManager.Instance.ShowUpgradeUI(this, towerComp);
@@ -70,7 +70,7 @@ namespace TowerDefence.Grid
 
             if (localUI == null) return;
             
-            // Kendi içindeki seçim menüsünü aç
+            // Open internal selection menu
             localUI.ShowForSlot(this);
         }
 
@@ -91,10 +91,10 @@ namespace TowerDefence.Grid
 
             isOccupied = true;
             
-            // İnşa sonrası kendi menüsünü kapat
+            // Close menu after construction
             if (localUI != null) localUI.Hide();
 
-            // Slot görselini gizle (kule inşa edildi)
+            // Hide slot visual (tower constructed)
             SetSlotVisualsActive(false);
         }
 
@@ -104,7 +104,7 @@ namespace TowerDefence.Grid
             currentTower = null;
             isOccupied = false;
 
-            // Slot görselini tekrar göster (kule yok edildi, yeniden inşa edilebilir)
+            // Show slot visual again (tower destroyed, can be rebuilt)
             SetSlotVisualsActive(true);
         }
 

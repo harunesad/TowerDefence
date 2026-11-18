@@ -4,34 +4,34 @@ namespace TowerDefence.UI
 {
     public enum SafeAreaFitMode
     {
-        Auto,           // Tam ekran panellerde Anchor, köşelere sabitli öğelerde Offset kullanır
-        StretchAnchors, // Doğrudan anchorMin ve anchorMax'i güvenli alana eşitler (Konteyner/Panel için ideal)
-        OffsetPosition  // Öğenin konumunu çentik mesafesi kadar içeri kaydırır (Köşe butonları için ideal)
+        Auto,           // Uses Anchor for full screen panels, Offset for corner-anchored elements
+        StretchAnchors, // Directly matches anchorMin and anchorMax to safe area (ideal for Container/Panel)
+        OffsetPosition  // Shifts element position inward by notch distance (ideal for corner buttons)
     }
 
     /// <summary>
-    /// Ekranın çentik (notch), kamera deliği ve yuvarlak köşe gibi güvenli alan sınırlarını (Screen.safeArea)
-    /// RectTransform üzerine otomatik uygular. Hem tam ekran panellerde hem de köşe butonlarında sorunsuz çalışır.
+    /// Automatically applies screen safe area boundaries (Screen.safeArea) such as notches, camera cutouts, and rounded corners
+    /// to the RectTransform. Works seamlessly for both fullscreen panels and corner buttons.
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(RectTransform))]
     public class SafeAreaFitter : MonoBehaviour
     {
         [Header("Fitting Mode")]
-        [Tooltip("Uygulama modu: Auto (önerilen), StretchAnchors veya OffsetPosition")]
+        [Tooltip("Application mode: Auto (recommended), StretchAnchors, or OffsetPosition")]
         [SerializeField] private SafeAreaFitMode fitMode = SafeAreaFitMode.Auto;
 
         [Header("Safe Area Edges")]
-        [Tooltip("Sol kenardaki çentik/kamera boşluğunu uygula")]
+        [Tooltip("Apply notch/camera cutout inset on the left edge")]
         [SerializeField] private bool applyLeft = true;
 
-        [Tooltip("Sağ kenardaki çentik/kamera boşluğunu uygula")]
+        [Tooltip("Apply notch/camera cutout inset on the right edge")]
         [SerializeField] private bool applyRight = true;
 
-        [Tooltip("Üst kenardaki çentik/durum çubuğu boşluğunu uygula")]
+        [Tooltip("Apply notch/status bar inset on the top edge")]
         [SerializeField] private bool applyTop = true;
 
-        [Tooltip("Alt kenardaki ev çubuğu (home indicator) boşluğunu uygula")]
+        [Tooltip("Apply home indicator inset on the bottom edge")]
         [SerializeField] private bool applyBottom = true;
 
         private RectTransform rectTransform;
@@ -40,7 +40,7 @@ namespace TowerDefence.UI
         private Vector2Int lastScreenSize = Vector2Int.zero;
         private ScreenOrientation lastOrientation = ScreenOrientation.AutoRotation;
 
-        // Orijinal pozisyonu sakla (Offset modunda katlanarak kaymayı önlemek için)
+        // Store original position (to prevent cumulative drifting in Offset mode)
         private Vector2 initialAnchoredPosition;
         private bool hasInitializedPos;
 
@@ -92,7 +92,7 @@ namespace TowerDefence.UI
 
             if (shouldUseAnchors)
             {
-                // Anchor Modu: Güvenli alan koordinatlarını 0.0 - 1.0 aralığına normalize et
+                // Anchor Mode: Normalize safe area coordinates to 0.0 - 1.0 range
                 Vector2 min = safeArea.position;
                 Vector2 max = safeArea.position + safeArea.size;
 
@@ -108,7 +108,7 @@ namespace TowerDefence.UI
             }
             else
             {
-                // Offset Modu: Canvas ölçeğine göre piksel farkını hesapla ve içeri ötele
+                // Offset Mode: Calculate pixel difference based on canvas scale and shift inward
                 if (rootCanvas == null) rootCanvas = GetComponentInParent<Canvas>();
                 float scaleFactor = (rootCanvas != null && rootCanvas.scaleFactor > 0f) ? rootCanvas.scaleFactor : 1f;
 
@@ -119,17 +119,17 @@ namespace TowerDefence.UI
 
                 Vector2 offset = Vector2.zero;
 
-                // Sol kenara sabitlenmişse içeri (sağa) kaydır
+                // Shift inward (right) if anchored to left edge
                 if (rectTransform.anchorMin.x < 0.5f && rectTransform.anchorMax.x < 0.5f)
                     offset.x += insetLeft;
-                // Sağ kenara sabitlenmişse içeri (sola) kaydır
+                // Shift inward (left) if anchored to right edge
                 else if (rectTransform.anchorMin.x > 0.5f && rectTransform.anchorMax.x > 0.5f)
                     offset.x -= insetRight;
 
-                // Alt kenara sabitlenmişse içeri (yukarı) kaydır
+                // Shift inward (up) if anchored to bottom edge
                 if (rectTransform.anchorMin.y < 0.5f && rectTransform.anchorMax.y < 0.5f)
                     offset.y += insetBottom;
-                // Üst kenara sabitlenmişse içeri (aşağı) kaydır
+                // Shift inward (down) if anchored to top edge
                 else if (rectTransform.anchorMin.y > 0.5f && rectTransform.anchorMax.y > 0.5f)
                     offset.y -= insetTop;
 

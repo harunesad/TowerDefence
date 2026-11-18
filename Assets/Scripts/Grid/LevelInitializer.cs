@@ -26,11 +26,11 @@ namespace TowerDefence.Grid
 
             if (currentLevel.mapPrefab != null)
             {
-                // Haritayı oluştur
+                // Generate map
                 GameObject mapInstance = Instantiate(currentLevel.mapPrefab, currentLevel.mapPrefab.transform.position, currentLevel.mapPrefab.transform.rotation);
                 Debug.Log($"LevelInitializer: Map '{currentLevel.levelName}' spawned.");
 
-                // Haritadaki kuleleri tara ve oyuncunun seçtiği tarafa göre rakip karşılıklarına dönüştür
+                // Scan towers on map and convert to opposing counterparts based on player's chosen side
                 Side playerSide = SideController.Instance.GetPlayerSide();
                 Tower[] mapTowers = mapInstance.GetComponentsInChildren<Tower>();
                 
@@ -47,7 +47,7 @@ namespace TowerDefence.Grid
                     }
                 }
 
-                // NavMesh sistemi kaldırıldı, waypoint bazlı hareket sistemine geçildi.
+                // NavMesh system removed; migrated to waypoint-based movement.
             }
             else
             {

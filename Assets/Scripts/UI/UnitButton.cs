@@ -39,6 +39,7 @@ namespace TowerDefence.UI
         {
             if (eventData.button != PointerEventData.InputButton.Left) return;
             if (unitData == null) return;
+            if (isInteractable) UIButtonSound.Play();
 
             if (activePanel != null)
             {

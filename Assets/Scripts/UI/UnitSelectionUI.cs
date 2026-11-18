@@ -40,11 +40,11 @@ namespace TowerDefence.UI
 
         private System.Collections.IEnumerator DeferredInit()
         {
-            // Bekle ki SideController vs iyice yerleşsin
+            // Bekle ki SideController vs iyice yerlessin
             yield return new WaitForSecondsRealtime(0.1f);
             InitializeUI();
             
-            // Eğer hala (yanlışlıkla) aydınlık gelmişse veya boşsa birkaç kez daha dene
+            // Eger hala (yanlislikla) aydinlik gelmisse veya bossa birkac kez daha dene
             for (int i = 0; i < 3; i++)
             {
                 if (lastSide == Side.Light && SideController.Instance != null && SideController.Instance.GetPlayerSide() != Side.Light)
@@ -168,7 +168,7 @@ namespace TowerDefence.UI
                 Debug.LogWarning("[CORE-UNIT] No units found for side: " + playerSide);
             }
 
-            // Butonları oluşturduktan sonra wave durumuna göre kontrol et
+            // Butonlari olusturduktan sonra wave durumuna gore kontrol et
             UpdateButtonsInteractability();
         }
 

@@ -40,11 +40,11 @@ namespace TowerDefence.Core
                 transform.SetParent(null);
                 DontDestroyOnLoad(gameObject);
                 
-                // Otomatik AdManager ekle
+                // Automatically add AdManager
                 if (GetComponent<AdManager>() == null)
                     gameObject.AddComponent<AdManager>();
 
-                // Loading Screen prefab'ını başlat
+                // Initialize Loading Screen prefab
                 if (loadingScreenPrefab != null && SceneLoader.Instance == null)
                     Instantiate(loadingScreenPrefab);
             }
@@ -56,12 +56,12 @@ namespace TowerDefence.Core
 
         private void Start()
         {
-            // Eğer oyun Bootstrap sahnesinden başlıyorsa otomatik Menüye git
+            // If the game starts from the Bootstrap scene, navigate automatically to the Main Menu
             if (SceneManager.GetActiveScene().buildIndex == 0)
             {
                 ChangeState(GameState.MainMenu);
                 SceneLoader.EnsureInstance();
-                SceneLoader.Instance.LoadScene(1); // 1 genelde MainMenu sahnesidir
+                SceneLoader.Instance.LoadScene(1); // 1 is typically the MainMenu scene
             }
         }
 
@@ -71,7 +71,7 @@ namespace TowerDefence.Core
             Debug.Log($"Game State changed to: {newState}");
             OnGameStateChanged?.Invoke(newState);
             
-            // State'e özgü eventler burada tetiklenebilir
+            // State-specific events can be triggered here
             switch (newState)
             {
                 case GameState.Playing:

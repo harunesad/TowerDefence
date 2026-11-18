@@ -30,8 +30,28 @@ namespace TowerDefence.Combat
 
         public HeroData HeroConfig => heroConfig;
         public float AbilityCooldownRemaining => abilityCooldownTimer;
-        public float AbilityCooldownMax => heroConfig != null ? heroConfig.abilityCooldown : 0f;
+        public float AbilityCooldownMax => ScaledAbilityCooldown;
         public bool IsAbilityReady => abilityCooldownTimer <= 0f && heroConfig != null;
+
+        private float ScaledAbilityCooldown
+        {
+            get
+            {
+                if (heroConfig == null) return 0f;
+                if (MetaProgressionManager.Instance == null) return heroConfig.abilityCooldown;
+                return MetaProgressionManager.Instance.GetHeroAbilityCooldown(heroConfig);
+            }
+        }
+
+        private float ScaledAbilityPower
+        {
+            get
+            {
+                if (heroConfig == null) return 1f;
+                if (MetaProgressionManager.Instance == null) return heroConfig.abilityPower;
+                return MetaProgressionManager.Instance.GetHeroAbilityPower(heroConfig);
+            }
+        }
 
         public bool IsSelected => selectionIndicator != null &&
             selectionIndicator.CurrentState == HeroSelectionState.Active;
@@ -47,7 +67,7 @@ namespace TowerDefence.Combat
             if (selectionIndicator == null)
                 selectionIndicator = gameObject.AddComponent<HeroSelectionIndicator>();
 
-            // Tıklanabilmesi için Collider eksikse dinamik olarak ekle (Root objesinde olmasını garanti ediyoruz)
+            // Dynamically add Collider if missing so it can be clicked (guaranteed on root object)
             if (GetComponent<Collider>() == null)
             {
                 CapsuleCollider col = gameObject.AddComponent<CapsuleCollider>();
@@ -57,7 +77,7 @@ namespace TowerDefence.Combat
                 col.isTrigger = false;
             }
 
-            // Ölçeği ayarla (Gereksinim: Herolar scale (1.5, 1.5, 1.5))
+            // Adjust scale (Requirement: Heroes scale (1.5, 1.5, 1.5))
             transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
             transform.position = new Vector3(transform.position.x, 0.2f, transform.position.z);
 
@@ -79,7 +99,7 @@ namespace TowerDefence.Combat
 
         private void HandlePhaseChanged(GamePhase phase)
         {
-            // Dalga bittiğinde (Hazırlık fazına geçildiğinde) animasyonu sıfırla
+            // Reset animation when wave ends (entering Preparation phase)
             if (phase == GamePhase.Preparation)
             {
                 ResetHeroAnimationState();
@@ -94,12 +114,12 @@ namespace TowerDefence.Combat
             if (activeVFXInstance != null)
                 activeVFXInstance.SetActive(false);
 
-            // 1. Animasyonları Idle'a çek
+            // 1. Set animations to Idle
             if (animator != null)
             {
                 animator.SetBool("IsMoving", false);
                 animator.speed = 1f;
-                // Triggers temizliği
+                // Clear triggers
                 if (animator.parameters != null)
                 {
                     foreach (var param in animator.parameters)
@@ -111,18 +131,18 @@ namespace TowerDefence.Combat
                         }
                     }
                 }
-                // Sert sıfırlama: Idle animasyonuna anında geç
+                // Hard reset: immediately transition to Idle animation
                 animator.Play("Idle", 0, 0f);
             }
 
-            // 2. Saldırı ve Hareket durumlarını temizle
+            // 2. Clear attack and movement states
             isAttacking = false;
             isMovingToManualTarget = false;
             hasMoveDestination = false;
             StopAllCoroutines(); // PerformAttack korutinini durdurur
             ClearTarget();       // Hedefi ve engellemeyi temizler
 
-            // 3. Ölçeği tekrar garanti et
+            // 3. Re-ensure scale
             transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
             transform.position = new Vector3(transform.position.x, 0.2f, transform.position.z);
 
@@ -135,7 +155,7 @@ namespace TowerDefence.Combat
             hasMoveDestination = true;
             isMovingToManualTarget = true;
             
-            // Mevcut saldırı ve hedef eylemlerini anında iptal et
+            // Immediately cancel current attack and target actions
             StopAllCoroutines();
             isAttacking = false;
             
@@ -283,7 +303,7 @@ namespace TowerDefence.Combat
             }
             else 
             {
-                // Combat fazı dışındayken saldırı veya hedef varsa temizle
+                // Clear attack or target when outside combat phase
                 if (isAttacking || GetTarget() != null)
                 {
                     ResetHeroAnimationState();
@@ -308,7 +328,7 @@ namespace TowerDefence.Combat
 
             if (TryUseAbility())
             {
-                abilityCooldownTimer = heroConfig.abilityCooldown;
+                abilityCooldownTimer = ScaledAbilityCooldown;
                 CheckAndPlayAbilityAnimation();
 
                 AudioClip sfx = heroConfig.abilitySFX;
@@ -336,7 +356,7 @@ namespace TowerDefence.Combat
         {
             if (animator == null || heroConfig == null) return;
 
-            // Sadece vuruş/hasar odaklı yeteneklerde "Ability" animasyonunu tetikle
+            // Only trigger "Ability" animation on strike/damage focused abilities
             switch (heroConfig.abilityType)
             {
                 case HeroAbilityType.ArrowRain:
@@ -349,7 +369,7 @@ namespace TowerDefence.Combat
                     animator.SetTrigger("Ability");
                     break;
                 
-                // Pasif veya iyileştirme gibi destek yetenekleri animasyon oynatmaz
+                // Passive or support abilities like healing do not play animation
                 case HeroAbilityType.RallyHeal:
                 case HeroAbilityType.HolyShield:
                 case HeroAbilityType.FortifyTaunt:
@@ -368,21 +388,21 @@ namespace TowerDefence.Combat
             {
                 case HeroAbilityType.RallyHeal:
                     if (GetHealth() >= GetMaxHealth()) return false;
-                    Heal(GetMaxHealth() * 0.15f * heroConfig.abilityPower);
+                    Heal(GetMaxHealth() * 0.15f * ScaledAbilityPower);
                     SpawnHeroVFX(HeroAbilityType.RallyHeal, 2f);
                     return true;
 
                 case HeroAbilityType.HolyShield:
                     if (GetHealth() / Mathf.Max(1f, GetMaxHealth()) <= 0.35f)
-                        Heal(GetMaxHealth() * 0.2f * heroConfig.abilityPower);
-                    AddAbsorbShield(GetMaxHealth() * 0.35f * heroConfig.abilityPower);
+                        Heal(GetMaxHealth() * 0.2f * ScaledAbilityPower);
+                    AddAbsorbShield(GetMaxHealth() * 0.35f * ScaledAbilityPower);
                     SpawnHeroVFX(HeroAbilityType.HolyShield, 2f);
                     return true;
 
                 case HeroAbilityType.LifeDrain:
                     if (GetTarget() is Unit target && !target.IsDead)
                     {
-                        float dmg = GetDamage() * heroConfig.abilityPower * 1.5f;
+                        float dmg = GetDamage() * ScaledAbilityPower * 1.5f;
                         target.TakeDamage(dmg);
                         Heal(dmg * 0.5f);
                         SpawnHeroVFX(HeroAbilityType.LifeDrain, 2f);
@@ -391,15 +411,15 @@ namespace TowerDefence.Combat
                     return false;
 
                 case HeroAbilityType.BoneArmor:
-                    AddAbsorbShield(GetMaxHealth() * 0.25f * heroConfig.abilityPower);
+                    AddAbsorbShield(GetMaxHealth() * 0.25f * ScaledAbilityPower);
                     SpawnHeroVFX(HeroAbilityType.BoneArmor, 2f);
                     return true;
 
                 case HeroAbilityType.ArrowRain:
-                    if (DealAbilityAreaDamage(heroConfig.abilityRadius, GetDamage() * heroConfig.abilityPower * 2.0f))
+                    if (DealAbilityAreaDamage(heroConfig.abilityRadius, GetDamage() * ScaledAbilityPower * 2.0f))
                     {
                         SpawnHeroVFX(HeroAbilityType.ArrowRain, 2f);
-                        SpawnArrowRain(transform.position, heroConfig.abilityRadius, 8);
+                        SpawnArrowRain(transform.position, heroConfig.abilityRadius, 32);
                         return true;
                     }
                     return false;
@@ -407,7 +427,7 @@ namespace TowerDefence.Combat
                 case HeroAbilityType.SwiftStrike:
                     if (GetTarget() is Unit swiftTarget && !swiftTarget.IsDead)
                     {
-                        swiftTarget.TakeDamage(GetDamage() * heroConfig.abilityPower * 2.5f);
+                        swiftTarget.TakeDamage(GetDamage() * ScaledAbilityPower * 2.5f);
                         SpawnHeroVFX(HeroAbilityType.SwiftStrike, 1f);
                         return true;
                     }
@@ -422,7 +442,7 @@ namespace TowerDefence.Combat
                     return false;
 
                 case HeroAbilityType.SolarSmite:
-                    if (DealAbilityAreaDamage(heroConfig.abilityRadius, GetDamage() * heroConfig.abilityPower * 2.0f))
+                    if (DealAbilityAreaDamage(heroConfig.abilityRadius, GetDamage() * ScaledAbilityPower * 2.0f))
                     {
                         SpawnHeroVFX(HeroAbilityType.SolarSmite, 1f);
                         return true;
@@ -433,14 +453,14 @@ namespace TowerDefence.Combat
                     if (GetTarget() is Unit execTarget && !execTarget.IsDead &&
                         execTarget.GetHealth() / execTarget.GetMaxHealth() <= 0.40f)
                     {
-                        execTarget.TakeDamage(GetDamage() * heroConfig.abilityPower * 4.0f);
+                        execTarget.TakeDamage(GetDamage() * ScaledAbilityPower * 4.0f);
                         SpawnHeroVFX(HeroAbilityType.SoulExecute, 1.5f);
                         return true;
                     }
                     return false;
 
                 case HeroAbilityType.GroundSlam:
-                    if (DealAbilityAreaDamage(heroConfig.abilityRadius, GetDamage() * heroConfig.abilityPower * 2.2f))
+                    if (DealAbilityAreaDamage(heroConfig.abilityRadius, GetDamage() * ScaledAbilityPower * 2.2f))
                     {
                         SpawnHeroVFX(HeroAbilityType.GroundSlam, 2f);
                         return true;
@@ -448,7 +468,7 @@ namespace TowerDefence.Combat
                     return false;
 
                 case HeroAbilityType.PlagueCloud:
-                    if (ApplyAbilityPoison(heroConfig.abilityRadius, GetDamage() * heroConfig.abilityPower * 0.5f, 4f))
+                    if (ApplyAbilityPoison(heroConfig.abilityRadius, GetDamage() * ScaledAbilityPower * 0.5f, 4f))
                     {
                         SpawnHeroVFX(HeroAbilityType.PlagueCloud, 2f);
                         return true;
@@ -460,7 +480,7 @@ namespace TowerDefence.Combat
                     {
                         Vector3 behind = stepTarget.transform.position - stepTarget.transform.forward * 1.2f;
                         transform.position = new Vector3(behind.x, transform.position.y, behind.z);
-                        stepTarget.TakeDamage(GetDamage() * heroConfig.abilityPower * 3.0f);
+                        stepTarget.TakeDamage(GetDamage() * ScaledAbilityPower * 3.0f);
                         SpawnHeroVFX(HeroAbilityType.ShadowStep, 1f);
                         return true;
                     }
@@ -552,7 +572,7 @@ namespace TowerDefence.Combat
             SetSelectionState(HeroSelectionState.Hidden);
             onDeathCallback?.Invoke(this);
             
-            // Bizi engelleyen varsa onu boşa çıkar
+            // Release anyone blocking us
             if (currentBlocker != null)
             {
                 currentBlocker.OnBlockedEnemyDied(this);
@@ -560,7 +580,7 @@ namespace TowerDefence.Combat
             }
             isBlocked = false;
 
-            // Bizim engellediğimiz düşmanlar varsa onları serbest bırak
+            // Release enemies blocked by us if any
             foreach (var enemy in blockedEnemies)
             {
                 if (enemy != null) enemy.Unblock();
@@ -569,7 +589,7 @@ namespace TowerDefence.Combat
             
             ClearAllStatusEffects();
 
-            // Unit.Die()'daki Destroy'u engellemek için base.Die() çağırmıyoruz
+            // Do not call base.Die() to prevent Destroy in Unit.Die()
             isDead = true;
             isMovingToManualTarget = false;
             hasMoveDestination = false;
@@ -587,14 +607,14 @@ namespace TowerDefence.Combat
 
             Debug.Log($"[HeroUnit] {gameObject.name} is down. Released units and cleared move state.");
 
-            // Ölüm efekti
+            // Death effect
             if (VFXManager.Instance != null)
                 VFXManager.Instance.SpawnVFX(VFXType.UnitDeath, transform.position, Quaternion.identity);
 
             if (AudioManager.Instance != null && unitData.deathSFX != null)
                 AudioManager.Instance.PlaySFX(unitData.deathSFX);
 
-            // Ekonomi ödülü
+            // Economy reward
             Side opponentSide = GetSide() == Side.Light ? Side.Dark : Side.Light;
             int reward = grantKillReward ? GetScaledKillReward() : 0;
             if (reward > 0 && CurrencyManager.Instance != null)
@@ -613,7 +633,7 @@ namespace TowerDefence.Combat
             blockedEnemies.Clear();
             isMovingToManualTarget = false;
             hasMoveDestination = false;
-            abilityCooldownTimer = heroConfig != null ? heroConfig.abilityCooldown : abilityCooldownTimer;
+            abilityCooldownTimer = heroConfig != null ? ScaledAbilityCooldown : abilityCooldownTimer;
             RefreshSlowFactor();
 
             currentHealth = GetMaxHealth();

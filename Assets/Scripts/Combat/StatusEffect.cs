@@ -54,7 +54,7 @@ namespace TowerDefence.Combat
                     unit.TakeDamage(power);
                     break;
                 case StatusEffectType.Stun:
-                    // Stun mantığı Unit Update'inde NavMeshAgent.isStopped ile kontrol edilecek
+                    // Stun mantigi Unit Update'inde NavMeshAgent.isStopped ile kontrol edilecek
                     break;
             }
         }
@@ -62,7 +62,7 @@ namespace TowerDefence.Combat
         public float GetRemainingDuration() => remainingDuration;
 
         /// <summary>
-        /// Süreyi ve gücü günceller. Tick saatini sıfırlamaz; yenilenen zehir ve yanma işlemeye devam eder.
+        /// Sureyi ve gucu gunceller. Tick saatini sifirlamaz; yenilenen zehir ve yanma islemeye devam eder.
         /// </summary>
         public void Extend(float newDuration, float newPower)
         {

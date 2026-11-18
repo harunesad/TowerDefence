@@ -1,0 +1,226 @@
+[
+  {
+    "line": 63,
+    "text": "private float pathOffset; // Yol üzerindeki yanal sapma (Sabitlendi)"
+  },
+  {
+    "line": 99,
+    "text": "protected List<Unit> blockedEnemies = new List<Unit>(); // Bizim engellediğimiz düşmanlar"
+  },
+  {
+    "line": 124,
+    "text": "// Runtime Bulletproof Fix: Eğer AnimationEventHandler yoksa otomatik ekle"
+  },
+  {
+    "line": 169,
+    "text": "// Meta-Gelişim Çarpanlarını Uygula"
+  },
+  {
+    "line": 170,
+    "text": "// SpeedBonus kule ateş hızıdır (Rapid Fire). Birim hızı yalnızca UnitSpeedBonus."
+  },
+  {
+    "line": 195,
+    "text": "// Animasyon hızını hareket hızıyla senkronize et"
+  },
+  {
+    "line": 196,
+    "text": "// 1.0f = referans hız, animasyon bu hıza göre kalibre edilmiş sayılır"
+  },
+  {
+    "line": 201,
+    "text": "// Dost birimler mavi, düşman birimler yeşil/kırmızı (prefabın orijinal rengi veya yeşil)"
+  },
+  {
+    "line": 205,
+    "text": "healthBar.SetColor(new Color(0.2f, 0.8f, 0.2f)); // Yeşil"
+  },
+  {
+    "line": 216,
+    "text": "// Kullanıcı isteği üzerine: Dost birliklerin altına çıkan indicator halkası tamamen kaldırıldı (Can barı renklerinden ayırt ediliyor)"
+  },
+  {
+    "line": 224,
+    "text": "/// <summary>Animator hızını verilen hareket hızına göre ayarlar.</summary>"
+  },
+  {
+    "line": 228,
+    "text": "// Referans hızı: 1.0f. Animasyonlar bu hıza göre çekilmiş sayılır."
+  },
+  {
+    "line": 229,
+    "text": "// Kısmi çarpım (0.85f) aşırı hızlı görünmeyi engeller."
+  },
+  {
+    "line": 289,
+    "text": "unitIndicator.transform.localPosition = indicatorPosition; // Editörden ayarlanan pozisyon"
+  },
+  {
+    "line": 407,
+    "text": "// Savaş Durumu Check — isBlocked'dan bağımsız çalışır"
+  },
+  {
+    "line": 415,
+    "text": "// Saldırı menziline küçük bir tolerans ekle (+0.5f)"
+  },
+  {
+    "line": 429,
+    "text": "// Hareket Mantığı — isBlocked sadece yol/kovalama hareketini engeller"
+  },
+  {
+    "line": 432,
+    "text": "// Değişiklik: isBlocked olsa bile eğer bir hedefimiz (düello partnerimiz) varsa ona yürüyebilelim"
+  },
+  {
+    "line": 440,
+    "text": "// Yakın dövüşçü ise (Projectile yoksa) iyice dibine (1.2f) gir"
+  },
+  {
+    "line": 469,
+    "text": "// 2. Düşman yoksa ve engellenmemişsek Waypoint Takibi yap"
+  },
+  {
+    "line": 521,
+    "text": "// isBlocked: Yerinde dur, hedefe dön"
+  },
+  {
+    "line": 529,
+    "text": "// Savaş/saldırı sırasında yürüme animasyonunu kapat — ama sadece normal üniteler için."
+  },
+  {
+    "line": 530,
+    "text": "// Hero'lar kendi animasyon yönetimlerini HeroUnit.Update() içinde yapıyor."
+  },
+  {
+    "line": 623,
+    "text": "// Yanal sapma için yönü ünitenin nerede olduğuna göre değil, yolun gidişatına (segment) göre hesapla."
+  },
+  {
+    "line": 624,
+    "text": "// Bu sayede ünite hedefe çok yaklaştığında sağ/sol hesaplaması fırıldak gibi dönüp sapmaz."
+  },
+  {
+    "line": 633,
+    "text": "// Önceki noktadan şu anki hedefe doğru olan yön"
+  },
+  {
+    "line": 638,
+    "text": "// İlk nokta için yönü bir sonraki noktaya bakarak al"
+  },
+  {
+    "line": 664,
+    "text": "direction.y = 0; // Yerden yükselmeyi veya aşağı bakmayı engelle"
+  },
+  {
+    "line": 666,
+    "text": "// Eğer sıfıra çok yakınsa dönmeye çalışma (LookRotation hatasını engeller)"
+  },
+  {
+    "line": 688,
+    "text": "// 1. ÖNCELİK: Düello Partneri Kontrolü"
+  },
+  {
+    "line": 720,
+    "text": "// 1'E 1 KURALI: Unit vs Unit, kahramanlar muaftır"
+  },
+  {
+    "line": 754,
+    "text": "// 4 şerit veya sürekli rastgele dağılım. Daha doğal görünmesi için PathWidth üzerinden hesaplıyoruz."
+  },
+  {
+    "line": 755,
+    "text": "// Örneğin width = 3 ise, offset -1.5 ile 1.5 arası."
+  },
+  {
+    "line": 822,
+    "text": "// En yakın noktaya ulaştı sayıp bir sonrakine yönlendiriyoruz"
+  },
+  {
+    "line": 881,
+    "text": "// Health barın Y pozisyonunun biraz altında"
+  },
+  {
+    "line": 889,
+    "text": "// Kameraya bakması (billboard) sağlanabilir, ama HealthBarUI'nin parent'ı zaten billboard yapıyorsa sorun yok."
+  },
+  {
+    "line": 890,
+    "text": "// UnitIndicator tarzı Yere paralel mi olsun, yoksa ekrana mı baksın?"
+  },
+  {
+    "line": 891,
+    "text": "// İkon oldukları için SpriteRenderer ile ekrana bakmaları daha iyidir."
+  },
+  {
+    "line": 910,
+    "text": "// Aynı tipte bir efekt varsa süreyi yenile veya daha güçlüsünü al"
+  },
+  {
+    "line": 950,
+    "text": "sr.sortingOrder = 15; // Healthbar'ın üstünde/altında net görünsün"
+  },
+  {
+    "line": 951,
+    "text": "visualObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // İkonların boyutu"
+  },
+  {
+    "line": 980,
+    "text": "// Slow uygulandığında animasyonu ve hareketi yavaşlat"
+  },
+  {
+    "line": 988,
+    "text": "// Eğer yol atanmışsa, hedef olarak yolun son noktasını (Base kapısını) referans al"
+  },
+  {
+    "line": 1001,
+    "text": "// Artık doğduğu yere göre değil, gideceği yolun sonuna en yakın Base'i seçecek"
+  },
+  {
+    "line": 1019,
+    "text": "// Üsse ulaştığında güncel hasarı ver. Can zaten bitmişse yenilgi yine işler."
+  },
+  {
+    "line": 1026,
+    "text": "// Özel ölüm veya standart ölüm efekti"
+  },
+  {
+    "line": 1112,
+    "text": "// Animation Event'ten çağrılacak metod"
+  },
+  {
+    "line": 1115,
+    "text": "// Eğer daha önceden (fallback veya çoklu event) hasar verildiyse çık"
+  },
+  {
+    "line": 1118,
+    "text": "// Eğer saldırı iptal edildiyse veya bitirildiyse vurma"
+  },
+  {
+    "line": 1132,
+    "text": "// Phantom Hit Fix (Ölüye vurmayı engelle)"
+  },
+  {
+    "line": 1215,
+    "text": "// Eğer kalkan varsa hasarı kalkan emsin"
+  },
+  {
+    "line": 1286,
+    "text": "// Bizi engelleyen varsa onu boşa çıkar"
+  },
+  {
+    "line": 1293,
+    "text": "// Bizim engellediğimiz düşmanlar varsa onları serbest bırak"
+  },
+  {
+    "line": 1303,
+    "text": "// Efekt görsellerini temizle"
+  },
+  {
+    "line": 1309,
+    "text": "// Ölüm efekti"
+  },
+  {
+    "line": 1350,
+    "text": "// Artık birini engellemiyoruz, normal harekete dönebiliriz (Veya rally point'e)"
+  }
+]

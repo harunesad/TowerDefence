@@ -3,23 +3,23 @@ using UnityEngine;
 namespace TowerDefence.Core
 {
     /// <summary>
-    /// Ekranın en/boy oranına (Aspect Ratio) göre kameranın görüş alanını (FOV veya Orthographic Size) dinamik ayarlar.
-    /// Referans 16:9 oranından daha dar ekranlarda (iPad, tablet vb.) haritanın kenarlarının kesilmesini engeller.
+    /// Ekranin en/boy oranina (Aspect Ratio) gore kameranin gorus alanini (FOV veya Orthographic Size) dinamik ayarlar.
+    /// Referans 16:9 oranindan daha dar ekranlarda (iPad, tablet vb.) haritanin kenarlarinin kesilmesini engeller.
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(Camera))]
     public class CameraAspectRatioScaler : MonoBehaviour
     {
         [Header("Aspect Ratio Reference")]
-        [Tooltip("Oyunun tasarlandığı hedef en/boy oranı (Örn: 16:9 için 1.7778)")]
+        [Tooltip("Target aspect ratio the game is designed for (e.g. 1.7778 for 16:9)")]
         [SerializeField] private float targetAspect = 16f / 9f;
 
         [Header("Orthographic Settings")]
-        [Tooltip("16:9 referans ekranda kullanılan temel ortografik boyut")]
+        [Tooltip("Base orthographic size used on 16:9 reference screen")]
         [SerializeField] private float baseOrthographicSize = 28f;
 
         [Header("Perspective Settings (Opsiyonel)")]
-        [Tooltip("16:9 referans ekranda kullanılan dikey FOV")]
+        [Tooltip("Vertical FOV used on 16:9 reference screen")]
         [SerializeField] private float baseFieldOfView = 60f;
 
         private Camera cam;
@@ -43,7 +43,7 @@ namespace TowerDefence.Core
 
         private void Update()
         {
-            // Çözünürlük veya yön (Orientation) değiştiğinde anında güncelle
+            // cozunurluk veya yon (Orientation) degistiginde aninda guncelle
             if (Screen.width != lastScreenWidth || Screen.height != lastScreenHeight)
             {
                 AdjustCamera();
@@ -62,20 +62,20 @@ namespace TowerDefence.Core
 
             if (cam.orthographic)
             {
-                // Cihaz 16:9'dan daha darsa (örn: iPad 4:3), haritayı kesmemek için kamerayı geriye çek
+                // Cihaz 16:9'dan daha darsa (orn: iPad 4:3), haritayi kesmemek icin kamerayi geriye cek
                 if (currentAspect < targetAspect)
                 {
                     cam.orthographicSize = baseOrthographicSize * (targetAspect / currentAspect);
                 }
                 else
                 {
-                    // 16:9 veya daha geniş ekranlarda temel boyutu koru
+                    // 16:9 veya daha genis ekranlarda temel boyutu koru
                     cam.orthographicSize = baseOrthographicSize;
                 }
             }
             else
             {
-                // Perspektif kamera için yatay FOV'u koru
+                // Perspektif kamera icin yatay FOV'u koru
                 if (currentAspect < targetAspect)
                 {
                     float horizontalFOVRad = 2f * Mathf.Atan(Mathf.Tan(baseFieldOfView * 0.5f * Mathf.Deg2Rad) * targetAspect);
@@ -90,7 +90,7 @@ namespace TowerDefence.Core
         }
 
         /// <summary>
-        /// Sahneye yüklendiğinde ve her sahne geçişinde Main Camera üzerinde bu bileşen yoksa otomatik ekler.
+        /// Sahneye yuklendiginde ve her sahne gecisinde Main Camera uzerinde bu bilesen yoksa otomatik ekler.
         /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoAttachToMainCamera()

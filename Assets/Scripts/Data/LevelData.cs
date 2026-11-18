@@ -35,13 +35,13 @@ namespace TowerDefence.Data
         public int sceneIndex;
         public LevelType levelType;
         [Range(1, 5)] public int difficulty = 1;
-        public string levelID; // Kilit takibi için benzersiz ID
+        public string levelID; // Unique ID for unlock tracking
 
         [Header("Map Generation Settings")]
         public LevelTheme theme;
-        [Tooltip("Opsiyonel: Tema rengi/skybox'i yerine bu bolume ozel bir renk atamak isterseniz secin.")]
+        [Tooltip("Optional: Select if you want to assign a custom background color to this level instead of the theme color/skybox.")]
         public Color customBackgroundColor = Color.clear;
-        [Tooltip("Opsiyonel: Skybox modu aktifse ve bu bolume ozel skybox isteniyorsa atayin.")]
+        [Tooltip("Optional: Assign if skybox mode is active and a custom skybox is desired for this level.")]
         public Material customSkybox;
         public List<LevelPath> paths = new List<LevelPath>();
         public List<Vector3> basePoints = new List<Vector3>();

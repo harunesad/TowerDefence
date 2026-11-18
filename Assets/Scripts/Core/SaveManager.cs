@@ -3,7 +3,7 @@ using UnityEngine;
 namespace TowerDefence.Core
 {
     /// <summary>
-    /// İlerleme kaydı MetaProgressionManager içindedir. Bu nesne ayrı bir kayıt dosyası yazmaz.
+    /// Progression save is handled in MetaProgressionManager. This object does not write a separate save file.
     /// </summary>
     public class SaveManager : MonoBehaviour
     {

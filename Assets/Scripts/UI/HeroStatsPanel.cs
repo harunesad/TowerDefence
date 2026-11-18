@@ -173,12 +173,12 @@ namespace TowerDefence.UI
                     float rem = currentHero.AbilityCooldownRemaining;
                     abilityCooldownText.text = rem <= 0f
                         ? "<color=#4DFF85>READY</color>"
-                        : $"<color=#FF8080>{StatIcons.Time} {rem:F1}s / {currentData.abilityCooldown:F1}s</color>";
+                        : $"<color=#FF8080>{StatIcons.Time} {rem:F1}s / {currentHero.AbilityCooldownMax:F1}s</color>";
                     StatIcons.Set(abilityCooldownText, abilityCooldownText.text);
                 }
                 else
                 {
-                    abilityCooldownText.text = $"{StatIcons.Time} {currentData.abilityCooldown:F1}s";
+                    abilityCooldownText.text = $"{StatIcons.Time} {currentData.AbilityCooldownAtLevel(1):F1}s";
                     StatIcons.Set(abilityCooldownText, abilityCooldownText.text);
                 }
             }

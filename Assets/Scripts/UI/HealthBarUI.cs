@@ -24,9 +24,9 @@ namespace TowerDefence.UI
                 float fillAmount = Mathf.Clamp01(current / max);
                 fillImage.fillAmount = fillAmount;
 
-                // Renk değişimi kaldırıldı. 
-                // fillImage her zaman kendi orijinal renginde kalacak (örn: Yeşil).
-                // Altındaki background Image objesi ise kırmızı renkte olarak arka planda görünecek.
+                // Color change removed. 
+                // fillImage always keeps its original color (e.g. Green).
+                // Background Image underneath remains red in the background.
             }
         }
 

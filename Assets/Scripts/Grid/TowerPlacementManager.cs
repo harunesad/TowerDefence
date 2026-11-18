@@ -47,7 +47,7 @@ namespace TowerDefence.Grid
 #endif
             }
 
-            // Eğer liste boşsa, Projedeki tüm TowerData'ları bulmaya çalış (Gelişmiş Başlatma)
+            // If list is empty, attempt to find all TowerData in project (Advanced Init)
             if (allTowers == null || allTowers.Count == 0)
             {
                 allTowers = new List<TowerData>(Resources.FindObjectsOfTypeAll<TowerData>());
@@ -61,7 +61,7 @@ namespace TowerDefence.Grid
 
         private void Update()
         {
-            // Yeni Input Sistemi'nde hem fare hem dokunmatik için en iyi yöntem: Pointer.current
+            // In New Input System, best method for mouse and touch: Pointer.current
             if (Pointer.current != null && Pointer.current.press.wasPressedThisFrame)
             {
                 bool isOverUI = false;
@@ -195,7 +195,7 @@ namespace TowerDefence.Grid
 
             if (hitSomething)
             {
-                // ÖNCELİK: Eğer bir büyü seçiliyse kule işlemlerini yapma, büyüyü at
+                // PRIORITY: If a spell is selected, cast spell instead of tower actions
                 if (SpellManager.Instance != null && SpellManager.Instance.SelectedSpell != null)
                 {
                     if (TutorialDirector.Instance != null && TutorialDirector.Instance.WaitsBossCast())
@@ -215,7 +215,7 @@ namespace TowerDefence.Grid
                 TowerSlot slot = hit.collider.GetComponentInParent<TowerSlot>();
                 if (slot == null)
                 {
-                    // Fallback: Eğer kuleye tıklandıysa kule üzerinden slotu al
+                    // Fallback: If tower clicked, retrieve slot via tower
                     Tower tower = hit.collider.GetComponentInParent<Tower>();
                     if (tower != null) slot = tower.GetSlot();
                 }
@@ -228,13 +228,13 @@ namespace TowerDefence.Grid
                 }
                 else if (TutorialDirector.Instance == null || !TutorialDirector.Instance.OnlyArcher())
                 {
-                    // Boş bir yere veya slot olmayan bir yere tıklandığında tüm menüleri kapat
+                    // Close all menus when clicking empty ground or non-slot area
                     CloseAllTowerUI();
                 }
             }
             else
             {
-                // Gökyüzüne veya collider olmayan bir yere tıklandığında da kapat
+                // Close when clicking sky or area without collider
                 if (SpellManager.Instance != null && SpellManager.Instance.SelectedSpell != null)
                 {
                     SpellManager.Instance.ClearSelectedSpell();
@@ -264,7 +264,7 @@ namespace TowerDefence.Grid
 
         public void StartPlacementAtSlot(TowerSlot slot)
         {
-            // Eğer daha önce başka bir slot aktifse onun menüsünü kapatabilirsin
+            // Can close menu of previously active slot
             activeSlot = slot;
         }
 
@@ -303,7 +303,7 @@ namespace TowerDefence.Grid
 
         public void CloseAllTowerUI()
         {
-            // Sahnedeki tüm kule seçim ve yükseltme menülerini kapat
+            // Close all tower selection and upgrade menus in scene
             var selections = FindObjectsByType<UI.TowerSelectionUI>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             foreach (var s in selections) s.Hide();
 
@@ -318,7 +318,7 @@ namespace TowerDefence.Grid
 
         public void ShowUpgradeUI(TowerSlot slot, Combat.Tower tower)
         {
-            // Singleton yerine kulenin kendi içindeki (çocuk) UI'ı tetikle
+            // Trigger tower's child UI directly instead of singleton
             TowerUpgradeUI ui = tower.GetComponentInChildren<TowerUpgradeUI>(true);
             if (ui != null) ui.Show(slot, tower);
         }

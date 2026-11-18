@@ -43,27 +43,27 @@ namespace TowerDefence.Combat
             Debug.Log($"[UnitPlacementManager] StartDragging: {unitData.unitName}");
             currentDraggingUnit = unitData;
             
-            // Ghost unit oluştur (Birim prefab'ının bir kopyası ama yarı saydam shader verilbilir)
+            // Spawn ghost unit (copy of prefab; semi-transparent shader can be applied)
             if (unitData.prefab != null)
             {
                 ghostUnit = Instantiate(unitData.prefab);
-                // NavMeshAgent'ı kapat ki sürüklerken hareket etmeye çalışmasın
+                // Disable NavMeshAgent so it doesn't move during drag
                 var agent = ghostUnit.GetComponent<UnityEngine.AI.NavMeshAgent>();
                 if (agent != null) agent.enabled = false;
                 
-                // Çarpışmaları kapat
+                // Disable collisions
                 var colliders = ghostUnit.GetComponentsInChildren<Collider>();
                 foreach (var col in colliders) col.enabled = false;
 
-                // Unit bileşenini kapat ki sürükleme esnasında saldırmasın/hedef aramasın
+                // Disable Unit component so it does not attack or target during drag
                 var unitComp = ghostUnit.GetComponent<Unit>();
                 if (unitComp != null) unitComp.enabled = false;
 
-                // Sağlık barını da gizle
+                // Hide health bar
                 var healthBar = ghostUnit.GetComponentInChildren<TowerDefence.UI.HealthBarUI>();
                 if (healthBar != null) healthBar.gameObject.SetActive(false);
 
-                UpdateGhostPosition(); // İlk karede ghost'u mouse'a ışınla
+                UpdateGhostPosition(); // Snap ghost to mouse on first frame
             }
         }
 
@@ -107,7 +107,7 @@ namespace TowerDefence.Combat
             {
                 ghostUnit.SetActive(true);
                 
-                // Tüm PathWaypoints'leri tara (spawner bağımsız)
+                // Iterate through all PathWaypoints (spawner independent)
                 bool isPlayer = (currentDraggingUnit.side == SideController.Instance.GetPlayerSide());
                 PathWaypoints[] allPaths = FindObjectsByType<PathWaypoints>(FindObjectsSortMode.None);
 
@@ -145,7 +145,7 @@ namespace TowerDefence.Combat
                     var wps = nearestPath.GetPathPoints();
                     if (isPlayer)
                     {
-                        // Player unitleri path'te geriye doğru yürüsün (wp[son] → wp[0] = düşmana doğru)
+                        // Player units walk backwards along path (wp[last] -> wp[0] towards enemy)
                         targetWaypointIndex = Mathf.Max(nearestWpIdx - 1, 0);
                     }
                     else
@@ -238,8 +238,8 @@ namespace TowerDefence.Combat
 
         private void UpdateGhostVisuals(bool isValid)
         {
-            // İleride buraya malzeme (Material) değiştirme eklenebilir. 
-            // Şimdilik sadece debug veya basit renk değişimi.
+            // Material swap can be added here in the future. 
+            // Currently simple color change or debug.
         }
 
         private Vector3 GetClosestPointOnSegment(Vector3 p, Vector3 a, Vector3 b)

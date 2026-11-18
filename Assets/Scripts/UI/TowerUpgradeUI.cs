@@ -712,14 +712,20 @@ namespace TowerDefence.UI
                 return text;
             }
 
+            if (data != null && data.isAuraTower)
+            {
+                float scale = data.AuraLevelScale(currentTower.CurrentLevel);
+                text += $"\n{StatIcons.Range} {data.auraRadius * scale:0.#}";
+                text += $"\n{StatIcons.AuraBonus(data.auraDamageBonus * scale, data.auraFireRateBonus * scale)}";
+                return text;
+            }
+
             text += $"\n{StatIcons.Damage} {currentTower.GetCurrentDamage():0}\n{StatIcons.Range} {currentTower.GetCurrentRange():0.#}\n{StatIcons.Attack} {currentTower.GetCurrentFireRate():0.##}/s";
             if (data == null) return text;
             if (data.isArtillery && data.explosionRadius > 0f)
                 text += $"\n{StatIcons.Area} {data.explosionRadius:0.#}";
             else if (data.isSlowTower)
                 text += $"\n{StatIcons.Slow} {data.effectPower * 100f:0}%";
-            else if (data.isAuraTower)
-                text += $"\n{StatIcons.Aura} +{data.auraDamageBonus * 100f:0}%";
             return text;
         }
 
@@ -729,7 +735,15 @@ namespace TowerDefence.UI
                 return $"{name}\nLv {currentTower.CurrentLevel}";
 
             int next = currentTower.CurrentLevel + 1;
-            float nextDamage = currentTower.GetCurrentDamage() / Mathf.Max(1, currentTower.CurrentLevel) * next;
+            if (data.isAuraTower)
+            {
+                float nextScale = data.AuraLevelScale(next);
+                return $"{name}\n{StatIcons.Gold} {data.upgradeCost}\nLv {currentTower.CurrentLevel} > {next}\n{StatIcons.Range} {data.auraRadius * nextScale:0.#}\n{StatIcons.AuraBonus(data.auraDamageBonus * nextScale, data.auraFireRateBonus * nextScale)}";
+            }
+
+            float nextDamage = currentTower.GetCurrentDamage()
+                / Mathf.Max(0.01f, Tower.DamageLevelScale(currentTower.CurrentLevel))
+                * Tower.DamageLevelScale(next);
             float rangeLevel = 1f + (currentTower.CurrentLevel - 1) * 0.2f;
             float nextRange = currentTower.GetCurrentRange() / Mathf.Max(0.01f, rangeLevel) * (1f + (next - 1) * 0.2f);
             return $"{name}\n{StatIcons.Gold} {data.upgradeCost}\nLv {currentTower.CurrentLevel} > {next}\n{StatIcons.Damage} {nextDamage:0}\n{StatIcons.Range} {nextRange:0.#}";
@@ -744,13 +758,17 @@ namespace TowerDefence.UI
             if (barracks != null)
                 return $"{spec.towerName}\n{StatIcons.Gold} {spec.cost}\n{StatIcons.Health} {spec.health:0}\n{StatIcons.Soldiers} {barracks.soldierCount}\n{StatIcons.Time} {barracks.respawnDelay:0}s";
 
+            if (spec.isAuraTower)
+            {
+                float scale = spec.AuraLevelScale(currentTower.CurrentLevel + 1);
+                return $"{spec.towerName}\n{StatIcons.Gold} {spec.cost}\n{StatIcons.Health} {spec.health:0}\n{StatIcons.Range} {spec.auraRadius * scale:0.#}\n{StatIcons.AuraBonus(spec.auraDamageBonus * scale, spec.auraFireRateBonus * scale)}";
+            }
+
             string text = $"{spec.towerName}\n{StatIcons.Gold} {spec.cost}\n{StatIcons.Damage} {spec.damage:0}\n{StatIcons.Range} {spec.range:0.#}\n{StatIcons.Attack} {spec.fireRate:0.##}/s\n{StatIcons.Health} {spec.health:0}";
             if (spec.isArtillery && spec.explosionRadius > 0f)
                 text += $"\n{StatIcons.Area} {spec.explosionRadius:0.#}";
             else if (spec.isSlowTower)
                 text += $"\n{StatIcons.Slow} {spec.effectPower * 100f:0}%";
-            else if (spec.isAuraTower)
-                text += $"\n{StatIcons.Aura} +{spec.auraDamageBonus * 100f:0}%";
             return text;
         }
 
