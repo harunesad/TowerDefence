@@ -438,7 +438,8 @@ namespace TowerDefence.UI
             if (root == null || actionButtonPrefab == null) return;
 
             bool specs = HasSpecs();
-            if (RingIsCurrent(root, specs))
+            bool upgrade = ShowsUpgrade();
+            if (RingIsCurrent(root, specs, upgrade))
                 return;
 
             for (int i = root.childCount - 1; i >= 0; i--)
@@ -450,7 +451,7 @@ namespace TowerDefence.UI
                 CreateRingButton(RingAction.SpecA);
                 CreateRingButton(RingAction.SpecB);
             }
-            else
+            else if (upgrade)
                 CreateRingButton(RingAction.Upgrade);
             CreateRingButton(RingAction.Sell);
             CreateRingButton(RingAction.Priority);
@@ -460,14 +461,23 @@ namespace TowerDefence.UI
                 selectedAction = RingAction.None;
         }
 
-        private static bool RingIsCurrent(Transform root, bool specs)
+        private static bool RingIsCurrent(Transform root, bool specs, bool upgrade)
         {
             if (specs)
                 return root.childCount == 5
                     && root.Find("SpecA") != null
                     && root.Find("SpecB") != null
                     && root.Find("Upgrade") == null;
-            return root.childCount == 4 && root.Find("Upgrade") != null && root.Find("SpecA") == null;
+            if (upgrade)
+                return root.childCount == 4 && root.Find("Upgrade") != null && root.Find("SpecA") == null;
+            return root.childCount == 3
+                && root.Find("Upgrade") == null
+                && root.Find("SpecA") == null;
+        }
+
+        private bool ShowsUpgrade()
+        {
+            return currentTower != null && currentTower.CurrentLevel < 3 && !HasSpecs();
         }
 
         private Transform RingRoot()
@@ -546,10 +556,8 @@ namespace TowerDefence.UI
                 SetButtonVisual(RingAction.SpecA, specs[0].icon, specs[0].cost.ToString(), CanAfford(specs[0].side, specs[0].cost), true);
                 SetButtonVisual(RingAction.SpecB, specs[1].icon, specs[1].cost.ToString(), CanAfford(specs[1].side, specs[1].cost), true);
             }
-            else if (level < 3 && data != null)
+            else if (ShowsUpgrade() && data != null)
                 SetButtonVisual(RingAction.Upgrade, upgradeIcon, data.upgradeCost.ToString(), CanAfford(data.side, data.upgradeCost), true);
-            else
-                SetButtonVisual(RingAction.Upgrade, upgradeIcon, "", true, false);
 
             SetButtonVisual(RingAction.Sell, sellIcon, currentTower.GetSellRefund().ToString(), true, true);
 

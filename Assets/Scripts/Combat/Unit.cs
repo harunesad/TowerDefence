@@ -27,6 +27,27 @@ namespace TowerDefence.Combat
         private float attackDamage;
         public float GetDamage() => attackDamage * tempDamageMultiplier;
 
+        public static float ResolveAttackDamage(UnitData data, float damageScale)
+        {
+            if (data == null) return 0f;
+
+            float damageMult = 1f;
+            float allStatMult = 1f;
+            MetaProgressionManager meta = MetaProgressionManager.Instance;
+            if (meta != null)
+            {
+                damageMult = meta.GetMultiplierForType(UpgradeType.DamageBonus, data.side);
+                if (data.side == Side.Light && meta.IsSkillUnlocked("Skill_Light_HolyBlessing"))
+                    damageMult *= 1.15f;
+                if (data.side == Side.Dark && meta.IsSkillUnlocked("Skill_Dark_SoulHarvest"))
+                    damageMult *= 1.1f;
+                if (meta.IsSkillUnlocked("Skill_Neutral_AncientWisdom"))
+                    allStatMult = 1.1f;
+            }
+
+            return data.attackDamage * damageMult * allStatMult * damageScale;
+        }
+
         private float absorbShield;
 
         public void AddAbsorbShield(float amount)
@@ -176,18 +197,11 @@ namespace TowerDefence.Combat
             if (this is HeroUnit)
                 healthMult *= MetaProgressionManager.Instance.GetSkillGroupMultiplier("Skill_Hero_", UpgradeType.HealthBonus, unitSide);
             float speedMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.UnitSpeedBonus, unitSide);
-            float damageMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.DamageBonus, unitSide);
-
-            if (unitSide == Side.Light && MetaProgressionManager.Instance.IsSkillUnlocked("Skill_Light_HolyBlessing"))
-                damageMult *= 1.15f;
-            if (unitSide == Side.Dark && MetaProgressionManager.Instance.IsSkillUnlocked("Skill_Dark_SoulHarvest"))
-                damageMult *= 1.1f;
-
             float allStatMult = MetaProgressionManager.Instance.IsSkillUnlocked("Skill_Neutral_AncientWisdom") ? 1.1f : 1f;
 
             maxHealth = data.maxHealth * healthMult * allStatMult * healthScale;
             moveSpeed = data.moveSpeed * speedMult * allStatMult;
-            attackDamage = data.attackDamage * damageMult * allStatMult * damageScale;
+            attackDamage = ResolveAttackDamage(data, damageScale);
             attackRange = data.attackRange * allStatMult;
             attackRate = data.attackRate * allStatMult;
 

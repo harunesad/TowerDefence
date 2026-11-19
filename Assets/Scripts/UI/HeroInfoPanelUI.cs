@@ -45,7 +45,7 @@ namespace TowerDefence.UI
             float y = -10 - 8;
             float contentH = 24 + 2; // name + its bottom gap
             contentH += 5 * 20 + 4; // 5 stat rows
-            contentH += 2 + 18 + 32; // sep2 + ability name + ability desc
+            contentH += 2 + 18 + 48; // sep2 + ability name + ability desc
             float panelH = Mathf.Abs(y) + contentH + 10;
 
             RectTransform rt = GetComponent<RectTransform>();
@@ -105,8 +105,8 @@ namespace TowerDefence.UI
             y -= 22;
             int heroLevel = MetaProgressionManager.Instance.GetHeroLevel(data.heroID);
             if (heroLevel < 1) heroLevel = 1;
-            CreateText("AbilityDescText", $"{data.abilityDescription}  {StatIcons.Time} {data.AbilityCooldownAtLevel(heroLevel):0}s",
-                new Vector2(0, y), new Vector2(290, 32),
+            CreateText("AbilityDescText", $"{data.AbilityDescriptionAtLevel(heroLevel)}  {StatIcons.Time} {HeroData.FormatSeconds(data.AbilityCooldownAtLevel(heroLevel))}s",
+                new Vector2(0, y), new Vector2(290, 48),
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 14, FontStyles.Normal, TextAlignmentOptions.Center, new Color(0.7f, 0.7f, 0.8f));
             RaiseAboveShade(gameObject);

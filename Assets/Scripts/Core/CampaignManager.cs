@@ -184,6 +184,46 @@ namespace TowerDefence.Core
             return 1f;
         }
 
+        public static float RewardDifficultyFactor(int globalDifficulty)
+        {
+            if (globalDifficulty >= 3) return 2f;
+            if (globalDifficulty == 2) return 1.5f;
+            return 1f;
+        }
+
+        public static void CalculateClearReward(int stars, int levelDifficulty, int globalDifficulty, out int karma, out int crystals)
+        {
+            float scale = Mathf.Max(1, levelDifficulty) * RewardDifficultyFactor(globalDifficulty);
+            int safeStars = Mathf.Max(0, stars);
+            karma = Mathf.RoundToInt(25f * safeStars * scale);
+            crystals = Mathf.RoundToInt(2f * safeStars * scale);
+        }
+
+        public static void CalculateManualPayout(int oldStars, int newStars, int levelDifficulty, int globalDifficulty, out int karma, out int crystals, out bool offerAdDouble)
+        {
+            CalculateClearReward(newStars, levelDifficulty, globalDifficulty, out int earnedKarma, out int earnedCrystals);
+            if (oldStars <= 0)
+            {
+                karma = earnedKarma;
+                crystals = earnedCrystals;
+                offerAdDouble = false;
+                return;
+            }
+
+            if (newStars > oldStars)
+            {
+                CalculateClearReward(oldStars, levelDifficulty, globalDifficulty, out int previousKarma, out int previousCrystals);
+                karma = Mathf.Max(0, earnedKarma - previousKarma);
+                crystals = Mathf.Max(0, earnedCrystals - previousCrystals);
+                offerAdDouble = false;
+                return;
+            }
+
+            karma = Mathf.RoundToInt(earnedKarma * 0.4f);
+            crystals = Mathf.RoundToInt(earnedCrystals * 0.4f);
+            offerAdDouble = karma > 0 || crystals > 0;
+        }
+
         public void SetDifficulty(int difficulty)
         {
             if (difficulty >= 1 && difficulty <= MetaProgressionManager.Instance.GetHighestUnlockedGlobalDifficulty())

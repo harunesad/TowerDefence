@@ -56,7 +56,7 @@ namespace TowerDefence.Data
         public int unlockKarmaCost = 500;
         public int unlockCrystalCost = 50; // New: Crystal cost
         public bool isStarterHero;
-        public int maxUpgradeLevel = 5;
+        public int maxUpgradeLevel = 10;
         public int upgradeKarmaCost = 150;
         public int upgradeCrystalCost = 15;
         [Range(0.05f, 0.5f)] public float healthBonusPerLevel = 0.08f;
@@ -64,35 +64,86 @@ namespace TowerDefence.Data
 
         public int KarmaCostForNextLevel(int currentLevel)
         {
-            switch (currentLevel)
-            {
-                case 1: return 150;
-                case 2: return 250;
-                case 3: return 400;
-                default: return 600;
-            }
+            return ScaledUpgradeCost(upgradeKarmaCost, currentLevel);
         }
 
         public int CrystalCostForNextLevel(int currentLevel)
         {
+            return ScaledUpgradeCost(upgradeCrystalCost, currentLevel);
+        }
+
+        static int ScaledUpgradeCost(int baseCost, int currentLevel)
+        {
+            int numer;
+            int denom;
             switch (currentLevel)
             {
-                case 1: return 15;
-                case 2: return 25;
-                case 3: return 40;
-                default: return 60;
+                case 1: numer = 1; denom = 1; break;
+                case 2: numer = 5; denom = 3; break;
+                case 3: numer = 8; denom = 3; break;
+                case 4: numer = 4; denom = 1; break;
+                case 5: numer = 16; denom = 3; break;
+                case 6: numer = 22; denom = 3; break;
+                case 7: numer = 10; denom = 1; break;
+                case 8: numer = 40; denom = 3; break;
+                default: numer = 52; denom = 3; break;
             }
+            return Mathf.Max(0, Mathf.RoundToInt(baseCost * numer / (float)denom));
+        }
+
+        public string AbilityDescriptionAtLevel(int level)
+        {
+            float power = AbilityPowerAtLevel(Mathf.Max(1, level));
+            switch (abilityType)
+            {
+                case HeroAbilityType.RallyHeal:
+                    return $"Restores {Percent(0.15f * power)}% of max health.";
+                case HeroAbilityType.HolyShield:
+                    return $"Restores {Percent(0.2f * power)}% of max health below 35%, and grants a shield for {Percent(0.35f * power)}%.";
+                case HeroAbilityType.ArrowRain:
+                    return $"Deals {Percent(2f * power)}% attack damage in an area.";
+                case HeroAbilityType.SwiftStrike:
+                    return $"Deals {Percent(2.5f * power)}% attack damage.";
+                case HeroAbilityType.FortifyTaunt:
+                    return "Taunts nearby enemies.";
+                case HeroAbilityType.SolarSmite:
+                    return $"Deals {Percent(2f * power)}% attack damage around the hero.";
+                case HeroAbilityType.LifeDrain:
+                    return $"Deals {Percent(1.5f * power)}% attack damage and restores half of it.";
+                case HeroAbilityType.SoulExecute:
+                    return $"Deals {Percent(4f * power)}% attack damage to an enemy below 40% health.";
+                case HeroAbilityType.GroundSlam:
+                    return $"Deals {Percent(2.2f * power)}% attack damage around the hero.";
+                case HeroAbilityType.PlagueCloud:
+                    return $"Poisons for {Percent(0.5f * power)}% attack damage each second for 4s.";
+                case HeroAbilityType.BoneArmor:
+                    return $"Grants a shield for {Percent(0.25f * power)}% of max health.";
+                case HeroAbilityType.ShadowStep:
+                    return $"Steps behind the target and deals {Percent(3f * power)}% attack damage.";
+                default:
+                    return abilityDescription;
+            }
+        }
+
+        static string Percent(float ratio)
+        {
+            return (ratio * 100f).ToString("0.##");
         }
 
         public float AbilityCooldownAtLevel(int level)
         {
-            float scale = Mathf.Max(0.5f, 1f - Mathf.Max(0, level - 1) * 0.1f);
+            float scale = Mathf.Max(0.5f, 1f - Mathf.Max(0, level - 1) * 0.05f);
             return abilityCooldown * scale;
+        }
+
+        public static string FormatSeconds(float seconds)
+        {
+            return seconds.ToString("0.##");
         }
 
         public float AbilityPowerAtLevel(int level)
         {
-            return abilityPower * (1f + Mathf.Max(0, level - 1) * 0.15f);
+            return abilityPower * (1f + Mathf.Max(0, level - 1) * 0.05f);
         }
 
         public Sprite GetIcon() => icon != null ? icon : (unitData != null ? unitData.icon : null);

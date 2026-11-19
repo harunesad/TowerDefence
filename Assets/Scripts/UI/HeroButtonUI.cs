@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using TowerDefence.Core;
 using TowerDefence.Combat;
+using TowerDefence.Data;
 
 namespace TowerDefence.UI
 {
@@ -404,7 +405,7 @@ namespace TowerDefence.UI
             {
                 abilityCooldownOverlay.fillAmount = max > 0 ? current / max : 0f;
                 abilityCooldownOverlay.color = new Color(0, 0, 0, 0.6f);
-                abilityTimerText.text = $"{Mathf.CeilToInt(current)}s";
+                abilityTimerText.text = $"{HeroData.FormatSeconds(current)}s";
                 abilityTimerText.color = Color.white;
                 abilityIconImage.color = new Color(0.5f, 0.5f, 0.5f, 1f);
             }

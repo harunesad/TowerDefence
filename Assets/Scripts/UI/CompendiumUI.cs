@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using TowerDefence.Combat;
 using TowerDefence.Core;
 using TowerDefence.Data;
 using System.Collections.Generic;
@@ -208,7 +209,8 @@ namespace TowerDefence.UI
             if (detailName != null) detailName.text = data.unitName;
             if (detailStats != null)
             {
-                detailStats.text = $"{StatIcons.Health} {data.maxHealth}\n{StatIcons.Damage} {data.attackDamage}\n{StatIcons.Move} {data.moveSpeed}\n{StatIcons.Attack} {data.attackRate:F2}/s";
+                float strike = Unit.ResolveAttackDamage(data, 1f / 3f);
+                detailStats.text = $"{StatIcons.Health} {data.maxHealth}\n{StatIcons.Damage} {strike.ToString("0.#")}\n{StatIcons.Move} {data.moveSpeed}\n{StatIcons.Attack} {data.attackRate:F2}/s";
                 StatIcons.Set(detailStats, detailStats.text);
             }
             if (detailLore != null)

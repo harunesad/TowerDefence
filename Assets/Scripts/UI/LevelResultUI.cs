@@ -70,7 +70,6 @@ namespace TowerDefence.UI
             if (TutorialDirector.Instance != null)
                 TutorialDirector.Instance.OnLevelResult(isVictory, currentLvl != null ? currentLvl.levelID : null);
             int levelDifficulty = (currentLvl != null && currentLvl.difficulty > 0) ? currentLvl.difficulty : 1;
-            int totalMultiplier = levelDifficulty * globalDifficulty;
 
             int stars = 0;
 
@@ -81,13 +80,14 @@ namespace TowerDefence.UI
                 else if (lifePercent >= 0.5f) stars = 2;
                 else stars = 1;
 
-                // Reward based on star count and multipliers (Level Difficulty x Global Difficulty)
-                int offeredKarma = 25 * stars * totalMultiplier;
-                int offeredCrystals = 5 * stars * totalMultiplier;
+                int oldStars = 0;
+                if (currentLvl != null && MetaProgressionManager.Instance != null)
+                    oldStars = MetaProgressionManager.Instance.GetLevelStars(currentLvl.levelID, globalDifficulty);
+
+                CampaignManager.CalculateManualPayout(oldStars, stars, levelDifficulty, globalDifficulty, out int offeredKarma, out int offeredCrystals, out _);
                 pendingKarma = offeredKarma;
                 pendingCrystals = offeredCrystals;
 
-                // The recorded balance is what is shown on screen and multiplied by ads.
                 if (CampaignManager.Instance != null)
                 {
                     (pendingKarma, pendingCrystals) = CampaignManager.Instance.CompleteCurrentLevel(stars, offeredKarma, offeredCrystals);
@@ -99,7 +99,11 @@ namespace TowerDefence.UI
                     MetaProgressionManager.Instance.CommitTutorialCheckpoint();
 
                 if (doubleRewardButton != null)
-                    doubleRewardButton.gameObject.SetActive(pendingKarma > 0 || pendingCrystals > 0);
+                {
+                    bool showDouble = pendingKarma > 0 || pendingCrystals > 0;
+                    doubleRewardButton.gameObject.SetActive(showDouble);
+                    doubleRewardButton.interactable = showDouble;
+                }
             }
             else
             {
@@ -201,7 +205,6 @@ namespace TowerDefence.UI
 
             int stars = 3;
 
-            // Since skipped without playing, grants significantly less than normal (Level Difficulty x Global Difficulty)
             int offeredKarma = 10 * totalMultiplier;
             int offeredCrystals = 2 * totalMultiplier;
             pendingKarma = offeredKarma;

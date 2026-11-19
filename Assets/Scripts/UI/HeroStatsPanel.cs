@@ -164,7 +164,15 @@ namespace TowerDefence.UI
                 abilityNameText.text = $"<color=#FFD24D>[{currentData.abilityType}]</color> {currentData.abilityName}";
 
             if (abilityDescText != null)
-                abilityDescText.text = currentData.abilityDescription;
+            {
+                int abilityLevel = 1;
+                if (MetaProgressionManager.Instance != null)
+                {
+                    int stored = MetaProgressionManager.Instance.GetHeroLevel(currentData.heroID);
+                    if (stored >= 1) abilityLevel = stored;
+                }
+                abilityDescText.text = currentData.AbilityDescriptionAtLevel(abilityLevel);
+            }
 
             if (abilityCooldownText != null)
             {
@@ -173,12 +181,12 @@ namespace TowerDefence.UI
                     float rem = currentHero.AbilityCooldownRemaining;
                     abilityCooldownText.text = rem <= 0f
                         ? "<color=#4DFF85>READY</color>"
-                        : $"<color=#FF8080>{StatIcons.Time} {rem:F1}s / {currentHero.AbilityCooldownMax:F1}s</color>";
+                        : $"<color=#FF8080>{StatIcons.Time} {HeroData.FormatSeconds(rem)}s / {HeroData.FormatSeconds(currentHero.AbilityCooldownMax)}s</color>";
                     StatIcons.Set(abilityCooldownText, abilityCooldownText.text);
                 }
                 else
                 {
-                    abilityCooldownText.text = $"{StatIcons.Time} {currentData.AbilityCooldownAtLevel(1):F1}s";
+                    abilityCooldownText.text = $"{StatIcons.Time} {HeroData.FormatSeconds(currentData.AbilityCooldownAtLevel(1))}s";
                     StatIcons.Set(abilityCooldownText, abilityCooldownText.text);
                 }
             }

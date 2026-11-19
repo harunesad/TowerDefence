@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
+using TowerDefence.Combat;
 using TowerDefence.Data;
 
 namespace TowerDefence.UI
@@ -74,7 +75,8 @@ namespace TowerDefence.UI
 
             CreateStatRow("HealthRow", StatIcons.Health, data.maxHealth.ToString("0"), new Vector2(0, y), false);
             y -= 22;
-            CreateStatRow("AttackRow", StatIcons.Damage, data.attackDamage.ToString("0"), new Vector2(0, y), false);
+            float strike = Unit.ResolveAttackDamage(data, 1f / 3f);
+            CreateStatRow("AttackRow", StatIcons.Damage, strike.ToString("0.#"), new Vector2(0, y), false);
             y -= 22;
             CreateStatRow("AtkSpeedRow", StatIcons.Attack, data.attackRate.ToString("0.00") + "/s", new Vector2(0, y), false);
             if (showCost)

@@ -126,8 +126,11 @@ namespace TowerDefence.UI
 
             if (abilityNameText != null) abilityNameText.text = $"Ability: {currentHero.abilityName}";
             if (abilityDescText != null)
-                abilityDescText.text = $"{currentHero.abilityDescription}\n{StatIcons.Time} {currentHero.AbilityCooldownAtLevel(unlocked ? level : 1):0}s";
+            {
+                int shownLevel = unlocked ? level : 1;
+                abilityDescText.text = $"{currentHero.AbilityDescriptionAtLevel(shownLevel)}\n{StatIcons.Time} {HeroData.FormatSeconds(currentHero.AbilityCooldownAtLevel(shownLevel))}s";
                 StatIcons.Set(abilityDescText, abilityDescText.text);
+            }
 
             int karma = MetaProgressionManager.Instance.GetTotalKarma();
             int crystals = MetaProgressionManager.Instance.GetTotalCrystals();
