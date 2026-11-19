@@ -10,10 +10,6 @@ namespace TowerDefence.Core
 
         [SerializeField] private LevelData currentSelectedLevel;
 
-        [Header("Debug")]
-        [Tooltip("Editor only. Unlocks all levels.")]
-        [SerializeField] private bool unlockAllLevelsForTesting = false;
-
         private void Awake()
         {
             if (Instance == null)
@@ -312,10 +308,6 @@ namespace TowerDefence.Core
 
         public bool IsLevelUnlocked(LevelData level)
         {
-#if UNITY_EDITOR
-            if (unlockAllLevelsForTesting) return true;
-#endif
-
             if (allLevels == null || allLevels.Count == 0) return true;
             
             int index = allLevels.IndexOf(level);

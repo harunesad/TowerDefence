@@ -166,35 +166,7 @@ namespace TowerDefence.UI
             SetupHeroButtons();
             SetupWaveInfoUI();
             SetupWarningBannerUI();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            SetupDebugAutoWinButton();
-            SetupVfxDebugPanel();
-#endif
         }
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        private void SetupDebugAutoWinButton()
-        {
-            if (FindObjectOfType<DebugAutoWinButton>() != null) return;
-            Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas == null) canvas = FindObjectOfType<Canvas>();
-            if (canvas == null) return;
-
-            GameObject go = new GameObject("DebugAutoWinButton", typeof(RectTransform), typeof(DebugAutoWinButton));
-            go.transform.SetParent(canvas.transform, false);
-        }
-
-        private void SetupVfxDebugPanel()
-        {
-            if (FindObjectOfType<VfxDebugPanel>() != null) return;
-            Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas == null) canvas = FindObjectOfType<Canvas>();
-            if (canvas == null) return;
-
-            GameObject go = new GameObject("VfxDebugPanel", typeof(RectTransform), typeof(VfxDebugPanel));
-            go.transform.SetParent(canvas.transform, false);
-        }
-#endif
 
         private void SetupWarningBannerUI()
         {
