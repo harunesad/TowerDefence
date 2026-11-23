@@ -133,7 +133,7 @@ namespace TowerDefence.Combat
         // Hit Flash (URP uyumlu — _BaseColor/_Color ikisini de destekler)
         private Renderer[] flashRenderers;
         private MaterialPropertyBlock flashBlock;
-        private Coroutine flashCoroutine;
+        private float hitFlashUntil;
         private static readonly int ColorPropId = Shader.PropertyToID("_Color");
         private static readonly int BaseColorPropId = Shader.PropertyToID("_BaseColor");
 
@@ -1253,10 +1253,7 @@ namespace TowerDefence.Combat
             if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
 
             if (gameObject.activeInHierarchy)
-            {
-                if (flashCoroutine != null) StopCoroutine(flashCoroutine);
-                flashCoroutine = StartCoroutine(FlashRoutine());
-            }
+                BeginHitFlash();
 
             if (currentHealth <= 0 && !isDead)
             {
@@ -1264,33 +1261,43 @@ namespace TowerDefence.Combat
             }
         }
 
-        private IEnumerator FlashRoutine()
+        void BeginHitFlash()
         {
-            Color flashColor = new Color(1f, 0.75f, 0.75f, 1f); // Cok hafif kirmizi
+            if (flashRenderers == null || flashBlock == null) return;
+            Color flashColor = new Color(1f, 0.75f, 0.75f, 1f);
 
-            foreach (var r in flashRenderers)
+            for (int i = 0; i < flashRenderers.Length; i++)
             {
-                if (r == null) continue;
-
-                Material shared = r.sharedMaterial;
+                Renderer renderer = flashRenderers[i];
+                if (renderer == null) continue;
+                Material shared = renderer.sharedMaterial;
                 if (shared == null) continue;
-                r.GetPropertyBlock(flashBlock);
+                renderer.GetPropertyBlock(flashBlock);
                 if (shared.HasProperty(BaseColorPropId))
                     flashBlock.SetColor(BaseColorPropId, flashColor);
                 if (shared.HasProperty(ColorPropId))
                     flashBlock.SetColor(ColorPropId, flashColor);
-                r.SetPropertyBlock(flashBlock);
+                renderer.SetPropertyBlock(flashBlock);
             }
 
-            yield return new WaitForSeconds(0.1f);
+            hitFlashUntil = Time.time + 0.1f;
+        }
 
-            foreach (var r in flashRenderers)
+        void LateUpdate()
+        {
+            if (hitFlashUntil <= 0f || Time.time < hitFlashUntil) return;
+            ClearHitFlash();
+        }
+
+        protected void ClearHitFlash()
+        {
+            hitFlashUntil = 0f;
+            if (flashRenderers == null) return;
+            for (int i = 0; i < flashRenderers.Length; i++)
             {
-                if (r == null) continue;
-
-                r.GetPropertyBlock(flashBlock);
-                flashBlock.Clear();
-                r.SetPropertyBlock(flashBlock);
+                Renderer renderer = flashRenderers[i];
+                if (renderer == null) continue;
+                renderer.SetPropertyBlock(null);
             }
         }
 

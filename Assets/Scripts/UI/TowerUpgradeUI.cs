@@ -235,6 +235,10 @@ namespace TowerDefence.UI
                 infoVisible = false;
                 RefreshUI();
             }
+            else
+            {
+                WarningBannerUI.Show("NOT ENOUGH GOLD!");
+            }
         }
 
         public void OnSpecAClicked() => Specialize(0);
@@ -249,7 +253,10 @@ namespace TowerDefence.UI
             TowerData specData = specs[index];
             if (specData == null || CurrencyManager.Instance == null) return;
             if (!CurrencyManager.Instance.TrySpendCurrency(specData.side, specData.cost))
+            {
+                WarningBannerUI.Show("NOT ENOUGH GOLD!");
                 return;
+            }
 
             CurrencyFloatUI.Show(currentSlot.GetPlacementPosition(), -specData.cost, specData.side);
             int invested = currentTower.GetInvestedGold() + specData.cost;

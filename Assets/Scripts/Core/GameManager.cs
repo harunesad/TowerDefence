@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
+using TMPro;
 using TowerDefence.Combat;
 
 namespace TowerDefence.Core
@@ -26,6 +27,10 @@ namespace TowerDefence.Core
         
         [Header("Loading Screen")]
         [SerializeField] private GameObject loadingScreenPrefab;
+
+        [Header("Warning")]
+        [SerializeField] private TMP_FontAsset warningFont;
+        public TMP_FontAsset WarningFont => warningFont;
 
         [Header("Audio")]
         [SerializeField] private AudioClip battleBGM;

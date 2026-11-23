@@ -326,6 +326,11 @@ namespace TowerDefence.UI
         {
             if (feedbackText != null)
             {
+                if (feedbackFont == null) feedbackFont = feedbackText.font;
+                if (color == Color.red && TowerDefence.Core.GameManager.Instance != null && TowerDefence.Core.GameManager.Instance.WarningFont != null)
+                    feedbackText.font = TowerDefence.Core.GameManager.Instance.WarningFont;
+                else if (feedbackFont != null)
+                    feedbackText.font = feedbackFont;
                 feedbackText.text = message;
                 feedbackText.color = color;
                 feedbackTimer = 3f;
@@ -333,6 +338,7 @@ namespace TowerDefence.UI
         }
 
         private float feedbackTimer;
+        private TMP_FontAsset feedbackFont;
         private void Update()
         {
             if (backgroundScroller != null)

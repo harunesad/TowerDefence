@@ -568,6 +568,7 @@ namespace TowerDefence.Combat
             if (isDead) return;
             isDead = true;
             StopAllCoroutines();
+            ClearHitFlash();
 
             SetSelectionState(HeroSelectionState.Hidden);
             onDeathCallback?.Invoke(this);
@@ -627,6 +628,7 @@ namespace TowerDefence.Combat
 
         public void Respawn(Vector3 position)
         {
+            ClearHitFlash();
             isDead = false;
             isBlocked = false;
             currentBlocker = null;

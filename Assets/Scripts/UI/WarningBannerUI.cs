@@ -13,6 +13,7 @@ namespace TowerDefence.UI
         private CanvasGroup canvasGroup;
         private Coroutine activeRoutine;
         private TMP_FontAsset cinzelFont;
+        private Material warningMaterial;
         private AudioClip warningSFX;
         private AudioClip rewardSFX;
 
@@ -31,6 +32,7 @@ namespace TowerDefence.UI
 
         private void OnDestroy()
         {
+            if (warningMaterial != null) Destroy(warningMaterial);
             if (Instance == this) Instance = null;
         }
 
@@ -42,8 +44,9 @@ namespace TowerDefence.UI
 
         private void LoadResources()
         {
+            if (TowerDefence.Core.GameManager.Instance != null)
+                cinzelFont = TowerDefence.Core.GameManager.Instance.WarningFont;
 #if UNITY_EDITOR
-            cinzelFont = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Cinzel-Black SDF.asset");
             warningSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/WrongAction.wav");
             rewardSFX = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sounds/GoldCollect.wav");
 #endif
@@ -91,13 +94,31 @@ namespace TowerDefence.UI
             warningText = textObj.AddComponent<TextMeshProUGUI>();
             if (cinzelFont != null) warningText.font = cinzelFont;
             warningText.fontSize = 28f;
-            warningText.fontStyle = FontStyles.Bold;
+            warningText.fontStyle = FontStyles.Normal;
             warningText.alignment = TextAlignmentOptions.Center;
             warningText.color = new Color(1f, 0.25f, 0.2f, 1f); // Red / Warning
             warningText.raycastTarget = false;
             warningText.enableWordWrapping = false;
-            warningText.outlineColor = new Color32(0, 0, 0, 255);
-            warningText.outlineWidth = 0.25f;
+            ApplyWarningLook();
+        }
+
+        private void ApplyWarningLook()
+        {
+            if (warningText == null || warningText.font == null) return;
+
+            if (warningMaterial == null)
+            {
+                warningMaterial = new Material(warningText.font.material);
+                warningMaterial.SetColor(ShaderUtilities.ID_FaceColor, Color.white);
+                warningMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, 0.5f);
+                warningMaterial.SetFloat(ShaderUtilities.ID_OutlineSoftness, 0f);
+                warningMaterial.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
+                warningMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.4f);
+            }
+
+            warningText.fontMaterial = warningMaterial;
+            warningText.extraPadding = true;
+            warningText.UpdateMeshPadding();
         }
 
         public static void Show(string message, float duration = 2.0f, Color? textColor = null, bool isReward = false)
@@ -120,8 +141,12 @@ namespace TowerDefence.UI
         private void DisplayWarning(string message, float duration, Color? textColor, bool isReward)
         {
             if (warningText == null) return;
+            if (cinzelFont == null && TowerDefence.Core.GameManager.Instance != null)
+                cinzelFont = TowerDefence.Core.GameManager.Instance.WarningFont;
+            if (cinzelFont != null) warningText.font = cinzelFont;
+            ApplyWarningLook();
 
-            transform.SetAsLastSibling(); // Always render on top
+            transform.SetAsLastSibling();
             StatIcons.Set(warningText, message);
             warningText.color = textColor ?? (isReward ? new Color(1f, 0.84f, 0f, 1f) : new Color(1f, 0.3f, 0.25f, 1f));
 

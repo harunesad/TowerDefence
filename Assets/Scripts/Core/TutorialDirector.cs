@@ -2863,7 +2863,7 @@ namespace TowerDefence.Core
                 nameRect.sizeDelta = new Vector2(-250f, 24f);
                 textRect.offsetMin = new Vector2(112f, 10f);
                 textRect.offsetMax = new Vector2(-84f, -40f);
-                FitNext(40f);
+                FitNext(48f);
                 if (nameText != null) nameText.fontSize = 20f;
                 if (bodyText != null) bodyText.fontSize = 18f;
                 return;
@@ -2889,7 +2889,7 @@ namespace TowerDefence.Core
                 nameRect.anchoredPosition = new Vector2(116f, -14f);
                 textRect.offsetMin = new Vector2(116f, 8f);
                 textRect.offsetMax = new Vector2(-86f, -38f);
-                FitNext(40f);
+                FitNext(48f);
                 return;
             }
             if (onMap)
@@ -2901,7 +2901,7 @@ namespace TowerDefence.Core
                 nameRect.anchoredPosition = new Vector2(116f, -16f);
                 textRect.offsetMin = new Vector2(116f, 8f);
                 textRect.offsetMax = new Vector2(-86f, -40f);
-                FitNext(40f);
+                FitNext(48f);
                 return;
             }
 
@@ -2912,7 +2912,7 @@ namespace TowerDefence.Core
             nameRect.anchoredPosition = new Vector2(134f, -28f);
             textRect.offsetMin = new Vector2(134f, 12f);
             textRect.offsetMax = new Vector2(-90f, -56f);
-            FitNext(40f);
+            FitNext(48f);
         }
 
         void FitNext(float size)
@@ -3036,7 +3036,7 @@ namespace TowerDefence.Core
             rimRect.anchorMax = new Vector2(1f, 0.5f);
             rimRect.pivot = new Vector2(1f, 0.5f);
             rimRect.anchoredPosition = new Vector2(-18f, 0f);
-            rimRect.sizeDelta = new Vector2(40f, 40f);
+            rimRect.sizeDelta = new Vector2(48f, 48f);
             Image rimImage = rimGo.GetComponent<Image>();
             rimImage.color = new Color(1f, 1f, 1f, 0f);
             rimImage.raycastTarget = false;

@@ -337,20 +337,8 @@ namespace TowerDefence.UI
             else
                 Time.timeScale = 1f;
             
-            // Show interstitial ad, then return to main menu
-            if (TowerDefence.Core.AdManager.Instance != null)
-            {
-                TowerDefence.Core.AdManager.Instance.ShowInterstitialAd(onCompleted: () =>
-                {
-                    TowerDefence.Core.SceneLoader.EnsureInstance();
-                    if (TowerDefence.Core.SceneLoader.Instance != null) TowerDefence.Core.SceneLoader.Instance.LoadScene(1);
-                });
-            }
-            else
-            {
-                TowerDefence.Core.SceneLoader.EnsureInstance();
-                if (TowerDefence.Core.SceneLoader.Instance != null) TowerDefence.Core.SceneLoader.Instance.LoadScene(1);
-            }
+            TowerDefence.Core.SceneLoader.EnsureInstance();
+            if (TowerDefence.Core.SceneLoader.Instance != null) TowerDefence.Core.SceneLoader.Instance.LoadScene(1);
         }
 
         private void OnNextLevelClicked()

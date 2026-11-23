@@ -285,7 +285,11 @@ namespace TowerDefence.UI
             {
                 Side side = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : tower.side;
                 if (CurrencyManager.Instance == null || !CurrencyManager.Instance.CanAfford(side, tower.cost))
+                {
+                    if (CurrencyManager.Instance != null)
+                        WarningBannerUI.Show("NOT ENOUGH GOLD!");
                     return;
+                }
 
                 if (TowerPlacementManager.Instance != null)
                 {

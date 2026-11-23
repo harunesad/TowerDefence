@@ -59,7 +59,6 @@ namespace TowerDefence.Core
         {
             Debug.Log("Unity Ads initialization complete.");
             LoadAd(rewardedId);
-            LoadAd(interstitialId);
             TryPresentRewarded();
         }
 

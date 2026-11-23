@@ -186,10 +186,28 @@ namespace TowerDefence.UI
             if (closeButtonObj != null) closeButtonObj.SetActive(true);
         }
 
+        TMP_FontAsset rewardFont;
+
+        void ShowRewardWarning(string message)
+        {
+            if (rewardText == null) return;
+            if (rewardFont == null) rewardFont = rewardText.font;
+            if (GameManager.Instance != null && GameManager.Instance.WarningFont != null)
+                rewardText.font = GameManager.Instance.WarningFont;
+            rewardText.text = message;
+        }
+
+        void RestoreRewardFont()
+        {
+            if (rewardText != null && rewardFont != null)
+                rewardText.font = rewardFont;
+        }
+
         private void SetCombinedRewardText(string statusMsg)
         {
             if (rewardText == null) return;
 
+            RestoreRewardFont();
             rewardText.text = statusMsg;
             CurrencyRowView.Apply(rewardText.transform, lastWonKarma, lastWonCrystals, false);
         }
@@ -227,19 +245,18 @@ namespace TowerDefence.UI
                     lastWonCrystals = 0;
                     if (rewardText != null)
                     {
+                        RestoreRewardFont();
                         rewardText.text = "Loading Ad...";
                         CurrencyRowView.Apply(rewardText.transform, 0, 0, false);
                     }
                     AdManager.Instance.ShowRewardedAd(
                         onSuccess: () => { StartCoroutine(SpinRoutine(isFreeSpin: false)); },
-                        onFailed: () => { 
-                            if (rewardText != null) rewardText.text = "Ad Failed. Try again."; 
-                        }
+                        onFailed: () => ShowRewardWarning("Ad Failed. Try again.")
                     );
                 }
                 else
                 {
-                    if (rewardText != null) rewardText.text = "Ad System Offline";
+                    ShowRewardWarning("Ad System Offline");
                 }
             }
             else
@@ -274,6 +291,7 @@ namespace TowerDefence.UI
             if (closeButtonObj != null) closeButtonObj.SetActive(false);
             if (rewardText != null)
             {
+                RestoreRewardFont();
                 rewardText.text = "Spinning...";
                 CurrencyRowView.Apply(rewardText.transform, 0, 0, false);
             }
