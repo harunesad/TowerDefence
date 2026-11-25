@@ -146,7 +146,6 @@ namespace TowerDefence.Combat
             transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
             transform.position = new Vector3(transform.position.x, 0.2f, transform.position.z);
 
-            Debug.Log($"[HeroReset] {gameObject.name} FORCED to Idle and state cleared.");
         }
 
         public void SetMoveDestination(Vector3 point)
@@ -181,6 +180,8 @@ namespace TowerDefence.Combat
 
         private Coroutine activeVFXCoroutine;
         private GameObject activeVFXInstance;
+        bool abilityPose;
+        int abilityPoseHash;
 
         private void SpawnHeroVFX(HeroAbilityType abilityType, float delay)
         {
@@ -189,13 +190,11 @@ namespace TowerDefence.Combat
                 container = transform.Find("AbilityVFX");
             if (container == null)
             {
-                Debug.LogWarning($"[HeroVFX] AbilityVFX container not found on {gameObject.name}");
                 return;
             }
             Transform vfxTransform = container.Find(abilityType.ToString());
             if (vfxTransform == null)
             {
-                Debug.LogWarning($"[HeroVFX] Child '{abilityType}' not found under AbilityVFX on {gameObject.name}");
                 return;
             }
 
@@ -234,6 +233,64 @@ namespace TowerDefence.Combat
 
             if (vfx != null)
                 vfx.SetActive(false);
+        }
+
+        void StopAbilityVfx()
+        {
+            activeVFXCoroutine = null;
+            abilityPose = false;
+            abilityPoseHash = 0;
+            if (activeVFXInstance == null) return;
+
+            ParticleSystem[] systems = activeVFXInstance.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; i < systems.Length; i++)
+            {
+                if (systems[i] == null) continue;
+                ParticleSystem.MainModule main = systems[i].main;
+                main.playOnAwake = false;
+                systems[i].Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+            activeVFXInstance.SetActive(false);
+            activeVFXInstance = null;
+        }
+
+        protected override bool SuppressAttackHit()
+        {
+            return AbilityPoseActive();
+        }
+
+        protected override void OnLateTick()
+        {
+            if (!abilityPose || animator == null) return;
+
+            bool transitioning = animator.IsInTransition(0);
+            AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo next = transitioning ? animator.GetNextAnimatorStateInfo(0) : default;
+
+            if (abilityPoseHash == 0)
+            {
+                if (transitioning && !next.IsName("Attack"))
+                    abilityPoseHash = next.shortNameHash;
+                else if (!transitioning && !current.IsName("Attack") && !current.IsName("Idle"))
+                    abilityPoseHash = current.shortNameHash;
+                return;
+            }
+
+            bool inPose = current.shortNameHash == abilityPoseHash
+                || (transitioning && next.shortNameHash == abilityPoseHash);
+            if (!inPose)
+            {
+                abilityPose = false;
+                abilityPoseHash = 0;
+            }
+        }
+
+        bool AbilityPoseActive()
+        {
+            if (!abilityPose || animator == null || abilityPoseHash == 0) return false;
+            AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+            if (current.shortNameHash == abilityPoseHash) return true;
+            return animator.IsInTransition(0) && animator.GetNextAnimatorStateInfo(0).shortNameHash == abilityPoseHash;
         }
 
         private void SpawnArrowRain(Vector3 center, float radius, int arrowCount)
@@ -367,6 +424,8 @@ namespace TowerDefence.Combat
                 case HeroAbilityType.GroundSlam:
                 case HeroAbilityType.PlagueCloud:
                     animator.SetTrigger("Ability");
+                    abilityPose = true;
+                    abilityPoseHash = 0;
                     break;
                 
                 // Passive or support abilities like healing do not play animation
@@ -568,7 +627,8 @@ namespace TowerDefence.Combat
             if (isDead) return;
             isDead = true;
             StopAllCoroutines();
-            ClearHitFlash();
+            StopAbilityVfx();
+            CancelHitFlash();
 
             SetSelectionState(HeroSelectionState.Hidden);
             onDeathCallback?.Invoke(this);
@@ -606,7 +666,6 @@ namespace TowerDefence.Combat
             }
             if (healthBar != null) healthBar.SetVisible(false);
 
-            Debug.Log($"[HeroUnit] {gameObject.name} is down. Released units and cleared move state.");
 
             // Death effect
             if (VFXManager.Instance != null)
@@ -628,7 +687,8 @@ namespace TowerDefence.Combat
 
         public void Respawn(Vector3 position)
         {
-            ClearHitFlash();
+            StopAbilityVfx();
+            CancelHitFlash();
             isDead = false;
             isBlocked = false;
             currentBlocker = null;
@@ -662,7 +722,6 @@ namespace TowerDefence.Combat
             if (VFXManager.Instance != null)
                 VFXManager.Instance.SpawnVFX(VFXType.UnitSpawn, transform.position, Quaternion.identity);
 
-            Debug.Log($"[HeroUnit] {gameObject.name} respawned and state fully reset.");
         }
     }
 }

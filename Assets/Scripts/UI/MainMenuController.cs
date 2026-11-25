@@ -346,7 +346,6 @@ namespace TowerDefence.UI
             if (TutorialDirector.Instance != null && !TutorialDirector.Instance.MenuButtonAllowed("quit"))
                 return;
             Application.Quit();
-            Debug.Log("Quit Game");
         }
 
         public bool IsRootMenu()

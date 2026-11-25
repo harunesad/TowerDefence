@@ -41,6 +41,7 @@ namespace TowerDefence.UI
         private SkillNodeData selectedSkill;
 
         private float backgroundScrollOffset;
+        private bool placeAtBottom;
 
         private void Start()
         {
@@ -121,8 +122,9 @@ namespace TowerDefence.UI
             Canvas.ForceUpdateCanvases();
             Vector2 nodeCenter = view.InverseTransformPoint(node.TransformPoint(node.rect.center));
             Vector2 delta = view.rect.center - nodeCenter;
-            if (delta.sqrMagnitude < 0.25f) return;
-            contentRect.anchoredPosition += delta;
+            if (delta.sqrMagnitude >= 0.25f)
+                contentRect.anchoredPosition += delta;
+            KeepTreeOnBackground();
             if (scroll != null)
             {
                 scroll.StopMovement();
@@ -373,8 +375,42 @@ namespace TowerDefence.UI
                 tutorial.OnSkillPurchased();
         }
 
+        void ShowAtBottomCenter()
+        {
+            if (contentRect == null) return;
+            contentRect.anchoredPosition = new Vector2(0f, 100000f);
+            KeepTreeOnBackground();
+            ScrollRect scroll = contentRect.GetComponentInParent<ScrollRect>();
+            if (scroll != null)
+            {
+                scroll.StopMovement();
+                scroll.velocity = Vector2.zero;
+            }
+        }
+
+        bool LessonOwnsView()
+        {
+            TutorialDirector tutorial = TutorialDirector.Instance;
+            if (tutorial == null) return false;
+            string step = tutorial.Current();
+            return step == "skill_info" || step == "skill_info_top"
+                || step == "skill_buy" || step == "skill_buy_top";
+        }
+
         void LateUpdate()
         {
+            if (placeAtBottom && contentRect != null)
+            {
+                RectTransform view = contentRect.parent as RectTransform;
+                RectTransform panel = view != null ? view.parent as RectTransform : null;
+                if (panel != null && panel.rect.height > 1f && contentRect.rect.height > 1f)
+                {
+                    placeAtBottom = false;
+                    if (!LessonOwnsView())
+                        ShowAtBottomCenter();
+                }
+            }
+            KeepTreeOnBackground();
             TutorialDirector tutorial = TutorialDirector.Instance;
             string step = tutorial != null ? tutorial.Current() : null;
             bool buying = step == "skill_buy" || step == "skill_buy_top";
@@ -400,6 +436,34 @@ namespace TowerDefence.UI
             }
         }
 
+        void KeepTreeOnBackground()
+        {
+            if (contentRect == null) return;
+            RectTransform view = contentRect.parent as RectTransform;
+            RectTransform panel = view != null ? view.parent as RectTransform : null;
+            if (panel == null || panel.lossyScale.x == 0f || panel.lossyScale.y == 0f) return;
+
+            Vector3 top = panel.InverseTransformPoint(contentRect.TransformPoint(new Vector3(0f, contentRect.rect.yMax, 0f)));
+            Vector3 bottom = panel.InverseTransformPoint(contentRect.TransformPoint(new Vector3(0f, contentRect.rect.yMin, 0f)));
+            Vector3 left = panel.InverseTransformPoint(contentRect.TransformPoint(new Vector3(contentRect.rect.xMin, 0f, 0f)));
+            Vector3 right = panel.InverseTransformPoint(contentRect.TransformPoint(new Vector3(contentRect.rect.xMax, 0f, 0f)));
+
+            Rect area = panel.rect;
+            float unitY = contentRect.lossyScale.y / panel.lossyScale.y;
+            float unitX = contentRect.lossyScale.x / panel.lossyScale.x;
+            float dy = 0f;
+            float dx = 0f;
+            if (top.y < area.yMax) dy = (area.yMax - top.y) / unitY;
+            else if (bottom.y > area.yMin) dy = (area.yMin - bottom.y) / unitY;
+            if (right.x < area.xMax) dx = (area.xMax - right.x) / unitX;
+            else if (left.x > area.xMin) dx = (area.xMin - left.x) / unitX;
+            if (dx == 0f && dy == 0f) return;
+
+            contentRect.anchoredPosition += new Vector2(dx, dy);
+            ScrollRect scroll = view.GetComponent<ScrollRect>();
+            if (scroll != null) scroll.velocity = Vector2.zero;
+        }
+
         static void RaiseAboveShade(GameObject go)
         {
             Canvas canvas = go.GetComponent<Canvas>();
@@ -420,6 +484,7 @@ namespace TowerDefence.UI
 
         private void OnEnable()
         {
+            placeAtBottom = true;
             UpdateAllNodes();
         }
 

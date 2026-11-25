@@ -24,11 +24,8 @@ namespace TowerDefence.Grid
                 if (selectionGO != null) localUI = selectionGO.GetComponent<TowerSelectionUI>();
             }
 
-            if (localUI == null) Debug.LogWarning($"TowerSlot {gameObject.name}: localUI (TowerSelectionUI) not found in children!");
-            else 
-            {
+            if (localUI != null)
                 localUI.Hide();
-            }
         }
 
         private float lastClickTime = -1f;
@@ -38,8 +35,6 @@ namespace TowerDefence.Grid
             if (Time.time - lastClickTime < 0.2f) return;
             lastClickTime = Time.time;
 
-            Debug.Log($"TowerSlot {gameObject.name} clicked. Occupied: {isOccupied}");
-            
             // Check current state (toggles if already open)
             bool isSelectionOpen = !isOccupied && localUI != null && localUI.gameObject.activeSelf;
             var upgradeUIComp = isOccupied && currentTower != null 

@@ -121,7 +121,6 @@ namespace TowerDefence.Core
                             PlayerPrefs.SetString(PREF_SAFE_TIME_KEY, lastKnownSafeUtcTicks.ToString());
                             PlayerPrefs.Save();
 
-                            Debug.Log($"[NetworkTimeManager] Time synced successfully with {server}: {networkBaseUtcTime} UTC");
                             OnTimeSynced?.Invoke();
                             yield break;
                         }
@@ -129,7 +128,6 @@ namespace TowerDefence.Core
                 }
             }
 
-            Debug.LogWarning("[NetworkTimeManager] Could not sync with network servers. Using monotonic local clock.");
         }
 
         /// <summary>

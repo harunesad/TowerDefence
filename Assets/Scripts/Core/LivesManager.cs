@@ -52,22 +52,18 @@ namespace TowerDefence.Combat
             if (side == SideController.Instance.GetPlayerSide())
             {
                 currentLives -= amount;
-                Debug.Log($"LivesManager: Unit leaked! Lives lost: {amount}. Current lives: {currentLives}");
+                if (currentLives < 0) currentLives = 0;
 
                 OnLivesChanged?.Invoke(currentLives, maxLives);
 
                 if (currentLives <= 0)
-                {
-                    currentLives = 0;
                     GameOver();
-                }
             }
         }
 
         private void GameOver()
         {
             isGameOver = true;
-            Debug.Log("LivesManager: Game Over! All lives lost.");
             GameManager.Instance.ChangeState(GameState.Defeat);
         }
 

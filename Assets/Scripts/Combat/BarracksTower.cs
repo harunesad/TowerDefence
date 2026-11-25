@@ -120,6 +120,45 @@ namespace TowerDefence.Combat
             SpawnInitialSoldiers();
         }
 
+        public float PowerForLevel(int level)
+        {
+            return 1f + (Mathf.Max(1, level) - 1) * 0.25f;
+        }
+
+        public float RespawnDelayForLevel(int level)
+        {
+            return baseRespawnDelay * (1f - (Mathf.Max(1, level) - 1) * 0.15f);
+        }
+
+        public void GetSoldierCombatStats(out float health, out float damage, out float attackRate)
+        {
+            GetSoldierCombatStats(soldierStatMultiplier, out health, out damage, out attackRate);
+        }
+
+        public void GetSoldierCombatStats(float power, out float health, out float damage, out float attackRate)
+        {
+            health = damage = attackRate = 0f;
+            if (soldierData == null) return;
+
+            float healthMult = 1f;
+            float allStatMult = 1f;
+            MetaProgressionManager meta = MetaProgressionManager.Instance;
+            if (meta != null)
+            {
+                healthMult = meta.GetMultiplierForType(UpgradeType.HealthBonus, soldierData.side);
+                if (meta.IsSkillUnlocked("Skill_Neutral_AncientWisdom"))
+                    allStatMult = 1.1f;
+            }
+
+            float damageScale = power;
+            if (SideController.Instance != null && soldierData.side == SideController.Instance.GetPlayerSide())
+                damageScale *= 1f / 3f;
+
+            health = soldierData.maxHealth * healthMult * allStatMult * power;
+            damage = Unit.ResolveAttackDamage(soldierData, damageScale);
+            attackRate = soldierData.attackRate * allStatMult;
+        }
+
         public override bool Upgrade()
         {
             if (currentLevel >= 3) return false;
@@ -137,7 +176,7 @@ namespace TowerDefence.Combat
                     soldier.MatchBarracksPower(soldierStatMultiplier);
             }
 
-            Debug.Log($"[Barracks] Upgraded to Level {currentLevel}! Soldiers: {soldierCount}, Respawn: {respawnDelay:F1}s, Power: x{soldierStatMultiplier} (was x{previousPower})");
+            ApplyLevelHealth();
             return true;
         }
 
@@ -190,7 +229,6 @@ namespace TowerDefence.Combat
         {
             if (soldierData == null || soldierData.prefab == null)
             {
-                Debug.LogWarning($"[Barracks] SoldierData or Prefab missing on {gameObject.name}");
                 return false;
             }
 

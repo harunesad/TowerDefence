@@ -120,12 +120,10 @@ namespace TowerDefence.Combat
                 {
                     isSpawning = true;
                     nextSpawnTime = Time.time + activeWaveGroups[0].groupDelay;
-                    Debug.Log($"Spawner [{spawnerIndex}]: Wave {waveIndex + 1} started with {activeWaveGroups.Count} groups.");
                 }
                 else
                 {
                     isSpawning = false;
-                    Debug.Log($"Spawner [{spawnerIndex}]: No groups for this spawner in Wave {waveIndex + 1}.");
                 }
             }
             else
@@ -166,7 +164,6 @@ namespace TowerDefence.Combat
             {
                 // Tum gruplar bitti
                 isSpawning = false;
-                Debug.Log($"Spawner [{spawnerIndex}]: Wave {currentWaveIndex + 1} complete.");
             }
         }
 
@@ -224,7 +221,6 @@ namespace TowerDefence.Combat
                 {
                     if (unitData.enemyCounterpart == null)
                     {
-                        Debug.LogWarning($"[Spawner] {unitData.name} has no enemy counterpart. Wave unit skipped.");
                         return false;
                     }
                     finalUnitData = unitData.enemyCounterpart;

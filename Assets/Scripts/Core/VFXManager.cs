@@ -110,7 +110,6 @@ namespace TowerDefence.Core
                 return obj;
             }
 
-            Debug.LogWarning($"[VFXManager] VFX Type {type} prefab not found!");
             return null;
         }
 

@@ -72,7 +72,6 @@ namespace TowerDefence.Core
         public void SelectLevel(LevelData level)
         {
             currentSelectedLevel = level;
-            Debug.Log($"Level Selected: {level.levelName}");
         }
 
         private GameObject currentMapInstance;
@@ -112,7 +111,6 @@ namespace TowerDefence.Core
                     SceneLoader.Instance.LoadScene(currentSelectedLevel.sceneIndex);
                 }
                 
-                Debug.Log($"[CampaignManager] Restarting Level: {currentSelectedLevel.levelName}");
             }
         }
 
@@ -134,7 +132,6 @@ namespace TowerDefence.Core
             {
                 currentMapInstance = Instantiate(currentSelectedLevel.mapPrefab, currentSelectedLevel.mapPrefab.transform.position, currentSelectedLevel.mapPrefab.transform.rotation);
                 currentMapInstance.name = "[MAP] " + currentSelectedLevel.levelName;
-                Debug.Log($"CampaignManager: Map spawned: {currentMapInstance.name}");
             }
             else
             {
@@ -225,7 +222,6 @@ namespace TowerDefence.Core
             if (difficulty >= 1 && difficulty <= MetaProgressionManager.Instance.GetHighestUnlockedGlobalDifficulty())
             {
                 currentDifficultyLevel = difficulty;
-                Debug.Log($"[CampaignManager] Difficulty set to: {currentDifficultyLevel}");
             }
         }
 
@@ -242,7 +238,6 @@ namespace TowerDefence.Core
                 return (0, 0);
             rewardGrantedThisAttempt = true;
 
-            Debug.Log($"Level Completed: {currentSelectedLevel.levelName} on Difficulty {currentDifficultyLevel} with {stars} Stars");
 
             int karmaToGrant = karmaReward;
             int crystalsToGrant = crystalReward;
@@ -283,7 +278,6 @@ namespace TowerDefence.Core
                 if (nextIndex > MetaProgressionManager.Instance.GetHighestUnlockedLevel(currentDifficultyLevel))
                 {
                     MetaProgressionManager.Instance.UpdateHighestLevel(nextIndex, currentDifficultyLevel);
-                    Debug.Log($"Next Level Unlocked and Saved: {allLevels[nextIndex].levelName} for Difficulty {currentDifficultyLevel}");
                 }
             }
         }
@@ -359,7 +353,6 @@ namespace TowerDefence.Core
             // orthographicSize artik kod tarafindan degistirilmiyor, editordeki deger korunuyor.
             if (!cam.orthographic) cam.fieldOfView = 40;
 
-            Debug.Log($"[CampaignManager] Camera centering logic skipped as per requirement. Target would be: {center}, Height: {height}");
         }
 
 
@@ -394,7 +387,6 @@ namespace TowerDefence.Core
                     cam.backgroundColor = targetColor;
                 }
 
-                Debug.Log($"[CampaignManager] Applied solid background color {targetColor} for theme {level.theme} on {level.levelName}");
             }
             else // Skybox Material Modu
             {
@@ -418,7 +410,6 @@ namespace TowerDefence.Core
                 {
                     RenderSettings.skybox = targetSkybox;
                     DynamicGI.UpdateEnvironment();
-                    Debug.Log($"[CampaignManager] Applied skybox '{targetSkybox.name}' for theme {level.theme} on {level.levelName}");
                 }
             }
         }
@@ -440,7 +431,6 @@ namespace TowerDefence.Core
 
             if (nextIndex >= allLevels.Count)
             {
-                Debug.Log("[CampaignManager] Already at the last level.");
                 return false;
             }
 

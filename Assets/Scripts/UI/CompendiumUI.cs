@@ -145,8 +145,6 @@ namespace TowerDefence.UI
                 if (!seen.Add(data.unitName)) continue;
                 CreateItem(data, contentParent);
             }
-#else
-            Debug.LogWarning("[CompendiumUI] allUnits is empty in runtime build.");
 #endif
         }
 

@@ -133,7 +133,6 @@ namespace TowerDefence.Core
             NotifyWaveChanged();
             if (TutorialDirector.Instance != null)
                 TutorialDirector.Instance.OnPreparationBegan(currentWaveIndex);
-            Debug.Log("Preparation Phase Started!");
         }
 
         public void StartCombatPhase()
@@ -148,7 +147,6 @@ namespace TowerDefence.Core
                 AudioManager.Instance.PlaySFX(waveStartSFX);
             }
 
-            Debug.Log("Combat Phase Started!");
             if (TutorialDirector.Instance != null)
                 TutorialDirector.Instance.Notify("skip_wave");
         }
@@ -170,7 +168,6 @@ namespace TowerDefence.Core
                     if (CurrencyManager.Instance != null && SideController.Instance != null)
                     {
                         CurrencyManager.Instance.AddCurrency(side, bonus);
-                        Debug.Log($"<color=yellow>[Early Call Bonus]</color> +{bonus} {(side == Side.Dark ? "Soul" : "Gold")} awarded for calling wave {timer:F1}s early!");
                     }
 
                     if (bonus > 0)
@@ -237,12 +234,10 @@ namespace TowerDefence.Core
         {
             currentWaveIndex = 0;
             NotifyWaveChanged();
-            Debug.Log("Core: Wave Index Reset.");
         }
 
         private void WaveCompleted()
         {
-            Debug.Log($"Wave {currentWaveIndex + 1} Completed!");
 
             LevelData level = CampaignManager.Instance != null ? CampaignManager.Instance.GetCurrentLevel() : null;
             if (level == null || level.waves == null || level.waves.Count == 0)

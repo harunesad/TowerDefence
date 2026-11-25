@@ -195,7 +195,6 @@ namespace TowerDefence.Core
                     && skill.skillID == TutorialDirector.Instance.CurrentSkillId();
                 if (!lessonTarget && !spellUnlock && CountCappedSkills() >= maxSkillsUnlocked && maxSkillsUnlocked > 0)
                 {
-                    Debug.LogWarning($"[Progression] Skill limit reached! Maximum {maxSkillsUnlocked} skills can be unlocked. Current: {saveData.unlockedSkillIDs.Count}");
                     return false;
                 }
 
@@ -730,7 +729,6 @@ namespace TowerDefence.Core
             {
                 saveData.highestUnlockedGlobalDifficulty++;
                 SaveGame();
-                Debug.Log($"[Progression] Global Difficulty Unlocked: {saveData.highestUnlockedGlobalDifficulty}");
             }
         }
 
@@ -1032,7 +1030,6 @@ namespace TowerDefence.Core
             }
             catch (System.Exception ex)
             {
-                Debug.LogWarning($"[SaveSecurity] Decryption failed: {ex.Message}");
                 return false;
             }
         }
@@ -1060,7 +1057,6 @@ namespace TowerDefence.Core
                     File.Replace(tempPath, savePath, backupPath);
                 else
                     File.Move(tempPath, savePath);
-                Debug.Log($"Game Saved and Encrypted to: {savePath}");
             }
             catch (System.Exception ex)
             {
@@ -1093,7 +1089,6 @@ namespace TowerDefence.Core
                 SaveData restored = JsonUtility.FromJson<SaveData>(plainText);
                 if (restored == null) return false;
                 saveData = restored;
-                Debug.LogWarning("[SaveSecurity] Primary save was unreadable. Restored the previous save.");
                 SaveGame();
                 return true;
             }
@@ -1119,13 +1114,10 @@ namespace TowerDefence.Core
                         {
                             saveData = JsonUtility.FromJson<SaveData>(plainText);
 #if UNITY_EDITOR
-                            Debug.Log($"[SaveDebug] Raw Loaded JSON: {plainText}");
-                            Debug.Log($"[SaveDebug] Parsed: Karma={saveData.totalKarma}, Crystals={saveData.totalCrystals}");
 #endif
                             loadSuccess = true;
                             if (fileContent.StartsWith(AES_HEADER_V2))
                                 SaveGame();
-                            Debug.Log("Game Loaded and Decrypted securely (AES-256 + HMAC).");
                         }
                         else
                         {
@@ -1138,7 +1130,6 @@ namespace TowerDefence.Core
                     {
                         saveData = JsonUtility.FromJson<SaveData>(fileContent);
                         loadSuccess = true;
-                        Debug.Log("Game Loaded from plain-text JSON (Migrating to AES-256 on next save)");
                         SaveGame();
                     }
                     else
@@ -1150,7 +1141,6 @@ namespace TowerDefence.Core
                             {
                                 saveData = JsonUtility.FromJson<SaveData>(decrypted);
                                 loadSuccess = true;
-                                Debug.Log("Game Loaded from legacy XOR format (Migrating to AES-256 on next save)");
                                 SaveGame();
                             }
                         }
@@ -1387,7 +1377,6 @@ namespace TowerDefence.Core
             EnsureSaveCollections();
             EnsureStarterHeroUnlocked();
             SaveGame();
-            Debug.Log("Game Progress Reset Successfully!");
         }
     }
 }

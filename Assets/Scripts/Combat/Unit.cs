@@ -134,6 +134,7 @@ namespace TowerDefence.Combat
         private Renderer[] flashRenderers;
         private MaterialPropertyBlock flashBlock;
         private float hitFlashUntil;
+        private bool hitFlashClearNow;
         private static readonly int ColorPropId = Shader.PropertyToID("_Color");
         private static readonly int BaseColorPropId = Shader.PropertyToID("_BaseColor");
 
@@ -707,19 +708,11 @@ namespace TowerDefence.Combat
             if (blockedEnemies.Count > 0 && blockedEnemies[0] != null && !blockedEnemies[0].IsDead)
             {
                 targetCombatant = blockedEnemies[0];
-                if (this is HeroUnit)
-                {
-                    Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} targeting blockedEnemy: {((MonoBehaviour)targetCombatant).name}");
-                }
                 return;
             }
             if (isBlocked && currentBlocker != null && !currentBlocker.IsDead)
             {
                 targetCombatant = currentBlocker;
-                if (this is HeroUnit)
-                {
-                    Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} targeting currentBlocker: {currentBlocker.name}");
-                }
                 return;
             }
 
@@ -989,7 +982,6 @@ namespace TowerDefence.Combat
             
             if (healthBar != null) healthBar.UpdateHealth(currentHealth, maxHealth);
 
-            Debug.Log($"{gameObject.name} healed by {amount}. Current Health: {currentHealth}");
         }
 
         public void ApplySlow(float multiplier, float duration)
@@ -1035,7 +1027,6 @@ namespace TowerDefence.Combat
             if (targetBase != null)
             {
                 targetBase.Leak(unitData != null ? unitData.LeakLives : 1);
-                Debug.Log($"{gameObject.name} reached base and exploded!");
                 
                 // Kamikaze efekti
                 if (VFXManager.Instance != null)
@@ -1052,7 +1043,6 @@ namespace TowerDefence.Combat
 
         protected System.Collections.IEnumerator PerformAttack(MonoBehaviour targetMB)
         {
-            if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} PerformAttack started.");
             isAttacking = true;
             hasDealtDamage = false;
             currentTargetMB = targetMB;
@@ -1084,7 +1074,6 @@ namespace TowerDefence.Combat
             }
 
             EndAttackSwing();
-            if (this is HeroUnit) Debug.Log($"[UNIT_COMBAT_DEBUG] Hero {gameObject.name} PerformAttack finished. isAttacking reset to false.");
         }
 
         private float GetAttackClipLength()
@@ -1134,8 +1123,14 @@ namespace TowerDefence.Combat
             
             // Do not hit if attack was cancelled or completed
             if (!isAttacking) return;
-            
+            if (SuppressAttackHit()) return;
+
             ExecuteAttackHit();
+        }
+
+        protected virtual bool SuppressAttackHit()
+        {
+            return false;
         }
 
         private void ExecuteAttackHit()
@@ -1285,13 +1280,23 @@ namespace TowerDefence.Combat
 
         void LateUpdate()
         {
-            if (hitFlashUntil <= 0f || Time.time < hitFlashUntil) return;
-            ClearHitFlash();
+            OnLateTick();
+            if (hitFlashClearNow || (hitFlashUntil > 0f && Time.time >= hitFlashUntil))
+                ClearHitFlash();
+        }
+
+        protected virtual void OnLateTick() { }
+
+        protected void CancelHitFlash()
+        {
+            hitFlashUntil = 0f;
+            hitFlashClearNow = true;
         }
 
         protected void ClearHitFlash()
         {
             hitFlashUntil = 0f;
+            hitFlashClearNow = false;
             if (flashRenderers == null) return;
             for (int i = 0; i < flashRenderers.Length; i++)
             {
@@ -1328,7 +1333,6 @@ namespace TowerDefence.Combat
             ClearAllStatusEffects();
 
             if (animator != null) animator.SetTrigger("Die");
-            Debug.Log($"{gameObject.name} died!");
 
             // Death effect
             if (VFXManager.Instance != null)

@@ -51,11 +51,6 @@ namespace TowerDefence.Grid
             if (allTowers == null || allTowers.Count == 0)
             {
                 allTowers = new List<TowerData>(Resources.FindObjectsOfTypeAll<TowerData>());
-                Debug.Log($"[TOWER-Placement] Fallback LOAD! Discovering towers: {allTowers.Count}");
-            }
-            else
-            {
-                Debug.Log($"[TOWER-Placement] Pre-Loaded READY! Towers in list: {allTowers.Count}");
             }
         }
 
@@ -86,7 +81,6 @@ namespace TowerDefence.Grid
                     }
                 }
                 
-                Debug.Log($"[TowerPlacementManager] Click detected! isOverUI: {isOverUI}, Blocking UI: {uiName}, IsRealUI: {isRealUIElement}");
                 
                 if (isOverUI && isRealUIElement) 
                 {
@@ -106,20 +100,8 @@ namespace TowerDefence.Grid
                                      uiName.Contains("Background");
                     }
 
-                    if (isIgnorable)
-                    {
-                        Debug.Log($"[TowerPlacementManager] Ignoring UI catch from {uiName} and proceeding to game click.");
-                    }
-                    else
-                    {
-                        Debug.Log($"[RALLY] Click blocked by UI: {uiName}, interactive={isInteractive}. Rally mode active: {isInRallyMode}");
-                        return; 
-                    }
-                }
-
-                if (isInRallyMode)
-                {
-                    Debug.Log($"[RALLY] Click passed UI check, calling HandleMouseClick. isOverUI={isOverUI}, isRealUIElement={isRealUIElement}");
+                    if (!isIgnorable)
+                        return;
                 }
 
                 HandleMouseClick();
@@ -134,14 +116,11 @@ namespace TowerDefence.Grid
             isInRallyMode = true;
             currentRallyBarracks = barracks;
             barracks.SetRangeVisible(true);
-            Debug.Log($"[RALLY] Entered Rally Mode for {barracks.gameObject.name} at pos {barracks.transform.position}");
-            Debug.Log($"[RALLY] isInRallyMode={isInRallyMode}, currentRallyBarracks={currentRallyBarracks?.gameObject.name}");
         }
 
         private void HandleMouseClick()
         {
             if (Camera.main == null) return;
-            Debug.Log("<color=white>[CLICK-TRACE]</color> HandleMouseClick Called!");
 
             Vector2 mousePos = Pointer.current.position.ReadValue();
             Ray ray = Camera.main.ScreenPointToRay(mousePos);
@@ -182,16 +161,11 @@ namespace TowerDefence.Grid
                     isInRallyMode = false;
                     currentRallyBarracks = null;
                 }
-                else
-                {
-                    Debug.Log("[RALLY] Ground miss. Rally mode stays active.");
-                }
 
                 return;
             }
 
 
-            Debug.Log($"[TowerPlacementManager] Click detected on: {(hitSomething ? hit.collider.gameObject.name : "Nothing")}");
 
             if (hitSomething)
             {
@@ -294,10 +268,6 @@ namespace TowerDefence.Grid
                 }
 
                 CloseSelection();
-            }
-            else
-            {
-                Debug.Log("Not enough currency!");
             }
         }
 

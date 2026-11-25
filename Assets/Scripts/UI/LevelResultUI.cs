@@ -80,6 +80,12 @@ namespace TowerDefence.UI
                 else if (lifePercent >= 0.5f) stars = 2;
                 else stars = 1;
 
+                if (currentLvl != null && currentLvl.levelID == "Level1"
+                    && TutorialDirector.Instance != null
+                    && TutorialDirector.Instance.Current() != null
+                    && (MetaProgressionManager.Instance == null || !MetaProgressionManager.Instance.IsTutorialStepDone("tutorial_rest")))
+                    stars = 3;
+
                 int oldStars = 0;
                 if (currentLvl != null && MetaProgressionManager.Instance != null)
                     oldStars = MetaProgressionManager.Instance.GetLevelStars(currentLvl.levelID, globalDifficulty);
@@ -319,7 +325,6 @@ namespace TowerDefence.UI
                     },
                     onFailed: () =>
                     {
-                        Debug.Log("Double reward ad failed.");
                     }
                 );
             }

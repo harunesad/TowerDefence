@@ -135,7 +135,6 @@ namespace TowerDefence.UI
                 startTicks = now.Date.Ticks;
 
             MetaProgressionManager.Instance.GrantDailyReward(karma, crystal, now.Ticks, lastDay, startTicks);
-            Debug.Log($"[DailyReward] Claimed days {claimed + 1}-{lastDay}: {karma} Karma, {crystal} Crystals");
             return true;
         }
 

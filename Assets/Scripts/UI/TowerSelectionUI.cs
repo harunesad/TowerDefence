@@ -79,7 +79,6 @@ namespace TowerDefence.UI
             if (allTowers == null || allTowers.Count == 0)
             {
                 allTowers = new List<TowerData>(Resources.FindObjectsOfTypeAll<TowerData>());
-                Debug.LogWarning($"[CORE-UI] Manager empty. Local search found {allTowers.Count} towers.");
             }
 
             List<TowerData> buildable = new List<TowerData>();
@@ -105,7 +104,6 @@ namespace TowerDefence.UI
 
             if (buildable.Count == 0)
             {
-                Debug.LogWarning($"[CORE-UI] No TOWERS found for side {playerSide}.");
                 return;
             }
 
@@ -243,8 +241,9 @@ namespace TowerDefence.UI
 
             if (!anyVisible) return;
 
-            float shiftX = ScreenShift(minX, maxX, 0f, Screen.width);
-            float shiftY = ScreenShift(minY, maxY, Screen.height * ScreenBottom, Screen.height * ScreenTop);
+            PlayfieldBand(cam, out float left, out float right, out float bottom, out float top);
+            float shiftX = ScreenShift(minX, maxX, left, right);
+            float shiftY = ScreenShift(minY, maxY, bottom, top);
             if (shiftX == 0f && shiftY == 0f) return;
 
             Plane plane = new Plane(Vector3.up, transform.position);
@@ -255,6 +254,22 @@ namespace TowerDefence.UI
             Ray to = cam.ScreenPointToRay(centerScreen + new Vector3(shiftX, shiftY, 0f));
             if (plane.Raycast(from, out float d0) && plane.Raycast(to, out float d1))
                 transform.position += to.GetPoint(d1) - from.GetPoint(d0);
+        }
+
+        private static void PlayfieldBand(Camera cam, out float left, out float right, out float bottom, out float top)
+        {
+            Rect pixel = cam.pixelRect;
+            Rect safe = Screen.safeArea;
+            left = Mathf.Max(pixel.xMin, safe.xMin);
+            right = Mathf.Min(pixel.xMax, safe.xMax);
+            bottom = Mathf.Max(safe.yMin, pixel.yMin + pixel.height * ScreenBottom);
+            top = Mathf.Min(safe.yMax, pixel.yMin + pixel.height * ScreenTop);
+            if (bottom > top)
+            {
+                float mid = (safe.yMin + safe.yMax) * 0.5f;
+                bottom = mid;
+                top = mid;
+            }
         }
 
         private static float ScreenShift(float min, float max, float safeMin, float safeMax)

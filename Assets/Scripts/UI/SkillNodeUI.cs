@@ -86,19 +86,13 @@ namespace TowerDefence.UI
                 bool isActive = data.upgradeType == UpgradeType.UnlockSpell;
                 bool isImportant = data.crystalCost > 0;
                 
-                string sideStr = data.side.ToString().ToUpper();
                 string typeStr = isActive ? "ACTIVE" : "PASSIVE";
+                typeText.text = typeStr;
 
                 if (isImportant)
-                {
-                    typeText.text = $"★ {sideStr} {typeStr} ★";
                     typeText.color = new Color(0.2f, 0.8f, 1f);
-                }
                 else
-                {
-                    typeText.text = $"{sideStr} {typeStr}";
                     typeText.color = isActive ? new Color(1f, 0.8f, 0.2f) : Color.white;
-                }
             }
 
             RefreshStatus();

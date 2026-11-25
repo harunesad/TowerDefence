@@ -40,7 +40,6 @@ namespace TowerDefence.Combat
 
         private void StartDraggingInternal(UnitData unitData)
         {
-            Debug.Log($"[UnitPlacementManager] StartDragging: {unitData.unitName}");
             currentDraggingUnit = unitData;
             
             // Spawn ghost unit (copy of prefab; semi-transparent shader can be applied)
@@ -82,10 +81,8 @@ namespace TowerDefence.Combat
                 return UnityEngine.InputSystem.Mouse.current.position.ReadValue();
             if (UnityEngine.InputSystem.Pointer.current != null)
                 return UnityEngine.InputSystem.Pointer.current.position.ReadValue();
-            return Vector2.zero;
-#else
-            return Input.mousePosition;
 #endif
+            return Vector2.zero;
         }
 
         private void UpdateGhostPosition()
@@ -186,7 +183,6 @@ namespace TowerDefence.Combat
 
         public void StopDragging()
         {
-            Debug.Log($"[UnitPlacementManager] StopDragging called. CurrentUnit: {currentDraggingUnit?.unitName}, NearestPath: {nearestPath != null}");
             if (currentDraggingUnit != null && nearestPath != null)
             {
                 if (CurrencyManager.Instance.TrySpendCurrency(currentDraggingUnit.side, currentDraggingUnit.spawnCost))
@@ -218,14 +214,6 @@ namespace TowerDefence.Combat
                         Debug.LogError("[UnitPlacementManager] No spawners available in the scene!");
                     }
                 }
-                else
-                {
-                    Debug.Log("[UnitPlacementManager] Not enough currency at the moment of placement!");
-                }
-            }
-            else
-            {
-                Debug.Log($"[UnitPlacementManager] Cannot drop. currentUnit={currentDraggingUnit != null}, nearestPath={nearestPath != null}");
             }
 
             // Temizlik

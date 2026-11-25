@@ -21,7 +21,6 @@ namespace TowerDefence.Core
         public void SelectSpell(Data.SpellData spell)
         {
             SelectedSpell = spell;
-            Debug.Log($"Spell Selected: {spell.spellName}. Click to cast!");
         }
 
         public void ClearSelectedSpell() => SelectedSpell = null;

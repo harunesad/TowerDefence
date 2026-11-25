@@ -121,7 +121,7 @@ namespace TowerDefence.UI
             warningText.UpdateMeshPadding();
         }
 
-        public static void Show(string message, float duration = 2.0f, Color? textColor = null, bool isReward = false)
+        public static void Show(string message, float duration = 2.0f, Color? textColor = null, bool isReward = false, bool playSound = true)
         {
             if (Instance == null)
             {
@@ -134,11 +134,11 @@ namespace TowerDefence.UI
 
             if (Instance != null)
             {
-                Instance.DisplayWarning(message, duration, textColor, isReward);
+                Instance.DisplayWarning(message, duration, textColor, isReward, playSound);
             }
         }
 
-        private void DisplayWarning(string message, float duration, Color? textColor, bool isReward)
+        private void DisplayWarning(string message, float duration, Color? textColor, bool isReward, bool playSound)
         {
             if (warningText == null) return;
             if (cinzelFont == null && TowerDefence.Core.GameManager.Instance != null)
@@ -150,7 +150,7 @@ namespace TowerDefence.UI
             StatIcons.Set(warningText, message);
             warningText.color = textColor ?? (isReward ? new Color(1f, 0.84f, 0f, 1f) : new Color(1f, 0.3f, 0.25f, 1f));
 
-            if (TowerDefence.Core.AudioManager.Instance != null)
+            if (playSound && TowerDefence.Core.AudioManager.Instance != null)
             {
                 AudioClip sfx = isReward ? (rewardSFX != null ? rewardSFX : warningSFX) : warningSFX;
                 if (sfx != null) TowerDefence.Core.AudioManager.Instance.PlaySFX(sfx);

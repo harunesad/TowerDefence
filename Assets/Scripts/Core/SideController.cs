@@ -35,7 +35,6 @@ namespace TowerDefence.Core
         public void SetPlayerSide(Side side)
         {
             playerSide = side;
-            Debug.Log($"Player chose: {side} side");
             OnSideChanged?.Invoke(side);
         }
 

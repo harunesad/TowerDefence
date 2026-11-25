@@ -45,7 +45,6 @@ namespace TowerDefence.Combat
         public void CycleTargetingPriority()
         {
             currentPriority = (TargetingPriority)(((int)currentPriority + 1) % 4);
-            Debug.Log($"Targeting Priority changed to: {currentPriority}");
         }
 
         [Header("Target Switch")]
@@ -106,11 +105,14 @@ namespace TowerDefence.Combat
             if (isDead) return;
             isDead = true;
 
-            Debug.Log($"[TOWER] {towerData.towerName} destroyed!");
 
             // VFX
             if (VFXManager.Instance != null)
                 VFXManager.Instance.SpawnVFX(VFXType.SpellEarthquake, transform.position, Quaternion.identity);
+
+            if (AudioManager.Instance != null && AudioManager.Instance.TowerDestroyedSFX != null)
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.TowerDestroyedSFX);
+            TowerDefence.UI.WarningBannerUI.Show("TOWER DESTROYED!", playSound: false);
 
             // Slotu serbest birak
             if (mySlot != null) mySlot.ClearSlot();
@@ -567,6 +569,16 @@ namespace TowerDefence.Combat
                 return;
             }
 
+            bool attackersInRange = false;
+            foreach (Collider col in colliders)
+            {
+                if (TryGetLivingUnit(col, out Unit unit) && IsAttackingThisTower(unit))
+                {
+                    attackersInRange = true;
+                    break;
+                }
+            }
+
             GameObject selectedEnemy = null;
 
             switch (currentPriority)
@@ -576,6 +588,7 @@ namespace TowerDefence.Combat
                     foreach (Collider col in colliders)
                     {
                         if (!TryGetLivingUnit(col, out Unit unit)) continue;
+                        if (attackersInRange && !IsAttackingThisTower(unit)) continue;
                         
                         // First: Highest waypoint index + closest to next waypoint
                         float progress = CalculateUnitProgress(unit);
@@ -592,6 +605,7 @@ namespace TowerDefence.Combat
                     foreach (Collider col in colliders)
                     {
                         if (!TryGetLivingUnit(col, out Unit unit)) continue;
+                        if (attackersInRange && !IsAttackingThisTower(unit)) continue;
 
                         float progress = CalculateUnitProgress(unit);
                         if (progress < minProgress)
@@ -607,6 +621,7 @@ namespace TowerDefence.Combat
                     foreach (Collider col in colliders)
                     {
                         if (!TryGetLivingUnit(col, out Unit unit)) continue;
+                        if (attackersInRange && !IsAttackingThisTower(unit)) continue;
 
                         float h = unit.GetHealth(); 
                         if (h > maxHealth)
@@ -622,6 +637,7 @@ namespace TowerDefence.Combat
                     foreach (Collider col in colliders)
                     {
                         if (!TryGetLivingUnit(col, out Unit unit)) continue;
+                        if (attackersInRange && !IsAttackingThisTower(unit)) continue;
 
                         float h = unit.GetHealth();
                         if (h < minHealth)
@@ -646,6 +662,15 @@ namespace TowerDefence.Combat
             {
                 target = null;
             }
+        }
+
+        private bool IsAttackingThisTower(Unit unit)
+        {
+            if (unit == null) return false;
+            IDamageable aim = unit.GetTarget();
+            if (aim == this) return true;
+            Component component = aim as Component;
+            return component != null && component.GetComponentInParent<Tower>() == this;
         }
 
         private static bool TryGetLivingUnit(Collider col, out Unit unit)
@@ -712,7 +737,6 @@ namespace TowerDefence.Combat
             target = null;
             BeamTower beam = GetComponent<BeamTower>();
             if (beam != null) beam.StopBeam();
-            Debug.Log($"{gameObject.name} disabled for {duration} seconds.");
         }
 
         private static bool IsLightArcher(TowerData data)
@@ -727,7 +751,6 @@ namespace TowerDefence.Combat
         {
             if (currentLevel >= 3 && GetSpecializations() != null && GetSpecializations().Count > 0)
             {
-                Debug.LogWarning("Tower: Level 3 reached. Use Specialize() instead of normal Upgrade.");
                 return false;
             }
 
@@ -751,6 +774,7 @@ namespace TowerDefence.Combat
             range = towerData.range * rangeMult * rangeLevel;
             damage = towerData.damage * damageMult * damageLevel;
             fireRate = towerData.fireRate * speedMult;
+            ApplyLevelHealth();
 
             AuraTower aura = GetComponent<AuraTower>();
             if (aura != null) aura.OnTowerUpgraded(currentLevel);
@@ -758,7 +782,6 @@ namespace TowerDefence.Combat
             if (attackRangeLine != null && attackRangeLine.gameObject.activeSelf)
                 DrawRangeCircle();
 
-            Debug.Log($"{towerData.towerName} upgraded to Level {currentLevel}! New Damage: {damage}");
             return true;
         }
 
@@ -772,12 +795,33 @@ namespace TowerDefence.Combat
             
             Initialize(newData);
             
-            Debug.Log($"{gameObject.name} specialized into {newData.towerName}!");
         }
 
         public static float DamageLevelScale(int level)
         {
             return 1f + Mathf.Max(0, level - 1) * 0.4f;
+        }
+
+        public float HealthForLevel(int level)
+        {
+            float healthMult = 1f;
+            if (MetaProgressionManager.Instance != null)
+                healthMult = MetaProgressionManager.Instance.GetMultiplierForType(UpgradeType.TowerHealthBonus, towerSide);
+            float baseHealth = (towerData != null && towerData.health > 0f ? towerData.health : 100f) * healthMult;
+            return baseHealth * DamageLevelScale(level);
+        }
+
+        protected void ApplyLevelHealth()
+        {
+            float newMax = HealthForLevel(currentLevel);
+            float gained = newMax - maxHealth;
+            maxHealth = newMax;
+            if (gained > 0f)
+                currentHealth = Mathf.Min(maxHealth, currentHealth + gained);
+            else
+                currentHealth = Mathf.Min(currentHealth, maxHealth);
+            if (healthBar != null)
+                healthBar.UpdateHealth(currentHealth, maxHealth);
         }
 
         public int GetLevel() => currentLevel;

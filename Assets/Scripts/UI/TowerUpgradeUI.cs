@@ -373,8 +373,9 @@ namespace TowerDefence.UI
 
             if (!anyVisible) return;
 
-            float shiftX = ScreenShift(minX, maxX, 0f, Screen.width);
-            float shiftY = ScreenShift(minY, maxY, Screen.height * ScreenBottom, Screen.height * ScreenTop);
+            PlayfieldBand(cam, out float left, out float right, out float bottom, out float top);
+            float shiftX = ScreenShift(minX, maxX, left, right);
+            float shiftY = ScreenShift(minY, maxY, bottom, top);
             if (shiftX == 0f && shiftY == 0f) return;
 
             Plane plane = new Plane(Vector3.up, transform.position);
@@ -385,6 +386,22 @@ namespace TowerDefence.UI
             Ray to = cam.ScreenPointToRay(centerScreen + new Vector3(shiftX, shiftY, 0f));
             if (plane.Raycast(from, out float d0) && plane.Raycast(to, out float d1))
                 transform.position += to.GetPoint(d1) - from.GetPoint(d0);
+        }
+
+        private static void PlayfieldBand(Camera cam, out float left, out float right, out float bottom, out float top)
+        {
+            Rect pixel = cam.pixelRect;
+            Rect safe = Screen.safeArea;
+            left = Mathf.Max(pixel.xMin, safe.xMin);
+            right = Mathf.Min(pixel.xMax, safe.xMax);
+            bottom = Mathf.Max(safe.yMin, pixel.yMin + pixel.height * ScreenBottom);
+            top = Mathf.Min(safe.yMax, pixel.yMin + pixel.height * ScreenTop);
+            if (bottom > top)
+            {
+                float mid = (safe.yMin + safe.yMax) * 0.5f;
+                bottom = mid;
+                top = mid;
+            }
         }
 
         private static float ScreenShift(float min, float max, float safeMin, float safeMax)
@@ -724,6 +741,11 @@ namespace TowerDefence.UI
             if (currentTower is BarracksTower barracks)
             {
                 text += $"\n{StatIcons.Soldiers} {barracks.soldierCount}\n{StatIcons.Time} {barracks.respawnDelay:0}s";
+                if (barracks.soldierData != null)
+                {
+                    barracks.GetSoldierCombatStats(out float health, out float damage, out float attackRate);
+                    text += $"\n{barracks.soldierData.unitName}\n{StatIcons.Health} {health:0}\n{StatIcons.Damage} {damage:0.#}\n{StatIcons.Attack} {attackRate:0.00}/s";
+                }
                 return text;
             }
 
@@ -750,10 +772,25 @@ namespace TowerDefence.UI
                 return $"{name}\nLv {currentTower.CurrentLevel}";
 
             int next = currentTower.CurrentLevel + 1;
+            string text = $"{name}\nLv {currentTower.CurrentLevel} > {next}\n{StatIcons.Gold} {data.upgradeCost}\n{StatIcons.Health} {currentTower.HealthForLevel(next):0}";
+
+            if (currentTower is BarracksTower barracks)
+            {
+                text += $"\n{StatIcons.Soldiers} {barracks.soldierCount}\n{StatIcons.Time} {barracks.RespawnDelayForLevel(next):0}s";
+                if (barracks.soldierData != null)
+                {
+                    barracks.GetSoldierCombatStats(barracks.PowerForLevel(next), out float health, out float damage, out float attackRate);
+                    text += $"\n{barracks.soldierData.unitName}\n{StatIcons.Health} {health:0}\n{StatIcons.Damage} {damage:0.#}\n{StatIcons.Attack} {attackRate:0.00}/s";
+                }
+                return text;
+            }
+
             if (data.isAuraTower)
             {
                 float nextScale = data.AuraLevelScale(next);
-                return $"{name}\n{StatIcons.Gold} {data.upgradeCost}\nLv {currentTower.CurrentLevel} > {next}\n{StatIcons.Range} {data.auraRadius * nextScale:0.#}\n{StatIcons.AuraBonus(data.auraDamageBonus * nextScale, data.auraFireRateBonus * nextScale)}";
+                text += $"\n{StatIcons.Range} {data.auraRadius * nextScale:0.#}";
+                text += $"\n{StatIcons.AuraBonus(data.auraDamageBonus * nextScale, data.auraFireRateBonus * nextScale)}";
+                return text;
             }
 
             float nextDamage = currentTower.GetCurrentDamage()
@@ -761,7 +798,12 @@ namespace TowerDefence.UI
                 * Tower.DamageLevelScale(next);
             float rangeLevel = 1f + (currentTower.CurrentLevel - 1) * 0.2f;
             float nextRange = currentTower.GetCurrentRange() / Mathf.Max(0.01f, rangeLevel) * (1f + (next - 1) * 0.2f);
-            return $"{name}\n{StatIcons.Gold} {data.upgradeCost}\nLv {currentTower.CurrentLevel} > {next}\n{StatIcons.Damage} {nextDamage:0}\n{StatIcons.Range} {nextRange:0.#}";
+            text += $"\n{StatIcons.Damage} {nextDamage:0}\n{StatIcons.Range} {nextRange:0.#}\n{StatIcons.Attack} {currentTower.GetCurrentFireRate():0.##}/s";
+            if (data.isArtillery && data.explosionRadius > 0f)
+                text += $"\n{StatIcons.Area} {data.explosionRadius:0.#}";
+            else if (data.isSlowTower)
+                text += $"\n{StatIcons.Slow} {data.effectPower * 100f:0}%";
+            return text;
         }
 
         private string BuildSpecText(int index)

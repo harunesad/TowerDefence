@@ -73,7 +73,6 @@ namespace TowerDefence.Core
         public void ChangeState(GameState newState)
         {
             currentState = newState;
-            Debug.Log($"Game State changed to: {newState}");
             OnGameStateChanged?.Invoke(newState);
             
             // State-specific events can be triggered here
@@ -84,7 +83,6 @@ namespace TowerDefence.Core
                         AudioManager.Instance.PlayBGM(battleBGM);
                     break;
                 case GameState.Victory:
-                    Debug.Log("Victory!");
                     if (AudioManager.Instance != null)
                     {
                         AudioManager.Instance.StopBGM();
@@ -95,7 +93,6 @@ namespace TowerDefence.Core
                     TriggerResultUI(true);
                     break;
                 case GameState.Defeat:
-                    Debug.Log("Defeat.");
                     if (AudioManager.Instance != null)
                     {
                         AudioManager.Instance.StopBGM();

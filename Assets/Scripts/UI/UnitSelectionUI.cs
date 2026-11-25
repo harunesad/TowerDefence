@@ -19,7 +19,6 @@ namespace TowerDefence.UI
         {
             if (SideController.Instance != null && SideController.Instance.GetPlayerSide() != lastSide)
             {
-                Debug.Log("[UNIT-FORCE-REFRESH] Side change detected in Update! " + lastSide + " -> " + SideController.Instance.GetPlayerSide());
                 InitializeUI();
             }
         }
@@ -136,7 +135,6 @@ namespace TowerDefence.UI
             }
 
             Side playerSide = lastSide;
-            Debug.Log($"[CORE-UNIT] Refreshing bottom bar. Side: {playerSide}. Units: {unitsPool.Count}");
 
             HashSet<string> addedNames = new HashSet<string>();
             List<string> equippedUnitNames = MetaProgressionManager.Instance != null ? MetaProgressionManager.Instance.GetEquippedUnitNames() : new List<string>();
@@ -163,11 +161,6 @@ namespace TowerDefence.UI
                 }
             }
 
-            if (addedNames.Count == 0)
-            {
-                Debug.LogWarning("[CORE-UNIT] No units found for side: " + playerSide);
-            }
-
             // Butonlari olusturduktan sonra wave durumuna gore kontrol et
             UpdateButtonsInteractability();
         }
@@ -177,10 +170,6 @@ namespace TowerDefence.UI
             if (UnitPlacementManager.Instance != null && CurrencyManager.Instance != null && CurrencyManager.Instance.CanAfford(unit.side, unit.spawnCost))
             {
                 UnitPlacementManager.Instance.StartDragging(unit);
-            }
-            else
-            {
-                Debug.Log("Not enough currency or Manager missing!");
             }
         }
 

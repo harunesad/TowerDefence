@@ -96,8 +96,7 @@ namespace TowerDefence.UI
             y -= 30;
 
             bool isActive = data.upgradeType == UpgradeType.UnlockSpell;
-            string sideStr = data.side.ToString().ToUpper();
-            string typeStr = $"{sideStr} {(isActive ? "ACTIVE" : "PASSIVE")}";
+            string typeStr = isActive ? "ACTIVE" : "PASSIVE";
             Color typeColor = isActive ? new Color(1f, 0.8f, 0.2f) : Color.white;
             CreateText("TypeText", typeStr, new Vector2(0, y), new Vector2(340, 18),
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), 13, FontStyles.Bold, TextAlignmentOptions.Center, typeColor);

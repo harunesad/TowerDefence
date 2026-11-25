@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -571,7 +571,6 @@ namespace TowerDefence.UI
             // Kahraman secilmemisse bile savasa girilebilir, auto-equip yapmiyoruz.
             // Bu sayede oyuncu istemezse kahraman olmadan oynayabilir.
 
-            Debug.Log("Starting match with side: " + currentSelectedSide);
             if (TutorialDirector.Instance != null)
                 TutorialDirector.Instance.OnMatchStarted();
             CampaignManager.Instance.LoadSelectedLevel();

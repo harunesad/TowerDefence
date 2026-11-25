@@ -413,7 +413,6 @@ namespace TowerDefence.UI
             if (TutorialDirector.Instance != null && !TutorialDirector.Instance.LevelAllowed(level.levelID)) return;
 
             CampaignManager.Instance.SelectLevel(level);
-            Debug.Log($"LevelSelectionUI: {level.levelName} selected.");
 
             MainMenuController mc = GetComponentInParent<MainMenuController>();
             if (mc != null)
@@ -438,7 +437,6 @@ namespace TowerDefence.UI
                     CampaignManager.Instance.SelectLevel(level);
                 if (AdManager.Instance == null)
                 {
-                    Debug.LogWarning("AdManager not found!");
                     return;
                 }
                 AdManager.Instance.ShowRewardedAd(
@@ -474,7 +472,6 @@ namespace TowerDefence.UI
                         }
                         else
                         {
-                            Debug.LogWarning("SweepResultUI unassigned! Granting manual reward.");
                             if (CampaignManager.Instance != null)
                             {
                                 int globalDifficulty = CampaignManager.Instance.CurrentDifficultyLevel;
@@ -488,13 +485,8 @@ namespace TowerDefence.UI
                     },
                     onFailed: () =>
                     {
-                        Debug.Log("Sweep rewarded ad failed or skipped.");
                     }
                 );
-            }
-            else
-            {
-                Debug.LogWarning("AdManager not found!");
             }
         }
     }

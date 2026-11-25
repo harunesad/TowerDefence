@@ -28,7 +28,6 @@ namespace TowerDefence.Grid
             {
                 // Generate map
                 GameObject mapInstance = Instantiate(currentLevel.mapPrefab, currentLevel.mapPrefab.transform.position, currentLevel.mapPrefab.transform.rotation);
-                Debug.Log($"LevelInitializer: Map '{currentLevel.levelName}' spawned.");
 
                 // Scan towers on map and convert to opposing counterparts based on player's chosen side
                 Side playerSide = SideController.Instance.GetPlayerSide();
@@ -42,16 +41,11 @@ namespace TowerDefence.Grid
                         if (currentData.enemyCounterpart != null)
                         {
                             tower.Initialize(currentData.enemyCounterpart);
-                            Debug.Log($"LevelInitializer: Map tower '{currentData.towerName}' swapped to opponent counterpart '{currentData.enemyCounterpart.towerName}'.");
                         }
                     }
                 }
 
                 // NavMesh system removed; migrated to waypoint-based movement.
-            }
-            else
-            {
-                Debug.LogWarning($"LevelInitializer: No map prefab assigned for {currentLevel.levelName}");
             }
         }
     }

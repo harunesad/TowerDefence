@@ -209,7 +209,6 @@ namespace TowerDefence.Core
         public static void EnsureInstance()
         {
             if (Instance != null) return;
-            Debug.LogWarning("[SceneLoader] Instance not found. Make sure LoadingScreenPrefab is assigned in GameManager Inspector.");
         }
     }
 }

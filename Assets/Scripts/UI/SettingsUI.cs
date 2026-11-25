@@ -18,7 +18,6 @@ namespace TowerDefence.UI
         {
             if (Core.AudioManager.Instance == null)
             {
-                Debug.LogWarning("SettingsUI: AudioManager not found!");
                 return;
             }
 

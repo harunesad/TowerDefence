@@ -74,7 +74,6 @@ namespace TowerDefence.Core.Security
             bool intact = checksum == CalculateChecksum(decrypted, slot.key) && fakeHoneyPot == slot.honeypot;
             if (!intact)
             {
-                Debug.LogWarning("[Security] Memory tampering detected in ObscuredInt.");
                 return slot.committed;
             }
 

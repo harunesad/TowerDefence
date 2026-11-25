@@ -81,10 +81,6 @@ namespace TowerDefence.UI
                         btnScript.Setup(spell);
                     }
                 }
-                else
-                {
-                    Debug.LogWarning($"SpellSelectionUI: Equipped spell '{spellID}' not found!");
-                }
             }
         }
     }

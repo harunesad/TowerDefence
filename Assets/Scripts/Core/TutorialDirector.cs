@@ -10,6 +10,7 @@ using TowerDefence.UI;
 
 namespace TowerDefence.Core
 {
+    [DefaultExecutionOrder(100)]
     public class TutorialDirector : MonoBehaviour
     {
         public static TutorialDirector Instance { get; private set; }
@@ -25,7 +26,7 @@ namespace TowerDefence.Core
             "compendium_go", "compendium_tell", "heroes_go", "heroes_tell",
             "skill_go", "skill_info", "skill_buy", "skill_info_top", "skill_buy_top", "skill_back", "sweep_1", "force_dark", "to_battle_2",
             "hero_info", "unit_info", "spell_info", "start_dark",
-            "wave_info", "hero_unit_info", "boss_intro", "boss_spell", "victory_2",
+            "wave_info", "hero_unit_info", "skip_dark", "boss_spell", "boss_intro", "victory_2",
             "tutorial_rest",
             "map_next",
             "war_end",
@@ -41,7 +42,7 @@ namespace TowerDefence.Core
             "compendium_go", "compendium_tell", "heroes_go", "heroes_tell",
             "skill_go", "skill_info", "skill_buy", "skill_info_top", "skill_buy_top", "skill_back", "sweep_1", "force_dark", "to_battle_2",
             "hero_info", "unit_info", "spell_info", "start_dark",
-            "wave_info", "hero_unit_info", "boss_intro", "boss_spell", "victory_2",
+            "wave_info", "hero_unit_info", "skip_dark", "boss_spell", "boss_intro", "victory_2",
             "tutorial_rest",
             "map_next", "war_end", "normal_end", "hard_end", "expert_finish", "barracks", "spell_cast"
         };
@@ -53,7 +54,7 @@ namespace TowerDefence.Core
 
         static readonly string[] Level2BeforeVictory =
         {
-            "wave_info", "hero_unit_info", "boss_intro", "boss_spell"
+            "wave_info", "hero_unit_info", "skip_dark", "boss_spell", "boss_intro"
         };
 
         bool routedThisLoad;
@@ -135,7 +136,6 @@ namespace TowerDefence.Core
                 PresentDefeat();
                 TryRoute();
                 PlaceCard();
-                PlaceShade();
                 return;
             }
             if (forceMenuReturn && InMatch())
@@ -143,7 +143,6 @@ namespace TowerDefence.Core
                 PresentMenuReturn();
                 TryRoute();
                 PlaceCard();
-                PlaceShade();
                 return;
             }
             if (forceMapReturn && InMatch())
@@ -151,13 +150,11 @@ namespace TowerDefence.Core
                 PresentMapReturn();
                 TryRoute();
                 PlaceCard();
-                PlaceShade();
                 return;
             }
             if (!PresentMoment()) PresentCurrent();
             TryRoute();
             PlaceCard();
-            PlaceShade();
         }
 
         public void OnProgressReset()
@@ -385,7 +382,7 @@ namespace TowerDefence.Core
 
         public bool FocusesSpellButton(SpellButtonUI button)
         {
-            return Current() == "boss_spell" && bossSpellPage <= 0 && BossAtPathMiddle()
+            return Current() == "boss_spell" && bossSpellPage <= 0 && EnemiesHaveArrived()
                 && button != null && LessonSpellButton() == button;
         }
 
@@ -396,9 +393,9 @@ namespace TowerDefence.Core
 
         public bool BossCastHits(Vector3 point)
         {
-            TowerDefence.Combat.Unit boss = LessonBoss();
-            if (boss == null) return false;
-            Vector3 delta = point - boss.transform.position;
+            TowerDefence.Combat.Unit target = LessonTarget();
+            if (target == null) return false;
+            Vector3 delta = point - target.transform.position;
             delta.y = 0f;
             return delta.magnitude <= 6f;
         }
@@ -424,10 +421,28 @@ namespace TowerDefence.Core
             return fallback;
         }
 
-        bool BossAtPathMiddle()
+        const float SpellLessonProgress = 0.12f;
+
+        bool EnemiesHaveArrived()
         {
-            TowerDefence.Combat.Unit boss = LessonBoss();
-            return boss != null && boss.GetPathProgress01() >= 0.5f;
+            return LessonTarget() != null;
+        }
+
+        TowerDefence.Combat.Unit LessonTarget()
+        {
+            Side player = SideController.Instance != null ? SideController.Instance.GetPlayerSide() : Side.Dark;
+            TowerDefence.Combat.Unit best = null;
+            float bestProgress = -1f;
+            for (int i = 0; i < TowerDefence.Combat.Unit.AllUnits.Count; i++)
+            {
+                TowerDefence.Combat.Unit unit = TowerDefence.Combat.Unit.AllUnits[i];
+                if (unit == null || unit.IsDead || unit.GetSide() == player) continue;
+                float progress = unit.GetPathProgress01();
+                if (progress < SpellLessonProgress || progress <= bestProgress) continue;
+                best = unit;
+                bestProgress = progress;
+            }
+            return best;
         }
 
         TowerDefence.Combat.Unit LessonBoss()
@@ -1254,6 +1269,14 @@ namespace TowerDefence.Core
                 case "hero_unit_info":
                     ShowIfMatch(step, false);
                     break;
+                case "skip_dark":
+                    if (CombatRunning())
+                    {
+                        Complete("skip_dark");
+                        break;
+                    }
+                    ShowIfMatch(step, false, true);
+                    break;
                 case "boss_intro":
                     if (LessonBoss() == null)
                     {
@@ -1263,7 +1286,7 @@ namespace TowerDefence.Core
                     else ShowIfMatch(step, true);
                     break;
                 case "boss_spell":
-                    if (!BossAtPathMiddle())
+                    if (!EnemiesHaveArrived())
                     {
                         Hide();
                         ApplyPause(false);
@@ -1404,7 +1427,7 @@ namespace TowerDefence.Core
 
         void ResumeBattle(string step)
         {
-            string levelId = step == "wave_info" || step == "hero_unit_info" || step == "boss_intro" || step == "boss_spell" ? "Level2" : "Level1";
+            string levelId = step == "wave_info" || step == "hero_unit_info" || step == "skip_dark" || step == "boss_intro" || step == "boss_spell" ? "Level2" : "Level1";
             CampaignManager campaign = CampaignManager.Instance;
             if (campaign == null) return;
             LevelData level = campaign.FindLevel(levelId);
@@ -1497,6 +1520,7 @@ namespace TowerDefence.Core
                 case "tower_menu":
                 case "wave_info":
                 case "hero_unit_info":
+                case "skip_dark":
                 case "boss_intro":
                 case "boss_spell":
                     return true;
@@ -1537,6 +1561,8 @@ namespace TowerDefence.Core
         void LateUpdate()
         {
             if (pausedByCard) Time.timeScale = 0f;
+            if (MetaProgressionManager.Instance == null) return;
+            PlaceShade();
         }
 
         void Hide()
@@ -1935,7 +1961,8 @@ namespace TowerDefence.Core
             HUDController hud = FindAnyObjectByType<HUDController>();
             if (step == "boss_intro" || (step == "boss_spell" && bossSpellPage > 0))
             {
-                AddBossDisc(holes);
+                TowerDefence.Combat.Unit marked = step == "boss_spell" ? LessonTarget() : LessonBoss();
+                AddBossDisc(holes, marked);
                 return holes;
             }
             if (step == "boss_spell")
@@ -2053,7 +2080,7 @@ namespace TowerDefence.Core
                 AddPath(holes);
                 return holes;
             }
-            if (step == "skip_wave")
+            if (step == "skip_wave" || step == "skip_dark")
             {
                 if (hud != null && Cluster(hud.SkipTarget, 8f, out Rect skip))
                     holes.Add(skip);
@@ -2390,9 +2417,8 @@ namespace TowerDefence.Core
             holes.Add(Rect.MinMaxRect(box.xMin - 10f, box.yMin - 8f, box.xMax + 10f, box.yMax + 8f));
         }
 
-        void AddBossDisc(List<Rect> holes)
+        void AddBossDisc(List<Rect> holes, TowerDefence.Combat.Unit boss)
         {
-            TowerDefence.Combat.Unit boss = LessonBoss();
             if (boss == null || root == null) return;
             Camera cam = Camera.main;
             if (cam == null) return;
@@ -2678,6 +2704,8 @@ namespace TowerDefence.Core
                     if (heroUnitPage <= 0 || !heroInfoSeen)
                         return FirstBattleHero();
                     return FirstBattleUnit();
+                case "skip_dark":
+                    return hud != null ? hud.SkipTarget : null;
                 case "daily_tell":
                     DailyRewardUI daily = FindAnyObjectByType<DailyRewardUI>();
                     if (daily == null) return null;
@@ -2855,7 +2883,7 @@ namespace TowerDefence.Core
                 bandRect.anchorMin = new Vector2(1f, 0f);
                 bandRect.anchorMax = new Vector2(1f, 0f);
                 bandRect.pivot = new Vector2(1f, 0f);
-                bandRect.anchoredPosition = new Vector2(-18f, 188f);
+                bandRect.anchoredPosition = CardPos(new Vector2(-18f, 188f), true, false);
                 bandRect.sizeDelta = new Vector2(520f, 156f);
                 frameRect.anchoredPosition = new Vector2(10f, 0f);
                 frameRect.sizeDelta = new Vector2(92f, 92f);
@@ -2882,7 +2910,7 @@ namespace TowerDefence.Core
                 bandRect.anchorMin = new Vector2(1f, 0f);
                 bandRect.anchorMax = new Vector2(1f, 0f);
                 bandRect.pivot = new Vector2(1f, 0f);
-                bandRect.anchoredPosition = new Vector2(-110f, 12f);
+                bandRect.anchoredPosition = CardPos(new Vector2(-110f, 12f), true, false);
                 bandRect.sizeDelta = new Vector2(560f, 140f);
                 frameRect.anchoredPosition = new Vector2(10f, 0f);
                 frameRect.sizeDelta = new Vector2(96f, 96f);
@@ -2894,7 +2922,7 @@ namespace TowerDefence.Core
             }
             if (onMap)
             {
-                bandRect.anchoredPosition = new Vector2(420f, 8f);
+                bandRect.anchoredPosition = CardPos(new Vector2(420f, 8f), false, false);
                 bandRect.sizeDelta = new Vector2(640f, 132f);
                 frameRect.anchoredPosition = new Vector2(10f, 0f);
                 frameRect.sizeDelta = new Vector2(96f, 96f);
@@ -2905,7 +2933,7 @@ namespace TowerDefence.Core
                 return;
             }
 
-            bandRect.anchoredPosition = new Vector2(110f, 16f);
+            bandRect.anchoredPosition = CardPos(new Vector2(110f, 16f), false, false);
             bandRect.sizeDelta = new Vector2(620f, 156f);
             frameRect.anchoredPosition = new Vector2(14f, 0f);
             frameRect.sizeDelta = new Vector2(108f, 108f);
@@ -2913,6 +2941,26 @@ namespace TowerDefence.Core
             textRect.offsetMin = new Vector2(134f, 12f);
             textRect.offsetMax = new Vector2(-90f, -56f);
             FitNext(48f);
+        }
+
+        static Vector2 CardPos(Vector2 pos, bool fromRight, bool fromTop)
+        {
+            if (Screen.width <= 0 || Screen.height <= 0) return pos;
+            Rect safe = Screen.safeArea;
+            float scale = 1f;
+            TutorialDirector director = Instance;
+            if (director != null && director.root != null)
+            {
+                Canvas canvas = director.root.GetComponent<Canvas>();
+                if (canvas != null && canvas.scaleFactor > 0.01f) scale = canvas.scaleFactor;
+            }
+            float left = safe.xMin / scale;
+            float bottom = safe.yMin / scale;
+            float right = (Screen.width - safe.xMax) / scale;
+            float top = (Screen.height - safe.yMax) / scale;
+            pos.x += fromRight ? -right : left;
+            pos.y += fromTop ? -top : bottom;
+            return pos;
         }
 
         void FitNext(float size)
@@ -3216,8 +3264,9 @@ namespace TowerDefence.Core
                     if (!heroInfoSeen) return "Double-tap the hero and their info will open.";
                     if (heroUnitPage == 0) return "You've seen it. Close it now.";
                     return "Now tap a soldier. Their info opens too.";
+                case "skip_dark": return "Hit Skip. Start the march.";
                 case "boss_intro": return "This is a boss. They're the only one in the last wave.";
-                case "boss_spell": return bossSpellPage > 0 ? "Tap the boss and drop the spell there." : "Select your spell.";
+                case "boss_spell": return bossSpellPage > 0 ? "Tap the enemy and drop the spell there." : "Select your spell.";
                 case "victory_2": return "You've seen both sides and held both gates. From here, you choose the side.";
                 case "fortune_go": return "A fight isn't only the gate. Open the wheel.";
                 case "fortune_tell": return fortuneClosePending ? "All right, close it." : "Spin the wheel and let your reward come.";

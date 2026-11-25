@@ -51,20 +51,17 @@ namespace TowerDefence.Core
             rewardedId = (Application.platform == RuntimePlatform.IPhonePlayer) ? iosRewardedId : androidRewardedId;
             interstitialId = (Application.platform == RuntimePlatform.IPhonePlayer) ? iosInterstitialId : androidInterstitialId;
 
-            Debug.Log($"Initializing Unity Ads with Game ID: {gameId}");
             Advertisement.Initialize(gameId, testMode, this);
         }
 
         public void OnInitializationComplete()
         {
-            Debug.Log("Unity Ads initialization complete.");
             LoadAd(rewardedId);
             TryPresentRewarded();
         }
 
         public void OnInitializationFailed(UnityAdsInitializationError error, string message)
         {
-            Debug.Log($"Unity Ads Initialization Failed: {error.ToString()} - {message}");
         }
 
         private bool isRewardedLoaded = false;
@@ -75,13 +72,11 @@ namespace TowerDefence.Core
 
         private void LoadAd(string adUnitId)
         {
-            Debug.Log($"Loading Ad: {adUnitId}");
             Advertisement.Load(adUnitId, this);
         }
 
         public void OnUnityAdsAdLoaded(string adUnitId)
         {
-            Debug.Log($"Ad Loaded: {adUnitId}");
             if (adUnitId == rewardedId)
             {
                 isRewardedLoaded = true;
@@ -92,7 +87,6 @@ namespace TowerDefence.Core
 
         public void OnUnityAdsFailedToLoad(string adUnitId, UnityAdsLoadError error, string message)
         {
-            Debug.Log($"Error loading Ad Unit: {adUnitId} - {error.ToString()} - {message}");
             if (adUnitId == rewardedId)
             {
                 isRewardedLoaded = false;
@@ -137,7 +131,6 @@ namespace TowerDefence.Core
             }
             rewardShowPending = false;
             isRewardedLoaded = false;
-            Debug.Log("Showing Rewarded Ad.");
             Advertisement.Show(rewardedId, this);
         }
 
@@ -155,13 +148,11 @@ namespace TowerDefence.Core
 
             if (isInterstitialLoaded)
             {
-                Debug.Log("Showing Interstitial Ad.");
                 isInterstitialLoaded = false; // Kullanildi
                 Advertisement.Show(interstitialId, this);
             }
             else
             {
-                Debug.LogWarning("Interstitial Ad not ready!");
                 FinishInterstitial();
                 LoadAd(interstitialId); // Yeniden yuklemeyi dene
             }
@@ -169,7 +160,6 @@ namespace TowerDefence.Core
 
         public void OnUnityAdsShowFailure(string adUnitId, UnityAdsShowError error, string message)
         {
-            Debug.Log($"Error showing Ad Unit {adUnitId}: {error.ToString()} - {message}");
             
             if (adUnitId == rewardedId) FinishRewarded(false);
             else if (adUnitId == interstitialId) FinishInterstitial();
@@ -186,18 +176,15 @@ namespace TowerDefence.Core
             {
                 if (showCompletionState == UnityAdsShowCompletionState.COMPLETED)
                 {
-                    Debug.Log("Rewarded Ad completed successfully.");
                     FinishRewarded(true);
                 }
                 else
                 {
-                    Debug.Log("Rewarded Ad skipped or failed.");
                     FinishRewarded(false);
                 }
             }
             else if (adUnitId == interstitialId)
             {
-                Debug.Log("Interstitial Ad closed.");
                 FinishInterstitial();
             }
 

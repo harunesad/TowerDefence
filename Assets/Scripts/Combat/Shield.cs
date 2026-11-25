@@ -40,14 +40,12 @@ namespace TowerDefence.Combat
                 if (currentShieldAmount >= amount)
                 {
                     currentShieldAmount -= amount;
-                    Debug.Log($"Shield absorbed damage! Current Shield: {currentShieldAmount}");
                 }
                 else
                 {
                     float remainingDamage = amount - currentShieldAmount;
                     currentShieldAmount = 0;
                     isBroken = true;
-                    Debug.Log("Shield Broken!");
                     
                     // Tasan hasari ana birime ilet
                     SendMessageUpwards("TakeHealthDamage", remainingDamage, SendMessageOptions.DontRequireReceiver);
@@ -86,7 +84,6 @@ namespace TowerDefence.Combat
             if (isBroken && currentShieldAmount > 0)
             {
                 isBroken = false;
-                Debug.Log("Shield Regenerated!");
             }
         }
 

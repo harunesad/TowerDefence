@@ -74,7 +74,6 @@ namespace TowerDefence.Combat
                 // Sadece olmemis ve baska biri tarafindan engellenmemis dusmanlari engelle
                 if (enemy != null && !enemy.IsDead && !enemy.IsBlocked)
                 {
-                    Debug.Log($"<color=green>[SOLDIER]</color> {gameObject.name} engaged {enemy.gameObject.name}!");
                     StartBlocking(enemy);
                     break; 
                 }

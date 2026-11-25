@@ -137,7 +137,6 @@ namespace TowerDefence.Core
                 HeroUnit clickedHero = hit.collider.GetComponentInParent<HeroUnit>();
                 if (clickedHero != null && !clickedHero.IsDead && IsManagedHero(clickedHero))
                 {
-                    Debug.Log($"[HeroManager] Hero clicked: {clickedHero.gameObject.name}");
                     if (selectedHero == clickedHero)
                     {
                         DeselectHero();
@@ -155,7 +154,6 @@ namespace TowerDefence.Core
             {
                 if (TryGetGroundPoint(ray, out Vector3 groundPoint))
                 {
-                    Debug.Log($"[HeroManager] Moving hero to: {groundPoint}");
                     MoveSelectedHeroTo(groundPoint);
                     return;
                 }
@@ -378,7 +376,6 @@ namespace TowerDefence.Core
                     // ozel Durum: Sadece 2 waypoint varsa, ikisinin tam ortasini hesapla
                     if (waypoints.Count == 2 && waypoints[0] != null && waypoints[1] != null)
                     {
-                        Debug.Log($"[HeroManager] Spawning heroes at mathematical middle of 2-point path '{mainPath.name}'");
                         return (waypoints[0].position + waypoints[1].position) * 0.5f;
                     }
 
@@ -386,7 +383,6 @@ namespace TowerDefence.Core
                     int midIndex = waypoints.Count / 2;
                     if (waypoints[midIndex] != null)
                     {
-                        Debug.Log($"[HeroManager] Spawning heroes at middle waypoint {midIndex} of path '{mainPath.name}'");
                         return waypoints[midIndex].position;
                     }
                 }

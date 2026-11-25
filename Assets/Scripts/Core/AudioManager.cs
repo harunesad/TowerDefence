@@ -13,8 +13,10 @@ namespace TowerDefence.Core
         [Header("Audio Sources")]
         [SerializeField] private AudioSource bgmSource;
         [SerializeField] private AudioClip uiClick;
+        [SerializeField] private AudioClip towerDestroyedSFX;
 
         public static AudioClip UiClick => Instance != null ? Instance.uiClick : null;
+        public AudioClip TowerDestroyedSFX => towerDestroyedSFX;
         private List<AudioSource> sfxPool = new List<AudioSource>();
 
         public float MasterVolume { get; private set; } = 1f;
