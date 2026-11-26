@@ -346,9 +346,7 @@ namespace TowerDefence.Combat
             foreach (var soldier in activeSoldiers)
             {
                 if (soldier != null)
-                {
-                    Destroy(soldier.gameObject);
-                }
+                    soldier.Dismiss();
             }
             activeSoldiers.Clear();
 

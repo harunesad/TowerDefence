@@ -345,7 +345,7 @@ namespace TowerDefence.Combat
                 TickAbility();
 
                 IDamageable currentTarget = GetTarget();
-                if (currentTarget == null || currentTarget.IsDead)
+                if (!IsTargetAlive(currentTarget))
                 {
                     if ((isAttacking || (animator != null && animator.GetCurrentAnimatorStateInfo(0).IsName("Attack"))) && !isMovingToManualTarget)
                     {
@@ -459,7 +459,7 @@ namespace TowerDefence.Combat
                     return true;
 
                 case HeroAbilityType.LifeDrain:
-                    if (GetTarget() is Unit target && !target.IsDead)
+                    if (IsTargetAlive(GetTarget()) && GetTarget() is Unit target)
                     {
                         float dmg = GetDamage() * ScaledAbilityPower * 1.5f;
                         target.TakeDamage(dmg);
@@ -484,7 +484,7 @@ namespace TowerDefence.Combat
                     return false;
 
                 case HeroAbilityType.SwiftStrike:
-                    if (GetTarget() is Unit swiftTarget && !swiftTarget.IsDead)
+                    if (IsTargetAlive(GetTarget()) && GetTarget() is Unit swiftTarget)
                     {
                         swiftTarget.TakeDamage(GetDamage() * ScaledAbilityPower * 2.5f);
                         SpawnHeroVFX(HeroAbilityType.SwiftStrike, 1f);
@@ -509,7 +509,7 @@ namespace TowerDefence.Combat
                     return false;
 
                 case HeroAbilityType.SoulExecute:
-                    if (GetTarget() is Unit execTarget && !execTarget.IsDead &&
+                    if (IsTargetAlive(GetTarget()) && GetTarget() is Unit execTarget &&
                         execTarget.GetHealth() / execTarget.GetMaxHealth() <= 0.40f)
                     {
                         execTarget.TakeDamage(GetDamage() * ScaledAbilityPower * 4.0f);
@@ -535,7 +535,7 @@ namespace TowerDefence.Combat
                     return false;
 
                 case HeroAbilityType.ShadowStep:
-                    if (GetTarget() is Unit stepTarget && !stepTarget.IsDead)
+                    if (IsTargetAlive(GetTarget()) && GetTarget() is Unit stepTarget)
                     {
                         Vector3 behind = stepTarget.transform.position - stepTarget.transform.forward * 1.2f;
                         transform.position = new Vector3(behind.x, transform.position.y, behind.z);

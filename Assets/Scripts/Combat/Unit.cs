@@ -169,6 +169,20 @@ namespace TowerDefence.Combat
 
         public void SuppressKillReward() => grantKillReward = false;
 
+        public void Dismiss()
+        {
+            if (isDead) return;
+            SuppressKillReward();
+            Die();
+        }
+
+        public static bool IsTargetAlive(IDamageable target)
+        {
+            if (target is not UnityEngine.Object unityObject || unityObject == null)
+                return false;
+            return !target.IsDead;
+        }
+
         public void SetKillRewardMultiplier(float multiplier)
         {
             killRewardMultiplier = Mathf.Max(1f, multiplier);
@@ -244,10 +258,10 @@ namespace TowerDefence.Combat
         private void SyncAnimatorSpeed(float speed)
         {
             if (animator == null || isAttacking) return;
-            // Reference speed: 1.0f. Animations considered calibrated to this.
-            // Partial factor (0.85f) prevents appearing excessively fast.
+            // Walk clips stride farther than 1 unit per second. This factor keeps the step with the distance traveled.
             const float baseSpeed = 1.0f;
-            animator.speed = Mathf.Clamp((speed / baseSpeed) * 0.85f, 0.3f, 2.5f);
+            const float strideFactor = 0.55f;
+            animator.speed = Mathf.Clamp((speed / baseSpeed) * strideFactor, 0.3f, 2.5f);
         }
 
         private void InitializeStatusEffects()
@@ -381,6 +395,15 @@ namespace TowerDefence.Combat
         protected virtual void TryMoveToManualDestination() { }
         protected virtual bool CanAcquireTarget() => true;
 
+        private void ReleaseGoneTarget()
+        {
+            if (!IsTargetAlive(targetCombatant))
+                targetCombatant = null;
+
+            if (isBlocked && (currentBlocker == null || currentBlocker.IsDead))
+                Unblock();
+        }
+
         protected void ClearTarget()
         {
             targetCombatant = null;
@@ -412,7 +435,8 @@ namespace TowerDefence.Combat
             if (PhaseManager.Instance.GetCurrentPhase() != GamePhase.Combat) return;
 
             HandleStatusEffects();
-            
+            ReleaseGoneTarget();
+
             targetSearchTimer -= Time.deltaTime;
             if (targetSearchTimer <= 0)
             {
@@ -426,7 +450,7 @@ namespace TowerDefence.Combat
             // Combat State Check — operates independently of isBlocked
             bool isStunned = activeEffects.Exists(e => e.type == StatusEffectType.Stun);
             bool isFighting = false;
-            if (!isStunned && targetCombatant != null && !targetCombatant.IsDead)
+            if (!isStunned && IsTargetAlive(targetCombatant))
             {
                 Vector3 fightPos = ((MonoBehaviour)targetCombatant).transform.position;
                 float distance = GetCombatDistance(targetCombatant, fightPos);
@@ -449,7 +473,7 @@ namespace TowerDefence.Combat
             if (!isFighting && !isStunned && !isAttacking)
             {
                 // Change: Even if isBlocked, walk towards duel partner if we have one
-                if (targetCombatant != null && !targetCombatant.IsDead)
+                if (IsTargetAlive(targetCombatant))
                 {
                     // 1. Hedefi Kovala (Chase Logic)
                     wasChasing = true;
@@ -563,6 +587,7 @@ namespace TowerDefence.Combat
 
         protected void MoveTowardsTarget(Vector3 targetPos)
         {
+            SyncAnimatorSpeed(moveSpeed * slowMultiplier);
             float step = moveSpeed * slowMultiplier * GetCorruptionMultiplier() * Time.deltaTime;
             Vector3 from = transform.position;
             Vector3 next = Vector3.MoveTowards(from, targetPos, step);
@@ -748,7 +773,7 @@ namespace TowerDefence.Combat
 
             if (nearestTarget != null)
                 targetCombatant = nearestTarget;
-            else if (targetCombatant == null || targetCombatant.IsDead)
+            else if (!IsTargetAlive(targetCombatant))
                 targetCombatant = null;
         }
 
@@ -1050,7 +1075,7 @@ namespace TowerDefence.Combat
             IDamageable targetC = targetMB as IDamageable;
             float attackDuration = 1f / Mathf.Max(0.01f, attackRate);
 
-            if (targetC != null && !targetC.IsDead)
+            if (IsTargetAlive(targetC))
             {
                 if (animator != null)
                 {
@@ -1098,14 +1123,14 @@ namespace TowerDefence.Combat
 
         private void EndAttackSwing()
         {
+            isAttacking = false;
             if (animator != null)
             {
-                animator.speed = 1f;
                 animator.ResetTrigger("Attack");
                 if (!isDead && IsInAttackState())
                     animator.Play("Idle", 0, 0f);
             }
-            isAttacking = false;
+            SyncAnimatorSpeed(moveSpeed * slowMultiplier);
         }
 
         private bool IsInAttackState()
@@ -1142,7 +1167,7 @@ namespace TowerDefence.Combat
             IDamageable targetC = currentTargetMB as IDamageable;
 
             // Phantom Hit Fix (Prevent hitting dead targets)
-            if (targetC != null && !targetC.IsDead)
+            if (IsTargetAlive(targetC))
             {
                 if (AudioManager.Instance != null && unitData != null && unitData.attackSFX != null)
                     AudioManager.Instance.PlaySFX(unitData.attackSFX);

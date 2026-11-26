@@ -262,9 +262,11 @@ namespace TowerDefence.Core
             point = Vector3.zero;
             int groundMask = LayerMask.GetMask("Path");
 
-            if (Physics.Raycast(ray, out RaycastHit hit, 250f, groundMask))
+            if (Physics.Raycast(ray, out RaycastHit hit, 250f, groundMask, QueryTriggerInteraction.Ignore))
             {
                 point = hit.point;
+                if (WalkSurface.TryGetHeight(hit.point.x, hit.point.z, groundMask, out float walkY))
+                    point.y = walkY;
                 return true;
             }
 

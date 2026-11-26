@@ -149,6 +149,9 @@ namespace TowerDefence.Grid
                         clicked = origin + flat.normalized * radius;
 
                     clicked.y = hit.point.y;
+                    int pathMask = LayerMask.GetMask("Path");
+                    if (WalkSurface.TryGetHeight(clicked.x, clicked.z, pathMask, out float walkY))
+                        clicked.y = walkY;
                     currentRallyBarracks.SetRallyPoint(clicked);
                     currentRallyBarracks.SetRangeVisible(false);
 

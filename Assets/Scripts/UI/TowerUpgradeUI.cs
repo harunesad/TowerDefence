@@ -278,7 +278,7 @@ namespace TowerDefence.UI
             TowerData data = currentTower.GetTowerData();
             int refund = currentTower.GetSellRefund();
             if (data != null && CurrencyManager.Instance != null)
-                CurrencyManager.Instance.AddCurrency(data.side, refund);
+            CurrencyManager.Instance.AddCurrency(data.side, refund);
             if (currentSlot != null && data != null)
                 CurrencyFloatUI.Show(currentSlot.GetPlacementPosition(), refund, data.side);
             if (AudioManager.Instance != null && sellSFX != null)
