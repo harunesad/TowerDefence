@@ -257,11 +257,23 @@ namespace TowerDefence.Combat
         /// <summary>Adjusts animator speed based on given movement speed.</summary>
         private void SyncAnimatorSpeed(float speed)
         {
-            if (animator == null || isAttacking) return;
+            if (animator == null) return;
+            if (IsFrozen())
+            {
+                animator.speed = 0f;
+                return;
+            }
+            if (isAttacking) return;
             // Walk clips stride farther than 1 unit per second. This factor keeps the step with the distance traveled.
             const float baseSpeed = 1.0f;
             const float strideFactor = 0.55f;
             animator.speed = Mathf.Clamp((speed / baseSpeed) * strideFactor, 0.3f, 2.5f);
+        }
+
+        protected bool IsFrozen()
+        {
+            return slowMultiplier <= 0.001f
+                && activeEffects.Exists(e => e.type == StatusEffectType.Slow);
         }
 
         private void InitializeStatusEffects()
@@ -449,8 +461,9 @@ namespace TowerDefence.Combat
 
             // Combat State Check — operates independently of isBlocked
             bool isStunned = activeEffects.Exists(e => e.type == StatusEffectType.Stun);
+            bool isFrozen = IsFrozen();
             bool isFighting = false;
-            if (!isStunned && IsTargetAlive(targetCombatant))
+            if (!isStunned && !isFrozen && IsTargetAlive(targetCombatant))
             {
                 Vector3 fightPos = ((MonoBehaviour)targetCombatant).transform.position;
                 float distance = GetCombatDistance(targetCombatant, fightPos);
@@ -463,7 +476,7 @@ namespace TowerDefence.Combat
                     
                     if (Time.time >= nextAttackTime && !isAttacking)
                     {
-                        StartCoroutine(PerformAttack((MonoBehaviour)targetCombatant));
+                        attackRoutine = StartCoroutine(PerformAttack((MonoBehaviour)targetCombatant));
                         nextAttackTime = Time.time + 1f / attackRate;
                     }
                 }
@@ -780,6 +793,7 @@ namespace TowerDefence.Combat
         private PathWaypoints currentPath;
         private int currentWaypointIndex = 0;
         protected bool isAttacking = false;
+        Coroutine attackRoutine;
         protected bool hasDealtDamage = false;
         protected MonoBehaviour currentTargetMB;
 
@@ -963,6 +977,9 @@ namespace TowerDefence.Combat
                 activeEffects.Add(new StatusEffect(type, duration, power));
                 AddStatusVisual(type);
             }
+
+            if (type == StatusEffectType.Stun)
+                CancelAttackSwing();
         }
 
         private void AddStatusVisual(StatusEffectType type)
@@ -1075,20 +1092,39 @@ namespace TowerDefence.Combat
             IDamageable targetC = targetMB as IDamageable;
             float attackDuration = 1f / Mathf.Max(0.01f, attackRate);
 
-            if (IsTargetAlive(targetC))
-            {
-                if (animator != null)
+                if (IsTargetAlive(targetC))
                 {
-                    float clipLength = GetAttackClipLength();
-                    animator.speed = clipLength > 0.05f ? clipLength / attackDuration : 1f;
-                    animator.ResetTrigger("Attack");
-                    animator.SetBool("IsMoving", false);
-                    animator.SetTrigger("Attack");
-                }
+                    float attackPlayback = 1f;
+                    if (animator != null)
+                    {
+                        float clipLength = GetAttackClipLength();
+                        attackPlayback = clipLength > 0.05f ? clipLength / attackDuration : 1f;
+                        animator.speed = IsFrozen() ? 0f : attackPlayback;
+                        animator.ResetTrigger("Attack");
+                        animator.SetBool("IsMoving", false);
+                        animator.SetTrigger("Attack");
+                    }
 
-                yield return new WaitForSeconds(attackDuration);
+                    float elapsed = 0f;
+                    while (elapsed < attackDuration)
+                    {
+                        if (IsStunned())
+                        {
+                            EndAttackSwing();
+                            yield break;
+                        }
+                        if (IsFrozen())
+                        {
+                            if (animator != null) animator.speed = 0f;
+                            yield return null;
+                            continue;
+                        }
+                        if (animator != null) animator.speed = attackPlayback;
+                        elapsed += Time.deltaTime;
+                        yield return null;
+                    }
 
-                if (this is HeroUnit && ((HeroUnit)this).IsMovingToManualTarget)
+                if (IsStunned() || (this is HeroUnit && ((HeroUnit)this).IsMovingToManualTarget))
                 {
                     EndAttackSwing();
                     yield break;
@@ -1121,6 +1157,22 @@ namespace TowerDefence.Combat
             return longest;
         }
 
+        protected bool IsStunned()
+        {
+            return activeEffects.Exists(e => e.type == StatusEffectType.Stun);
+        }
+
+        void CancelAttackSwing()
+        {
+            if (attackRoutine != null)
+            {
+                StopCoroutine(attackRoutine);
+                attackRoutine = null;
+            }
+            if (!isAttacking) return;
+            EndAttackSwing();
+        }
+
         private void EndAttackSwing()
         {
             isAttacking = false;
@@ -1147,7 +1199,7 @@ namespace TowerDefence.Combat
             if (hasDealtDamage || isDead) return;
             
             // Do not hit if attack was cancelled or completed
-            if (!isAttacking) return;
+            if (!isAttacking || IsStunned()) return;
             if (SuppressAttackHit()) return;
 
             ExecuteAttackHit();
@@ -1357,7 +1409,11 @@ namespace TowerDefence.Combat
             // Efekt gorsellerini temizle
             ClearAllStatusEffects();
 
-            if (animator != null) animator.SetTrigger("Die");
+            if (animator != null)
+            {
+                animator.speed = 1f;
+                animator.SetTrigger("Die");
+            }
 
             // Death effect
             if (VFXManager.Instance != null)

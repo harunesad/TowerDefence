@@ -160,9 +160,9 @@ namespace TowerDefence.Combat
             
             if (animator != null)
             {
-                animator.speed = 1f;
                 animator.ResetTrigger("Attack");
                 animator.SetBool("IsMoving", true);
+                animator.speed = IsFrozen() ? 0f : 1f;
             }
             
             ClearTarget();

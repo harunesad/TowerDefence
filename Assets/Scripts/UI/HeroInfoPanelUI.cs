@@ -58,7 +58,7 @@ namespace TowerDefence.UI
             // Pozisyonu tam olarak butonun dunya pozisyonuna esitleyip
             rt.position = source.position;
             // Canvas olceklemesinden bagimsiz olarak UI uzerinde sag uste kaydiriyoruz
-            rt.anchoredPosition = new Vector2(rt.anchoredPosition.x + source.rect.width * 0.5f + 10f, 300f);
+            rt.anchoredPosition = new Vector2(rt.anchoredPosition.x + source.rect.width * 0.5f + 10f, 250f);
 
             Image bgImg = gameObject.GetComponent<Image>();
             if (bgImg == null) bgImg = gameObject.AddComponent<Image>();
